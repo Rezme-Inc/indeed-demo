@@ -1,3 +1,39 @@
+### Installation
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/Rezme-Inc/selfservice.git
+cd rezme
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Set up environment variables:
+
+Reach out to Ola for these
+
+Fill in the required environment variables in `.env.local`
+
+4. Start the development server:
+
+```bash
+npm run dev
+```
+
+## Contributing
+
+1. Clone the repo
+2. Create your feature branch (`git checkout -b youname_feature_amazing-feature`)
+3. Add you changes (`git add .`)
+3. Commit your changes (`git commit -m "Add some amazing feature"`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
 # Rezme
 
 Rezme is a platform that connects job seekers with HR professionals, making the job search process more efficient and personalized.
