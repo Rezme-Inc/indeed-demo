@@ -6,7 +6,6 @@ CREATE TABLE user_profiles (
     last_name TEXT NOT NULL,
     birthday DATE,
     interests TEXT[] DEFAULT '{}',
-    is_visible_to_hr BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
@@ -95,6 +94,22 @@ CREATE POLICY "Users can read HR admin profiles for invitation code verification
     ON hr_admin_profiles FOR SELECT
     USING (true);
 
+-- Add policy to allow HR admins to view all users but only interact with connected ones
+CREATE POLICY "HR Admins can view all users"
+    ON user_profiles FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM hr_admin_profiles
+            WHERE id = auth.uid()
+        )
+    );
+
+-- Add policy to allow HR admins to update their connected users
+CREATE POLICY "HR Admins can update their connected users"
+    ON hr_admin_profiles FOR UPDATE
+    USING (auth.uid() = id)
+    WITH CHECK (auth.uid() = id);
+
 -- Rezme Admin profiles policies
 CREATE POLICY "Rezme Admins can view their own profile"
     ON rezme_admin_profiles FOR SELECT
@@ -139,4 +154,124 @@ CREATE POLICY "Rezme Admins can create HR admins"
 -- Create indexes for better performance
 CREATE INDEX idx_user_profiles_email ON user_profiles(email);
 CREATE INDEX idx_hr_admin_profiles_email ON hr_admin_profiles(email);
-CREATE INDEX idx_rezme_admin_profiles_email ON rezme_admin_profiles(email); 
+CREATE INDEX idx_rezme_admin_profiles_email ON rezme_admin_profiles(email);
+
+-- Enable RLS on assessment tables
+ALTER TABLE assessment_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE assessment_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE assessment_decisions ENABLE ROW LEVEL SECURITY;
+
+-- Assessment sessions policies
+CREATE POLICY "HR Admins can view their own company's sessions"
+    ON assessment_sessions FOR SELECT
+    USING (
+        company_id IN (
+            SELECT id FROM hr_admin_profiles
+            WHERE company = (
+                SELECT company FROM hr_admin_profiles
+                WHERE id = auth.uid()
+            )
+        )
+    );
+
+CREATE POLICY "HR Admins can create sessions for their company"
+    ON assessment_sessions FOR INSERT
+    WITH CHECK (
+        company_id IN (
+            SELECT id FROM hr_admin_profiles
+            WHERE company = (
+                SELECT company FROM hr_admin_profiles
+                WHERE id = auth.uid()
+            )
+        )
+    );
+
+-- Assessment events policies
+CREATE POLICY "HR Admins can view their company's events"
+    ON assessment_events FOR SELECT
+    USING (
+        session_id IN (
+            SELECT id FROM assessment_sessions
+            WHERE company_id IN (
+                SELECT id FROM hr_admin_profiles
+                WHERE company = (
+                    SELECT company FROM hr_admin_profiles
+                    WHERE id = auth.uid()
+                )
+            )
+        )
+    );
+
+CREATE POLICY "HR Admins can create events for their sessions"
+    ON assessment_events FOR INSERT
+    WITH CHECK (
+        session_id IN (
+            SELECT id FROM assessment_sessions
+            WHERE company_id IN (
+                SELECT id FROM hr_admin_profiles
+                WHERE company = (
+                    SELECT company FROM hr_admin_profiles
+                    WHERE id = auth.uid()
+                )
+            )
+        )
+    );
+
+-- Assessment decisions policies
+CREATE POLICY "HR Admins can view their company's decisions"
+    ON assessment_decisions FOR SELECT
+    USING (
+        session_id IN (
+            SELECT id FROM assessment_sessions
+            WHERE company_id IN (
+                SELECT id FROM hr_admin_profiles
+                WHERE company = (
+                    SELECT company FROM hr_admin_profiles
+                    WHERE id = auth.uid()
+                )
+            )
+        )
+    );
+
+CREATE POLICY "HR Admins can create decisions for their sessions"
+    ON assessment_decisions FOR INSERT
+    WITH CHECK (
+        session_id IN (
+            SELECT id FROM assessment_sessions
+            WHERE company_id IN (
+                SELECT id FROM hr_admin_profiles
+                WHERE company = (
+                    SELECT company FROM hr_admin_profiles
+                    WHERE id = auth.uid()
+                )
+            )
+        )
+    );
+
+-- Rezme Admin access to all assessment data
+CREATE POLICY "Rezme Admins can view all assessment data"
+    ON assessment_sessions FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM rezme_admin_profiles
+            WHERE id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Rezme Admins can view all assessment events"
+    ON assessment_events FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM rezme_admin_profiles
+            WHERE id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Rezme Admins can view all assessment decisions"
+    ON assessment_decisions FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM rezme_admin_profiles
+            WHERE id = auth.uid()
+        )
+    ); 

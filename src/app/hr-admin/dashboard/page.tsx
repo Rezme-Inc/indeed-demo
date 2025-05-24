@@ -205,6 +205,17 @@ export default function HRAdminDashboard() {
     }
   };
 
+  const startAssessment = async (userId: string) => {
+    try {
+      // Directly navigate to the assessment page
+      window.location.href = `/hr-admin/dashboard/${userId}/assessment`;
+    } catch (err) {
+      console.error("Error starting assessment:", err);
+      setError("Failed to start assessment");
+      setTimeout(() => setError(null), 3000);
+    }
+  };
+
   const refreshData = async () => {
     await fetchHRAdminProfile();
     await fetchConnectedUsers();
@@ -318,7 +329,7 @@ export default function HRAdminDashboard() {
                   <td className="px-6 py-4 whitespace-nowrap text-gray-900">
                     {user.interests?.join(", ") || "None"}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-900 space-x-4">
                     <button
                       onClick={() => {
                         /* TODO: View user profile */
@@ -326,6 +337,12 @@ export default function HRAdminDashboard() {
                       className="text-indigo-600 hover:text-indigo-900"
                     >
                       View Profile
+                    </button>
+                    <button
+                      onClick={() => startAssessment(user.id)}
+                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                    >
+                      Begin Assessment
                     </button>
                   </td>
                 </tr>
