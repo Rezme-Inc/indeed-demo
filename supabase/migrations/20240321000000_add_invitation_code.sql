@@ -5,3 +5,4 @@ ADD COLUMN IF NOT EXISTS invitation_code TEXT UNIQUE;
 
 -- Create index for faster lookups
 CREATE INDEX IF NOT EXISTS idx_hr_admin_profiles_invitation_code ON hr_admin_profiles(invitation_code); 
+ 
