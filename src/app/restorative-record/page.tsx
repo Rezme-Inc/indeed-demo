@@ -61,6 +61,85 @@ interface Employment {
   file?: FileWithPreview;
 }
 
+interface Introduction {
+  facebookUrl: string;
+  linkedinUrl: string;
+  redditUrl: string;
+  digitalPortfolioUrl: string;
+  instagramUrl: string;
+  githubUrl: string;
+  tiktokUrl: string;
+  pinterestUrl: string;
+  twitterUrl: string;
+  personalWebsiteUrl: string;
+  handshakeUrl: string;
+  preferredOccupation: string;
+  personalNarrative: string;
+  languageProficiency:
+    | "Bilingual"
+    | "Advanced Proficiency"
+    | "Intermediate Proficiency"
+    | "Basic Proficiency"
+    | "Limited Proficiency"
+    | "No Proficiency";
+  otherLanguages: string[];
+}
+
+interface RehabPrograms {
+  substanceUseDisorder: boolean;
+  substanceUseDisorderDetails: string;
+  womensJusticeCenters: boolean;
+  womensJusticeCentersDetails: string;
+  employmentFocused: boolean;
+  employmentFocusedDetails: string;
+  adaptableJustice: boolean;
+  adaptableJusticeDetails: string;
+  lifeSkillsTraining: boolean;
+  lifeSkillsTrainingDetails: string;
+  communityService: boolean;
+  communityServiceDetails: string;
+  familyReintegration: boolean;
+  familyReintegrationDetails: string;
+  parentingClasses: boolean;
+  parentingClassesDetails: string;
+  mentalWellness: boolean;
+  mentalWellnessDetails: string;
+  faithBased: boolean;
+  faithBasedDetails: string;
+  peerSupport: boolean;
+  peerSupportDetails: string;
+  artsRecreation: boolean;
+  artsRecreationDetails: string;
+  housingAssistance: boolean;
+  housingAssistanceDetails: string;
+  legalCompliance: boolean;
+  legalComplianceDetails: string;
+  civicEngagement: boolean;
+  civicEngagementDetails: string;
+  veteransServices: boolean;
+  veteransServicesDetails: string;
+  domesticViolenceReduction: boolean;
+  domesticViolenceReductionDetails: string;
+  sexOffenderTreatment: boolean;
+  sexOffenderTreatmentDetails: string;
+  medicalHealthCare: boolean;
+  medicalHealthCareDetails: string;
+  other: boolean;
+  otherDetails: string;
+}
+
+type RehabProgramKey = keyof Omit<RehabPrograms, `${string}Details`>;
+type RehabProgramDetailsKey = `${RehabProgramKey}Details`;
+
+interface Hobby {
+  id: string;
+  general: string;
+  sports: string;
+  other: string;
+  narrative: string;
+  file?: FileWithPreview;
+}
+
 export default function RestorativeRecordBuilder() {
   const { toast } = useToast();
   const [currentCategory, setCurrentCategory] = useState(0);
@@ -238,124 +317,50 @@ export default function RestorativeRecordBuilder() {
   ];
 
   // Step 5: Rehabilitative Programs state
-  const rehabProgramsList = [
-    {
-      key: "substance_use",
-      label: "Substance Use Disorder Treatment",
-      desc: "Counseling, residential, outpatient, relapse prevention, harm reduction or AA/NA/peer.",
-    },
-    {
-      key: "womens_justice",
-      label: "Women's Justice Centers",
-      desc: "Gender-responsive, trauma-informed, family-focused care.",
-    },
-    {
-      key: "employment_focused",
-      label: "Employment-Focused Programs",
-      desc: "Job readiness, skills training, job placement, work release, transitional jobs, social enterprise.",
-    },
-    {
-      key: "adaptable_justice",
-      label: "Adaptable Justice Programs",
-      desc: "Restorative, transformative, victim-offender healing, circle conferencing.",
-    },
-    {
-      key: "life_skills",
-      label: "Life Skills Training",
-      desc: "Education, basic life management, financial management, communication skills.",
-    },
-    {
-      key: "community_service",
-      label: "Community Service",
-      desc: "Service learning, restitution, reparative projects, neighborhood initiatives.",
-    },
-    {
-      key: "family_reintegration",
-      label: "Family and Community Reintegration Programs",
-      desc: "Family reunification, mediation, mentoring, parenting programs.",
-    },
-    {
-      key: "parenting_classes",
-      label: "Parenting Classes",
-      desc: "Child development education, discipline techniques, child–parent visitation and practice.",
-    },
-    {
-      key: "mental_health",
-      label: "Mental and Wellness Programs",
-      desc: "Psychological counseling, trauma, substance programs, cognitive behavioral health.",
-    },
-    {
-      key: "faith_based",
-      label: "Faith-Based Initiatives",
-      desc: "Spiritual support, religious programs, faith-based support groups.",
-    },
-    {
-      key: "peer_support",
-      label: "Peer Support Groups",
-      desc: "Group therapy, peer mentoring, recovery, lived-experience.",
-    },
-    {
-      key: "arts_recreation",
-      label: "Arts and Recreation Programs",
-      desc: "Creative arts, music, theater, recreation, leisure and play.",
-    },
-    {
-      key: "housing_assistance",
-      label: "Housing Assistance Programs",
-      desc: "Transitional housing, supportive housing, independent living, shelter.",
-    },
-    {
-      key: "legal_compliance",
-      label: "Legal Compliance",
-      desc: "Court-ordered, parole/probation, monitoring, mediation or legal skills training.",
-    },
-    {
-      key: "civic_engagement",
-      label: "Civic Engagement Activities",
-      desc: "Voter registration, community service, volunteering, civic or resident participation.",
-    },
-    {
-      key: "veterans_services",
-      label: "Veterans Services",
-      desc: "Veteran-specific services, case management, advocacy, including those dealing with reentry.",
-    },
-    {
-      key: "domestic_violence",
-      label: "Domestic Violence Reduction",
-      desc: "Domestic violence education, counseling, advocacy, including those dealing with victimization and reentry.",
-    },
-    {
-      key: "sex_offender_treatment",
-      label: "Sex Offender Treatment Programs",
-      desc: "Therapy and treatment for persons convicted of sex offenses.",
-    },
-    {
-      key: "medical_health",
-      label: "Medical and Physical Health Care",
-      desc: "General medical care, physical rehabilitation, and related services for individuals affected by physical illness or injury, physical disabilities, or special health and self-care needs.",
-    },
-    {
-      key: "other",
-      label: "Other",
-      desc: "Specify other relevant program.",
-    },
-  ];
-  const [selectedRehabPrograms, setSelectedRehabPrograms] = useState<{
-    [key: string]: string;
-  }>({});
-  const handleRehabCheckbox = (key: string) => {
-    setSelectedRehabPrograms((prev) =>
-      prev[key] !== undefined
-        ? Object.fromEntries(Object.entries(prev).filter(([k]) => k !== key))
-        : { ...prev, [key]: "" }
-    );
-  };
-  const handleRehabDetailsChange = (key: string, value: string) => {
-    setSelectedRehabPrograms((prev) => ({
-      ...prev,
-      [key]: value.slice(0, 500),
-    }));
-  };
+  const [rehabPrograms, setRehabPrograms] = useState<RehabPrograms>({
+    substanceUseDisorder: false,
+    substanceUseDisorderDetails: "",
+    womensJusticeCenters: false,
+    womensJusticeCentersDetails: "",
+    employmentFocused: false,
+    employmentFocusedDetails: "",
+    adaptableJustice: false,
+    adaptableJusticeDetails: "",
+    lifeSkillsTraining: false,
+    lifeSkillsTrainingDetails: "",
+    communityService: false,
+    communityServiceDetails: "",
+    familyReintegration: false,
+    familyReintegrationDetails: "",
+    parentingClasses: false,
+    parentingClassesDetails: "",
+    mentalWellness: false,
+    mentalWellnessDetails: "",
+    faithBased: false,
+    faithBasedDetails: "",
+    peerSupport: false,
+    peerSupportDetails: "",
+    artsRecreation: false,
+    artsRecreationDetails: "",
+    housingAssistance: false,
+    housingAssistanceDetails: "",
+    legalCompliance: false,
+    legalComplianceDetails: "",
+    civicEngagement: false,
+    civicEngagementDetails: "",
+    veteransServices: false,
+    veteransServicesDetails: "",
+    domesticViolenceReduction: false,
+    domesticViolenceReductionDetails: "",
+    sexOffenderTreatment: false,
+    sexOffenderTreatmentDetails: "",
+    medicalHealthCare: false,
+    medicalHealthCareDetails: "",
+    other: false,
+    otherDetails: "",
+  });
+
+  const [hobbyList, setHobbyList] = useState<Hobby[]>([]);
 
   // Step 6: Microcredentials and Certifications state
   const [showMicroForm, setShowMicroForm] = useState(false);
@@ -2473,41 +2478,55 @@ export default function RestorativeRecordBuilder() {
               self-improvement and your readiness for new opportunities.
             </p>
             <div className="space-y-4">
-              {rehabProgramsList.map((prog) => (
-                <div key={prog.key} className="border rounded p-4 bg-white">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedRehabPrograms[prog.key] !== undefined}
-                      onChange={() => handleRehabCheckbox(prog.key)}
-                      className="mt-1 accent-red-500"
-                    />
-                    <div className="flex-1">
-                      <div className="font-semibold">{prog.label}</div>
-                      <div className="text-xs text-secondary mb-2">
-                        {prog.desc}
-                      </div>
-                      {selectedRehabPrograms[prog.key] !== undefined && (
-                        <div>
-                          <textarea
-                            className="border p-2 rounded w-full min-h-[60px]"
-                            placeholder="Describe your experience with this program. Describe its value, how it helped you, and any outcomes."
-                            value={selectedRehabPrograms[prog.key]}
-                            onChange={(e) =>
-                              handleRehabDetailsChange(prog.key, e.target.value)
-                            }
-                            maxLength={500}
-                          />
-                          <div className="text-xs text-secondary text-right">
-                            {selectedRehabPrograms[prog.key].length}/500
-                            characters
-                          </div>
+              {rehabProgramsList.map((prog) => {
+                const programKey = prog.key as RehabProgramKey;
+                return (
+                  <div key={prog.key} className="border rounded p-4 bg-white">
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={rehabPrograms[programKey]}
+                        onChange={() => handleRehabCheckbox(programKey)}
+                        className="mt-1 accent-red-500"
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium">{prog.label}</div>
+                        <div className="text-sm text-secondary mt-1">
+                          {prog.desc}
                         </div>
-                      )}
-                    </div>
-                  </label>
-                </div>
-              ))}
+                        {rehabPrograms[programKey] && (
+                          <div>
+                            <textarea
+                              className="border p-2 rounded w-full min-h-[60px]"
+                              placeholder="Describe your experience with this program. Describe its value, how it helped you, and any outcomes."
+                              value={
+                                rehabPrograms[
+                                  `${programKey}Details` as RehabProgramDetailsKey
+                                ]
+                              }
+                              onChange={(e) =>
+                                handleRehabDetailsChange(
+                                  programKey,
+                                  e.target.value
+                                )
+                              }
+                              maxLength={500}
+                            />
+                            <div className="text-xs text-secondary text-right">
+                              {
+                                rehabPrograms[
+                                  `${programKey}Details` as RehabProgramDetailsKey
+                                ].length
+                              }
+                              /500 characters
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                  </div>
+                );
+              })}
             </div>
           </div>
         );
@@ -4138,6 +4157,253 @@ export default function RestorativeRecordBuilder() {
     } = await supabase.auth.getUser();
     if (!user) return;
 
+    // Save introduction information
+    const { error: introError } = await supabase.from("introduction").upsert({
+      user_id: user.id,
+      facebook_url: introductionData.facebookUrl,
+      linkedin_url: introductionData.linkedinUrl,
+      reddit_url: introductionData.redditUrl,
+      digital_portfolio_url: introductionData.digitalPortfolioUrl,
+      instagram_url: introductionData.instagramUrl,
+      github_url: introductionData.githubUrl,
+      tiktok_url: introductionData.tiktokUrl,
+      pinterest_url: introductionData.pinterestUrl,
+      twitter_url: introductionData.twitterUrl,
+      personal_website_url: introductionData.personalWebsiteUrl,
+      handshake_url: introductionData.handshakeUrl,
+      preferred_occupation: introductionData.preferredOccupation,
+      personal_narrative: introductionData.personalNarrative,
+      language_proficiency: introductionData.languageProficiency,
+      other_languages: introductionData.otherLanguages,
+    });
+
+    if (introError) {
+      console.error("Error saving introduction:", introError);
+      toast.error("Failed to save introduction information");
+    }
+
+    // Save rehabilitative programs
+    const { error: rehabError } = await supabase
+      .from("rehabilitative_programs")
+      .upsert({
+        user_id: user.id,
+        substance_use_disorder: rehabPrograms.substanceUseDisorder,
+        substance_use_disorder_details:
+          rehabPrograms.substanceUseDisorderDetails,
+        womens_justice_centers: rehabPrograms.womensJusticeCenters,
+        womens_justice_centers_details:
+          rehabPrograms.womensJusticeCentersDetails,
+        employment_focused: rehabPrograms.employmentFocused,
+        employment_focused_details: rehabPrograms.employmentFocusedDetails,
+        adaptable_justice: rehabPrograms.adaptableJustice,
+        adaptable_justice_details: rehabPrograms.adaptableJusticeDetails,
+        life_skills_training: rehabPrograms.lifeSkillsTraining,
+        life_skills_training_details: rehabPrograms.lifeSkillsTrainingDetails,
+        community_service: rehabPrograms.communityService,
+        community_service_details: rehabPrograms.communityServiceDetails,
+        family_reintegration: rehabPrograms.familyReintegration,
+        family_reintegration_details: rehabPrograms.familyReintegrationDetails,
+        parenting_classes: rehabPrograms.parentingClasses,
+        parenting_classes_details: rehabPrograms.parentingClassesDetails,
+        mental_wellness: rehabPrograms.mentalWellness,
+        mental_wellness_details: rehabPrograms.mentalWellnessDetails,
+        faith_based: rehabPrograms.faithBased,
+        faith_based_details: rehabPrograms.faithBasedDetails,
+        peer_support: rehabPrograms.peerSupport,
+        peer_support_details: rehabPrograms.peerSupportDetails,
+        arts_recreation: rehabPrograms.artsRecreation,
+        arts_recreation_details: rehabPrograms.artsRecreationDetails,
+        housing_assistance: rehabPrograms.housingAssistance,
+        housing_assistance_details: rehabPrograms.housingAssistanceDetails,
+        legal_compliance: rehabPrograms.legalCompliance,
+        legal_compliance_details: rehabPrograms.legalComplianceDetails,
+        civic_engagement: rehabPrograms.civicEngagement,
+        civic_engagement_details: rehabPrograms.civicEngagementDetails,
+        veterans_services: rehabPrograms.veteransServices,
+        veterans_services_details: rehabPrograms.veteransServicesDetails,
+        domestic_violence_reduction: rehabPrograms.domesticViolenceReduction,
+        domestic_violence_reduction_details:
+          rehabPrograms.domesticViolenceReductionDetails,
+        sex_offender_treatment: rehabPrograms.sexOffenderTreatment,
+        sex_offender_treatment_details:
+          rehabPrograms.sexOffenderTreatmentDetails,
+        medical_health_care: rehabPrograms.medicalHealthCare,
+        medical_health_care_details: rehabPrograms.medicalHealthCareDetails,
+        other: rehabPrograms.other,
+        other_details: rehabPrograms.otherDetails,
+      });
+
+    if (rehabError) {
+      console.error("Error saving rehabilitative programs:", rehabError);
+      toast.error("Failed to save rehabilitative programs");
+    }
+
+    // Save hobbies
+    for (const hobby of hobbyList) {
+      let fileUrl: string | null = null;
+      let fileName: string | null = null;
+      let fileSize: number | null = null;
+
+      // Upload file if exists
+      if (hobby.file) {
+        const fileExt = hobby.file.name.split(".").pop() || "";
+        const filePath = `${user.id}/${Date.now()}.${fileExt}`;
+        const { data: fileData, error: fileError } = await supabase.storage
+          .from("hobbies")
+          .upload(filePath, hobby.file);
+
+        if (fileError) {
+          console.error("Error uploading file:", fileError);
+          continue;
+        }
+
+        const { data } = supabase.storage
+          .from("hobbies")
+          .getPublicUrl(filePath);
+
+        fileUrl = data.publicUrl;
+        fileName = hobby.file.name;
+        fileSize = hobby.file.size;
+      }
+
+      // Save hobby to database
+      const { error: hobbyError } = await supabase.from("hobbies").upsert({
+        user_id: user.id,
+        general: hobby.general,
+        sports: hobby.sports,
+        other: hobby.other,
+        narrative: hobby.narrative,
+        file_url: fileUrl || undefined,
+        file_name: fileName || undefined,
+        file_size: fileSize || undefined,
+      });
+
+      if (hobbyError) {
+        console.error("Error saving hobby:", hobbyError);
+        toast.error("Failed to save hobby");
+      }
+    }
+
+    // Save education
+    for (const edu of educations) {
+      let fileUrl: string | null = null;
+      let fileName: string | null = null;
+      let fileSize: number | null = null;
+
+      // Upload file if exists
+      if (edu.file) {
+        const fileExt = edu.file.name.split(".").pop() || "";
+        const filePath = `${user.id}/${Date.now()}.${fileExt}`;
+        const { data: fileData, error: fileError } = await supabase.storage
+          .from("education")
+          .upload(filePath, edu.file);
+
+        if (fileError) {
+          console.error("Error uploading file:", fileError);
+          continue;
+        }
+
+        const { data } = supabase.storage
+          .from("education")
+          .getPublicUrl(filePath);
+
+        fileUrl = data.publicUrl;
+        fileName = edu.file.name;
+        fileSize = edu.file.size;
+      }
+
+      // Save education to database
+      const { error: eduError } = await supabase.from("education").upsert({
+        user_id: user.id,
+        school_name: edu.school,
+        school_location: edu.location,
+        degree: edu.degree,
+        field_of_study: edu.field,
+        currently_enrolled: edu.currentlyEnrolled,
+        start_date: edu.startDate,
+        end_date: edu.endDate,
+        grade: edu.grade,
+        description: edu.description,
+        file_url: fileUrl || undefined,
+        file_name: fileName || undefined,
+        file_size: fileSize || undefined,
+      });
+
+      if (eduError) {
+        console.error("Error saving education:", eduError);
+        toast.error("Failed to save education");
+      }
+    }
+
+    // Save mentors
+    for (const mentor of mentors) {
+      const { error: mentorError } = await supabase.from("mentors").upsert({
+        user_id: user.id,
+        linkedin: mentor.linkedin,
+        name: mentor.name,
+        company: mentor.company,
+        title: mentor.title,
+        email: mentor.email,
+        phone: mentor.phone,
+        website: mentor.website,
+        narrative: mentor.narrative,
+      });
+
+      if (mentorError) {
+        console.error("Error saving mentor:", mentorError);
+        toast.error("Failed to save mentor");
+      }
+    }
+
+    // Save micro credentials
+    for (const micro of microcredentials) {
+      let fileUrl: string | null = null;
+      let fileName: string | null = null;
+      let fileSize: number | null = null;
+
+      // Upload file if exists
+      if (micro.file) {
+        const fileExt = micro.file.name.split(".").pop() || "";
+        const filePath = `${user.id}/${Date.now()}.${fileExt}`;
+        const { data: fileData, error: fileError } = await supabase.storage
+          .from("micro_credentials")
+          .upload(filePath, micro.file);
+
+        if (fileError) {
+          console.error("Error uploading file:", fileError);
+          continue;
+        }
+
+        const { data } = supabase.storage
+          .from("micro_credentials")
+          .getPublicUrl(filePath);
+
+        fileUrl = data.publicUrl;
+        fileName = micro.file.name;
+        fileSize = micro.file.size;
+      }
+
+      // Save micro credential to database
+      const { error: microError } = await supabase
+        .from("micro_credentials")
+        .upsert({
+          user_id: user.id,
+          name: micro.name,
+          issuing_organization: micro.org,
+          issue_date: micro.issueDate,
+          expiry_date: micro.expiryDate,
+          narrative: micro.narrative,
+          file_url: fileUrl || undefined,
+          file_name: fileName || undefined,
+          file_size: fileSize || undefined,
+        });
+
+      if (microError) {
+        console.error("Error saving micro credential:", microError);
+        toast.error("Failed to save micro credential");
+      }
+    }
+
     // Save awards
     for (const award of awards) {
       let fileUrl: string | null = null;
@@ -4183,6 +4449,99 @@ export default function RestorativeRecordBuilder() {
       }
     }
 
+    // Save skills
+    for (const skill of skills) {
+      let fileUrl: string | null = null;
+      let fileName: string | null = null;
+      let fileSize: number | null = null;
+
+      // Upload file if exists
+      if (skill.file) {
+        const fileExt = skill.file.name.split(".").pop() || "";
+        const filePath = `${user.id}/${Date.now()}.${fileExt}`;
+        const { data: fileData, error: fileError } = await supabase.storage
+          .from("skills")
+          .upload(filePath, skill.file);
+
+        if (fileError) {
+          console.error("Error uploading file:", fileError);
+          continue;
+        }
+
+        const { data } = supabase.storage.from("skills").getPublicUrl(filePath);
+
+        fileUrl = data.publicUrl;
+        fileName = skill.file.name;
+        fileSize = skill.file.size;
+      }
+
+      // Save skill to database
+      const { error: skillError } = await supabase.from("skills").upsert({
+        user_id: user.id,
+        soft_skills: skill.softSkills.split(",").map((s) => s.trim()),
+        hard_skills: skill.hardSkills.split(",").map((s) => s.trim()),
+        other_skills: skill.otherSkills,
+        file_url: fileUrl || undefined,
+        file_name: fileName || undefined,
+        file_size: fileSize || undefined,
+        narrative: skill.narrative,
+      });
+
+      if (skillError) {
+        console.error("Error saving skill:", skillError);
+        toast.error("Failed to save skill");
+      }
+    }
+
+    // Save community engagements
+    for (const engagement of engagements) {
+      let fileUrl: string | null = null;
+      let fileName: string | null = null;
+      let fileSize: number | null = null;
+
+      // Upload file if exists
+      if (engagement.file) {
+        const fileExt = engagement.file.name.split(".").pop() || "";
+        const filePath = `${user.id}/${Date.now()}.${fileExt}`;
+        const { data: fileData, error: fileError } = await supabase.storage
+          .from("community_engagements")
+          .upload(filePath, engagement.file);
+
+        if (fileError) {
+          console.error("Error uploading file:", fileError);
+          continue;
+        }
+
+        const { data } = supabase.storage
+          .from("community_engagements")
+          .getPublicUrl(filePath);
+
+        fileUrl = data.publicUrl;
+        fileName = engagement.file.name;
+        fileSize = engagement.file.size;
+      }
+
+      // Save community engagement to database
+      const { error: engagementError } = await supabase
+        .from("community_engagements")
+        .upsert({
+          user_id: user.id,
+          type: engagement.type,
+          role: engagement.role,
+          organization_name: engagement.orgName,
+          organization_website: engagement.orgWebsite,
+          details: engagement.details,
+          file_url: fileUrl || undefined,
+          file_name: fileName || undefined,
+          file_size: fileSize || undefined,
+        });
+
+      if (engagementError) {
+        console.error("Error saving community engagement:", engagementError);
+        toast.error("Failed to save community engagement");
+      }
+    }
+
     // Save other restorative record data
     const restorativeRecordData = {
       user_id: user.id,
@@ -4212,6 +4571,170 @@ export default function RestorativeRecordBuilder() {
       console.error("Error saving to Supabase:", recordError);
       toast.error("Failed to save changes");
     }
+  };
+
+  const rehabProgramsList = [
+    {
+      key: "substanceUseDisorder",
+      label: "Substance Use Disorder Treatment",
+      desc: "Counseling, residential, outpatient, relapse prevention, harm reduction or AA/NA/peer.",
+    },
+    {
+      key: "womensJusticeCenters",
+      label: "Women's Justice Centers",
+      desc: "Gender-responsive, trauma-informed, family-focused care.",
+    },
+    {
+      key: "employmentFocused",
+      label: "Employment-Focused Programs",
+      desc: "Job readiness, skills training, job placement, work release, transitional jobs, social enterprise.",
+    },
+    {
+      key: "adaptableJustice",
+      label: "Adaptable Justice Programs",
+      desc: "Restorative, transformative, victim-offender healing, circle conferencing.",
+    },
+    {
+      key: "lifeSkillsTraining",
+      label: "Life Skills Training",
+      desc: "Education, basic life management, financial management, communication skills.",
+    },
+    {
+      key: "communityService",
+      label: "Community Service",
+      desc: "Service learning, restitution, reparative projects, neighborhood initiatives.",
+    },
+    {
+      key: "familyReintegration",
+      label: "Family and Community Reintegration Programs",
+      desc: "Family reunification, mediation, mentoring, parenting programs.",
+    },
+    {
+      key: "parentingClasses",
+      label: "Parenting Classes",
+      desc: "Child development education, discipline techniques, child–parent visitation and practice.",
+    },
+    {
+      key: "mentalWellness",
+      label: "Mental and Wellness Programs",
+      desc: "Psychological counseling, trauma, substance programs, cognitive behavioral health.",
+    },
+    {
+      key: "faithBased",
+      label: "Faith-Based Initiatives",
+      desc: "Spiritual support, religious programs, faith-based support groups.",
+    },
+    {
+      key: "peerSupport",
+      label: "Peer Support Groups",
+      desc: "Group therapy, peer mentoring, recovery, lived-experience.",
+    },
+    {
+      key: "artsRecreation",
+      label: "Arts and Recreation Programs",
+      desc: "Creative arts, music, theater, recreation, leisure and play.",
+    },
+    {
+      key: "housingAssistance",
+      label: "Housing Assistance Programs",
+      desc: "Transitional housing, supportive housing, independent living, shelter.",
+    },
+    {
+      key: "legalCompliance",
+      label: "Legal Compliance",
+      desc: "Court-ordered, parole/probation, monitoring, mediation or legal skills training.",
+    },
+    {
+      key: "civicEngagement",
+      label: "Civic Engagement Activities",
+      desc: "Voter registration, community service, volunteering, civic or resident participation.",
+    },
+    {
+      key: "veteransServices",
+      label: "Veterans Services",
+      desc: "Veteran-specific services, case management, advocacy, including those dealing with reentry.",
+    },
+    {
+      key: "domesticViolenceReduction",
+      label: "Domestic Violence Reduction",
+      desc: "Domestic violence education, counseling, advocacy, including those dealing with victimization and reentry.",
+    },
+    {
+      key: "sexOffenderTreatment",
+      label: "Sex Offender Treatment Programs",
+      desc: "Therapy and treatment for persons convicted of sex offenses.",
+    },
+    {
+      key: "medicalHealthCare",
+      label: "Medical and Physical Health Care",
+      desc: "General medical care, physical rehabilitation, and related services for individuals affected by physical illness or injury, physical disabilities, or special health and self-care needs.",
+    },
+    {
+      key: "other",
+      label: "Other",
+      desc: "Specify other relevant program.",
+    },
+  ];
+
+  const handleRehabCheckbox = (key: RehabProgramKey) => {
+    setRehabPrograms((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+      [`${key}Details`]: !prev[key] ? prev[`${key}Details`] : "",
+    }));
+  };
+
+  const handleRehabDetailsChange = (key: RehabProgramKey, value: string) => {
+    setRehabPrograms((prev) => ({
+      ...prev,
+      [`${key}Details`]: value.slice(0, 500),
+    }));
+  };
+
+  const [introductionData, setIntroductionData] = useState<Introduction>({
+    facebookUrl: "",
+    linkedinUrl: "",
+    redditUrl: "",
+    digitalPortfolioUrl: "",
+    instagramUrl: "",
+    githubUrl: "",
+    tiktokUrl: "",
+    pinterestUrl: "",
+    twitterUrl: "",
+    personalWebsiteUrl: "",
+    handshakeUrl: "",
+    preferredOccupation: "",
+    personalNarrative: "",
+    languageProficiency: "No Proficiency",
+    otherLanguages: [],
+  });
+
+  const handleIntroductionChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value } = e.target;
+    setIntroductionData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleLanguageProficiencyChange = (
+    value: Introduction["languageProficiency"]
+  ) => {
+    setIntroductionData((prev) => ({
+      ...prev,
+      languageProficiency: value,
+    }));
+  };
+
+  const handleOtherLanguagesChange = (languages: string[]) => {
+    setIntroductionData((prev) => ({
+      ...prev,
+      otherLanguages: languages,
+    }));
   };
 
   return (
