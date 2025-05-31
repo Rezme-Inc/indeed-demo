@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { supabase } from "@/lib/supabase";
+import { useEffect, useRef, useState } from "react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
-import { supabase } from "@/lib/supabase";
 // Import Radix UI components as needed
 // import { Button, Input, Select, ... } from '@radix-ui/react-*';
+import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -61,6 +62,7 @@ interface Employment {
 }
 
 export default function RestorativeRecordBuilder() {
+  const { toast } = useToast();
   const [currentCategory, setCurrentCategory] = useState(0);
   const searchParams = useSearchParams();
   const [formData, setFormData] = useState<any>({
@@ -125,16 +127,18 @@ export default function RestorativeRecordBuilder() {
 
   // Step 2: Personal Achievements state
   const [showAwardForm, setShowAwardForm] = useState(false);
-  const [awards, setAwards] = useState<Array<{
-    id: string;
-    type: string;
-    name: string;
-    organization: string;
-    date: string;
-    file: File | null;
-    filePreview: string;
-    narrative: string;
-  }>>([]);
+  const [awards, setAwards] = useState<
+    Array<{
+      id: string;
+      type: string;
+      name: string;
+      organization: string;
+      date: string;
+      file: File | null;
+      filePreview: string;
+      narrative: string;
+    }>
+  >([]);
   const [editingAwardId, setEditingAwardId] = useState<string | null>(null);
   const [awardForm, setAwardForm] = useState({
     type: "",
@@ -157,15 +161,17 @@ export default function RestorativeRecordBuilder() {
 
   // Step 3: Skills state
   const [showSkillsForm, setShowSkillsForm] = useState(false);
-  const [skills, setSkills] = useState<Array<{
-    id: string;
-    softSkills: string;
-    hardSkills: string;
-    otherSkills: string;
-    file: File | null;
-    filePreview: string;
-    narrative: string;
-  }>>([]);
+  const [skills, setSkills] = useState<
+    Array<{
+      id: string;
+      softSkills: string;
+      hardSkills: string;
+      otherSkills: string;
+      file: File | null;
+      filePreview: string;
+      narrative: string;
+    }>
+  >([]);
   const [editingSkillId, setEditingSkillId] = useState<string | null>(null);
   const [skillsForm, setSkillsForm] = useState({
     softSkills: "",
@@ -177,25 +183,41 @@ export default function RestorativeRecordBuilder() {
   });
   const [skillsFileError, setSkillsFileError] = useState("");
   const softSkillsOptions = [
-    "Communication", "Teamwork", "Problem Solving", "Adaptability", "Creativity", "Work Ethic", "Other..."
+    "Communication",
+    "Teamwork",
+    "Problem Solving",
+    "Adaptability",
+    "Creativity",
+    "Work Ethic",
+    "Other...",
   ];
   const hardSkillsOptions = [
-    "Programming", "Data Analysis", "Project Management", "Writing", "Design", "Marketing", "Other..."
+    "Programming",
+    "Data Analysis",
+    "Project Management",
+    "Writing",
+    "Design",
+    "Marketing",
+    "Other...",
   ];
 
   // Step 4: Community Engagement state
   const [showEngagementForm, setShowEngagementForm] = useState(false);
-  const [engagements, setEngagements] = useState<Array<{
-    id: string;
-    type: string;
-    role: string;
-    orgName: string;
-    orgWebsite: string;
-    details: string;
-    file: File | null;
-    filePreview: string;
-  }>>([]);
-  const [editingEngagementId, setEditingEngagementId] = useState<string | null>(null);
+  const [engagements, setEngagements] = useState<
+    Array<{
+      id: string;
+      type: string;
+      role: string;
+      orgName: string;
+      orgWebsite: string;
+      details: string;
+      file: File | null;
+      filePreview: string;
+    }>
+  >([]);
+  const [editingEngagementId, setEditingEngagementId] = useState<string | null>(
+    null
+  );
   const [engagementForm, setEngagementForm] = useState({
     type: "",
     role: "",
@@ -220,105 +242,107 @@ export default function RestorativeRecordBuilder() {
     {
       key: "substance_use",
       label: "Substance Use Disorder Treatment",
-      desc: "Counseling, residential, outpatient, relapse prevention, harm reduction or AA/NA/peer."
+      desc: "Counseling, residential, outpatient, relapse prevention, harm reduction or AA/NA/peer.",
     },
     {
       key: "womens_justice",
       label: "Women's Justice Centers",
-      desc: "Gender-responsive, trauma-informed, family-focused care."
+      desc: "Gender-responsive, trauma-informed, family-focused care.",
     },
     {
       key: "employment_focused",
       label: "Employment-Focused Programs",
-      desc: "Job readiness, skills training, job placement, work release, transitional jobs, social enterprise."
+      desc: "Job readiness, skills training, job placement, work release, transitional jobs, social enterprise.",
     },
     {
       key: "adaptable_justice",
       label: "Adaptable Justice Programs",
-      desc: "Restorative, transformative, victim-offender healing, circle conferencing."
+      desc: "Restorative, transformative, victim-offender healing, circle conferencing.",
     },
     {
       key: "life_skills",
       label: "Life Skills Training",
-      desc: "Education, basic life management, financial management, communication skills."
+      desc: "Education, basic life management, financial management, communication skills.",
     },
     {
       key: "community_service",
       label: "Community Service",
-      desc: "Service learning, restitution, reparative projects, neighborhood initiatives."
+      desc: "Service learning, restitution, reparative projects, neighborhood initiatives.",
     },
     {
       key: "family_reintegration",
       label: "Family and Community Reintegration Programs",
-      desc: "Family reunification, mediation, mentoring, parenting programs."
+      desc: "Family reunification, mediation, mentoring, parenting programs.",
     },
     {
       key: "parenting_classes",
       label: "Parenting Classes",
-      desc: "Child development education, discipline techniques, child–parent visitation and practice."
+      desc: "Child development education, discipline techniques, child–parent visitation and practice.",
     },
     {
       key: "mental_health",
       label: "Mental and Wellness Programs",
-      desc: "Psychological counseling, trauma, substance programs, cognitive behavioral health."
+      desc: "Psychological counseling, trauma, substance programs, cognitive behavioral health.",
     },
     {
       key: "faith_based",
       label: "Faith-Based Initiatives",
-      desc: "Spiritual support, religious programs, faith-based support groups."
+      desc: "Spiritual support, religious programs, faith-based support groups.",
     },
     {
       key: "peer_support",
       label: "Peer Support Groups",
-      desc: "Group therapy, peer mentoring, recovery, lived-experience."
+      desc: "Group therapy, peer mentoring, recovery, lived-experience.",
     },
     {
       key: "arts_recreation",
       label: "Arts and Recreation Programs",
-      desc: "Creative arts, music, theater, recreation, leisure and play."
+      desc: "Creative arts, music, theater, recreation, leisure and play.",
     },
     {
       key: "housing_assistance",
       label: "Housing Assistance Programs",
-      desc: "Transitional housing, supportive housing, independent living, shelter."
+      desc: "Transitional housing, supportive housing, independent living, shelter.",
     },
     {
       key: "legal_compliance",
       label: "Legal Compliance",
-      desc: "Court-ordered, parole/probation, monitoring, mediation or legal skills training."
+      desc: "Court-ordered, parole/probation, monitoring, mediation or legal skills training.",
     },
     {
       key: "civic_engagement",
       label: "Civic Engagement Activities",
-      desc: "Voter registration, community service, volunteering, civic or resident participation."
+      desc: "Voter registration, community service, volunteering, civic or resident participation.",
     },
     {
       key: "veterans_services",
       label: "Veterans Services",
-      desc: "Veteran-specific services, case management, advocacy, including those dealing with reentry."
+      desc: "Veteran-specific services, case management, advocacy, including those dealing with reentry.",
     },
     {
       key: "domestic_violence",
       label: "Domestic Violence Reduction",
-      desc: "Domestic violence education, counseling, advocacy, including those dealing with victimization and reentry."
+      desc: "Domestic violence education, counseling, advocacy, including those dealing with victimization and reentry.",
     },
     {
       key: "sex_offender_treatment",
       label: "Sex Offender Treatment Programs",
-      desc: "Therapy and treatment for persons convicted of sex offenses."
+      desc: "Therapy and treatment for persons convicted of sex offenses.",
     },
     {
       key: "medical_health",
       label: "Medical and Physical Health Care",
-      desc: "General medical care, physical rehabilitation, and related services for individuals affected by physical illness or injury, physical disabilities, or special health and self-care needs."
+      desc: "General medical care, physical rehabilitation, and related services for individuals affected by physical illness or injury, physical disabilities, or special health and self-care needs.",
     },
     {
       key: "other",
       label: "Other",
-      desc: "Specify other relevant program."
+      desc: "Specify other relevant program.",
     },
   ];
-  const [selectedRehabPrograms, setSelectedRehabPrograms] = useState<{ [key: string]: string }>({});
+  const [selectedRehabPrograms, setSelectedRehabPrograms] = useState<{
+    [key: string]: string;
+  }>({});
   const handleRehabCheckbox = (key: string) => {
     setSelectedRehabPrograms((prev) =>
       prev[key] !== undefined
@@ -327,23 +351,28 @@ export default function RestorativeRecordBuilder() {
     );
   };
   const handleRehabDetailsChange = (key: string, value: string) => {
-    setSelectedRehabPrograms((prev) => ({ ...prev, [key]: value.slice(0, 500) }));
+    setSelectedRehabPrograms((prev) => ({
+      ...prev,
+      [key]: value.slice(0, 500),
+    }));
   };
 
   // Step 6: Microcredentials and Certifications state
   const [showMicroForm, setShowMicroForm] = useState(false);
-  const [microcredentials, setMicrocredentials] = useState<Array<{
-    id: string;
-    name: string;
-    org: string;
-    issueDate: string;
-    expiryDate: string;
-    credentialId: string;
-    credentialUrl: string;
-    narrative: string;
-    file: File | null;
-    filePreview: string;
-  }>>([]);
+  const [microcredentials, setMicrocredentials] = useState<
+    Array<{
+      id: string;
+      name: string;
+      org: string;
+      issueDate: string;
+      expiryDate: string;
+      credentialId: string;
+      credentialUrl: string;
+      narrative: string;
+      file: File | null;
+      filePreview: string;
+    }>
+  >([]);
   const [editingMicroId, setEditingMicroId] = useState<string | null>(null);
   const [microForm, setMicroForm] = useState({
     name: "",
@@ -357,20 +386,30 @@ export default function RestorativeRecordBuilder() {
     filePreview: "",
   });
   const [microFileError, setMicroFileError] = useState("");
-  const [microIssueDatePickerOpen, setMicroIssueDatePickerOpen] = useState(false);
-  const [microExpiryDatePickerOpen, setMicroExpiryDatePickerOpen] = useState(false);
+  const [microIssueDatePickerOpen, setMicroIssueDatePickerOpen] =
+    useState(false);
+  const [microExpiryDatePickerOpen, setMicroExpiryDatePickerOpen] =
+    useState(false);
   const microIssueDateInputRef = useRef<HTMLInputElement>(null);
   const microExpiryDateInputRef = useRef<HTMLInputElement>(null);
-  const handleMicroInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleMicroInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setMicroForm((prev) => ({ ...prev, [name]: value }));
   };
   const handleMicroIssueDateChange = (date: Date | undefined) => {
-    setMicroForm((prev) => ({ ...prev, issueDate: date ? date.toISOString().split("T")[0] : "" }));
+    setMicroForm((prev) => ({
+      ...prev,
+      issueDate: date ? date.toISOString().split("T")[0] : "",
+    }));
     setMicroIssueDatePickerOpen(false);
   };
   const handleMicroExpiryDateChange = (date: Date | undefined) => {
-    setMicroForm((prev) => ({ ...prev, expiryDate: date ? date.toISOString().split("T")[0] : "" }));
+    setMicroForm((prev) => ({
+      ...prev,
+      expiryDate: date ? date.toISOString().split("T")[0] : "",
+    }));
     setMicroExpiryDatePickerOpen(false);
   };
   const handleMicroFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -381,7 +420,11 @@ export default function RestorativeRecordBuilder() {
         return;
       }
       setMicroFileError("");
-      setMicroForm((prev) => ({ ...prev, file, filePreview: URL.createObjectURL(file) }));
+      setMicroForm((prev) => ({
+        ...prev,
+        file,
+        filePreview: URL.createObjectURL(file),
+      }));
     }
   };
   const handleMicroFileDrop = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -393,7 +436,11 @@ export default function RestorativeRecordBuilder() {
         return;
       }
       setMicroFileError("");
-      setMicroForm((prev) => ({ ...prev, file, filePreview: URL.createObjectURL(file) }));
+      setMicroForm((prev) => ({
+        ...prev,
+        file,
+        filePreview: URL.createObjectURL(file),
+      }));
     }
   };
   const handleMicroFileDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -422,21 +469,26 @@ export default function RestorativeRecordBuilder() {
     if (!microForm.name || !microForm.org || !microForm.issueDate) {
       return;
     }
-    
+
     if (editingMicroId) {
-      setMicrocredentials(microcredentials.map(micro => 
-        micro.id === editingMicroId 
-          ? { ...micro, ...microForm, id: micro.id }
-          : micro
-      ));
+      setMicrocredentials(
+        microcredentials.map((micro) =>
+          micro.id === editingMicroId
+            ? { ...micro, ...microForm, id: micro.id }
+            : micro
+        )
+      );
     } else {
-      setMicrocredentials([...microcredentials, { ...microForm, id: Date.now().toString() }]);
+      setMicrocredentials([
+        ...microcredentials,
+        { ...microForm, id: Date.now().toString() },
+      ]);
     }
-    
+
     handleMicroFormClose();
   };
   const handleMicroEdit = (id: string) => {
-    const micro = microcredentials.find(m => m.id === id);
+    const micro = microcredentials.find((m) => m.id === id);
     if (micro) {
       setMicroForm({
         name: micro.name,
@@ -454,22 +506,24 @@ export default function RestorativeRecordBuilder() {
     }
   };
   const handleMicroDelete = (id: string) => {
-    setMicrocredentials(microcredentials.filter(m => m.id !== id));
+    setMicrocredentials(microcredentials.filter((m) => m.id !== id));
   };
 
   // Step 7: Mentors & Recommendations state
   const [showMentorForm, setShowMentorForm] = useState(false);
-  const [mentors, setMentors] = useState<Array<{
-    id: string;
-    linkedin: string;
-    name: string;
-    company: string;
-    title: string;
-    email: string;
-    phone: string;
-    website: string;
-    narrative: string;
-  }>>([]);
+  const [mentors, setMentors] = useState<
+    Array<{
+      id: string;
+      linkedin: string;
+      name: string;
+      company: string;
+      title: string;
+      email: string;
+      phone: string;
+      website: string;
+      narrative: string;
+    }>
+  >([]);
   const [editingMentorId, setEditingMentorId] = useState<string | null>(null);
   const [mentorForm, setMentorForm] = useState({
     linkedin: "",
@@ -481,7 +535,9 @@ export default function RestorativeRecordBuilder() {
     website: "",
     narrative: "",
   });
-  const handleMentorInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleMentorInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setMentorForm((prev) => ({ ...prev, [name]: value }));
   };
@@ -507,21 +563,23 @@ export default function RestorativeRecordBuilder() {
     if (!mentorForm.name || !mentorForm.company || !mentorForm.title) {
       return;
     }
-    
+
     if (editingMentorId) {
-      setMentors(mentors.map(mentor => 
-        mentor.id === editingMentorId 
-          ? { ...mentor, ...mentorForm, id: mentor.id }
-          : mentor
-      ));
+      setMentors(
+        mentors.map((mentor) =>
+          mentor.id === editingMentorId
+            ? { ...mentor, ...mentorForm, id: mentor.id }
+            : mentor
+        )
+      );
     } else {
       setMentors([...mentors, { ...mentorForm, id: Date.now().toString() }]);
     }
-    
+
     handleMentorFormClose();
   };
   const handleMentorEdit = (id: string) => {
-    const mentor = mentors.find(m => m.id === id);
+    const mentor = mentors.find((m) => m.id === id);
     if (mentor) {
       setMentorForm({
         linkedin: mentor.linkedin,
@@ -538,26 +596,30 @@ export default function RestorativeRecordBuilder() {
     }
   };
   const handleMentorDelete = (id: string) => {
-    setMentors(mentors.filter(m => m.id !== id));
+    setMentors(mentors.filter((m) => m.id !== id));
   };
 
   // Step 8: Education state
   const [showEducationForm, setShowEducationForm] = useState(false);
-  const [educations, setEducations] = useState<Array<{
-    id: string;
-    school: string;
-    location: string;
-    degree: string;
-    field: string;
-    currentlyEnrolled: boolean;
-    startDate: string;
-    endDate: string;
-    grade: string;
-    description: string;
-    file: File | null;
-    filePreview: string;
-  }>>([]);
-  const [editingEducationId, setEditingEducationId] = useState<string | null>(null);
+  const [educations, setEducations] = useState<
+    Array<{
+      id: string;
+      school: string;
+      location: string;
+      degree: string;
+      field: string;
+      currentlyEnrolled: boolean;
+      startDate: string;
+      endDate: string;
+      grade: string;
+      description: string;
+      file: File | null;
+      filePreview: string;
+    }>
+  >([]);
+  const [editingEducationId, setEditingEducationId] = useState<string | null>(
+    null
+  );
   const [educationForm, setEducationForm] = useState({
     school: "",
     location: "",
@@ -572,27 +634,42 @@ export default function RestorativeRecordBuilder() {
     filePreview: "",
   });
   const [educationFileError, setEducationFileError] = useState("");
-  const [educationStartDatePickerOpen, setEducationStartDatePickerOpen] = useState(false);
-  const [educationEndDatePickerOpen, setEducationEndDatePickerOpen] = useState(false);
+  const [educationStartDatePickerOpen, setEducationStartDatePickerOpen] =
+    useState(false);
+  const [educationEndDatePickerOpen, setEducationEndDatePickerOpen] =
+    useState(false);
   const educationStartDateInputRef = useRef<HTMLInputElement>(null);
   const educationEndDateInputRef = useRef<HTMLInputElement>(null);
-  const handleEducationInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleEducationInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value, type } = e.target;
     if (type === "checkbox" && e.target instanceof HTMLInputElement) {
-      setEducationForm((prev) => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
+      setEducationForm((prev) => ({
+        ...prev,
+        [name]: (e.target as HTMLInputElement).checked,
+      }));
     } else {
       setEducationForm((prev) => ({ ...prev, [name]: value }));
     }
   };
   const handleEducationStartDateChange = (date: Date | undefined) => {
-    setEducationForm((prev) => ({ ...prev, startDate: date ? date.toISOString().split("T")[0] : "" }));
+    setEducationForm((prev) => ({
+      ...prev,
+      startDate: date ? date.toISOString().split("T")[0] : "",
+    }));
     setEducationStartDatePickerOpen(false);
   };
   const handleEducationEndDateChange = (date: Date | undefined) => {
-    setEducationForm((prev) => ({ ...prev, endDate: date ? date.toISOString().split("T")[0] : "" }));
+    setEducationForm((prev) => ({
+      ...prev,
+      endDate: date ? date.toISOString().split("T")[0] : "",
+    }));
     setEducationEndDatePickerOpen(false);
   };
-  const handleEducationFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEducationFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
@@ -600,7 +677,11 @@ export default function RestorativeRecordBuilder() {
         return;
       }
       setEducationFileError("");
-      setEducationForm((prev) => ({ ...prev, file, filePreview: URL.createObjectURL(file) }));
+      setEducationForm((prev) => ({
+        ...prev,
+        file,
+        filePreview: URL.createObjectURL(file),
+      }));
     }
   };
   const handleEducationFileDrop = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -612,10 +693,16 @@ export default function RestorativeRecordBuilder() {
         return;
       }
       setEducationFileError("");
-      setEducationForm((prev) => ({ ...prev, file, filePreview: URL.createObjectURL(file) }));
+      setEducationForm((prev) => ({
+        ...prev,
+        file,
+        filePreview: URL.createObjectURL(file),
+      }));
     }
   };
-  const handleEducationFileDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+  const handleEducationFileDragOver = (
+    e: React.DragEvent<HTMLLabelElement>
+  ) => {
     e.preventDefault();
   };
   const handleEducationFormOpen = () => {
@@ -640,24 +727,35 @@ export default function RestorativeRecordBuilder() {
     setEditingEducationId(null);
   };
   const handleEducationSave = () => {
-    if (!educationForm.school || !educationForm.location || !educationForm.degree || !educationForm.field || !educationForm.startDate) {
+    if (
+      !educationForm.school ||
+      !educationForm.location ||
+      !educationForm.degree ||
+      !educationForm.field ||
+      !educationForm.startDate
+    ) {
       return;
     }
-    
+
     if (editingEducationId) {
-      setEducations(educations.map(education => 
-        education.id === editingEducationId 
-          ? { ...education, ...educationForm, id: education.id }
-          : education
-      ));
+      setEducations(
+        educations.map((education) =>
+          education.id === editingEducationId
+            ? { ...education, ...educationForm, id: education.id }
+            : education
+        )
+      );
     } else {
-      setEducations([...educations, { ...educationForm, id: Date.now().toString() }]);
+      setEducations([
+        ...educations,
+        { ...educationForm, id: Date.now().toString() },
+      ]);
     }
-    
+
     handleEducationFormClose();
   };
   const handleEducationEdit = (id: string) => {
-    const education = educations.find(e => e.id === id);
+    const education = educations.find((e) => e.id === id);
     if (education) {
       setEducationForm({
         school: education.school,
@@ -677,25 +775,29 @@ export default function RestorativeRecordBuilder() {
     }
   };
   const handleEducationDelete = (id: string) => {
-    setEducations(educations.filter(e => e.id !== id));
+    setEducations(educations.filter((e) => e.id !== id));
   };
 
   // Step 9: Employment History state
   const [showEmploymentForm, setShowEmploymentForm] = useState(false);
-  const [employments, setEmployments] = useState<Array<{
-    id: string;
-    state: string;
-    city: string;
-    employmentType: string;
-    title: string;
-    company: string;
-    companyUrl: string;
-    startDate: string;
-    endDate: string;
-    currentlyEmployed: boolean;
-    employedWhileIncarcerated: boolean;
-  }>>([]);
-  const [editingEmploymentId, setEditingEmploymentId] = useState<string | null>(null);
+  const [employments, setEmployments] = useState<
+    Array<{
+      id: string;
+      state: string;
+      city: string;
+      employmentType: string;
+      title: string;
+      company: string;
+      companyUrl: string;
+      startDate: string;
+      endDate: string;
+      currentlyEmployed: boolean;
+      employedWhileIncarcerated: boolean;
+    }>
+  >([]);
+  const [editingEmploymentId, setEditingEmploymentId] = useState<string | null>(
+    null
+  );
   const [employmentForm, setEmploymentForm] = useState({
     state: "",
     city: "",
@@ -708,8 +810,10 @@ export default function RestorativeRecordBuilder() {
     currentlyEmployed: false,
     employedWhileIncarcerated: false,
   });
-  const [employmentStartDatePickerOpen, setEmploymentStartDatePickerOpen] = useState(false);
-  const [employmentEndDatePickerOpen, setEmploymentEndDatePickerOpen] = useState(false);
+  const [employmentStartDatePickerOpen, setEmploymentStartDatePickerOpen] =
+    useState(false);
+  const [employmentEndDatePickerOpen, setEmploymentEndDatePickerOpen] =
+    useState(false);
   const employmentStartDateInputRef = useRef<HTMLInputElement>(null);
   const employmentEndDateInputRef = useRef<HTMLInputElement>(null);
   const employmentTypeOptions = [
@@ -725,28 +829,84 @@ export default function RestorativeRecordBuilder() {
     "Other",
   ];
   const usStates = [
-    "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware",
-    "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky",
-    "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi",
-    "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico",
-    "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania",
-    "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont",
-    "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
+    "Alabama",
+    "Alaska",
+    "Arizona",
+    "Arkansas",
+    "California",
+    "Colorado",
+    "Connecticut",
+    "Delaware",
+    "Florida",
+    "Georgia",
+    "Hawaii",
+    "Idaho",
+    "Illinois",
+    "Indiana",
+    "Iowa",
+    "Kansas",
+    "Kentucky",
+    "Louisiana",
+    "Maine",
+    "Maryland",
+    "Massachusetts",
+    "Michigan",
+    "Minnesota",
+    "Mississippi",
+    "Missouri",
+    "Montana",
+    "Nebraska",
+    "Nevada",
+    "New Hampshire",
+    "New Jersey",
+    "New Mexico",
+    "New York",
+    "North Carolina",
+    "North Dakota",
+    "Ohio",
+    "Oklahoma",
+    "Oregon",
+    "Pennsylvania",
+    "Rhode Island",
+    "South Carolina",
+    "South Dakota",
+    "Tennessee",
+    "Texas",
+    "Utah",
+    "Vermont",
+    "Virginia",
+    "Washington",
+    "West Virginia",
+    "Wisconsin",
+    "Wyoming",
   ];
-  const handleEmploymentInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleEmploymentInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value, type } = e.target;
     if (type === "checkbox" && e.target instanceof HTMLInputElement) {
-      setEmploymentForm((prev) => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
+      setEmploymentForm((prev) => ({
+        ...prev,
+        [name]: (e.target as HTMLInputElement).checked,
+      }));
     } else {
       setEmploymentForm((prev) => ({ ...prev, [name]: value }));
     }
   };
   const handleEmploymentStartDateChange = (date: Date | undefined) => {
-    setEmploymentForm((prev) => ({ ...prev, startDate: date ? date.toISOString().split("T")[0] : "" }));
+    setEmploymentForm((prev) => ({
+      ...prev,
+      startDate: date ? date.toISOString().split("T")[0] : "",
+    }));
     setEmploymentStartDatePickerOpen(false);
   };
   const handleEmploymentEndDateChange = (date: Date | undefined) => {
-    setEmploymentForm((prev) => ({ ...prev, endDate: date ? date.toISOString().split("T")[0] : "" }));
+    setEmploymentForm((prev) => ({
+      ...prev,
+      endDate: date ? date.toISOString().split("T")[0] : "",
+    }));
     setEmploymentEndDatePickerOpen(false);
   };
   const handleEmploymentFormOpen = () => {
@@ -770,24 +930,34 @@ export default function RestorativeRecordBuilder() {
     setEditingEmploymentId(null);
   };
   const handleEmploymentSave = () => {
-    if (!employmentForm.title || !employmentForm.company || !employmentForm.employmentType || !employmentForm.startDate) {
+    if (
+      !employmentForm.title ||
+      !employmentForm.company ||
+      !employmentForm.employmentType ||
+      !employmentForm.startDate
+    ) {
       return;
     }
-    
+
     if (editingEmploymentId) {
-      setEmployments(employments.map(employment => 
-        employment.id === editingEmploymentId 
-          ? { ...employment, ...employmentForm, id: employment.id }
-          : employment
-      ));
+      setEmployments(
+        employments.map((employment) =>
+          employment.id === editingEmploymentId
+            ? { ...employment, ...employmentForm, id: employment.id }
+            : employment
+        )
+      );
     } else {
-      setEmployments([...employments, { ...employmentForm, id: Date.now().toString() }]);
+      setEmployments([
+        ...employments,
+        { ...employmentForm, id: Date.now().toString() },
+      ]);
     }
-    
+
     handleEmploymentFormClose();
   };
   const handleEmploymentEdit = (id: string) => {
-    const employment = employments.find(e => e.id === id);
+    const employment = employments.find((e) => e.id === id);
     if (employment) {
       setEmploymentForm({
         state: employment.state,
@@ -806,7 +976,7 @@ export default function RestorativeRecordBuilder() {
     }
   };
   const handleEmploymentDelete = (id: string) => {
-    setEmployments(employments.filter(e => e.id !== id));
+    setEmployments(employments.filter((e) => e.id !== id));
   };
 
   // Navigation
@@ -836,7 +1006,11 @@ export default function RestorativeRecordBuilder() {
   };
 
   // Handlers
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
     setFormData((prev: any) => ({ ...prev, [name]: value }));
   };
@@ -845,7 +1019,9 @@ export default function RestorativeRecordBuilder() {
     setFormData((prev: any) => ({ ...prev, occupationInput: e.target.value }));
   };
 
-  const handleOccupationKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleOccupationKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
     if (e.key === "Enter" && formData.occupationInput.trim()) {
       e.preventDefault();
       setFormData((prev: any) => ({
@@ -866,16 +1042,23 @@ export default function RestorativeRecordBuilder() {
   // Form Submission
   const handleSubmit = async () => {
     await saveToSupabase();
-    alert("Restorative Record submitted!");
+    toast.success("Restorative Record submitted!");
   };
 
   // Step 2: Personal Achievements handlers
-  const handleAwardInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleAwardInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
     setAwardForm((prev) => ({ ...prev, [name]: value }));
   };
   const handleAwardDateChange = (date: Date | undefined) => {
-    setAwardForm((prev) => ({ ...prev, date: date ? date.toISOString().split("T")[0] : "" }));
+    setAwardForm((prev) => ({
+      ...prev,
+      date: date ? date.toISOString().split("T")[0] : "",
+    }));
     setDatePickerOpen(false);
   };
   const handleAwardFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -886,7 +1069,11 @@ export default function RestorativeRecordBuilder() {
         return;
       }
       setAwardFileError("");
-      setAwardForm((prev) => ({ ...prev, file, filePreview: URL.createObjectURL(file) }));
+      setAwardForm((prev) => ({
+        ...prev,
+        file,
+        filePreview: URL.createObjectURL(file),
+      }));
     }
   };
   const handleAwardFileDrop = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -898,7 +1085,11 @@ export default function RestorativeRecordBuilder() {
         return;
       }
       setAwardFileError("");
-      setAwardForm((prev) => ({ ...prev, file, filePreview: URL.createObjectURL(file) }));
+      setAwardForm((prev) => ({
+        ...prev,
+        file,
+        filePreview: URL.createObjectURL(file),
+      }));
     }
   };
   const handleAwardFileDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -922,25 +1113,32 @@ export default function RestorativeRecordBuilder() {
     setEditingAwardId(null);
   };
   const handleAwardSave = () => {
-    if (!awardForm.type || !awardForm.name || !awardForm.organization || !awardForm.date) {
+    if (
+      !awardForm.type ||
+      !awardForm.name ||
+      !awardForm.organization ||
+      !awardForm.date
+    ) {
       setAwardFormTouched(true);
       return;
     }
-    
+
     if (editingAwardId) {
-      setAwards(awards.map(award => 
-        award.id === editingAwardId 
-          ? { ...award, ...awardForm, id: award.id }
-          : award
-      ));
+      setAwards(
+        awards.map((award) =>
+          award.id === editingAwardId
+            ? { ...award, ...awardForm, id: award.id }
+            : award
+        )
+      );
     } else {
       setAwards([...awards, { ...awardForm, id: Date.now().toString() }]);
     }
-    
+
     handleAwardFormClose();
   };
   const handleAwardEdit = (id: string) => {
-    const award = awards.find(a => a.id === id);
+    const award = awards.find((a) => a.id === id);
     if (award) {
       setAwardForm({
         type: award.type,
@@ -956,11 +1154,15 @@ export default function RestorativeRecordBuilder() {
     }
   };
   const handleAwardDelete = (id: string) => {
-    setAwards(awards.filter(a => a.id !== id));
+    setAwards(awards.filter((a) => a.id !== id));
   };
 
   // Step 3: Skills handlers
-  const handleSkillsInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleSkillsInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
     setSkillsForm((prev) => ({ ...prev, [name]: value }));
   };
@@ -972,7 +1174,11 @@ export default function RestorativeRecordBuilder() {
         return;
       }
       setSkillsFileError("");
-      setSkillsForm((prev) => ({ ...prev, file, filePreview: URL.createObjectURL(file) }));
+      setSkillsForm((prev) => ({
+        ...prev,
+        file,
+        filePreview: URL.createObjectURL(file),
+      }));
     }
   };
   const handleSkillsFileDrop = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -984,7 +1190,11 @@ export default function RestorativeRecordBuilder() {
         return;
       }
       setSkillsFileError("");
-      setSkillsForm((prev) => ({ ...prev, file, filePreview: URL.createObjectURL(file) }));
+      setSkillsForm((prev) => ({
+        ...prev,
+        file,
+        filePreview: URL.createObjectURL(file),
+      }));
     }
   };
   const handleSkillsFileDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -1010,21 +1220,23 @@ export default function RestorativeRecordBuilder() {
     if (!skillsForm.softSkills || !skillsForm.hardSkills) {
       return;
     }
-    
+
     if (editingSkillId) {
-      setSkills(skills.map(skill => 
-        skill.id === editingSkillId 
-          ? { ...skill, ...skillsForm, id: skill.id }
-          : skill
-      ));
+      setSkills(
+        skills.map((skill) =>
+          skill.id === editingSkillId
+            ? { ...skill, ...skillsForm, id: skill.id }
+            : skill
+        )
+      );
     } else {
       setSkills([...skills, { ...skillsForm, id: Date.now().toString() }]);
     }
-    
+
     handleSkillsFormClose();
   };
   const handleSkillsEdit = (id: string) => {
-    const skill = skills.find(s => s.id === id);
+    const skill = skills.find((s) => s.id === id);
     if (skill) {
       setSkillsForm({
         softSkills: skill.softSkills,
@@ -1039,15 +1251,21 @@ export default function RestorativeRecordBuilder() {
     }
   };
   const handleSkillsDelete = (id: string) => {
-    setSkills(skills.filter(s => s.id !== id));
+    setSkills(skills.filter((s) => s.id !== id));
   };
 
   // Step 4: Community Engagement handlers
-  const handleEngagementInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleEngagementInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
     setEngagementForm((prev) => ({ ...prev, [name]: value }));
   };
-  const handleEngagementFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEngagementFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
@@ -1055,7 +1273,11 @@ export default function RestorativeRecordBuilder() {
         return;
       }
       setEngagementFileError("");
-      setEngagementForm((prev) => ({ ...prev, file, filePreview: URL.createObjectURL(file) }));
+      setEngagementForm((prev) => ({
+        ...prev,
+        file,
+        filePreview: URL.createObjectURL(file),
+      }));
     }
   };
   const handleEngagementFileDrop = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -1067,10 +1289,16 @@ export default function RestorativeRecordBuilder() {
         return;
       }
       setEngagementFileError("");
-      setEngagementForm((prev) => ({ ...prev, file, filePreview: URL.createObjectURL(file) }));
+      setEngagementForm((prev) => ({
+        ...prev,
+        file,
+        filePreview: URL.createObjectURL(file),
+      }));
     }
   };
-  const handleEngagementFileDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+  const handleEngagementFileDragOver = (
+    e: React.DragEvent<HTMLLabelElement>
+  ) => {
     e.preventDefault();
   };
   const handleEngagementFormOpen = () => {
@@ -1091,24 +1319,34 @@ export default function RestorativeRecordBuilder() {
     setEditingEngagementId(null);
   };
   const handleEngagementSave = () => {
-    if (!engagementForm.type || !engagementForm.role || !engagementForm.orgName || !engagementForm.details) {
+    if (
+      !engagementForm.type ||
+      !engagementForm.role ||
+      !engagementForm.orgName ||
+      !engagementForm.details
+    ) {
       return;
     }
-    
+
     if (editingEngagementId) {
-      setEngagements(engagements.map(engagement => 
-        engagement.id === editingEngagementId 
-          ? { ...engagement, ...engagementForm, id: engagement.id }
-          : engagement
-      ));
+      setEngagements(
+        engagements.map((engagement) =>
+          engagement.id === editingEngagementId
+            ? { ...engagement, ...engagementForm, id: engagement.id }
+            : engagement
+        )
+      );
     } else {
-      setEngagements([...engagements, { ...engagementForm, id: Date.now().toString() }]);
+      setEngagements([
+        ...engagements,
+        { ...engagementForm, id: Date.now().toString() },
+      ]);
     }
-    
+
     handleEngagementFormClose();
   };
   const handleEngagementEdit = (id: string) => {
-    const engagement = engagements.find(e => e.id === id);
+    const engagement = engagements.find((e) => e.id === id);
     if (engagement) {
       setEngagementForm({
         type: engagement.type,
@@ -1124,20 +1362,22 @@ export default function RestorativeRecordBuilder() {
     }
   };
   const handleEngagementDelete = (id: string) => {
-    setEngagements(engagements.filter(e => e.id !== id));
+    setEngagements(engagements.filter((e) => e.id !== id));
   };
 
   // Step 10: Hobbies & Interests state
   const [showHobbiesForm, setShowHobbiesForm] = useState(false);
-  const [hobbies, setHobbies] = useState<Array<{
-    id: string;
-    general: string;
-    sports: string;
-    other: string;
-    narrative: string;
-    file: File | null;
-    filePreview: string;
-  }>>([]);
+  const [hobbies, setHobbies] = useState<
+    Array<{
+      id: string;
+      general: string;
+      sports: string;
+      other: string;
+      narrative: string;
+      file: File | null;
+      filePreview: string;
+    }>
+  >([]);
   const [editingHobbyId, setEditingHobbyId] = useState<string | null>(null);
   const [hobbiesForm, setHobbiesForm] = useState({
     general: "",
@@ -1185,7 +1425,11 @@ export default function RestorativeRecordBuilder() {
     "Dancing",
     "Other",
   ];
-  const handleHobbiesInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleHobbiesInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
     setHobbiesForm((prev) => ({ ...prev, [name]: value }));
   };
@@ -1197,7 +1441,11 @@ export default function RestorativeRecordBuilder() {
         return;
       }
       setHobbiesFileError("");
-      setHobbiesForm((prev) => ({ ...prev, file, filePreview: URL.createObjectURL(file) }));
+      setHobbiesForm((prev) => ({
+        ...prev,
+        file,
+        filePreview: URL.createObjectURL(file),
+      }));
     }
   };
   const handleHobbiesFileDrop = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -1209,7 +1457,11 @@ export default function RestorativeRecordBuilder() {
         return;
       }
       setHobbiesFileError("");
-      setHobbiesForm((prev) => ({ ...prev, file, filePreview: URL.createObjectURL(file) }));
+      setHobbiesForm((prev) => ({
+        ...prev,
+        file,
+        filePreview: URL.createObjectURL(file),
+      }));
     }
   };
   const handleHobbiesFileDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -1235,21 +1487,23 @@ export default function RestorativeRecordBuilder() {
     if (!hobbiesForm.general && !hobbiesForm.sports && !hobbiesForm.other) {
       return;
     }
-    
+
     if (editingHobbyId) {
-      setHobbies(hobbies.map(hobby => 
-        hobby.id === editingHobbyId 
-          ? { ...hobby, ...hobbiesForm, id: hobby.id }
-          : hobby
-      ));
+      setHobbies(
+        hobbies.map((hobby) =>
+          hobby.id === editingHobbyId
+            ? { ...hobby, ...hobbiesForm, id: hobby.id }
+            : hobby
+        )
+      );
     } else {
       setHobbies([...hobbies, { ...hobbiesForm, id: Date.now().toString() }]);
     }
-    
+
     handleHobbiesFormClose();
   };
   const handleHobbiesEdit = (id: string) => {
-    const hobby = hobbies.find(h => h.id === id);
+    const hobby = hobbies.find((h) => h.id === id);
     if (hobby) {
       setHobbiesForm({
         general: hobby.general,
@@ -1264,7 +1518,7 @@ export default function RestorativeRecordBuilder() {
     }
   };
   const handleHobbiesDelete = (id: string) => {
-    setHobbies(hobbies.filter(h => h.id !== id));
+    setHobbies(hobbies.filter((h) => h.id !== id));
   };
   const handleHobbiesClose = () => {
     handleHobbiesFormClose();
@@ -1279,11 +1533,21 @@ export default function RestorativeRecordBuilder() {
       case "introduction":
         return (
           <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
-            <h2 className="text-2xl font-semibold text-black mb-2">Introduction</h2>
-            <p className="mb-6 text-secondary">Welcome to the Introduction section. Here, you can share your preferred occupations, personal narrative, and language proficiency. This information helps us understand your background and aspirations, setting the foundation for your restorative record.</p>
+            <h2 className="text-2xl font-semibold text-black mb-2">
+              Introduction
+            </h2>
+            <p className="mb-6 text-secondary">
+              Welcome to the Introduction section. Here, you can share your
+              preferred occupations, personal narrative, and language
+              proficiency. This information helps us understand your background
+              and aspirations, setting the foundation for your restorative
+              record.
+            </p>
             {/* Social Media Profiles */}
             <div className="mb-6">
-              <h3 className="font-medium text-black mb-3">Social Media Profiles</h3>
+              <h3 className="font-medium text-black mb-3">
+                Social Media Profiles
+              </h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {socialFields.map((field) => (
                   <input
@@ -1299,7 +1563,9 @@ export default function RestorativeRecordBuilder() {
             </div>
             {/* Preferred Occupation */}
             <div className="mb-6">
-              <h3 className="font-medium text-black mb-3">Preferred Occupation</h3>
+              <h3 className="font-medium text-black mb-3">
+                Preferred Occupation
+              </h3>
               <input
                 name="occupationInput"
                 value={formData.occupationInput}
@@ -1310,17 +1576,30 @@ export default function RestorativeRecordBuilder() {
               />
               <div className="flex flex-wrap gap-2">
                 {formData.occupations.map((occ: string, idx: number) => (
-                  <span key={idx} className="bg-gray-100 px-3 py-1 rounded-full flex items-center text-sm">
+                  <span
+                    key={idx}
+                    className="bg-gray-100 px-3 py-1 rounded-full flex items-center text-sm"
+                  >
                     {occ}
-                    <button type="button" className="ml-2 text-primary hover:text-red-600" onClick={() => handleRemoveOccupation(idx)}>&times;</button>
+                    <button
+                      type="button"
+                      className="ml-2 text-primary hover:text-red-600"
+                      onClick={() => handleRemoveOccupation(idx)}
+                    >
+                      &times;
+                    </button>
                   </span>
                 ))}
               </div>
-              <div className="text-xs text-secondary mt-2">You can add 10 occupations of your choice</div>
+              <div className="text-xs text-secondary mt-2">
+                You can add 10 occupations of your choice
+              </div>
             </div>
             {/* Personal Narrative */}
             <div className="mb-6">
-              <h3 className="font-medium text-black mb-3">Personal Narrative</h3>
+              <h3 className="font-medium text-black mb-3">
+                Personal Narrative
+              </h3>
               <textarea
                 name="narrative"
                 value={formData.narrative}
@@ -1329,13 +1608,17 @@ export default function RestorativeRecordBuilder() {
                 placeholder="Your personal narrative"
                 maxLength={700}
               />
-              <div className="text-xs text-secondary text-right mt-1">{formData.narrative.length}/700 characters</div>
+              <div className="text-xs text-secondary text-right mt-1">
+                {formData.narrative.length}/700 characters
+              </div>
             </div>
             {/* Language */}
             <div className="mb-6">
               <h3 className="font-medium text-black mb-3">Language</h3>
               <div className="mb-4">
-                <span className="text-primary font-medium mr-1">English Proficiency *</span>
+                <span className="text-primary font-medium mr-1">
+                  English Proficiency *
+                </span>
                 <div className="flex flex-col gap-2 mt-2">
                   {englishOptions.map((opt) => (
                     <label key={opt} className="flex items-center gap-2">
@@ -1354,7 +1637,9 @@ export default function RestorativeRecordBuilder() {
                 </div>
               </div>
               <div>
-                <span className="block mb-2 font-medium text-black">Other Languages</span>
+                <span className="block mb-2 font-medium text-black">
+                  Other Languages
+                </span>
                 <select
                   name="otherLanguage"
                   value={formData.otherLanguage}
@@ -1363,7 +1648,9 @@ export default function RestorativeRecordBuilder() {
                 >
                   <option value="">Select a language...</option>
                   {otherLanguages.map((lang) => (
-                    <option key={lang} value={lang}>{lang}</option>
+                    <option key={lang} value={lang}>
+                      {lang}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -1374,40 +1661,57 @@ export default function RestorativeRecordBuilder() {
         return (
           <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
             <div className="flex justify-between items-center mb-2">
-              <h2 className="text-2xl font-semibold text-black">Personal Achievements</h2>
-              <button 
-                type="button" 
-                className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors" 
+              <h2 className="text-2xl font-semibold text-black">
+                Personal Achievements
+              </h2>
+              <button
+                type="button"
+                className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
                 onClick={handleAwardFormOpen}
               >
                 ADD MORE
               </button>
             </div>
-            <p className="mb-6 text-secondary">Your personal achievements tell a powerful story about your journey and growth. Include any milestones, awards, or recognitions you've earned—whether before, during, or after incarceration. These experiences highlight your resilience, dedication, and the positive impact you've made.</p>
-            
+            <p className="mb-6 text-secondary">
+              Your personal achievements tell a powerful story about your
+              journey and growth. Include any milestones, awards, or
+              recognitions you've earned—whether before, during, or after
+              incarceration. These experiences highlight your resilience,
+              dedication, and the positive impact you've made.
+            </p>
+
             {/* List of awards */}
             {awards.length > 0 && (
               <div className="mb-6 space-y-4">
                 {awards.map((award) => (
-                  <div key={award.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div
+                    key={award.id}
+                    className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+                  >
                     <div className="flex justify-between items-start">
                       <div>
                         <h4 className="font-medium text-black">{award.name}</h4>
-                        <p className="text-sm text-secondary">{award.type} • {award.organization}</p>
-                        <p className="text-sm text-secondary">Awarded: {new Date(award.date).toLocaleDateString()}</p>
+                        <p className="text-sm text-secondary">
+                          {award.type} • {award.organization}
+                        </p>
+                        <p className="text-sm text-secondary">
+                          Awarded: {new Date(award.date).toLocaleDateString()}
+                        </p>
                         {award.narrative && (
-                          <p className="text-sm mt-2 text-black">{award.narrative}</p>
+                          <p className="text-sm mt-2 text-black">
+                            {award.narrative}
+                          </p>
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <button 
+                        <button
                           type="button"
                           onClick={() => handleAwardEdit(award.id)}
                           className="text-primary hover:text-red-600 font-medium text-sm transition-colors"
                         >
                           Edit
                         </button>
-                        <button 
+                        <button
                           type="button"
                           onClick={() => handleAwardDelete(award.id)}
                           className="text-primary hover:text-red-600 font-medium text-sm transition-colors"
@@ -1420,35 +1724,59 @@ export default function RestorativeRecordBuilder() {
                 ))}
               </div>
             )}
-            
+
             {/* Award form */}
             {showAwardForm && (
               <div className="border border-gray-200 rounded-lg p-6 bg-gray-50">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-medium text-black">
-                    {editingAwardId ? 'Edit Award' : 'Add Award or Recognition'}
+                    {editingAwardId ? "Edit Award" : "Add Award or Recognition"}
                   </h3>
-                  <button type="button" className="text-2xl text-secondary hover:text-black transition-colors" onClick={handleAwardFormClose}>&times;</button>
+                  <button
+                    type="button"
+                    className="text-2xl text-secondary hover:text-black transition-colors"
+                    onClick={handleAwardFormClose}
+                  >
+                    &times;
+                  </button>
                 </div>
-                <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleAwardSave(); }}>
+                <form
+                  className="space-y-4"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleAwardSave();
+                  }}
+                >
                   <div>
-                    <label className="block font-medium text-black mb-2">Award Type *</label>
+                    <label className="block font-medium text-black mb-2">
+                      Award Type *
+                    </label>
                     <select
                       name="type"
                       value={awardForm.type}
                       onChange={handleAwardInputChange}
                       onBlur={() => setAwardFormTouched(true)}
-                      className={`border ${awardFormTouched && !awardForm.type ? "border-primary" : "border-gray-200"} px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all`}
+                      className={`border ${
+                        awardFormTouched && !awardForm.type
+                          ? "border-primary"
+                          : "border-gray-200"
+                      } px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all`}
                       required
                     >
-                      <option value="">Select award type from the options</option>
+                      <option value="">
+                        Select award type from the options
+                      </option>
                       {awardTypes.map((type) => (
-                        <option key={type} value={type}>{type}</option>
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block font-medium text-black mb-2">Name of Award *</label>
+                    <label className="block font-medium text-black mb-2">
+                      Name of Award *
+                    </label>
                     <input
                       name="name"
                       value={awardForm.name}
@@ -1459,7 +1787,9 @@ export default function RestorativeRecordBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="block font-medium text-black mb-2">Award Organization *</label>
+                    <label className="block font-medium text-black mb-2">
+                      Award Organization *
+                    </label>
                     <input
                       name="organization"
                       value={awardForm.organization}
@@ -1470,7 +1800,9 @@ export default function RestorativeRecordBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="block font-medium text-black mb-2">Date Awarded *</label>
+                    <label className="block font-medium text-black mb-2">
+                      Date Awarded *
+                    </label>
                     <div className="relative">
                       <input
                         ref={dateInputRef}
@@ -1487,15 +1819,30 @@ export default function RestorativeRecordBuilder() {
                         onClick={() => setDatePickerOpen((open) => !open)}
                         tabIndex={-1}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3.75 7.5h16.5M4.5 21h15a.75.75 0 00.75-.75V7.5a.75.75 0 00-.75-.75h-15a.75.75 0 00-.75.75v12.75c0 .414.336.75.75.75z" />
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          className="w-5 h-5"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M6.75 3v2.25M17.25 3v2.25M3.75 7.5h16.5M4.5 21h15a.75.75 0 00.75-.75V7.5a.75.75 0 00-.75-.75h-15a.75.75 0 00-.75.75v12.75c0 .414.336.75.75.75z"
+                          />
                         </svg>
                       </button>
                       {datePickerOpen && (
                         <div className="absolute z-10 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg left-0">
                           <DayPicker
                             mode="single"
-                            selected={awardForm.date ? new Date(awardForm.date) : undefined}
+                            selected={
+                              awardForm.date
+                                ? new Date(awardForm.date)
+                                : undefined
+                            }
                             onSelect={handleAwardDateChange}
                             initialFocus
                           />
@@ -1504,7 +1851,9 @@ export default function RestorativeRecordBuilder() {
                     </div>
                   </div>
                   <div>
-                    <label className="block font-medium text-black mb-2">Upload optional supporting file (image or pdf)</label>
+                    <label className="block font-medium text-black mb-2">
+                      Upload optional supporting file (image or pdf)
+                    </label>
                     <label
                       htmlFor="award-file-upload"
                       onDrop={handleAwardFileDrop}
@@ -1520,26 +1869,57 @@ export default function RestorativeRecordBuilder() {
                       />
                       {!awardForm.filePreview && (
                         <>
-                          <svg className="w-10 h-10 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-8m0 0l-3 3m3-3l3 3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
+                          <svg
+                            className="w-10 h-10 text-gray-300 mx-auto mb-2"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 16v-8m0 0l-3 3m3-3l3 3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"
+                            />
                           </svg>
-                          <span className="text-secondary text-sm">Click to upload or drag and drop<br />Images or PDF (max 2MB)</span>
+                          <span className="text-secondary text-sm">
+                            Click to upload or drag and drop
+                            <br />
+                            Images or PDF (max 2MB)
+                          </span>
                         </>
                       )}
                       {awardForm.filePreview && (
                         <div className="mt-2 w-full flex flex-col items-center">
                           {awardForm.file?.type.startsWith("image/") ? (
-                            <img src={awardForm.filePreview} alt="Preview" className="max-h-32 mx-auto" />
+                            <img
+                              src={awardForm.filePreview}
+                              alt="Preview"
+                              className="max-h-32 mx-auto"
+                            />
                           ) : (
-                            <a href={awardForm.filePreview} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-red-600">View PDF</a>
+                            <a
+                              href={awardForm.filePreview}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:text-red-600"
+                            >
+                              View PDF
+                            </a>
                           )}
                         </div>
                       )}
-                      {awardFileError && <div className="text-primary text-xs mt-2">{awardFileError}</div>}
+                      {awardFileError && (
+                        <div className="text-primary text-xs mt-2">
+                          {awardFileError}
+                        </div>
+                      )}
                     </label>
                   </div>
                   <div>
-                    <label className="block font-medium text-black mb-2">Narrative</label>
+                    <label className="block font-medium text-black mb-2">
+                      Narrative
+                    </label>
                     <textarea
                       name="narrative"
                       value={awardForm.narrative}
@@ -1548,17 +1928,19 @@ export default function RestorativeRecordBuilder() {
                       placeholder="Provide a narrative about this achievement or recognition. Describe its significance, your role, and what it means to you."
                       maxLength={500}
                     />
-                    <div className="text-xs text-secondary text-right mt-1">{awardForm.narrative.length}/500 characters</div>
+                    <div className="text-xs text-secondary text-right mt-1">
+                      {awardForm.narrative.length}/500 characters
+                    </div>
                   </div>
                   <div className="flex gap-2">
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
                     >
-                      {editingAwardId ? 'Update Award' : 'Save Award'}
+                      {editingAwardId ? "Update Award" : "Save Award"}
                     </button>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={handleAwardFormClose}
                       className="px-4 py-2 bg-gray-200 text-secondary font-medium rounded-lg hover:bg-gray-300 transition-colors"
                     >
@@ -1575,16 +1957,23 @@ export default function RestorativeRecordBuilder() {
           <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-2xl font-semibold text-black">Skills</h2>
-              <button 
-                type="button" 
-                className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors" 
+              <button
+                type="button"
+                className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
                 onClick={handleSkillsFormOpen}
               >
                 ADD MORE
               </button>
             </div>
-            <p className="mb-6 text-secondary">Your skills—both hard and soft—are a key part of your story. List any abilities, talents, or expertise you've developed through work, education, volunteering, or personal experience. Don't forget to include skills gained during incarceration or through self-study. These show your readiness and value to future employers.</p>
-            
+            <p className="mb-6 text-secondary">
+              Your skills—both hard and soft—are a key part of your story. List
+              any abilities, talents, or expertise you've developed through
+              work, education, volunteering, or personal experience. Don't
+              forget to include skills gained during incarceration or through
+              self-study. These show your readiness and value to future
+              employers.
+            </p>
+
             {/* List of skills */}
             {skills.length > 0 && (
               <div className="mb-6 space-y-4">
@@ -1593,24 +1982,30 @@ export default function RestorativeRecordBuilder() {
                     <div className="flex justify-between items-start">
                       <div>
                         <h4 className="font-semibold">Skills Set</h4>
-                        <p className="text-sm text-secondary">Soft Skills: {skill.softSkills}</p>
-                        <p className="text-sm text-secondary">Hard Skills: {skill.hardSkills}</p>
+                        <p className="text-sm text-secondary">
+                          Soft Skills: {skill.softSkills}
+                        </p>
+                        <p className="text-sm text-secondary">
+                          Hard Skills: {skill.hardSkills}
+                        </p>
                         {skill.otherSkills && (
-                          <p className="text-sm text-secondary">Other Skills: {skill.otherSkills}</p>
+                          <p className="text-sm text-secondary">
+                            Other Skills: {skill.otherSkills}
+                          </p>
                         )}
                         {skill.narrative && (
                           <p className="text-sm mt-2">{skill.narrative}</p>
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <button 
+                        <button
                           type="button"
                           onClick={() => handleSkillsEdit(skill.id)}
                           className="text-blue-500 hover:text-blue-700"
                         >
                           Edit
                         </button>
-                        <button 
+                        <button
                           type="button"
                           onClick={() => handleSkillsDelete(skill.id)}
                           className="text-red-500 hover:text-red-700"
@@ -1623,19 +2018,33 @@ export default function RestorativeRecordBuilder() {
                 ))}
               </div>
             )}
-            
+
             {/* Skills form */}
             {showSkillsForm && (
               <div className="border rounded p-6 bg-gray-50">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-semibold">
-                    {editingSkillId ? 'Edit Skills' : 'Add Skills'}
+                    {editingSkillId ? "Edit Skills" : "Add Skills"}
                   </h3>
-                  <button type="button" className="text-2xl text-secondary hover:text-black" onClick={handleSkillsFormClose}>&times;</button>
+                  <button
+                    type="button"
+                    className="text-2xl text-secondary hover:text-black"
+                    onClick={handleSkillsFormClose}
+                  >
+                    &times;
+                  </button>
                 </div>
-                <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleSkillsSave(); }}>
+                <form
+                  className="space-y-4"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSkillsSave();
+                  }}
+                >
                   <div>
-                    <label className="block font-medium mb-1">Soft Skills *</label>
+                    <label className="block font-medium mb-1">
+                      Soft Skills *
+                    </label>
                     <select
                       name="softSkills"
                       value={skillsForm.softSkills}
@@ -1643,14 +2052,20 @@ export default function RestorativeRecordBuilder() {
                       className="border border-gray-200 px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                       required
                     >
-                      <option value="">Select your Soft Skills from the options below</option>
+                      <option value="">
+                        Select your Soft Skills from the options below
+                      </option>
                       {softSkillsOptions.map((opt) => (
-                        <option key={opt} value={opt}>{opt}</option>
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Hard Skills *</label>
+                    <label className="block font-medium mb-1">
+                      Hard Skills *
+                    </label>
                     <select
                       name="hardSkills"
                       value={skillsForm.hardSkills}
@@ -1658,14 +2073,20 @@ export default function RestorativeRecordBuilder() {
                       className="border border-gray-200 px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                       required
                     >
-                      <option value="">Select your Hard Skills from the options below</option>
+                      <option value="">
+                        Select your Hard Skills from the options below
+                      </option>
                       {hardSkillsOptions.map((opt) => (
-                        <option key={opt} value={opt}>{opt}</option>
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Other Skills</label>
+                    <label className="block font-medium mb-1">
+                      Other Skills
+                    </label>
                     <textarea
                       name="otherSkills"
                       value={skillsForm.otherSkills}
@@ -1674,10 +2095,14 @@ export default function RestorativeRecordBuilder() {
                       placeholder="List any additional skills not covered above"
                       maxLength={500}
                     />
-                    <div className="text-xs text-secondary text-right">{skillsForm.otherSkills.length}/500 characters</div>
+                    <div className="text-xs text-secondary text-right">
+                      {skillsForm.otherSkills.length}/500 characters
+                    </div>
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Upload optional supporting file (image or pdf)</label>
+                    <label className="block font-medium mb-1">
+                      Upload optional supporting file (image or pdf)
+                    </label>
                     <label
                       htmlFor="skills-file-upload"
                       onDrop={handleSkillsFileDrop}
@@ -1693,22 +2118,51 @@ export default function RestorativeRecordBuilder() {
                       />
                       {!skillsForm.filePreview && (
                         <>
-                          <svg className="w-10 h-10 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-8m0 0l-3 3m3-3l3 3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
+                          <svg
+                            className="w-10 h-10 text-gray-300 mx-auto mb-2"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 16v-8m0 0l-3 3m3-3l3 3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"
+                            />
                           </svg>
-                          <span className="text-secondary text-sm">Click to upload or drag and drop<br />Images or PDF (max 5MB)</span>
+                          <span className="text-secondary text-sm">
+                            Click to upload or drag and drop
+                            <br />
+                            Images or PDF (max 5MB)
+                          </span>
                         </>
                       )}
                       {skillsForm.filePreview && (
                         <div className="mt-2 w-full flex flex-col items-center">
                           {skillsForm.file?.type.startsWith("image/") ? (
-                            <img src={skillsForm.filePreview} alt="Preview" className="max-h-32 mx-auto" />
+                            <img
+                              src={skillsForm.filePreview}
+                              alt="Preview"
+                              className="max-h-32 mx-auto"
+                            />
                           ) : (
-                            <a href={skillsForm.filePreview} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">View PDF</a>
+                            <a
+                              href={skillsForm.filePreview}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-500 underline"
+                            >
+                              View PDF
+                            </a>
                           )}
                         </div>
                       )}
-                      {skillsFileError && <div className="text-red-500 text-xs mt-2">{skillsFileError}</div>}
+                      {skillsFileError && (
+                        <div className="text-red-500 text-xs mt-2">
+                          {skillsFileError}
+                        </div>
+                      )}
                     </label>
                   </div>
                   <div>
@@ -1721,17 +2175,19 @@ export default function RestorativeRecordBuilder() {
                       placeholder="Provide a narrative about your skills. Describe how you developed them, their significance, and how they have helped you."
                       maxLength={500}
                     />
-                    <div className="text-xs text-secondary text-right">{skillsForm.narrative.length}/500 characters</div>
+                    <div className="text-xs text-secondary text-right">
+                      {skillsForm.narrative.length}/500 characters
+                    </div>
                   </div>
                   <div className="flex gap-2">
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
                     >
-                      {editingSkillId ? 'Update Skills' : 'Save Skills'}
+                      {editingSkillId ? "Update Skills" : "Save Skills"}
                     </button>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={handleSkillsFormClose}
                       className="px-4 py-2 bg-gray-200 text-secondary font-medium rounded-lg hover:bg-gray-300 transition-colors"
                     >
@@ -1747,29 +2203,48 @@ export default function RestorativeRecordBuilder() {
         return (
           <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
             <div className="flex justify-between items-center mb-2">
-              <h2 className="text-2xl font-semibold text-black">Community Engagement</h2>
-              <button 
-                type="button" 
-                className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors" 
+              <h2 className="text-2xl font-semibold text-black">
+                Community Engagement
+              </h2>
+              <button
+                type="button"
+                className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
                 onClick={handleEngagementFormOpen}
               >
                 ADD MORE
               </button>
             </div>
-            <p className="mb-6 text-secondary">Community engagement and volunteering show your commitment to giving back and being part of something bigger than yourself. List any volunteer work, advocacy, or community service—before, during, or after incarceration. These experiences highlight your values, teamwork, and positive impact.</p>
-            
+            <p className="mb-6 text-secondary">
+              Community engagement and volunteering show your commitment to
+              giving back and being part of something bigger than yourself. List
+              any volunteer work, advocacy, or community service—before, during,
+              or after incarceration. These experiences highlight your values,
+              teamwork, and positive impact.
+            </p>
+
             {/* List of engagements */}
             {engagements.length > 0 && (
               <div className="mb-6 space-y-4">
                 {engagements.map((engagement) => (
-                  <div key={engagement.id} className="border rounded p-4 bg-gray-50">
+                  <div
+                    key={engagement.id}
+                    className="border rounded p-4 bg-gray-50"
+                  >
                     <div className="flex justify-between items-start">
                       <div>
                         <h4 className="font-semibold">{engagement.role}</h4>
-                        <p className="text-sm text-secondary">{engagement.type} • {engagement.orgName}</p>
+                        <p className="text-sm text-secondary">
+                          {engagement.type} • {engagement.orgName}
+                        </p>
                         {engagement.orgWebsite && (
                           <p className="text-sm text-blue-500">
-                            <a href={engagement.orgWebsite} target="_blank" rel="noopener noreferrer">{engagement.orgWebsite}</a>
+                            <a
+                              href={engagement.orgWebsite}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {engagement.orgWebsite}
+                            </a>
                           </p>
                         )}
                         {engagement.details && (
@@ -1777,14 +2252,14 @@ export default function RestorativeRecordBuilder() {
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <button 
+                        <button
                           type="button"
                           onClick={() => handleEngagementEdit(engagement.id)}
                           className="text-blue-500 hover:text-blue-700"
                         >
                           Edit
                         </button>
-                        <button 
+                        <button
                           type="button"
                           onClick={() => handleEngagementDelete(engagement.id)}
                           className="text-red-500 hover:text-red-700"
@@ -1797,19 +2272,35 @@ export default function RestorativeRecordBuilder() {
                 ))}
               </div>
             )}
-            
+
             {/* Engagement form */}
             {showEngagementForm && (
               <div className="border rounded p-6 bg-gray-50">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-semibold">
-                    {editingEngagementId ? 'Edit Community Engagement' : 'Add Community Engagement'}
+                    {editingEngagementId
+                      ? "Edit Community Engagement"
+                      : "Add Community Engagement"}
                   </h3>
-                  <button type="button" className="text-2xl text-secondary hover:text-black" onClick={handleEngagementFormClose}>&times;</button>
+                  <button
+                    type="button"
+                    className="text-2xl text-secondary hover:text-black"
+                    onClick={handleEngagementFormClose}
+                  >
+                    &times;
+                  </button>
                 </div>
-                <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleEngagementSave(); }}>
+                <form
+                  className="space-y-4"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleEngagementSave();
+                  }}
+                >
                   <div>
-                    <label className="block font-medium mb-1">Community Engagement Type *</label>
+                    <label className="block font-medium mb-1">
+                      Community Engagement Type *
+                    </label>
                     <select
                       name="type"
                       value={engagementForm.type}
@@ -1817,14 +2308,20 @@ export default function RestorativeRecordBuilder() {
                       className="border border-gray-200 px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                       required
                     >
-                      <option value="">Select Community Engagement type from the options</option>
+                      <option value="">
+                        Select Community Engagement type from the options
+                      </option>
                       {engagementTypes.map((type) => (
-                        <option key={type} value={type}>{type}</option>
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Engagement role *</label>
+                    <label className="block font-medium mb-1">
+                      Engagement role *
+                    </label>
                     <input
                       name="role"
                       value={engagementForm.role}
@@ -1835,7 +2332,9 @@ export default function RestorativeRecordBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Organization or Event name *</label>
+                    <label className="block font-medium mb-1">
+                      Organization or Event name *
+                    </label>
                     <input
                       name="orgName"
                       value={engagementForm.orgName}
@@ -1846,7 +2345,9 @@ export default function RestorativeRecordBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Organization or Event website</label>
+                    <label className="block font-medium mb-1">
+                      Organization or Event website
+                    </label>
                     <input
                       name="orgWebsite"
                       value={engagementForm.orgWebsite}
@@ -1856,7 +2357,9 @@ export default function RestorativeRecordBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Involvement details *</label>
+                    <label className="block font-medium mb-1">
+                      Involvement details *
+                    </label>
                     <textarea
                       name="details"
                       value={engagementForm.details}
@@ -1866,10 +2369,14 @@ export default function RestorativeRecordBuilder() {
                       maxLength={500}
                       required
                     />
-                    <div className="text-xs text-secondary text-right">{engagementForm.details.length}/500 characters</div>
+                    <div className="text-xs text-secondary text-right">
+                      {engagementForm.details.length}/500 characters
+                    </div>
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Upload optional supporting file (image or pdf)</label>
+                    <label className="block font-medium mb-1">
+                      Upload optional supporting file (image or pdf)
+                    </label>
                     <label
                       htmlFor="engagement-file-upload"
                       onDrop={handleEngagementFileDrop}
@@ -1885,33 +2392,64 @@ export default function RestorativeRecordBuilder() {
                       />
                       {!engagementForm.filePreview && (
                         <>
-                          <svg className="w-10 h-10 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-8m0 0l-3 3m3-3l3 3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
+                          <svg
+                            className="w-10 h-10 text-gray-300 mx-auto mb-2"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 16v-8m0 0l-3 3m3-3l3 3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"
+                            />
                           </svg>
-                          <span className="text-secondary text-sm">Click to upload or drag and drop<br />Images or PDF (max 5MB)</span>
+                          <span className="text-secondary text-sm">
+                            Click to upload or drag and drop
+                            <br />
+                            Images or PDF (max 5MB)
+                          </span>
                         </>
                       )}
                       {engagementForm.filePreview && (
                         <div className="mt-2 w-full flex flex-col items-center">
                           {engagementForm.file?.type.startsWith("image/") ? (
-                            <img src={engagementForm.filePreview} alt="Preview" className="max-h-32 mx-auto" />
+                            <img
+                              src={engagementForm.filePreview}
+                              alt="Preview"
+                              className="max-h-32 mx-auto"
+                            />
                           ) : (
-                            <a href={engagementForm.filePreview} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">View PDF</a>
+                            <a
+                              href={engagementForm.filePreview}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-500 underline"
+                            >
+                              View PDF
+                            </a>
                           )}
                         </div>
                       )}
-                      {engagementFileError && <div className="text-red-500 text-xs mt-2">{engagementFileError}</div>}
+                      {engagementFileError && (
+                        <div className="text-red-500 text-xs mt-2">
+                          {engagementFileError}
+                        </div>
+                      )}
                     </label>
                   </div>
                   <div className="flex gap-2">
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
                     >
-                      {editingEngagementId ? 'Update Engagement' : 'Save Engagement'}
+                      {editingEngagementId
+                        ? "Update Engagement"
+                        : "Save Engagement"}
                     </button>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={handleEngagementFormClose}
                       className="px-4 py-2 bg-gray-200 text-secondary font-medium rounded-lg hover:bg-gray-300 transition-colors"
                     >
@@ -1927,7 +2465,13 @@ export default function RestorativeRecordBuilder() {
         return (
           <div className="p-6 bg-white rounded shadow relative">
             <h2 className="text-2xl font-bold mb-2">Rehabilitative Programs</h2>
-            <p className="mb-6 text-secondary">Listing your participation in rehabilitative programs highlights your resilience, growth, and commitment to positive change. Include any programs you completed before, during, or after incarceration—these experiences show your dedication to self-improvement and your readiness for new opportunities.</p>
+            <p className="mb-6 text-secondary">
+              Listing your participation in rehabilitative programs highlights
+              your resilience, growth, and commitment to positive change.
+              Include any programs you completed before, during, or after
+              incarceration—these experiences show your dedication to
+              self-improvement and your readiness for new opportunities.
+            </p>
             <div className="space-y-4">
               {rehabProgramsList.map((prog) => (
                 <div key={prog.key} className="border rounded p-4 bg-white">
@@ -1940,17 +2484,24 @@ export default function RestorativeRecordBuilder() {
                     />
                     <div className="flex-1">
                       <div className="font-semibold">{prog.label}</div>
-                      <div className="text-xs text-secondary mb-2">{prog.desc}</div>
+                      <div className="text-xs text-secondary mb-2">
+                        {prog.desc}
+                      </div>
                       {selectedRehabPrograms[prog.key] !== undefined && (
                         <div>
                           <textarea
                             className="border p-2 rounded w-full min-h-[60px]"
                             placeholder="Describe your experience with this program. Describe its value, how it helped you, and any outcomes."
                             value={selectedRehabPrograms[prog.key]}
-                            onChange={e => handleRehabDetailsChange(prog.key, e.target.value)}
+                            onChange={(e) =>
+                              handleRehabDetailsChange(prog.key, e.target.value)
+                            }
                             maxLength={500}
                           />
-                          <div className="text-xs text-secondary text-right">{selectedRehabPrograms[prog.key].length}/500 characters</div>
+                          <div className="text-xs text-secondary text-right">
+                            {selectedRehabPrograms[prog.key].length}/500
+                            characters
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1964,17 +2515,26 @@ export default function RestorativeRecordBuilder() {
         return (
           <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
             <div className="flex justify-between items-center mb-2">
-              <h2 className="text-2xl font-semibold text-black">Microcredentials and Certifications</h2>
-              <button 
-                type="button" 
-                className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors" 
+              <h2 className="text-2xl font-semibold text-black">
+                Microcredentials and Certifications
+              </h2>
+              <button
+                type="button"
+                className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
                 onClick={handleMicroFormOpen}
               >
                 ADD MORE
               </button>
             </div>
-            <p className="mb-6 text-secondary">Microcredentials, certifications, and licenses are valuable proof of your skills and commitment to learning. Include any certificates, training, or credentials you've earned—whether through formal education, online courses, or programs completed during incarceration or reentry. These achievements help you prove your expertise and dedication.</p>
-            
+            <p className="mb-6 text-secondary">
+              Microcredentials, certifications, and licenses are valuable proof
+              of your skills and commitment to learning. Include any
+              certificates, training, or credentials you've earned—whether
+              through formal education, online courses, or programs completed
+              during incarceration or reentry. These achievements help you prove
+              your expertise and dedication.
+            </p>
+
             {/* List of microcredentials */}
             {microcredentials.length > 0 && (
               <div className="mb-6 space-y-4">
@@ -1985,15 +2545,27 @@ export default function RestorativeRecordBuilder() {
                         <h4 className="font-semibold">{micro.name}</h4>
                         <p className="text-sm text-secondary">{micro.org}</p>
                         <p className="text-sm text-secondary">
-                          Issued: {new Date(micro.issueDate).toLocaleDateString()}
-                          {micro.expiryDate && ` • Expires: ${new Date(micro.expiryDate).toLocaleDateString()}`}
+                          Issued:{" "}
+                          {new Date(micro.issueDate).toLocaleDateString()}
+                          {micro.expiryDate &&
+                            ` • Expires: ${new Date(
+                              micro.expiryDate
+                            ).toLocaleDateString()}`}
                         </p>
                         {micro.credentialId && (
-                          <p className="text-sm text-secondary">ID: {micro.credentialId}</p>
+                          <p className="text-sm text-secondary">
+                            ID: {micro.credentialId}
+                          </p>
                         )}
                         {micro.credentialUrl && (
                           <p className="text-sm text-blue-500">
-                            <a href={micro.credentialUrl} target="_blank" rel="noopener noreferrer">View Credential</a>
+                            <a
+                              href={micro.credentialUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              View Credential
+                            </a>
                           </p>
                         )}
                         {micro.narrative && (
@@ -2001,14 +2573,14 @@ export default function RestorativeRecordBuilder() {
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <button 
+                        <button
                           type="button"
                           onClick={() => handleMicroEdit(micro.id)}
                           className="text-blue-500 hover:text-blue-700"
                         >
                           Edit
                         </button>
-                        <button 
+                        <button
                           type="button"
                           onClick={() => handleMicroDelete(micro.id)}
                           className="text-red-500 hover:text-red-700"
@@ -2021,19 +2593,35 @@ export default function RestorativeRecordBuilder() {
                 ))}
               </div>
             )}
-            
+
             {/* Microcredential form */}
             {showMicroForm && (
               <div className="border rounded p-6 bg-gray-50">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-semibold">
-                    {editingMicroId ? 'Edit Microcredential' : 'Add Microcredential / Certification'}
+                    {editingMicroId
+                      ? "Edit Microcredential"
+                      : "Add Microcredential / Certification"}
                   </h3>
-                  <button type="button" className="text-2xl text-secondary hover:text-black" onClick={handleMicroFormClose}>&times;</button>
+                  <button
+                    type="button"
+                    className="text-2xl text-secondary hover:text-black"
+                    onClick={handleMicroFormClose}
+                  >
+                    &times;
+                  </button>
                 </div>
-                <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleMicroSave(); }}>
+                <form
+                  className="space-y-4"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleMicroSave();
+                  }}
+                >
                   <div>
-                    <label className="block font-medium mb-1">Certification or Microcredential name *</label>
+                    <label className="block font-medium mb-1">
+                      Certification or Microcredential name *
+                    </label>
                     <input
                       name="name"
                       value={microForm.name}
@@ -2044,7 +2632,9 @@ export default function RestorativeRecordBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Issuing organization *</label>
+                    <label className="block font-medium mb-1">
+                      Issuing organization *
+                    </label>
                     <input
                       name="org"
                       value={microForm.org}
@@ -2055,7 +2645,9 @@ export default function RestorativeRecordBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Issue Date *</label>
+                    <label className="block font-medium mb-1">
+                      Issue Date *
+                    </label>
                     <div className="relative">
                       <input
                         ref={microIssueDateInputRef}
@@ -2064,23 +2656,42 @@ export default function RestorativeRecordBuilder() {
                         readOnly
                         className="border p-2 rounded w-full pr-10 cursor-pointer bg-white"
                         placeholder="mm/dd/yyyy"
-                        onClick={() => setMicroIssueDatePickerOpen((open) => !open)}
+                        onClick={() =>
+                          setMicroIssueDatePickerOpen((open) => !open)
+                        }
                       />
                       <button
                         type="button"
                         className="absolute right-2 top-1/2 -translate-y-1/2 text-secondary hover:text-black"
-                        onClick={() => setMicroIssueDatePickerOpen((open) => !open)}
+                        onClick={() =>
+                          setMicroIssueDatePickerOpen((open) => !open)
+                        }
                         tabIndex={-1}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3.75 7.5h16.5M4.5 21h15a.75.75 0 00.75-.75V7.5a.75.75 0 00-.75-.75h-15a.75.75 0 00-.75.75v12.75c0 .414.336.75.75.75z" />
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          className="w-5 h-5"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M6.75 3v2.25M17.25 3v2.25M3.75 7.5h16.5M4.5 21h15a.75.75 0 00.75-.75V7.5a.75.75 0 00-.75-.75h-15a.75.75 0 00-.75.75v12.75c0 .414.336.75.75.75z"
+                          />
                         </svg>
                       </button>
                       {microIssueDatePickerOpen && (
                         <div className="absolute z-10 mt-2 bg-white border rounded shadow-lg left-0">
                           <DayPicker
                             mode="single"
-                            selected={microForm.issueDate ? new Date(microForm.issueDate) : undefined}
+                            selected={
+                              microForm.issueDate
+                                ? new Date(microForm.issueDate)
+                                : undefined
+                            }
                             onSelect={handleMicroIssueDateChange}
                             initialFocus
                           />
@@ -2089,7 +2700,9 @@ export default function RestorativeRecordBuilder() {
                     </div>
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Expiry Date</label>
+                    <label className="block font-medium mb-1">
+                      Expiry Date
+                    </label>
                     <div className="relative">
                       <input
                         ref={microExpiryDateInputRef}
@@ -2098,23 +2711,42 @@ export default function RestorativeRecordBuilder() {
                         readOnly
                         className="border p-2 rounded w-full pr-10 cursor-pointer bg-white"
                         placeholder="mm/dd/yyyy"
-                        onClick={() => setMicroExpiryDatePickerOpen((open) => !open)}
+                        onClick={() =>
+                          setMicroExpiryDatePickerOpen((open) => !open)
+                        }
                       />
                       <button
                         type="button"
                         className="absolute right-2 top-1/2 -translate-y-1/2 text-secondary hover:text-black"
-                        onClick={() => setMicroExpiryDatePickerOpen((open) => !open)}
+                        onClick={() =>
+                          setMicroExpiryDatePickerOpen((open) => !open)
+                        }
                         tabIndex={-1}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3.75 7.5h16.5M4.5 21h15a.75.75 0 00.75-.75V7.5a.75.75 0 00-.75-.75h-15a.75.75 0 00-.75.75v12.75c0 .414.336.75.75.75z" />
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          className="w-5 h-5"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M6.75 3v2.25M17.25 3v2.25M3.75 7.5h16.5M4.5 21h15a.75.75 0 00.75-.75V7.5a.75.75 0 00-.75-.75h-15a.75.75 0 00-.75.75v12.75c0 .414.336.75.75.75z"
+                          />
                         </svg>
                       </button>
                       {microExpiryDatePickerOpen && (
                         <div className="absolute z-10 mt-2 bg-white border rounded shadow-lg left-0">
                           <DayPicker
                             mode="single"
-                            selected={microForm.expiryDate ? new Date(microForm.expiryDate) : undefined}
+                            selected={
+                              microForm.expiryDate
+                                ? new Date(microForm.expiryDate)
+                                : undefined
+                            }
                             onSelect={handleMicroExpiryDateChange}
                             initialFocus
                           />
@@ -2123,7 +2755,9 @@ export default function RestorativeRecordBuilder() {
                     </div>
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Credential ID</label>
+                    <label className="block font-medium mb-1">
+                      Credential ID
+                    </label>
                     <input
                       name="credentialId"
                       value={microForm.credentialId}
@@ -2133,7 +2767,9 @@ export default function RestorativeRecordBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Credential URL</label>
+                    <label className="block font-medium mb-1">
+                      Credential URL
+                    </label>
                     <input
                       name="credentialUrl"
                       value={microForm.credentialUrl}
@@ -2152,10 +2788,14 @@ export default function RestorativeRecordBuilder() {
                       placeholder="Describe what this credential means to you and how it has helped in your journey."
                       maxLength={500}
                     />
-                    <div className="text-xs text-secondary text-right">{microForm.narrative.length}/500 characters</div>
+                    <div className="text-xs text-secondary text-right">
+                      {microForm.narrative.length}/500 characters
+                    </div>
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Upload optional supporting file (image or pdf)</label>
+                    <label className="block font-medium mb-1">
+                      Upload optional supporting file (image or pdf)
+                    </label>
                     <label
                       htmlFor="micro-file-upload"
                       onDrop={handleMicroFileDrop}
@@ -2171,33 +2811,62 @@ export default function RestorativeRecordBuilder() {
                       />
                       {!microForm.filePreview && (
                         <>
-                          <svg className="w-10 h-10 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-8m0 0l-3 3m3-3l3 3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
+                          <svg
+                            className="w-10 h-10 text-gray-300 mx-auto mb-2"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 16v-8m0 0l-3 3m3-3l3 3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"
+                            />
                           </svg>
-                          <span className="text-secondary text-sm">Click to upload or drag and drop<br />Images or PDF (max 5MB)</span>
+                          <span className="text-secondary text-sm">
+                            Click to upload or drag and drop
+                            <br />
+                            Images or PDF (max 5MB)
+                          </span>
                         </>
                       )}
                       {microForm.filePreview && (
                         <div className="mt-2 w-full flex flex-col items-center">
                           {microForm.file?.type.startsWith("image/") ? (
-                            <img src={microForm.filePreview} alt="Preview" className="max-h-32 mx-auto" />
+                            <img
+                              src={microForm.filePreview}
+                              alt="Preview"
+                              className="max-h-32 mx-auto"
+                            />
                           ) : (
-                            <a href={microForm.filePreview} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">View PDF</a>
+                            <a
+                              href={microForm.filePreview}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-500 underline"
+                            >
+                              View PDF
+                            </a>
                           )}
                         </div>
                       )}
-                      {microFileError && <div className="text-red-500 text-xs mt-2">{microFileError}</div>}
+                      {microFileError && (
+                        <div className="text-red-500 text-xs mt-2">
+                          {microFileError}
+                        </div>
+                      )}
                     </label>
                   </div>
                   <div className="flex gap-2">
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
                     >
-                      {editingMicroId ? 'Update Credential' : 'Save Credential'}
+                      {editingMicroId ? "Update Credential" : "Save Credential"}
                     </button>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={handleMicroFormClose}
                       className="px-4 py-2 bg-gray-200 text-secondary font-medium rounded-lg hover:bg-gray-300 transition-colors"
                     >
@@ -2213,41 +2882,73 @@ export default function RestorativeRecordBuilder() {
         return (
           <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
             <div className="flex justify-between items-center mb-2">
-              <h2 className="text-2xl font-semibold text-black">Mentors & Recommendations</h2>
-              <button 
-                type="button" 
-                className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors" 
+              <h2 className="text-2xl font-semibold text-black">
+                Mentors & Recommendations
+              </h2>
+              <button
+                type="button"
+                className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
                 onClick={handleMentorFormOpen}
               >
                 ADD MORE
               </button>
             </div>
-            <p className="mb-4 text-secondary">Mentors and recommendations can make a big difference in your journey. List anyone who has supported, guided, or advocated for you—whether personally, professionally, or during your time in a program. Their support helps show your growth, character, and readiness for new opportunities.</p>
-            <p className="mb-6 text-secondary">List mentors or advisors who have guided you to amplify your credibility and open doors to new opportunities.</p>
-            
+            <p className="mb-4 text-secondary">
+              Mentors and recommendations can make a big difference in your
+              journey. List anyone who has supported, guided, or advocated for
+              you—whether personally, professionally, or during your time in a
+              program. Their support helps show your growth, character, and
+              readiness for new opportunities.
+            </p>
+            <p className="mb-6 text-secondary">
+              List mentors or advisors who have guided you to amplify your
+              credibility and open doors to new opportunities.
+            </p>
+
             {/* List of mentors */}
             {mentors.length > 0 && (
               <div className="mb-6 space-y-4">
                 {mentors.map((mentor) => (
-                  <div key={mentor.id} className="border rounded p-4 bg-gray-50">
+                  <div
+                    key={mentor.id}
+                    className="border rounded p-4 bg-gray-50"
+                  >
                     <div className="flex justify-between items-start">
                       <div>
                         <h4 className="font-semibold">{mentor.name}</h4>
-                        <p className="text-sm text-secondary">{mentor.title} • {mentor.company}</p>
+                        <p className="text-sm text-secondary">
+                          {mentor.title} • {mentor.company}
+                        </p>
                         {mentor.email && (
-                          <p className="text-sm text-secondary">Email: {mentor.email}</p>
+                          <p className="text-sm text-secondary">
+                            Email: {mentor.email}
+                          </p>
                         )}
                         {mentor.phone && (
-                          <p className="text-sm text-secondary">Phone: {mentor.phone}</p>
+                          <p className="text-sm text-secondary">
+                            Phone: {mentor.phone}
+                          </p>
                         )}
                         {mentor.linkedin && (
                           <p className="text-sm text-blue-500">
-                            <a href={mentor.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn Profile</a>
+                            <a
+                              href={mentor.linkedin}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              LinkedIn Profile
+                            </a>
                           </p>
                         )}
                         {mentor.website && (
                           <p className="text-sm text-blue-500">
-                            <a href={mentor.website} target="_blank" rel="noopener noreferrer">Website</a>
+                            <a
+                              href={mentor.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              Website
+                            </a>
                           </p>
                         )}
                         {mentor.narrative && (
@@ -2255,14 +2956,14 @@ export default function RestorativeRecordBuilder() {
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <button 
+                        <button
                           type="button"
                           onClick={() => handleMentorEdit(mentor.id)}
                           className="text-blue-500 hover:text-blue-700"
                         >
                           Edit
                         </button>
-                        <button 
+                        <button
                           type="button"
                           onClick={() => handleMentorDelete(mentor.id)}
                           className="text-red-500 hover:text-red-700"
@@ -2275,19 +2976,33 @@ export default function RestorativeRecordBuilder() {
                 ))}
               </div>
             )}
-            
+
             {/* Mentor form */}
             {showMentorForm && (
               <div className="border rounded p-6 bg-gray-50">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-semibold">
-                    {editingMentorId ? 'Edit Mentor' : 'Add Mentor Information'}
+                    {editingMentorId ? "Edit Mentor" : "Add Mentor Information"}
                   </h3>
-                  <button type="button" className="text-2xl text-secondary hover:text-black" onClick={handleMentorFormClose}>&times;</button>
+                  <button
+                    type="button"
+                    className="text-2xl text-secondary hover:text-black"
+                    onClick={handleMentorFormClose}
+                  >
+                    &times;
+                  </button>
                 </div>
-                <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleMentorSave(); }}>
+                <form
+                  className="space-y-4"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleMentorSave();
+                  }}
+                >
                   <div>
-                    <label className="block font-medium mb-1">LinkedIn Profile</label>
+                    <label className="block font-medium mb-1">
+                      LinkedIn Profile
+                    </label>
                     <input
                       name="linkedin"
                       value={mentorForm.linkedin}
@@ -2297,7 +3012,9 @@ export default function RestorativeRecordBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Name of Mentor *</label>
+                    <label className="block font-medium mb-1">
+                      Name of Mentor *
+                    </label>
                     <input
                       name="name"
                       value={mentorForm.name}
@@ -2319,7 +3036,9 @@ export default function RestorativeRecordBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Title/Position *</label>
+                    <label className="block font-medium mb-1">
+                      Title/Position *
+                    </label>
                     <input
                       name="title"
                       value={mentorForm.title}
@@ -2330,7 +3049,9 @@ export default function RestorativeRecordBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Email address</label>
+                    <label className="block font-medium mb-1">
+                      Email address
+                    </label>
                     <input
                       name="email"
                       value={mentorForm.email}
@@ -2340,7 +3061,9 @@ export default function RestorativeRecordBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Phone number</label>
+                    <label className="block font-medium mb-1">
+                      Phone number
+                    </label>
                     <input
                       name="phone"
                       value={mentorForm.phone}
@@ -2369,17 +3092,19 @@ export default function RestorativeRecordBuilder() {
                       placeholder="Describe how this mentor supported you, what you learned from them, or why their recommendation is meaningful."
                       maxLength={500}
                     />
-                    <div className="text-xs text-secondary text-right">{mentorForm.narrative.length}/500 characters</div>
+                    <div className="text-xs text-secondary text-right">
+                      {mentorForm.narrative.length}/500 characters
+                    </div>
                   </div>
                   <div className="flex gap-2">
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
                     >
-                      {editingMentorId ? 'Update Mentor' : 'Save Mentor'}
+                      {editingMentorId ? "Update Mentor" : "Save Mentor"}
                     </button>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={handleMentorFormClose}
                       className="px-4 py-2 bg-gray-200 text-secondary font-medium rounded-lg hover:bg-gray-300 transition-colors"
                     >
@@ -2396,46 +3121,70 @@ export default function RestorativeRecordBuilder() {
           <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-2xl font-semibold text-black">Education</h2>
-              <button 
-                type="button" 
-                className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors" 
+              <button
+                type="button"
+                className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
                 onClick={handleEducationFormOpen}
               >
                 ADD MORE
               </button>
             </div>
-            <p className="mb-4 text-secondary">No matter the level—high school, GED, associate's degree, all the way up to a PhD—every educational experience helps tell your story and shows the progress you've made.</p>
-            <p className="mb-6 text-secondary">Be sure to include any education you completed while incarcerated or through an alternative-to-incarceration program—these experiences demonstrate your commitment to growth and learning in challenging circumstances.</p>
-            
+            <p className="mb-4 text-secondary">
+              No matter the level—high school, GED, associate's degree, all the
+              way up to a PhD—every educational experience helps tell your story
+              and shows the progress you've made.
+            </p>
+            <p className="mb-6 text-secondary">
+              Be sure to include any education you completed while incarcerated
+              or through an alternative-to-incarceration program—these
+              experiences demonstrate your commitment to growth and learning in
+              challenging circumstances.
+            </p>
+
             {/* List of educations */}
             {educations.length > 0 && (
               <div className="mb-6 space-y-4">
                 {educations.map((education) => (
-                  <div key={education.id} className="border rounded p-4 bg-gray-50">
+                  <div
+                    key={education.id}
+                    className="border rounded p-4 bg-gray-50"
+                  >
                     <div className="flex justify-between items-start">
                       <div>
-                        <h4 className="font-semibold">{education.degree} in {education.field}</h4>
-                        <p className="text-sm text-secondary">{education.school} • {education.location}</p>
+                        <h4 className="font-semibold">
+                          {education.degree} in {education.field}
+                        </h4>
                         <p className="text-sm text-secondary">
-                          {new Date(education.startDate).toLocaleDateString()} - 
-                          {education.currentlyEnrolled ? ' Present' : ` ${new Date(education.endDate).toLocaleDateString()}`}
+                          {education.school} • {education.location}
+                        </p>
+                        <p className="text-sm text-secondary">
+                          {new Date(education.startDate).toLocaleDateString()} -
+                          {education.currentlyEnrolled
+                            ? " Present"
+                            : ` ${new Date(
+                                education.endDate
+                              ).toLocaleDateString()}`}
                         </p>
                         {education.grade && (
-                          <p className="text-sm text-secondary">Grade: {education.grade}</p>
+                          <p className="text-sm text-secondary">
+                            Grade: {education.grade}
+                          </p>
                         )}
                         {education.description && (
-                          <p className="text-sm mt-2">{education.description}</p>
+                          <p className="text-sm mt-2">
+                            {education.description}
+                          </p>
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <button 
+                        <button
                           type="button"
                           onClick={() => handleEducationEdit(education.id)}
                           className="text-blue-500 hover:text-blue-700"
                         >
                           Edit
                         </button>
-                        <button 
+                        <button
                           type="button"
                           onClick={() => handleEducationDelete(education.id)}
                           className="text-red-500 hover:text-red-700"
@@ -2448,19 +3197,33 @@ export default function RestorativeRecordBuilder() {
                 ))}
               </div>
             )}
-            
+
             {/* Education form */}
             {showEducationForm && (
               <div className="border rounded p-6 bg-gray-50">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-semibold">
-                    {editingEducationId ? 'Edit Education' : 'Add Education'}
+                    {editingEducationId ? "Edit Education" : "Add Education"}
                   </h3>
-                  <button type="button" className="text-2xl text-secondary hover:text-black" onClick={handleEducationFormClose}>&times;</button>
+                  <button
+                    type="button"
+                    className="text-2xl text-secondary hover:text-black"
+                    onClick={handleEducationFormClose}
+                  >
+                    &times;
+                  </button>
                 </div>
-                <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleEducationSave(); }}>
+                <form
+                  className="space-y-4"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleEducationSave();
+                  }}
+                >
                   <div>
-                    <label className="block font-medium mb-1">School's Name *</label>
+                    <label className="block font-medium mb-1">
+                      School's Name *
+                    </label>
                     <input
                       name="school"
                       value={educationForm.school}
@@ -2471,7 +3234,9 @@ export default function RestorativeRecordBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">School's location *</label>
+                    <label className="block font-medium mb-1">
+                      School's location *
+                    </label>
                     <input
                       name="location"
                       value={educationForm.location}
@@ -2493,7 +3258,9 @@ export default function RestorativeRecordBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Field of Study *</label>
+                    <label className="block font-medium mb-1">
+                      Field of Study *
+                    </label>
                     <input
                       name="field"
                       value={educationForm.field}
@@ -2511,11 +3278,15 @@ export default function RestorativeRecordBuilder() {
                       onChange={handleEducationInputChange}
                       className="accent-red-500"
                     />
-                    <label className="font-medium">I am currently enrolled here</label>
+                    <label className="font-medium">
+                      I am currently enrolled here
+                    </label>
                   </div>
                   <div className="flex gap-4">
                     <div className="flex-1">
-                      <label className="block font-medium mb-1">Start Date *</label>
+                      <label className="block font-medium mb-1">
+                        Start Date *
+                      </label>
                       <div className="relative">
                         <input
                           ref={educationStartDateInputRef}
@@ -2524,23 +3295,42 @@ export default function RestorativeRecordBuilder() {
                           readOnly
                           className="border p-2 rounded w-full pr-10 cursor-pointer bg-white"
                           placeholder="MM/DD/YYYY"
-                          onClick={() => setEducationStartDatePickerOpen((open) => !open)}
+                          onClick={() =>
+                            setEducationStartDatePickerOpen((open) => !open)
+                          }
                         />
                         <button
                           type="button"
                           className="absolute right-2 top-1/2 -translate-y-1/2 text-secondary hover:text-black"
-                          onClick={() => setEducationStartDatePickerOpen((open) => !open)}
+                          onClick={() =>
+                            setEducationStartDatePickerOpen((open) => !open)
+                          }
                           tabIndex={-1}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3.75 7.5h16.5M4.5 21h15a.75.75 0 00.75-.75V7.5a.75.75 0 00-.75-.75h-15a.75.75 0 00-.75.75v12.75c0 .414.336.75.75.75z" />
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="w-5 h-5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M6.75 3v2.25M17.25 3v2.25M3.75 7.5h16.5M4.5 21h15a.75.75 0 00.75-.75V7.5a.75.75 0 00-.75-.75h-15a.75.75 0 00-.75.75v12.75c0 .414.336.75.75.75z"
+                            />
                           </svg>
                         </button>
                         {educationStartDatePickerOpen && (
                           <div className="absolute z-10 mt-2 bg-white border rounded shadow-lg left-0">
                             <DayPicker
                               mode="single"
-                              selected={educationForm.startDate ? new Date(educationForm.startDate) : undefined}
+                              selected={
+                                educationForm.startDate
+                                  ? new Date(educationForm.startDate)
+                                  : undefined
+                              }
                               onSelect={handleEducationStartDateChange}
                               initialFocus
                             />
@@ -2549,7 +3339,9 @@ export default function RestorativeRecordBuilder() {
                       </div>
                     </div>
                     <div className="flex-1">
-                      <label className="block font-medium mb-1">End Date {!educationForm.currentlyEnrolled && '*'}</label>
+                      <label className="block font-medium mb-1">
+                        End Date {!educationForm.currentlyEnrolled && "*"}
+                      </label>
                       <div className="relative">
                         <input
                           ref={educationEndDateInputRef}
@@ -2558,30 +3350,50 @@ export default function RestorativeRecordBuilder() {
                           readOnly
                           className="border p-2 rounded w-full pr-10 cursor-pointer bg-white"
                           placeholder="MM/DD/YYYY"
-                          onClick={() => setEducationEndDatePickerOpen((open) => !open)}
+                          onClick={() =>
+                            setEducationEndDatePickerOpen((open) => !open)
+                          }
                           disabled={educationForm.currentlyEnrolled}
                         />
                         <button
                           type="button"
                           className="absolute right-2 top-1/2 -translate-y-1/2 text-secondary hover:text-black"
-                          onClick={() => setEducationEndDatePickerOpen((open) => !open)}
+                          onClick={() =>
+                            setEducationEndDatePickerOpen((open) => !open)
+                          }
                           tabIndex={-1}
                           disabled={educationForm.currentlyEnrolled}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3.75 7.5h16.5M4.5 21h15a.75.75 0 00.75-.75V7.5a.75.75 0 00-.75-.75h-15a.75.75 0 00-.75.75v12.75c0 .414.336.75.75.75z" />
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="w-5 h-5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M6.75 3v2.25M17.25 3v2.25M3.75 7.5h16.5M4.5 21h15a.75.75 0 00.75-.75V7.5a.75.75 0 00-.75-.75h-15a.75.75 0 00-.75.75v12.75c0 .414.336.75.75.75z"
+                            />
                           </svg>
                         </button>
-                        {educationEndDatePickerOpen && !educationForm.currentlyEnrolled && (
-                          <div className="absolute z-10 mt-2 bg-white border rounded shadow-lg left-0">
-                            <DayPicker
-                              mode="single"
-                              selected={educationForm.endDate ? new Date(educationForm.endDate) : undefined}
-                              onSelect={handleEducationEndDateChange}
-                              initialFocus
-                            />
-                          </div>
-                        )}
+                        {educationEndDatePickerOpen &&
+                          !educationForm.currentlyEnrolled && (
+                            <div className="absolute z-10 mt-2 bg-white border rounded shadow-lg left-0">
+                              <DayPicker
+                                mode="single"
+                                selected={
+                                  educationForm.endDate
+                                    ? new Date(educationForm.endDate)
+                                    : undefined
+                                }
+                                onSelect={handleEducationEndDateChange}
+                                initialFocus
+                              />
+                            </div>
+                          )}
                       </div>
                     </div>
                   </div>
@@ -2596,7 +3408,9 @@ export default function RestorativeRecordBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Description of the experience</label>
+                    <label className="block font-medium mb-1">
+                      Description of the experience
+                    </label>
                     <textarea
                       name="description"
                       value={educationForm.description}
@@ -2605,10 +3419,14 @@ export default function RestorativeRecordBuilder() {
                       placeholder="Summarize your education, degrees, and relevant coursework. Highlight how your academic experience prepares you to contribute to the organization's goals"
                       maxLength={700}
                     />
-                    <div className="text-xs text-secondary text-right">{educationForm.description.length}/700 characters</div>
+                    <div className="text-xs text-secondary text-right">
+                      {educationForm.description.length}/700 characters
+                    </div>
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Upload optional supporting file (image or pdf)</label>
+                    <label className="block font-medium mb-1">
+                      Upload optional supporting file (image or pdf)
+                    </label>
                     <label
                       htmlFor="education-file-upload"
                       onDrop={handleEducationFileDrop}
@@ -2624,33 +3442,64 @@ export default function RestorativeRecordBuilder() {
                       />
                       {!educationForm.filePreview && (
                         <>
-                          <svg className="w-10 h-10 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-8m0 0l-3 3m3-3l3 3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
+                          <svg
+                            className="w-10 h-10 text-gray-300 mx-auto mb-2"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 16v-8m0 0l-3 3m3-3l3 3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"
+                            />
                           </svg>
-                          <span className="text-secondary text-sm">Click to upload or drag and drop<br />Images or PDF (max 5MB)</span>
+                          <span className="text-secondary text-sm">
+                            Click to upload or drag and drop
+                            <br />
+                            Images or PDF (max 5MB)
+                          </span>
                         </>
                       )}
                       {educationForm.filePreview && (
                         <div className="mt-2 w-full flex flex-col items-center">
                           {educationForm.file?.type.startsWith("image/") ? (
-                            <img src={educationForm.filePreview} alt="Preview" className="max-h-32 mx-auto" />
+                            <img
+                              src={educationForm.filePreview}
+                              alt="Preview"
+                              className="max-h-32 mx-auto"
+                            />
                           ) : (
-                            <a href={educationForm.filePreview} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">View PDF</a>
+                            <a
+                              href={educationForm.filePreview}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-500 underline"
+                            >
+                              View PDF
+                            </a>
                           )}
                         </div>
                       )}
-                      {educationFileError && <div className="text-red-500 text-xs mt-2">{educationFileError}</div>}
+                      {educationFileError && (
+                        <div className="text-red-500 text-xs mt-2">
+                          {educationFileError}
+                        </div>
+                      )}
                     </label>
                   </div>
                   <div className="flex gap-2">
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
                     >
-                      {editingEducationId ? 'Update Education' : 'Save Education'}
+                      {editingEducationId
+                        ? "Update Education"
+                        : "Save Education"}
                     </button>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={handleEducationFormClose}
                       className="px-4 py-2 bg-gray-200 text-secondary font-medium rounded-lg hover:bg-gray-300 transition-colors"
                     >
@@ -2666,53 +3515,77 @@ export default function RestorativeRecordBuilder() {
         return (
           <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
             <div className="flex justify-between items-center mb-2">
-              <h2 className="text-2xl font-semibold text-black">Employment History</h2>
-              <button 
-                type="button" 
-                className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors" 
+              <h2 className="text-2xl font-semibold text-black">
+                Employment History
+              </h2>
+              <button
+                type="button"
+                className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
                 onClick={handleEmploymentFormOpen}
               >
                 ADD MORE
               </button>
             </div>
-            <p className="mb-6 text-secondary">Share your employment profile with us at Restorative Records.</p>
-            
+            <p className="mb-6 text-secondary">
+              Share your employment profile with us at Restorative Records.
+            </p>
+
             {/* List of employments */}
             {employments.length > 0 && (
               <div className="mb-6 space-y-4">
                 {employments.map((employment) => (
-                  <div key={employment.id} className="border rounded p-4 bg-gray-50">
+                  <div
+                    key={employment.id}
+                    className="border rounded p-4 bg-gray-50"
+                  >
                     <div className="flex justify-between items-start">
                       <div>
                         <h4 className="font-semibold">{employment.title}</h4>
-                        <p className="text-sm text-secondary">{employment.company} • {employment.employmentType}</p>
+                        <p className="text-sm text-secondary">
+                          {employment.company} • {employment.employmentType}
+                        </p>
                         {(employment.city || employment.state) && (
                           <p className="text-sm text-secondary">
-                            {employment.city}{employment.city && employment.state && ', '}{employment.state}
+                            {employment.city}
+                            {employment.city && employment.state && ", "}
+                            {employment.state}
                           </p>
                         )}
                         <p className="text-sm text-secondary">
-                          {new Date(employment.startDate).toLocaleDateString()} - 
-                          {employment.currentlyEmployed ? ' Present' : ` ${new Date(employment.endDate).toLocaleDateString()}`}
+                          {new Date(employment.startDate).toLocaleDateString()}{" "}
+                          -
+                          {employment.currentlyEmployed
+                            ? " Present"
+                            : ` ${new Date(
+                                employment.endDate
+                              ).toLocaleDateString()}`}
                         </p>
                         {employment.employedWhileIncarcerated && (
-                          <p className="text-sm text-red-600">Employed while incarcerated</p>
+                          <p className="text-sm text-red-600">
+                            Employed while incarcerated
+                          </p>
                         )}
                         {employment.companyUrl && (
                           <p className="text-sm text-blue-500">
-                            <a href={employment.companyUrl} target="_blank" rel="noopener noreferrer">Company Website</a>
+                            <a
+                              href={employment.companyUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              Company Website
+                            </a>
                           </p>
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <button 
+                        <button
                           type="button"
                           onClick={() => handleEmploymentEdit(employment.id)}
                           className="text-blue-500 hover:text-blue-700"
                         >
                           Edit
                         </button>
-                        <button 
+                        <button
                           type="button"
                           onClick={() => handleEmploymentDelete(employment.id)}
                           className="text-red-500 hover:text-red-700"
@@ -2725,17 +3598,31 @@ export default function RestorativeRecordBuilder() {
                 ))}
               </div>
             )}
-            
+
             {/* Employment form */}
             {showEmploymentForm && (
               <div className="border rounded p-6 bg-gray-50">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-semibold">
-                    {editingEmploymentId ? 'Edit Employment' : 'Add Employment Information'}
+                    {editingEmploymentId
+                      ? "Edit Employment"
+                      : "Add Employment Information"}
                   </h3>
-                  <button type="button" className="text-2xl text-secondary hover:text-black" onClick={handleEmploymentFormClose}>&times;</button>
+                  <button
+                    type="button"
+                    className="text-2xl text-secondary hover:text-black"
+                    onClick={handleEmploymentFormClose}
+                  >
+                    &times;
+                  </button>
                 </div>
-                <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleEmploymentSave(); }}>
+                <form
+                  className="space-y-4"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleEmploymentSave();
+                  }}
+                >
                   <div>
                     <label className="block font-medium mb-1">State</label>
                     <select
@@ -2746,7 +3633,9 @@ export default function RestorativeRecordBuilder() {
                     >
                       <option value="">Select state</option>
                       {usStates.map((state) => (
-                        <option key={state} value={state}>{state}</option>
+                        <option key={state} value={state}>
+                          {state}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -2761,7 +3650,9 @@ export default function RestorativeRecordBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Employment Type *</label>
+                    <label className="block font-medium mb-1">
+                      Employment Type *
+                    </label>
                     <select
                       name="employmentType"
                       value={employmentForm.employmentType}
@@ -2771,12 +3662,16 @@ export default function RestorativeRecordBuilder() {
                     >
                       <option value="">Select employment type</option>
                       {employmentTypeOptions.map((type) => (
-                        <option key={type} value={type}>{type}</option>
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Title/Position *</label>
+                    <label className="block font-medium mb-1">
+                      Title/Position *
+                    </label>
                     <input
                       name="title"
                       value={employmentForm.title}
@@ -2798,7 +3693,9 @@ export default function RestorativeRecordBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Company URL</label>
+                    <label className="block font-medium mb-1">
+                      Company URL
+                    </label>
                     <input
                       name="companyUrl"
                       value={employmentForm.companyUrl}
@@ -2809,7 +3706,9 @@ export default function RestorativeRecordBuilder() {
                   </div>
                   <div className="flex gap-4">
                     <div className="flex-1">
-                      <label className="block font-medium mb-1">Start Date *</label>
+                      <label className="block font-medium mb-1">
+                        Start Date *
+                      </label>
                       <div className="relative">
                         <input
                           ref={employmentStartDateInputRef}
@@ -2818,23 +3717,42 @@ export default function RestorativeRecordBuilder() {
                           readOnly
                           className="border p-2 rounded w-full pr-10 cursor-pointer bg-white"
                           placeholder="MM/DD/YYYY"
-                          onClick={() => setEmploymentStartDatePickerOpen((open) => !open)}
+                          onClick={() =>
+                            setEmploymentStartDatePickerOpen((open) => !open)
+                          }
                         />
                         <button
                           type="button"
                           className="absolute right-2 top-1/2 -translate-y-1/2 text-secondary hover:text-black"
-                          onClick={() => setEmploymentStartDatePickerOpen((open) => !open)}
+                          onClick={() =>
+                            setEmploymentStartDatePickerOpen((open) => !open)
+                          }
                           tabIndex={-1}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3.75 7.5h16.5M4.5 21h15a.75.75 0 00.75-.75V7.5a.75.75 0 00-.75-.75h-15a.75.75 0 00-.75.75v12.75c0 .414.336.75.75.75z" />
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="w-5 h-5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M6.75 3v2.25M17.25 3v2.25M3.75 7.5h16.5M4.5 21h15a.75.75 0 00.75-.75V7.5a.75.75 0 00-.75-.75h-15a.75.75 0 00-.75.75v12.75c0 .414.336.75.75.75z"
+                            />
                           </svg>
                         </button>
                         {employmentStartDatePickerOpen && (
                           <div className="absolute z-10 mt-2 bg-white border rounded shadow-lg left-0">
                             <DayPicker
                               mode="single"
-                              selected={employmentForm.startDate ? new Date(employmentForm.startDate) : undefined}
+                              selected={
+                                employmentForm.startDate
+                                  ? new Date(employmentForm.startDate)
+                                  : undefined
+                              }
                               onSelect={handleEmploymentStartDateChange}
                               initialFocus
                             />
@@ -2852,30 +3770,50 @@ export default function RestorativeRecordBuilder() {
                           readOnly
                           className="border p-2 rounded w-full pr-10 cursor-pointer bg-white"
                           placeholder="MM/DD/YYYY"
-                          onClick={() => setEmploymentEndDatePickerOpen((open) => !open)}
+                          onClick={() =>
+                            setEmploymentEndDatePickerOpen((open) => !open)
+                          }
                           disabled={employmentForm.currentlyEmployed}
                         />
                         <button
                           type="button"
                           className="absolute right-2 top-1/2 -translate-y-1/2 text-secondary hover:text-black"
-                          onClick={() => setEmploymentEndDatePickerOpen((open) => !open)}
+                          onClick={() =>
+                            setEmploymentEndDatePickerOpen((open) => !open)
+                          }
                           tabIndex={-1}
                           disabled={employmentForm.currentlyEmployed}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3.75 7.5h16.5M4.5 21h15a.75.75 0 00.75-.75V7.5a.75.75 0 00-.75-.75h-15a.75.75 0 00-.75.75v12.75c0 .414.336.75.75.75z" />
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="w-5 h-5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M6.75 3v2.25M17.25 3v2.25M3.75 7.5h16.5M4.5 21h15a.75.75 0 00.75-.75V7.5a.75.75 0 00-.75-.75h-15a.75.75 0 00-.75.75v12.75c0 .414.336.75.75.75z"
+                            />
                           </svg>
                         </button>
-                        {employmentEndDatePickerOpen && !employmentForm.currentlyEmployed && (
-                          <div className="absolute z-10 mt-2 bg-white border rounded shadow-lg left-0">
-                            <DayPicker
-                              mode="single"
-                              selected={employmentForm.endDate ? new Date(employmentForm.endDate) : undefined}
-                              onSelect={handleEmploymentEndDateChange}
-                              initialFocus
-                            />
-                          </div>
-                        )}
+                        {employmentEndDatePickerOpen &&
+                          !employmentForm.currentlyEmployed && (
+                            <div className="absolute z-10 mt-2 bg-white border rounded shadow-lg left-0">
+                              <DayPicker
+                                mode="single"
+                                selected={
+                                  employmentForm.endDate
+                                    ? new Date(employmentForm.endDate)
+                                    : undefined
+                                }
+                                onSelect={handleEmploymentEndDateChange}
+                                initialFocus
+                              />
+                            </div>
+                          )}
                       </div>
                     </div>
                   </div>
@@ -2887,7 +3825,9 @@ export default function RestorativeRecordBuilder() {
                       onChange={handleEmploymentInputChange}
                       className="accent-red-500"
                     />
-                    <label className="font-medium">I am currently employed at this job</label>
+                    <label className="font-medium">
+                      I am currently employed at this job
+                    </label>
                   </div>
                   <div className="flex items-center gap-2">
                     <input
@@ -2897,17 +3837,21 @@ export default function RestorativeRecordBuilder() {
                       onChange={handleEmploymentInputChange}
                       className="accent-red-500"
                     />
-                    <label className="font-medium">I was employed in this role while I was incarcerated</label>
+                    <label className="font-medium">
+                      I was employed in this role while I was incarcerated
+                    </label>
                   </div>
                   <div className="flex gap-2">
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
                     >
-                      {editingEmploymentId ? 'Update Employment' : 'Save Employment'}
+                      {editingEmploymentId
+                        ? "Update Employment"
+                        : "Save Employment"}
                     </button>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={handleEmploymentFormClose}
                       className="px-4 py-2 bg-gray-200 text-secondary font-medium rounded-lg hover:bg-gray-300 transition-colors"
                     >
@@ -2923,17 +3867,24 @@ export default function RestorativeRecordBuilder() {
         return (
           <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
             <div className="flex justify-between items-center mb-2">
-              <h2 className="text-2xl font-semibold text-black">Hobbies & Interests</h2>
-              <button 
-                type="button" 
-                className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors" 
+              <h2 className="text-2xl font-semibold text-black">
+                Hobbies & Interests
+              </h2>
+              <button
+                type="button"
+                className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
                 onClick={handleHobbiesUploadClick}
               >
                 ADD MORE
               </button>
             </div>
-            <p className="mb-6 text-secondary">Hobbies and interests are a great way to showcase your diverse range of activities and passions. List any hobbies, sports, or other interests you enjoy, and describe why they are meaningful to you.</p>
-            
+            <p className="mb-6 text-secondary">
+              Hobbies and interests are a great way to showcase your diverse
+              range of activities and passions. List any hobbies, sports, or
+              other interests you enjoy, and describe why they are meaningful to
+              you.
+            </p>
+
             {/* List of hobbies */}
             {hobbies.length > 0 && (
               <div className="mb-6 space-y-4">
@@ -2949,14 +3900,14 @@ export default function RestorativeRecordBuilder() {
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <button 
+                        <button
                           type="button"
                           onClick={() => handleHobbiesEdit(hobby.id)}
                           className="text-blue-500 hover:text-blue-700"
                         >
                           Edit
                         </button>
-                        <button 
+                        <button
                           type="button"
                           onClick={() => handleHobbiesDelete(hobby.id)}
                           className="text-red-500 hover:text-red-700"
@@ -2969,19 +3920,33 @@ export default function RestorativeRecordBuilder() {
                 ))}
               </div>
             )}
-            
+
             {/* Hobbies form */}
             {showHobbiesForm && (
               <div className="border rounded p-6 bg-gray-50">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-semibold">
-                    {editingHobbyId ? 'Edit Hobby' : 'Add Hobby'}
+                    {editingHobbyId ? "Edit Hobby" : "Add Hobby"}
                   </h3>
-                  <button type="button" className="text-2xl text-secondary hover:text-black" onClick={handleHobbiesClose}>&times;</button>
+                  <button
+                    type="button"
+                    className="text-2xl text-secondary hover:text-black"
+                    onClick={handleHobbiesClose}
+                  >
+                    &times;
+                  </button>
                 </div>
-                <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleHobbiesSave(); }}>
+                <form
+                  className="space-y-4"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleHobbiesSave();
+                  }}
+                >
                   <div>
-                    <label className="block font-medium mb-1">General Hobby</label>
+                    <label className="block font-medium mb-1">
+                      General Hobby
+                    </label>
                     <input
                       name="general"
                       value={hobbiesForm.general}
@@ -3001,7 +3966,9 @@ export default function RestorativeRecordBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Other Interests</label>
+                    <label className="block font-medium mb-1">
+                      Other Interests
+                    </label>
                     <input
                       name="other"
                       value={hobbiesForm.other}
@@ -3020,10 +3987,14 @@ export default function RestorativeRecordBuilder() {
                       placeholder="Describe why this hobby or interest is meaningful to you"
                       maxLength={500}
                     />
-                    <div className="text-xs text-secondary text-right">{hobbiesForm.narrative.length}/500 characters</div>
+                    <div className="text-xs text-secondary text-right">
+                      {hobbiesForm.narrative.length}/500 characters
+                    </div>
                   </div>
                   <div>
-                    <label className="block font-medium mb-1">Upload optional supporting file (image or pdf)</label>
+                    <label className="block font-medium mb-1">
+                      Upload optional supporting file (image or pdf)
+                    </label>
                     <label
                       htmlFor="hobbies-file-upload"
                       onDrop={handleHobbiesFileDrop}
@@ -3039,33 +4010,62 @@ export default function RestorativeRecordBuilder() {
                       />
                       {!hobbiesForm.filePreview && (
                         <>
-                          <svg className="w-10 h-10 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-8m0 0l-3 3m3-3l3 3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
+                          <svg
+                            className="w-10 h-10 text-gray-300 mx-auto mb-2"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 16v-8m0 0l-3 3m3-3l3 3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"
+                            />
                           </svg>
-                          <span className="text-secondary text-sm">Click to upload or drag and drop<br />Images or PDF (max 5MB)</span>
+                          <span className="text-secondary text-sm">
+                            Click to upload or drag and drop
+                            <br />
+                            Images or PDF (max 5MB)
+                          </span>
                         </>
                       )}
                       {hobbiesForm.filePreview && (
                         <div className="mt-2 w-full flex flex-col items-center">
                           {hobbiesForm.file?.type.startsWith("image/") ? (
-                            <img src={hobbiesForm.filePreview} alt="Preview" className="max-h-32 mx-auto" />
+                            <img
+                              src={hobbiesForm.filePreview}
+                              alt="Preview"
+                              className="max-h-32 mx-auto"
+                            />
                           ) : (
-                            <a href={hobbiesForm.filePreview} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">View PDF</a>
+                            <a
+                              href={hobbiesForm.filePreview}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-500 underline"
+                            >
+                              View PDF
+                            </a>
                           )}
                         </div>
                       )}
-                      {hobbiesFileError && <div className="text-red-500 text-xs mt-2">{hobbiesFileError}</div>}
+                      {hobbiesFileError && (
+                        <div className="text-red-500 text-xs mt-2">
+                          {hobbiesFileError}
+                        </div>
+                      )}
                     </label>
                   </div>
                   <div className="flex gap-2">
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
                     >
-                      {editingHobbyId ? 'Update Hobby' : 'Save Hobby'}
+                      {editingHobbyId ? "Update Hobby" : "Save Hobby"}
                     </button>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={handleHobbiesClose}
                       className="px-4 py-2 bg-gray-200 text-secondary font-medium rounded-lg hover:bg-gray-300 transition-colors"
                     >
@@ -3079,13 +4079,22 @@ export default function RestorativeRecordBuilder() {
         );
       // Add more cases for each category with appropriate fields
       default:
-        return <div className="p-4 bg-white rounded shadow">Section coming soon...</div>;
+        return (
+          <div className="p-4 bg-white rounded shadow">
+            Section coming soon...
+          </div>
+        );
     }
   };
 
   useEffect(() => {
     async function fetchRecord() {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Only fetch if we're not on the introduction page
+      if (currentCategory === 0) return;
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
       const { data, error } = await supabase
         .from("restorative_records")
@@ -3096,16 +4105,20 @@ export default function RestorativeRecordBuilder() {
         setFormData((prev: any) => ({
           ...prev,
           ...data,
-          occupations: data.occupations || [],
-          occupationInput: "",
+          introduction: data.introduction || "",
           narrative: data.narrative || "",
-          englishProficiency: data.english_proficiency || "",
-          otherLanguage: data.other_language || "",
+          linkedin: data.social_media_profiles?.linkedin || "",
+          github: data.social_media_profiles?.github || "",
+          twitter: data.social_media_profiles?.twitter || "",
+          portfolio: data.social_media_profiles?.portfolio || "",
+          preferred_occupation: data.preferred_occupation || "",
+          language: data.language || "",
+          additional_languages: data.additional_languages || [],
         }));
       }
     }
     fetchRecord();
-  }, []);
+  }, [currentCategory]);
 
   useEffect(() => {
     const section = searchParams.get("section");
@@ -3120,27 +4133,85 @@ export default function RestorativeRecordBuilder() {
 
   // Save to Supabase
   const saveToSupabase = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return;
-    const upsertData = {
+
+    // Save awards
+    for (const award of awards) {
+      let fileUrl: string | null = null;
+      let fileName: string | null = null;
+      let fileSize: number | null = null;
+
+      // Upload file if exists
+      if (award.file) {
+        const fileExt = award.file.name.split(".").pop() || "";
+        const filePath = `${user.id}/${Date.now()}.${fileExt}`;
+        const { data: fileData, error: fileError } = await supabase.storage
+          .from("awards")
+          .upload(filePath, award.file);
+
+        if (fileError) {
+          console.error("Error uploading file:", fileError);
+          continue;
+        }
+
+        const { data } = supabase.storage.from("awards").getPublicUrl(filePath);
+
+        fileUrl = data.publicUrl;
+        fileName = award.file.name;
+        fileSize = award.file.size;
+      }
+
+      // Save award to database
+      const { error: awardError } = await supabase.from("awards").upsert({
+        user_id: user.id,
+        type: award.type,
+        name: award.name,
+        organization: award.organization,
+        date: award.date,
+        file_url: fileUrl || undefined,
+        file_name: fileName || undefined,
+        file_size: fileSize || undefined,
+        narrative: award.narrative,
+      });
+
+      if (awardError) {
+        console.error("Error saving award:", awardError);
+        toast.error("Failed to save award");
+      }
+    }
+
+    // Save other restorative record data
+    const restorativeRecordData = {
       user_id: user.id,
-      facebook: formData.facebook,
-      linkedin: formData.linkedin,
-      reddit: formData.reddit,
-      portfolio: formData.portfolio,
-      instagram: formData.instagram,
-      github: formData.github,
-      tiktok: formData.tiktok,
-      pinterest: formData.pinterest,
-      twitter: formData.twitter,
-      website: formData.website,
-      handshake: formData.handshake,
-      occupations: formData.occupations,
-      narrative: formData.narrative,
-      english_proficiency: formData.englishProficiency,
-      other_language: formData.otherLanguage,
+      introduction: formData.introduction || "",
+      narrative: formData.narrative || "",
+      social_media_profiles: {
+        linkedin: formData.linkedin || "",
+        github: formData.github || "",
+        twitter: formData.twitter || "",
+        portfolio: formData.portfolio || "",
+      },
+      preferred_occupation: formData.preferred_occupation || "",
+      language: formData.language || "",
+      additional_languages: Array.isArray(formData.additional_languages)
+        ? formData.additional_languages
+        : [],
     };
-    await supabase.from("restorative_records").upsert(upsertData, { onConflict: "user_id" });
+
+    const { error: recordError } = await supabase
+      .from("restorative_records")
+      .upsert(restorativeRecordData, {
+        onConflict: "user_id",
+        ignoreDuplicates: false,
+      });
+
+    if (recordError) {
+      console.error("Error saving to Supabase:", recordError);
+      toast.error("Failed to save changes");
+    }
   };
 
   return (
@@ -3154,13 +4225,15 @@ export default function RestorativeRecordBuilder() {
               <li key={cat}>
                 <button
                   className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
-                    idx === currentCategory 
-                      ? "bg-red-50 text-primary font-medium border border-primary" 
+                    idx === currentCategory
+                      ? "bg-red-50 text-primary font-medium border border-primary"
                       : "text-secondary hover:bg-gray-50 hover:text-black"
                   }`}
                   onClick={() => setCurrentCategory(idx)}
                 >
-                  {cat.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  {cat
+                    .replace(/-/g, " ")
+                    .replace(/\b\w/g, (l) => l.toUpperCase())}
                 </button>
               </li>
             ))}
@@ -3170,7 +4243,9 @@ export default function RestorativeRecordBuilder() {
         <main className="flex-1 p-8">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center justify-between mb-8">
-              <h1 className="text-3xl font-semibold text-black">Restorative Record Builder</h1>
+              <h1 className="text-3xl font-semibold text-black">
+                Restorative Record Builder
+              </h1>
               <Link href="/restorative-record/profile" legacyBehavior>
                 <a className="px-5 py-2 bg-primary text-white rounded-lg font-medium shadow hover:bg-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ml-4">
                   MY RESTORATIVE RECORD
@@ -3179,23 +4254,23 @@ export default function RestorativeRecordBuilder() {
             </div>
             <div className="mb-8">{renderSection()}</div>
             <div className="flex justify-between">
-              <button 
-                onClick={handlePrevious} 
-                disabled={currentCategory === 0} 
+              <button
+                onClick={handlePrevious}
+                disabled={currentCategory === 0}
                 className="px-6 py-3 bg-gray-200 text-secondary rounded-lg font-medium hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
               {currentCategory === categories.length - 1 ? (
-                <button 
-                  onClick={handleSubmit} 
+                <button
+                  onClick={handleSubmit}
                   className="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
                 >
                   Submit
                 </button>
               ) : (
-                <button 
-                  onClick={handleNext} 
+                <button
+                  onClick={handleNext}
                   className="px-6 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
                 >
                   Next
@@ -3207,4 +4282,4 @@ export default function RestorativeRecordBuilder() {
       </div>
     </div>
   );
-} 
+}

@@ -1,7 +1,9 @@
 "use client";
+import { useUser } from "@/hooks/useUser";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
 
 // Placeholder data arrays for demonstration
 const certifications = [
@@ -162,7 +164,37 @@ function formatFileSize(bytes: number) {
   return bytes + " B";
 }
 
+const languages = [
+  { value: "english", label: "English" },
+  { value: "spanish", label: "Spanish" },
+  { value: "french", label: "French" },
+  { value: "mandarin", label: "Mandarin" },
+  { value: "vietnamese", label: "Vietnamese" },
+  { value: "tagalog", label: "Tagalog" },
+  { value: "other", label: "Other" },
+];
+
+// Add type definition for the restorative record
+type RestorativeRecord = {
+  id?: string;
+  user_id: string;
+  introduction: string;
+  narrative: string;
+  social_media_profiles: {
+    linkedin: string;
+    github: string;
+    twitter: string;
+    portfolio: string;
+  };
+  preferred_occupation: string;
+  language: string;
+  additional_languages: string[];
+  created_at?: string;
+  updated_at?: string;
+};
+
 export default function MyRestorativeRecordProfile() {
+  const { user } = useUser();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -185,6 +217,22 @@ export default function MyRestorativeRecordProfile() {
     employers: "",
   });
   const [legalSubmitted, setLegalSubmitted] = useState(false);
+  const [restorativeRecord, setRestorativeRecord] = useState<RestorativeRecord>(
+    {
+      user_id: "",
+      introduction: "",
+      narrative: "",
+      social_media_profiles: {
+        linkedin: "",
+        github: "",
+        twitter: "",
+        portfolio: "",
+      },
+      preferred_occupation: "",
+      language: "",
+      additional_languages: [],
+    }
+  );
 
   useEffect(() => {
     async function fetchProfile() {
@@ -205,6 +253,96 @@ export default function MyRestorativeRecordProfile() {
     }
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    const fetchRestorativeRecord = async () => {
+      if (!user) return;
+
+      try {
+        // First try to get the record with a very basic query
+        const { data, error } = await supabase
+          .from("restorative_records")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        console.log("Initial fetch response:", { data, error });
+
+        // If no record exists or there's an error, create a new one
+        if (error || !data) {
+          console.log("Creating new restorative record");
+
+          const newRecord = {
+            user_id: user.id,
+            introduction: "",
+            narrative: "",
+            social_media_profiles: {
+              linkedin: "",
+              github: "",
+              twitter: "",
+              portfolio: "",
+            },
+            preferred_occupation: "",
+            language: "",
+            additional_languages: [],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+
+          const { data: insertedData, error: insertError } = await supabase
+            .from("restorative_records")
+            .insert([newRecord])
+            .select()
+            .single();
+
+          if (insertError) {
+            console.error("Error creating restorative record:", insertError);
+            toast.error("Failed to create restorative record");
+            return;
+          }
+
+          if (insertedData) {
+            setRestorativeRecord({
+              user_id: insertedData.user_id,
+              introduction: insertedData.introduction || "",
+              narrative: insertedData.narrative || "",
+              social_media_profiles: insertedData.social_media_profiles || {
+                linkedin: "",
+                github: "",
+                twitter: "",
+                portfolio: "",
+              },
+              preferred_occupation: insertedData.preferred_occupation || "",
+              language: insertedData.language || "",
+              additional_languages: insertedData.additional_languages || [],
+            });
+          }
+          return;
+        }
+
+        // If we have data, set it directly
+        setRestorativeRecord({
+          user_id: data.user_id,
+          introduction: data.introduction || "",
+          narrative: data.narrative || "",
+          social_media_profiles: data.social_media_profiles || {
+            linkedin: "",
+            github: "",
+            twitter: "",
+            portfolio: "",
+          },
+          preferred_occupation: data.preferred_occupation || "",
+          language: data.language || "",
+          additional_languages: data.additional_languages || [],
+        });
+      } catch (error) {
+        console.error("Unexpected error:", error);
+        toast.error("An unexpected error occurred");
+      }
+    };
+
+    fetchRestorativeRecord();
+  }, [user]);
 
   const handleShare = async (type: string) => {
     const {
@@ -255,6 +393,61 @@ export default function MyRestorativeRecordProfile() {
     e.preventDefault();
     setLegalSubmitted(true);
     // TODO: Send form data to backend or legal team
+  };
+
+  const handleSaveRestorativeRecord = async () => {
+    if (!user) return;
+
+    try {
+      // Prepare the data with explicit type checking
+      const recordData = {
+        user_id: user.id,
+        introduction: restorativeRecord.introduction || "",
+        narrative: restorativeRecord.narrative || "",
+        social_media_profiles: {
+          linkedin: restorativeRecord.social_media_profiles?.linkedin || "",
+          github: restorativeRecord.social_media_profiles?.github || "",
+          twitter: restorativeRecord.social_media_profiles?.twitter || "",
+          portfolio: restorativeRecord.social_media_profiles?.portfolio || "",
+        },
+        preferred_occupation: restorativeRecord.preferred_occupation || "",
+        language: restorativeRecord.language || "",
+        additional_languages: Array.isArray(
+          restorativeRecord.additional_languages
+        )
+          ? restorativeRecord.additional_languages
+          : [],
+        updated_at: new Date().toISOString(),
+      };
+
+      console.log("Attempting to save record with data:", recordData);
+
+      // Try to insert first
+      const { error: insertError } = await supabase
+        .from("restorative_records")
+        .insert(recordData);
+
+      if (insertError) {
+        console.log("Insert failed, trying update:", insertError);
+
+        // If insert fails, try update
+        const { error: updateError } = await supabase
+          .from("restorative_records")
+          .update(recordData)
+          .eq("user_id", user.id);
+
+        if (updateError) {
+          console.error("Both insert and update failed:", updateError);
+          toast.error("Failed to save restorative record");
+          return;
+        }
+      }
+
+      toast.success("Restorative record saved successfully");
+    } catch (error) {
+      console.error("Unexpected error while saving:", error);
+      toast.error("An unexpected error occurred");
+    }
   };
 
   if (loading) {
@@ -1275,6 +1468,207 @@ export default function MyRestorativeRecordProfile() {
             </div>
           ))}
         </section>
+
+        <div className="bg-white shadow rounded-lg p-6">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">
+            Restorative Record
+          </h2>
+          <div className="space-y-4">
+            <div>
+              <label
+                htmlFor="introduction"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Introduction
+              </label>
+              <textarea
+                id="introduction"
+                rows={4}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                value={restorativeRecord.introduction}
+                onChange={(e) =>
+                  setRestorativeRecord((prev) => ({
+                    ...prev,
+                    introduction: e.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="narrative"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Personal Narrative
+              </label>
+              <textarea
+                id="narrative"
+                rows={6}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                value={restorativeRecord.narrative}
+                onChange={(e) =>
+                  setRestorativeRecord((prev) => ({
+                    ...prev,
+                    narrative: e.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="preferred_occupation"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Preferred Occupation
+              </label>
+              <input
+                type="text"
+                id="preferred_occupation"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                value={restorativeRecord.preferred_occupation}
+                onChange={(e) =>
+                  setRestorativeRecord((prev) => ({
+                    ...prev,
+                    preferred_occupation: e.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="language"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Language
+              </label>
+              <input
+                type="text"
+                id="language"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                value={restorativeRecord.language}
+                onChange={(e) =>
+                  setRestorativeRecord((prev) => ({
+                    ...prev,
+                    language: e.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Social Media Profiles
+              </label>
+              <div className="space-y-2">
+                <div>
+                  <label
+                    htmlFor="linkedin"
+                    className="block text-sm text-gray-600"
+                  >
+                    LinkedIn
+                  </label>
+                  <input
+                    type="url"
+                    id="linkedin"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    value={restorativeRecord.social_media_profiles.linkedin}
+                    onChange={(e) =>
+                      setRestorativeRecord((prev) => ({
+                        ...prev,
+                        social_media_profiles: {
+                          ...prev.social_media_profiles,
+                          linkedin: e.target.value,
+                        },
+                      }))
+                    }
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="github"
+                    className="block text-sm text-gray-600"
+                  >
+                    GitHub
+                  </label>
+                  <input
+                    type="url"
+                    id="github"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    value={restorativeRecord.social_media_profiles.github}
+                    onChange={(e) =>
+                      setRestorativeRecord((prev) => ({
+                        ...prev,
+                        social_media_profiles: {
+                          ...prev.social_media_profiles,
+                          github: e.target.value,
+                        },
+                      }))
+                    }
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="twitter"
+                    className="block text-sm text-gray-600"
+                  >
+                    Twitter
+                  </label>
+                  <input
+                    type="url"
+                    id="twitter"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    value={restorativeRecord.social_media_profiles.twitter}
+                    onChange={(e) =>
+                      setRestorativeRecord((prev) => ({
+                        ...prev,
+                        social_media_profiles: {
+                          ...prev.social_media_profiles,
+                          twitter: e.target.value,
+                        },
+                      }))
+                    }
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="portfolio"
+                    className="block text-sm text-gray-600"
+                  >
+                    Portfolio
+                  </label>
+                  <input
+                    type="url"
+                    id="portfolio"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    value={restorativeRecord.social_media_profiles.portfolio}
+                    onChange={(e) =>
+                      setRestorativeRecord((prev) => ({
+                        ...prev,
+                        social_media_profiles: {
+                          ...prev.social_media_profiles,
+                          portfolio: e.target.value,
+                        },
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={handleSaveRestorativeRecord}
+                className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              >
+                Save Restorative Record
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
