@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function UserDashboard() {
   const router = useRouter();
@@ -32,6 +32,31 @@ export default function UserDashboard() {
     avatar_url: "",
   });
 
+  const [wotcData, setWotcData] = useState({
+    ssn: "",
+    county: "",
+    conditional_cert: false,
+    tanf_9mo: false,
+    vet_snap_3mo: false,
+    voc_rehab: false,
+    ticket_work: false,
+    va: false,
+    snap_6mo: false,
+    snap_3of5: false,
+    felony: false,
+    ssi: false,
+    vet_unemp_4_6: false,
+    vet_unemp_6: false,
+    vet_disab_discharged: false,
+    vet_disab_unemp: false,
+    tanf_18mo: false,
+    tanf_18mo_since97: false,
+    tanf_limit: false,
+    unemp_27wks: false,
+    signature: "",
+    signature_date: "",
+  });
+
   useEffect(() => {
     checkUser();
   }, []);
@@ -52,7 +77,7 @@ export default function UserDashboard() {
       const { data: profileData, error: profileError } = await supabase
         .from("user_profiles")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("id", user.id)
         .single();
 
       if (profileError && profileError.code !== "PGRST116") {
@@ -120,9 +145,19 @@ export default function UserDashboard() {
       }
 
       const { error } = await supabase.from("user_profiles").upsert({
-        user_id: user.id,
-        ...profileData,
-        avatar_url: avatarUrl,
+        id: user.id,
+        email: user.email,
+        first_name: profileData.first_name,
+        last_name: profileData.last_name,
+        birthday: profileData.date_of_birth,
+        phone: profileData.phone || null,
+        address_line1: profileData.address_line1 || null,
+        address_line2: profileData.address_line2 || null,
+        city: profileData.city || null,
+        state: profileData.state || null,
+        zip_code: profileData.zip_code || null,
+        country: profileData.country || null,
+        avatar_url: avatarUrl || null,
         updated_at: new Date().toISOString(),
       });
 
@@ -147,7 +182,9 @@ export default function UserDashboard() {
     router.push("/");
   }
 
-  function handleInputChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+  function handleInputChange(
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) {
     const { name, value } = e.target;
     let newValue: any = value;
     if (e.target instanceof HTMLInputElement && e.target.type === "checkbox") {
@@ -169,6 +206,63 @@ export default function UserDashboard() {
       };
       reader.readAsDataURL(file);
     }
+  }
+
+  async function handleSaveWotcSurvey() {
+    if (!user) return;
+    setSaving(true);
+
+    try {
+      const { error } = await supabase.from("wotc_surveys").upsert({
+        user_id: user.id,
+        ssn: wotcData.ssn,
+        county: wotcData.county,
+        conditional_cert: wotcData.conditional_cert,
+        tanf_9mo: wotcData.tanf_9mo,
+        vet_snap_3mo: wotcData.vet_snap_3mo,
+        voc_rehab: wotcData.voc_rehab,
+        ticket_work: wotcData.ticket_work,
+        va: wotcData.va,
+        snap_6mo: wotcData.snap_6mo,
+        snap_3of5: wotcData.snap_3of5,
+        felony: wotcData.felony,
+        ssi: wotcData.ssi,
+        vet_unemp_4_6: wotcData.vet_unemp_4_6,
+        vet_unemp_6: wotcData.vet_unemp_6,
+        vet_disab_discharged: wotcData.vet_disab_discharged,
+        vet_disab_unemp: wotcData.vet_disab_unemp,
+        tanf_18mo: wotcData.tanf_18mo,
+        tanf_18mo_since97: wotcData.tanf_18mo_since97,
+        tanf_limit: wotcData.tanf_limit,
+        unemp_27wks: wotcData.unemp_27wks,
+        signature: wotcData.signature,
+        signature_date: wotcData.signature_date,
+      });
+
+      if (error) {
+        console.error("Error saving WOTC survey:", error);
+        alert("Error saving WOTC survey. Please try again.");
+      } else {
+        alert("WOTC survey saved successfully!");
+      }
+    } catch (error) {
+      console.error("Error saving WOTC survey:", error);
+      alert("An unexpected error occurred. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleWotcInputChange(
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) {
+    const { name, value, type } = e.target;
+    const newValue =
+      type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
+    setWotcData((prev) => ({
+      ...prev,
+      [name]: newValue,
+    }));
   }
 
   if (loading) {
@@ -212,7 +306,10 @@ export default function UserDashboard() {
             <div className="flex items-center space-x-4">
               <div className="relative">
                 <img
-                  src={avatarPreview || `https://ui-avatars.com/api/?name=${profileData.first_name}+${profileData.last_name}&background=E54747&color=fff`}
+                  src={
+                    avatarPreview ||
+                    `https://ui-avatars.com/api/?name=${profileData.first_name}+${profileData.last_name}&background=E54747&color=fff`
+                  }
                   alt="Avatar"
                   className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
                 />
@@ -250,7 +347,12 @@ export default function UserDashboard() {
                       : "border-transparent text-secondary hover:text-black hover:border-gray-300"
                   }`}
                 >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)} {tab === "personal" ? "Info" : tab === "contact" ? "Info" : "Settings"}
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}{" "}
+                  {tab === "personal"
+                    ? "Info"
+                    : tab === "contact"
+                    ? "Info"
+                    : "Settings"}
                 </button>
               ))}
             </nav>
@@ -410,86 +512,360 @@ export default function UserDashboard() {
 
             {activeTab === "privacy" && (
               <div className="space-y-6">
-                <form className="space-y-6">
-                  <h3 className="text-lg font-semibold text-black mb-4">WOTC Pre-Screening Survey</h3>
+                <form
+                  className="space-y-6"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSaveWotcSurvey();
+                  }}
+                >
+                  <h3 className="text-lg font-semibold text-black mb-4">
+                    WOTC Pre-Screening Survey
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-black mb-1">Full Name</label>
-                      <input type="text" name="wotc_full_name" className="w-full px-4 py-2 border border-gray-200 rounded-lg" />
+                      <label className="block text-sm font-medium text-black mb-1">
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        value={`${profileData.first_name} ${profileData.last_name}`}
+                        disabled
+                        className="w-full px-4 py-2 border border-gray-100 bg-gray-50 rounded-lg focus:outline-none text-gray-400 cursor-not-allowed"
+                      />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-black mb-1">Social Security Number (SSN)</label>
-                      <input type="text" name="wotc_ssn" className="w-full px-4 py-2 border border-gray-200 rounded-lg" />
+                      <label className="block text-sm font-medium text-black mb-1">
+                        Social Security Number (SSN)
+                      </label>
+                      <input
+                        type="text"
+                        name="ssn"
+                        value={wotcData.ssn}
+                        onChange={handleWotcInputChange}
+                        className="w-full px-4 py-2 border border-gray-200 rounded-lg"
+                        required
+                      />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-black mb-1">Street Address</label>
-                      <input type="text" name="wotc_address" className="w-full px-4 py-2 border border-gray-200 rounded-lg" />
+                      <label className="block text-sm font-medium text-black mb-1">
+                        Street Address
+                      </label>
+                      <input
+                        type="text"
+                        value={profileData.address_line1}
+                        disabled
+                        className="w-full px-4 py-2 border border-gray-100 bg-gray-50 rounded-lg focus:outline-none text-gray-400 cursor-not-allowed"
+                      />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-black mb-1">City, State, ZIP Code</label>
-                      <input type="text" name="wotc_city_state_zip" className="w-full px-4 py-2 border border-gray-200 rounded-lg" />
+                      <label className="block text-sm font-medium text-black mb-1">
+                        City, State, ZIP Code
+                      </label>
+                      <input
+                        type="text"
+                        value={`${profileData.city}, ${profileData.state} ${profileData.zip_code}`}
+                        disabled
+                        className="w-full px-4 py-2 border border-gray-100 bg-gray-50 rounded-lg focus:outline-none text-gray-400 cursor-not-allowed"
+                      />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-black mb-1">County</label>
-                      <input type="text" name="wotc_county" className="w-full px-4 py-2 border border-gray-200 rounded-lg" />
+                      <label className="block text-sm font-medium text-black mb-1">
+                        County
+                      </label>
+                      <input
+                        type="text"
+                        name="county"
+                        value={wotcData.county}
+                        onChange={handleWotcInputChange}
+                        className="w-full px-4 py-2 border border-gray-200 rounded-lg"
+                        required
+                      />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-black mb-1">Phone Number</label>
-                      <input type="text" name="wotc_phone" className="w-full px-4 py-2 border border-gray-200 rounded-lg" />
+                      <label className="block text-sm font-medium text-black mb-1">
+                        Phone Number
+                      </label>
+                      <input
+                        type="text"
+                        value={profileData.phone}
+                        disabled
+                        className="w-full px-4 py-2 border border-gray-100 bg-gray-50 rounded-lg focus:outline-none text-gray-400 cursor-not-allowed"
+                      />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-black mb-1">Date of Birth (if under 40)</label>
-                      <input type="text" name="wotc_dob" className="w-full px-4 py-2 border border-gray-200 rounded-lg" />
+                      <label className="block text-sm font-medium text-black mb-1">
+                        Date of Birth (if under 40)
+                      </label>
+                      <input
+                        type="text"
+                        value={profileData.date_of_birth}
+                        disabled
+                        className="w-full px-4 py-2 border border-gray-100 bg-gray-50 rounded-lg focus:outline-none text-gray-400 cursor-not-allowed"
+                      />
                     </div>
                   </div>
                   <div className="mt-4">
-                    <p className="font-medium mb-2">Please check any of the following statements that apply to you. You may check more than one box.</p>
+                    <p className="font-medium mb-2">
+                      Please check any of the following statements that apply to
+                      you. You may check more than one box.
+                    </p>
                     <div className="space-y-2">
-                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_conditional_cert" className="mt-1" />I received a Conditional Certification (ETA Form 9062) from a state or local workforce agency for the Work Opportunity Tax Credit.</label>
-                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_tanf_9mo" className="mt-1" />I am a member of a family that received TANF (Temporary Assistance for Needy Families) for any 9 months during the past 18 months.</label>
-                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_vet_snap_3mo" className="mt-1" />I am a veteran and a member of a family that received SNAP (food stamps) for at least 3 months during the past 15 months.</label>
-                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_referred" className="mt-1" />I was referred to this job by:</label>
+                      <label className="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          name="conditional_cert"
+                          checked={wotcData.conditional_cert}
+                          onChange={handleWotcInputChange}
+                          className="mt-1"
+                        />
+                        I received a Conditional Certification (ETA Form 9062)
+                        from a state or local workforce agency for the Work
+                        Opportunity Tax Credit.
+                      </label>
+                      <label className="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          name="tanf_9mo"
+                          checked={wotcData.tanf_9mo}
+                          onChange={handleWotcInputChange}
+                          className="mt-1"
+                        />
+                        I am a member of a family that received TANF (Temporary
+                        Assistance for Needy Families) for any 9 months during
+                        the past 18 months.
+                      </label>
+                      <label className="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          name="vet_snap_3mo"
+                          checked={wotcData.vet_snap_3mo}
+                          onChange={handleWotcInputChange}
+                          className="mt-1"
+                        />
+                        I am a veteran and a member of a family that received
+                        SNAP (food stamps) for at least 3 months during the past
+                        15 months.
+                      </label>
+                      <label className="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          name="voc_rehab"
+                          checked={wotcData.voc_rehab}
+                          onChange={handleWotcInputChange}
+                          className="mt-1"
+                        />
+                        I was referred to this job by:
+                      </label>
                       <div className="pl-6 space-y-1">
-                        <label className="flex items-start gap-2"><input type="checkbox" name="wotc_voc_rehab" className="mt-1" />A state-certified vocational rehabilitation agency,</label>
-                        <label className="flex items-start gap-2"><input type="checkbox" name="wotc_ticket_work" className="mt-1" />An employment network under the Ticket to Work program, or</label>
-                        <label className="flex items-start gap-2"><input type="checkbox" name="wotc_va" className="mt-1" />The Department of Veterans Affairs.</label>
+                        <label className="flex items-start gap-2">
+                          <input
+                            type="checkbox"
+                            name="ticket_work"
+                            checked={wotcData.ticket_work}
+                            onChange={handleWotcInputChange}
+                            className="mt-1"
+                          />
+                          An employment network under the Ticket to Work
+                          program, or
+                        </label>
+                        <label className="flex items-start gap-2">
+                          <input
+                            type="checkbox"
+                            name="va"
+                            checked={wotcData.va}
+                            onChange={handleWotcInputChange}
+                            className="mt-1"
+                          />
+                          The Department of Veterans Affairs.
+                        </label>
                       </div>
-                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_snap_18_40" className="mt-1" />I am 18 or older but not yet 40, and a member of a family that:</label>
+                      <label className="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          name="snap_6mo"
+                          checked={wotcData.snap_6mo}
+                          onChange={handleWotcInputChange}
+                          className="mt-1"
+                        />
+                        I am 18 or older but not yet 40, and a member of a
+                        family that:
+                      </label>
                       <div className="pl-6 space-y-1">
-                        <label className="flex items-start gap-2"><input type="checkbox" name="wotc_snap_6mo" className="mt-1" />Received SNAP benefits for the past 6 months, OR</label>
-                        <label className="flex items-start gap-2"><input type="checkbox" name="wotc_snap_3of5" className="mt-1" />Received SNAP benefits for at least 3 of the past 5 months but is no longer eligible.</label>
+                        <label className="flex items-start gap-2">
+                          <input
+                            type="checkbox"
+                            name="snap_3of5"
+                            checked={wotcData.snap_3of5}
+                            onChange={handleWotcInputChange}
+                            className="mt-1"
+                          />
+                          Received SNAP benefits for at least 3 of the past 5
+                          months but is no longer eligible.
+                        </label>
                       </div>
-                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_felony" className="mt-1" />I was convicted of a felony or released from prison for a felony during the past year.</label>
-                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_ssi" className="mt-1" />I received Supplemental Security Income (SSI) benefits during any month in the past 60 days.</label>
-                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_vet_unemp_4_6" className="mt-1" />I am a veteran who was unemployed for at least 4 weeks but less than 6 months in the past year.</label>
-                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_vet_unemp_6" className="mt-1" />I am a veteran who was unemployed for at least 6 months in the past year.</label>
-                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_vet_disab" className="mt-1" />I am a veteran with a service-connected disability who was:</label>
+                      <label className="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          name="felony"
+                          checked={wotcData.felony}
+                          onChange={handleWotcInputChange}
+                          className="mt-1"
+                        />
+                        I was convicted of a felony or released from prison for
+                        a felony during the past year.
+                      </label>
+                      <label className="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          name="ssi"
+                          checked={wotcData.ssi}
+                          onChange={handleWotcInputChange}
+                          className="mt-1"
+                        />
+                        I received Supplemental Security Income (SSI) benefits
+                        during any month in the past 60 days.
+                      </label>
+                      <label className="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          name="vet_unemp_4_6"
+                          checked={wotcData.vet_unemp_4_6}
+                          onChange={handleWotcInputChange}
+                          className="mt-1"
+                        />
+                        I am a veteran who was unemployed for at least 4 weeks
+                        but less than 6 months in the past year.
+                      </label>
+                      <label className="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          name="vet_unemp_6"
+                          checked={wotcData.vet_unemp_6}
+                          onChange={handleWotcInputChange}
+                          className="mt-1"
+                        />
+                        I am a veteran who was unemployed for at least 6 months
+                        in the past year.
+                      </label>
+                      <label className="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          name="vet_disab_discharged"
+                          checked={wotcData.vet_disab_discharged}
+                          onChange={handleWotcInputChange}
+                          className="mt-1"
+                        />
+                        I am a veteran with a service-connected disability who
+                        was:
+                      </label>
                       <div className="pl-6 space-y-1">
-                        <label className="flex items-start gap-2"><input type="checkbox" name="wotc_vet_disab_discharged" className="mt-1" />Discharged or released from active duty in the U.S. Armed Forces in the past year, OR</label>
-                        <label className="flex items-start gap-2"><input type="checkbox" name="wotc_vet_disab_unemp" className="mt-1" />Unemployed for at least 6 months in the past year.</label>
+                        <label className="flex items-start gap-2">
+                          <input
+                            type="checkbox"
+                            name="vet_disab_unemp"
+                            checked={wotcData.vet_disab_unemp}
+                            onChange={handleWotcInputChange}
+                            className="mt-1"
+                          />
+                          Discharged or released from active duty in the U.S.
+                          Armed Forces in the past year, OR
+                        </label>
+                        <label className="flex items-start gap-2">
+                          <input
+                            type="checkbox"
+                            name="tanf_18mo"
+                            checked={wotcData.tanf_18mo}
+                            onChange={handleWotcInputChange}
+                            className="mt-1"
+                          />
+                          Unemployed for at least 6 months in the past year.
+                        </label>
                       </div>
-                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_tanf_family" className="mt-1" />I am a member of a family that:</label>
-                      <div className="pl-6 space-y-1">
-                        <label className="flex items-start gap-2"><input type="checkbox" name="wotc_tanf_18mo" className="mt-1" />Received TANF payments for at least the past 18 months, OR</label>
-                        <label className="flex items-start gap-2"><input type="checkbox" name="wotc_tanf_18mo_since97" className="mt-1" />Received TANF for any 18 months after August 5, 1997, and the earliest 18-month period ended during the past 2 years, OR</label>
-                        <label className="flex items-start gap-2"><input type="checkbox" name="wotc_tanf_limit" className="mt-1" />Stopped being eligible for TANF payments in the past 2 years due to a federal/state time limit.</label>
-                      </div>
-                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_unemp_27wks" className="mt-1" />I have been unemployed for at least 27 consecutive weeks, and I received unemployment compensation during all or part of that time.</label>
+                      <label className="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          name="tanf_18mo_since97"
+                          checked={wotcData.tanf_18mo_since97}
+                          onChange={handleWotcInputChange}
+                          className="mt-1"
+                        />
+                        Received TANF for any 18 months after August 5, 1997,
+                        and the earliest 18-month period ended during the past 2
+                        years, OR
+                      </label>
+                      <label className="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          name="tanf_limit"
+                          checked={wotcData.tanf_limit}
+                          onChange={handleWotcInputChange}
+                          className="mt-1"
+                        />
+                        Stopped being eligible for TANF payments in the past 2
+                        years due to a federal/state time limit.
+                      </label>
+                      <label className="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          name="unemp_27wks"
+                          checked={wotcData.unemp_27wks}
+                          onChange={handleWotcInputChange}
+                          className="mt-1"
+                        />
+                        I have been unemployed for at least 27 consecutive
+                        weeks, and I received unemployment compensation during
+                        all or part of that time.
+                      </label>
                     </div>
                   </div>
                   <div className="mt-8 border-t pt-6">
-                    <h4 className="font-semibold mb-2">Certification by Applicant</h4>
-                    <p className="mb-2 text-sm">Under penalties of perjury, I certify that I provided this information to my employer on or before the day I was offered a job, and that it is true and complete to the best of my knowledge.</p>
+                    <h4 className="font-semibold mb-2">
+                      Certification by Applicant
+                    </h4>
+                    <p className="mb-2 text-sm">
+                      Under penalties of perjury, I certify that I provided this
+                      information to my employer on or before the day I was
+                      offered a job, and that it is true and complete to the
+                      best of my knowledge.
+                    </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-black mb-1">Signature</label>
-                        <input type="text" name="wotc_signature" className="w-full px-4 py-2 border border-gray-200 rounded-lg" />
+                        <label className="block text-sm font-medium text-black mb-1">
+                          Signature
+                        </label>
+                        <input
+                          type="text"
+                          name="signature"
+                          value={wotcData.signature}
+                          onChange={handleWotcInputChange}
+                          className="w-full px-4 py-2 border border-gray-200 rounded-lg"
+                          required
+                        />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-black mb-1">Date</label>
-                        <input type="date" name="wotc_date" className="w-full px-4 py-2 border border-gray-200 rounded-lg" />
+                        <label className="block text-sm font-medium text-black mb-1">
+                          Date
+                        </label>
+                        <input
+                          type="date"
+                          name="signature_date"
+                          value={wotcData.signature_date}
+                          onChange={handleWotcInputChange}
+                          className="w-full px-4 py-2 border border-gray-200 rounded-lg"
+                          required
+                        />
                       </div>
                     </div>
+                  </div>
+                  <div className="mt-8 flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={saving}
+                      className="px-6 py-2 bg-primary text-white font-medium rounded-lg hover:bg-red-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {saving ? "Saving..." : "Save WOTC Survey"}
+                    </button>
                   </div>
                 </form>
               </div>

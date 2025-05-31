@@ -1,7 +1,7 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import Link from "next/link";
+import React, { useEffect, useState } from "react";
 
 // Placeholder data arrays for demonstration
 const certifications = [
@@ -92,7 +92,8 @@ const rehabPrograms = [
   {
     label: "Substance Use Disorder Treatment",
     year: "2020",
-    narrative: "Completed a 12-week outpatient program focused on relapse prevention.",
+    narrative:
+      "Completed a 12-week outpatient program focused on relapse prevention.",
   },
   {
     label: "Life Skills Training",
@@ -106,14 +107,16 @@ const hobbies = [
     general: "Reading",
     sports: "Basketball",
     other: "Photography",
-    narrative: "Reading helps me relax and learn new things. I enjoy playing basketball with friends and capturing moments through photography.",
+    narrative:
+      "Reading helps me relax and learn new things. I enjoy playing basketball with friends and capturing moments through photography.",
     file: null,
   },
   {
     general: "Gardening",
     sports: "Running",
     other: "Cooking",
-    narrative: "Gardening and cooking are my creative outlets. Running keeps me healthy.",
+    narrative:
+      "Gardening and cooking are my creative outlets. Running keeps me healthy.",
     file: {
       name: "garden-photo.jpg",
       url: "https://example.com/garden-photo.jpg",
@@ -167,22 +170,27 @@ export default function MyRestorativeRecordProfile() {
   const [addedEmails, setAddedEmails] = useState<string[]>([]);
   const [shareStatus, setShareStatus] = useState("private"); // private, public, employer
   const [copySuccess, setCopySuccess] = useState(false);
-  const [employer, setEmployer] = useState<{ name: string; logo: string } | null>({
+  const [employer, setEmployer] = useState<{
+    name: string;
+    logo: string;
+  } | null>({
     name: "Tech for Good",
-    logo: "https://example.com/logo.png"
+    logo: "https://example.com/logo.png",
   }); // Replace with actual employer data
   const [showLegalModal, setShowLegalModal] = useState(false);
   const [legalForm, setLegalForm] = useState({
-    name: '',
-    email: '',
-    question: '',
-    employers: '',
+    name: "",
+    email: "",
+    question: "",
+    employers: "",
   });
   const [legalSubmitted, setLegalSubmitted] = useState(false);
 
   useEffect(() => {
     async function fetchProfile() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         setLoading(false);
         return;
@@ -190,7 +198,7 @@ export default function MyRestorativeRecordProfile() {
       const { data: profileData } = await supabase
         .from("user_profiles")
         .select("first_name, last_name, avatar_url")
-        .eq("user_id", user.id)
+        .eq("id", user.id)
         .single();
       setProfile(profileData);
       setLoading(false);
@@ -199,7 +207,9 @@ export default function MyRestorativeRecordProfile() {
   }, []);
 
   const handleShare = async (type: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return;
 
     try {
@@ -232,10 +242,12 @@ export default function MyRestorativeRecordProfile() {
   };
 
   const removeEmail = (emailToRemove: string) => {
-    setAddedEmails(addedEmails.filter(email => email !== emailToRemove));
+    setAddedEmails(addedEmails.filter((email) => email !== emailToRemove));
   };
 
-  const handleLegalInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleLegalInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setLegalForm({ ...legalForm, [e.target.name]: e.target.value });
   };
 
@@ -258,17 +270,26 @@ export default function MyRestorativeRecordProfile() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
-          <h1 className="text-3xl font-bold text-black">My Restorative Record</h1>
+          <h1 className="text-3xl font-bold text-black">
+            My Restorative Record
+          </h1>
           <div className="flex gap-2">
-            <button className="px-4 py-2 bg-gray-100 text-secondary rounded-lg font-medium hover:bg-gray-200 transition-colors" onClick={() => window.print()}>Print</button>
-            <button 
+            <button
+              className="px-4 py-2 bg-gray-100 text-secondary rounded-lg font-medium hover:bg-gray-200 transition-colors"
+              onClick={() => window.print()}
+            >
+              Print
+            </button>
+            <button
               onClick={() => setShowShareModal(true)}
               className="px-4 py-2 bg-gray-100 text-secondary rounded-lg font-medium hover:bg-gray-200 transition-colors"
             >
               Share
             </button>
             <Link href="/user/dashboard" passHref legacyBehavior>
-              <a className="px-4 py-2 bg-gray-100 text-secondary rounded-lg font-medium hover:bg-gray-200 transition-colors">Settings</a>
+              <a className="px-4 py-2 bg-gray-100 text-secondary rounded-lg font-medium hover:bg-gray-200 transition-colors">
+                Settings
+              </a>
             </Link>
             <button
               className="px-4 py-2 bg-gray-100 text-secondary rounded-lg font-medium hover:bg-gray-200 transition-colors"
@@ -285,20 +306,35 @@ export default function MyRestorativeRecordProfile() {
             <div className="bg-white rounded-lg w-full max-w-2xl mx-4">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-semibold text-black">Share your Restorative Record</h2>
-                  <button 
+                  <h2 className="text-2xl font-semibold text-black">
+                    Share your Restorative Record
+                  </h2>
+                  <button
                     onClick={() => setShowShareModal(false)}
                     className="text-gray-500 hover:text-gray-700"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 </div>
 
                 {/* Share with specific people */}
                 <div className="mb-6">
-                  <h3 className="text-lg font-medium text-black mb-2">Share with specific people</h3>
+                  <h3 className="text-lg font-medium text-black mb-2">
+                    Share with specific people
+                  </h3>
                   <div className="flex gap-2 mb-2">
                     <input
                       type="email"
@@ -317,21 +353,37 @@ export default function MyRestorativeRecordProfile() {
                   {addedEmails.length > 0 && (
                     <div className="space-y-2">
                       {addedEmails.map((email, index) => (
-                        <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded-lg">
+                        <div
+                          key={index}
+                          className="flex items-center justify-between bg-gray-50 p-2 rounded-lg"
+                        >
                           <span className="text-sm text-gray-700">{email}</span>
                           <button
                             onClick={() => removeEmail(email)}
                             className="text-gray-500 hover:text-gray-700"
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-5 w-5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M6 18L18 6M6 6l12 12"
+                              />
                             </svg>
                           </button>
                         </div>
                       ))}
                     </div>
                   )}
-                  <p className="text-sm text-gray-500 mt-2">Only people you add will be able to view this record.</p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Only people you add will be able to view this record.
+                  </p>
                 </div>
 
                 {/* Share options */}
@@ -345,8 +397,12 @@ export default function MyRestorativeRecordProfile() {
                       className="mt-1"
                     />
                     <div>
-                      <div className="font-medium text-black">Share with everyone</div>
-                      <p className="text-sm text-gray-500">Anyone with the link can view your record.</p>
+                      <div className="font-medium text-black">
+                        Share with everyone
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        Anyone with the link can view your record.
+                      </p>
                     </div>
                   </label>
 
@@ -359,8 +415,12 @@ export default function MyRestorativeRecordProfile() {
                       className="mt-1"
                     />
                     <div>
-                      <div className="font-medium text-black">Keep it private</div>
-                      <p className="text-sm text-gray-500">Only you can view this record.</p>
+                      <div className="font-medium text-black">
+                        Keep it private
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        Only you can view this record.
+                      </p>
                     </div>
                   </label>
 
@@ -374,8 +434,12 @@ export default function MyRestorativeRecordProfile() {
                         className="mt-1"
                       />
                       <div>
-                        <span className="font-medium text-black">Share with employer who requested it</span>
-                        <p className="text-sm text-gray-500">Only the employer can view this record.</p>
+                        <span className="font-medium text-black">
+                          Share with employer who requested it
+                        </span>
+                        <p className="text-sm text-gray-500">
+                          Only the employer can view this record.
+                        </p>
                       </div>
                     </label>
                   )}
@@ -387,12 +451,25 @@ export default function MyRestorativeRecordProfile() {
                     onClick={() => handleShare("copy")}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg text-black font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
+                      />
                     </svg>
                     {copySuccess ? "Link copied!" : "Copy link"}
                   </button>
-                  <p className="text-sm text-gray-500 mt-2">Copy a link to share this record.</p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Copy a link to share this record.
+                  </p>
                 </div>
 
                 {/* Done button */}
@@ -413,42 +490,120 @@ export default function MyRestorativeRecordProfile() {
             <div className="bg-white rounded-lg w-full max-w-6xl mx-4">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2xl font-semibold text-black">Legal Assistance</h2>
+                  <h2 className="text-2xl font-semibold text-black">
+                    Legal Assistance
+                  </h2>
                   <button
-                    onClick={() => { setShowLegalModal(false); setLegalSubmitted(false); }}
+                    onClick={() => {
+                      setShowLegalModal(false);
+                      setLegalSubmitted(false);
+                    }}
                     className="text-gray-500 hover:text-gray-700"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 </div>
                 <div className="mb-4 text-gray-700">
-                  <p className="mb-2">If you believe you have experienced employment discrimination or have questions about your rights under Fair Chance Hiring laws, you can contact a legal team for assistance. Your inquiry will be sent to the appropriate legal professionals in your jurisdiction.</p>
+                  <p className="mb-2">
+                    If you believe you have experienced employment
+                    discrimination or have questions about your rights under
+                    Fair Chance Hiring laws, you can contact a legal team for
+                    assistance. Your inquiry will be sent to the appropriate
+                    legal professionals in your jurisdiction.
+                  </p>
                   <ul className="list-disc pl-5 text-sm text-gray-600 mb-2">
-                    <li>Fair Chance Hiring laws protect individuals with criminal records from unfair discrimination in employment.</li>
-                    <li>You have the right to know if an employer has run a background check on you.</li>
-                    <li>Legal teams can help you understand your rights and options if you believe you have been treated unfairly.</li>
+                    <li>
+                      Fair Chance Hiring laws protect individuals with criminal
+                      records from unfair discrimination in employment.
+                    </li>
+                    <li>
+                      You have the right to know if an employer has run a
+                      background check on you.
+                    </li>
+                    <li>
+                      Legal teams can help you understand your rights and
+                      options if you believe you have been treated unfairly.
+                    </li>
                   </ul>
                   {/* San Diego Applicants Message */}
                   <div className="border-l-4 border-primary bg-gray-50 p-4 my-4 rounded">
-                    <div className="font-semibold text-primary mb-1">San Diego Applicants</div>
-                    <p className="mb-2 text-black">If you would like to file a fair chance complaint, please complete the <a href="https://forms.office.com/Pages/ResponsePage.aspx?id=E69jRSnAs0G3TJZejuyPlqdlrWcla0pGkN2zYgm3FclUMUVUMDdGOFZDWlNJSlRDODBNMDNRWVNHOCQlQCN0PWcu" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">official fair chance complaint inquiry form</a>.</p>
-                    <p className="mb-1 text-black">If you are unable to fill out the form, contact us via:</p>
+                    <div className="font-semibold text-primary mb-1">
+                      San Diego Applicants
+                    </div>
+                    <p className="mb-2 text-black">
+                      If you would like to file a fair chance complaint, please
+                      complete the{" "}
+                      <a
+                        href="https://forms.office.com/Pages/ResponsePage.aspx?id=E69jRSnAs0G3TJZejuyPlqdlrWcla0pGkN2zYgm3FclUMUVUMDdGOFZDWlNJSlRDODBNMDNRWVNHOCQlQCN0PWcu"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline"
+                      >
+                        official fair chance complaint inquiry form
+                      </a>
+                      .
+                    </p>
+                    <p className="mb-1 text-black">
+                      If you are unable to fill out the form, contact us via:
+                    </p>
                     <ul className="text-black text-sm mb-1">
-                      <li><span className="font-medium">Email:</span> <a href="mailto:olse@sdcounty.ca.gov" className="text-blue-600 underline">olse@sdcounty.ca.gov</a></li>
-                      <li><span className="font-medium">Office:</span> <a href="tel:6195315129" className="text-blue-600 underline">619-531-5129</a></li>
+                      <li>
+                        <span className="font-medium">Email:</span>{" "}
+                        <a
+                          href="mailto:olse@sdcounty.ca.gov"
+                          className="text-blue-600 underline"
+                        >
+                          olse@sdcounty.ca.gov
+                        </a>
+                      </li>
+                      <li>
+                        <span className="font-medium">Office:</span>{" "}
+                        <a
+                          href="tel:6195315129"
+                          className="text-blue-600 underline"
+                        >
+                          619-531-5129
+                        </a>
+                      </li>
                       <li>We are open Monday-Friday 8:00 am-5:00 pm</li>
                     </ul>
-                    <p className="text-black text-sm">If your question is not related to fair chance hiring, please call <a href="tel:8586943900" className="text-blue-600 underline">858-694-3900</a>.</p>
+                    <p className="text-black text-sm">
+                      If your question is not related to fair chance hiring,
+                      please call{" "}
+                      <a
+                        href="tel:8586943900"
+                        className="text-blue-600 underline"
+                      >
+                        858-694-3900
+                      </a>
+                      .
+                    </p>
                   </div>
                 </div>
                 {legalSubmitted ? (
-                  <div className="text-green-600 font-medium text-center py-8">Thank you! Your request has been submitted. A legal professional will contact you soon.</div>
+                  <div className="text-green-600 font-medium text-center py-8">
+                    Thank you! Your request has been submitted. A legal
+                    professional will contact you soon.
+                  </div>
                 ) : (
                   <form onSubmit={handleLegalSubmit} className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Your Name
+                      </label>
                       <input
                         type="text"
                         name="name"
@@ -459,7 +614,9 @@ export default function MyRestorativeRecordProfile() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Your Email</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Your Email
+                      </label>
                       <input
                         type="email"
                         name="email"
@@ -470,7 +627,9 @@ export default function MyRestorativeRecordProfile() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Describe your question or issue</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Describe your question or issue
+                      </label>
                       <textarea
                         name="question"
                         value={legalForm.question}
@@ -481,7 +640,9 @@ export default function MyRestorativeRecordProfile() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Employer(s) who have run background checks on you</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Employer(s) who have run background checks on you
+                      </label>
                       <input
                         type="text"
                         name="employers"
@@ -509,8 +670,27 @@ export default function MyRestorativeRecordProfile() {
         <section className="mb-8 p-6 bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="flex justify-between items-start mb-2">
             <h2 className="text-xl font-semibold text-black">About</h2>
-            <Link href="/restorative-record?section=introduction" passHref legacyBehavior>
-              <a className="bg-black text-white p-2 rounded-lg" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z" /></svg></a>
+            <Link
+              href="/restorative-record?section=introduction"
+              passHref
+              legacyBehavior
+            >
+              <a className="bg-black text-white p-2 rounded-lg" title="Edit">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                  />
+                </svg>
+              </a>
             </Link>
           </div>
           <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
@@ -526,18 +706,37 @@ export default function MyRestorativeRecordProfile() {
               </div>
             )}
             <div className="flex-1">
-              <div className="font-semibold text-lg mb-1">{profile?.first_name || "Sam"} {profile?.last_name || "Finn"}</div>
-              <div className="text-secondary mb-2">Aspiring Software Engineer | Bilingual | Los Angeles, CA</div>
-              <div className="mb-2 text-black">"My journey is about resilience, growth, and giving back. I believe in second chances and the power of community."</div>
+              <div className="font-semibold text-lg mb-1">
+                {profile?.first_name || "Sam"} {profile?.last_name || "Finn"}
+              </div>
+              <div className="text-secondary mb-2">
+                Aspiring Software Engineer | Bilingual | Los Angeles, CA
+              </div>
+              <div className="mb-2 text-black">
+                "My journey is about resilience, growth, and giving back. I
+                believe in second chances and the power of community."
+              </div>
               <div className="flex flex-wrap gap-2 mb-2">
-                <span className="bg-gray-100 px-3 py-1 rounded-full text-sm">Software Engineer</span>
-                <span className="bg-gray-100 px-3 py-1 rounded-full text-sm">Mentor</span>
-                <span className="bg-gray-100 px-3 py-1 rounded-full text-sm">Volunteer</span>
+                <span className="bg-gray-100 px-3 py-1 rounded-full text-sm">
+                  Software Engineer
+                </span>
+                <span className="bg-gray-100 px-3 py-1 rounded-full text-sm">
+                  Mentor
+                </span>
+                <span className="bg-gray-100 px-3 py-1 rounded-full text-sm">
+                  Volunteer
+                </span>
               </div>
               <div className="flex gap-3 mt-2">
-                <a href="#" className="text-blue-500 underline text-sm">LinkedIn</a>
-                <a href="#" className="text-blue-500 underline text-sm">GitHub</a>
-                <a href="#" className="text-blue-500 underline text-sm">Portfolio</a>
+                <a href="#" className="text-blue-500 underline text-sm">
+                  LinkedIn
+                </a>
+                <a href="#" className="text-blue-500 underline text-sm">
+                  GitHub
+                </a>
+                <a href="#" className="text-blue-500 underline text-sm">
+                  Portfolio
+                </a>
               </div>
             </div>
           </div>
@@ -546,22 +745,63 @@ export default function MyRestorativeRecordProfile() {
         {/* Achievements */}
         <section className="mb-8">
           <div className="flex justify-between items-center mb-2">
-            <h2 className="text-xl font-semibold text-black">Personal Achievements & Awards</h2>
-            <Link href="/restorative-record?section=personal-achievements" passHref legacyBehavior>
-              <a className="bg-black text-white p-2 rounded-lg" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z" /></svg></a>
+            <h2 className="text-xl font-semibold text-black">
+              Personal Achievements & Awards
+            </h2>
+            <Link
+              href="/restorative-record?section=personal-achievements"
+              passHref
+              legacyBehavior
+            >
+              <a className="bg-black text-white p-2 rounded-lg" title="Edit">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                  />
+                </svg>
+              </a>
             </Link>
           </div>
           {achievements.map((award, idx) => (
-            <div key={idx} className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+            <div
+              key={idx}
+              className="bg-white border border-gray-200 rounded-lg p-4 mb-4"
+            >
               <div className="font-semibold text-black mb-1">{award.name}</div>
-              <div className="text-sm text-secondary mb-1">Type: {award.type}</div>
-              <div className="text-sm text-secondary mb-1">Organization: {award.organization}</div>
-              <div className="text-sm text-secondary mb-1">Date: {award.date}</div>
-              <div className="text-sm text-black mb-1">Narrative: {award.narrative}</div>
+              <div className="text-sm text-secondary mb-1">
+                Type: {award.type}
+              </div>
+              <div className="text-sm text-secondary mb-1">
+                Organization: {award.organization}
+              </div>
+              <div className="text-sm text-secondary mb-1">
+                Date: {award.date}
+              </div>
+              <div className="text-sm text-black mb-1">
+                Narrative: {award.narrative}
+              </div>
               {award.file && (
                 <div className="text-sm mt-2">
-                  <a href={award.file.url} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">{award.file.name}</a>
-                  <span className="ml-2 text-gray-400">{formatFileSize(award.file.size)}</span>
+                  <a
+                    href={award.file.url}
+                    className="text-blue-600 underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {award.file.name}
+                  </a>
+                  <span className="ml-2 text-gray-400">
+                    {formatFileSize(award.file.size)}
+                  </span>
                 </div>
               )}
             </div>
@@ -572,20 +812,61 @@ export default function MyRestorativeRecordProfile() {
         <section className="mb-8">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-xl font-semibold text-black">Skills</h2>
-            <Link href="/restorative-record?section=skills" passHref legacyBehavior>
-              <a className="bg-black text-white p-2 rounded-lg" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z" /></svg></a>
+            <Link
+              href="/restorative-record?section=skills"
+              passHref
+              legacyBehavior
+            >
+              <a className="bg-black text-white p-2 rounded-lg" title="Edit">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                  />
+                </svg>
+              </a>
             </Link>
           </div>
           {skills.map((skill, idx) => (
-            <div key={idx} className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
-              <div className="text-sm text-secondary mb-1">Soft Skills: {skill.softSkills}</div>
-              <div className="text-sm text-secondary mb-1">Hard Skills: {skill.hardSkills}</div>
-              {skill.otherSkills && <div className="text-sm text-secondary mb-1">Other Skills: {skill.otherSkills}</div>}
-              <div className="text-sm text-black mb-1">Narrative: {skill.narrative}</div>
+            <div
+              key={idx}
+              className="bg-white border border-gray-200 rounded-lg p-4 mb-4"
+            >
+              <div className="text-sm text-secondary mb-1">
+                Soft Skills: {skill.softSkills}
+              </div>
+              <div className="text-sm text-secondary mb-1">
+                Hard Skills: {skill.hardSkills}
+              </div>
+              {skill.otherSkills && (
+                <div className="text-sm text-secondary mb-1">
+                  Other Skills: {skill.otherSkills}
+                </div>
+              )}
+              <div className="text-sm text-black mb-1">
+                Narrative: {skill.narrative}
+              </div>
               {skill.file && (
                 <div className="text-sm mt-2">
-                  <a href={skill.file.url} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">{skill.file.name}</a>
-                  <span className="ml-2 text-gray-400">{formatFileSize(skill.file.size)}</span>
+                  <a
+                    href={skill.file.url}
+                    className="text-blue-600 underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {skill.file.name}
+                  </a>
+                  <span className="ml-2 text-gray-400">
+                    {formatFileSize(skill.file.size)}
+                  </span>
                 </div>
               )}
             </div>
@@ -595,24 +876,70 @@ export default function MyRestorativeRecordProfile() {
         {/* Community Engagement */}
         <section className="mb-8">
           <div className="flex justify-between items-center mb-2">
-            <h2 className="text-xl font-semibold text-black">Community Engagement</h2>
-            <Link href="/restorative-record?section=community-engagement" passHref legacyBehavior>
-              <a className="bg-black text-white p-2 rounded-lg" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z" /></svg></a>
+            <h2 className="text-xl font-semibold text-black">
+              Community Engagement
+            </h2>
+            <Link
+              href="/restorative-record?section=community-engagement"
+              passHref
+              legacyBehavior
+            >
+              <a className="bg-black text-white p-2 rounded-lg" title="Edit">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                  />
+                </svg>
+              </a>
             </Link>
           </div>
           {communityEngagements.map((eng, idx) => (
-            <div key={idx} className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+            <div
+              key={idx}
+              className="bg-white border border-gray-200 rounded-lg p-4 mb-4"
+            >
               <div className="font-semibold text-black mb-1">{eng.role}</div>
-              <div className="text-sm text-secondary mb-1">Type: {eng.type}</div>
-              <div className="text-sm text-secondary mb-1">Organization: {eng.orgName}</div>
-              <div className="text-sm mb-1">
-                <a href={eng.orgWebsite} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">{eng.orgWebsite}</a>
+              <div className="text-sm text-secondary mb-1">
+                Type: {eng.type}
               </div>
-              <div className="text-sm text-black mb-1">Details: {eng.details}</div>
+              <div className="text-sm text-secondary mb-1">
+                Organization: {eng.orgName}
+              </div>
+              <div className="text-sm mb-1">
+                <a
+                  href={eng.orgWebsite}
+                  className="text-blue-600 underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {eng.orgWebsite}
+                </a>
+              </div>
+              <div className="text-sm text-black mb-1">
+                Details: {eng.details}
+              </div>
               {eng.file && (
                 <div className="text-sm mt-2">
-                  <a href={eng.file.url} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">{eng.file.name}</a>
-                  <span className="ml-2 text-gray-400">{formatFileSize(eng.file.size)}</span>
+                  <a
+                    href={eng.file.url}
+                    className="text-blue-600 underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {eng.file.name}
+                  </a>
+                  <span className="ml-2 text-gray-400">
+                    {formatFileSize(eng.file.size)}
+                  </span>
                 </div>
               )}
             </div>
@@ -622,16 +949,44 @@ export default function MyRestorativeRecordProfile() {
         {/* Rehabilitative Programs */}
         <section className="mb-8">
           <div className="flex justify-between items-center mb-2">
-            <h2 className="text-xl font-semibold text-black">Rehabilitative Programs</h2>
-            <Link href="/restorative-record?section=rehabilitative-programs" passHref legacyBehavior>
-              <a className="bg-black text-white p-2 rounded-lg" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z" /></svg></a>
+            <h2 className="text-xl font-semibold text-black">
+              Rehabilitative Programs
+            </h2>
+            <Link
+              href="/restorative-record?section=rehabilitative-programs"
+              passHref
+              legacyBehavior
+            >
+              <a className="bg-black text-white p-2 rounded-lg" title="Edit">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                  />
+                </svg>
+              </a>
             </Link>
           </div>
           {rehabPrograms.map((prog, idx) => (
-            <div key={idx} className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+            <div
+              key={idx}
+              className="bg-white border border-gray-200 rounded-lg p-4 mb-4"
+            >
               <div className="font-semibold text-black mb-1">{prog.label}</div>
-              <div className="text-sm text-secondary mb-1">Year: {prog.year}</div>
-              <div className="text-sm text-black mb-1">Narrative: {prog.narrative}</div>
+              <div className="text-sm text-secondary mb-1">
+                Year: {prog.year}
+              </div>
+              <div className="text-sm text-black mb-1">
+                Narrative: {prog.narrative}
+              </div>
             </div>
           ))}
         </section>
@@ -639,21 +994,62 @@ export default function MyRestorativeRecordProfile() {
         {/* Hobbies & Interests */}
         <section className="mb-8">
           <div className="flex justify-between items-center mb-2">
-            <h2 className="text-xl font-semibold text-black">Hobbies & Interests</h2>
-            <Link href="/restorative-record?section=hobbies" passHref legacyBehavior>
-              <a className="bg-black text-white p-2 rounded-lg" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z" /></svg></a>
+            <h2 className="text-xl font-semibold text-black">
+              Hobbies & Interests
+            </h2>
+            <Link
+              href="/restorative-record?section=hobbies"
+              passHref
+              legacyBehavior
+            >
+              <a className="bg-black text-white p-2 rounded-lg" title="Edit">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                  />
+                </svg>
+              </a>
             </Link>
           </div>
           {hobbies.map((hobby, idx) => (
-            <div key={idx} className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
-              <div className="text-sm text-secondary mb-1">General: {hobby.general}</div>
-              <div className="text-sm text-secondary mb-1">Sports: {hobby.sports}</div>
-              <div className="text-sm text-secondary mb-1">Other: {hobby.other}</div>
-              <div className="text-sm text-black mb-1">Narrative: {hobby.narrative}</div>
+            <div
+              key={idx}
+              className="bg-white border border-gray-200 rounded-lg p-4 mb-4"
+            >
+              <div className="text-sm text-secondary mb-1">
+                General: {hobby.general}
+              </div>
+              <div className="text-sm text-secondary mb-1">
+                Sports: {hobby.sports}
+              </div>
+              <div className="text-sm text-secondary mb-1">
+                Other: {hobby.other}
+              </div>
+              <div className="text-sm text-black mb-1">
+                Narrative: {hobby.narrative}
+              </div>
               {hobby.file && (
                 <div className="text-sm mt-2">
-                  <a href={hobby.file.url} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">{hobby.file.name}</a>
-                  <span className="ml-2 text-gray-400">{formatFileSize(hobby.file.size)}</span>
+                  <a
+                    href={hobby.file.url}
+                    className="text-blue-600 underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {hobby.file.name}
+                  </a>
+                  <span className="ml-2 text-gray-400">
+                    {formatFileSize(hobby.file.size)}
+                  </span>
                 </div>
               )}
             </div>
@@ -663,26 +1059,76 @@ export default function MyRestorativeRecordProfile() {
         {/* Certifications and Licenses */}
         <section className="mb-8">
           <div className="flex justify-between items-center mb-2">
-            <h2 className="text-xl font-semibold text-black">Certifications and Licenses</h2>
-            <Link href="/restorative-record?section=microcredentials" passHref legacyBehavior>
-              <a className="bg-black text-white p-2 rounded-lg" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z" /></svg></a>
+            <h2 className="text-xl font-semibold text-black">
+              Certifications and Licenses
+            </h2>
+            <Link
+              href="/restorative-record?section=microcredentials"
+              passHref
+              legacyBehavior
+            >
+              <a className="bg-black text-white p-2 rounded-lg" title="Edit">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                  />
+                </svg>
+              </a>
             </Link>
           </div>
           {certifications.map((cert, idx) => (
-            <div key={idx} className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+            <div
+              key={idx}
+              className="bg-white border border-gray-200 rounded-lg p-4 mb-4"
+            >
               <div className="font-semibold text-black mb-1">{cert.name}</div>
-              <div className="text-sm text-secondary mb-1">Organization: {cert.organization}</div>
-              <div className="text-sm text-secondary mb-1">Issue Date: {cert.issueDate}</div>
-              <div className="text-sm text-secondary mb-1">Expiry Date: {cert.expiryDate}</div>
-              <div className="text-sm text-secondary mb-1">Credential ID: {cert.credentialId}</div>
-              <div className="text-sm mb-1">
-                <a href={cert.credentialUrl} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">{cert.credentialUrl}</a>
+              <div className="text-sm text-secondary mb-1">
+                Organization: {cert.organization}
               </div>
-              <div className="text-sm text-black mb-1">Narrative: {cert.narrative}</div>
+              <div className="text-sm text-secondary mb-1">
+                Issue Date: {cert.issueDate}
+              </div>
+              <div className="text-sm text-secondary mb-1">
+                Expiry Date: {cert.expiryDate}
+              </div>
+              <div className="text-sm text-secondary mb-1">
+                Credential ID: {cert.credentialId}
+              </div>
+              <div className="text-sm mb-1">
+                <a
+                  href={cert.credentialUrl}
+                  className="text-blue-600 underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {cert.credentialUrl}
+                </a>
+              </div>
+              <div className="text-sm text-black mb-1">
+                Narrative: {cert.narrative}
+              </div>
               {cert.file && (
                 <div className="text-sm mt-2">
-                  <a href={cert.file.url} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">{cert.file.name}</a>
-                  <span className="ml-2 text-gray-400">{formatFileSize(cert.file.size)}</span>
+                  <a
+                    href={cert.file.url}
+                    className="text-blue-600 underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {cert.file.name}
+                  </a>
+                  <span className="ml-2 text-gray-400">
+                    {formatFileSize(cert.file.size)}
+                  </span>
                 </div>
               )}
             </div>
@@ -693,24 +1139,70 @@ export default function MyRestorativeRecordProfile() {
         <section className="mb-8">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-xl font-semibold text-black">Mentors</h2>
-            <Link href="/restorative-record?section=mentors" passHref legacyBehavior>
-              <a className="bg-black text-white p-2 rounded-lg" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z" /></svg></a>
+            <Link
+              href="/restorative-record?section=mentors"
+              passHref
+              legacyBehavior
+            >
+              <a className="bg-black text-white p-2 rounded-lg" title="Edit">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                  />
+                </svg>
+              </a>
             </Link>
           </div>
           {mentors.map((mentor, idx) => (
-            <div key={idx} className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+            <div
+              key={idx}
+              className="bg-white border border-gray-200 rounded-lg p-4 mb-4"
+            >
               <div className="font-semibold text-black mb-1">{mentor.name}</div>
-              <div className="text-sm text-secondary mb-1">Title: {mentor.title}</div>
-              <div className="text-sm text-secondary mb-1">Company: {mentor.company}</div>
-              <div className="text-sm mb-1">
-                <a href={mentor.linkedin} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">{mentor.linkedin}</a>
+              <div className="text-sm text-secondary mb-1">
+                Title: {mentor.title}
               </div>
-              <div className="text-sm text-secondary mb-1">Email: {mentor.email}</div>
-              <div className="text-sm text-secondary mb-1">Phone: {mentor.phone}</div>
-              <div className="text-sm mb-1">
-                <a href={mentor.website} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">{mentor.website}</a>
+              <div className="text-sm text-secondary mb-1">
+                Company: {mentor.company}
               </div>
-              <div className="text-sm text-black mb-1">Narrative: {mentor.narrative}</div>
+              <div className="text-sm mb-1">
+                <a
+                  href={mentor.linkedin}
+                  className="text-blue-600 underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {mentor.linkedin}
+                </a>
+              </div>
+              <div className="text-sm text-secondary mb-1">
+                Email: {mentor.email}
+              </div>
+              <div className="text-sm text-secondary mb-1">
+                Phone: {mentor.phone}
+              </div>
+              <div className="text-sm mb-1">
+                <a
+                  href={mentor.website}
+                  className="text-blue-600 underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {mentor.website}
+                </a>
+              </div>
+              <div className="text-sm text-black mb-1">
+                Narrative: {mentor.narrative}
+              </div>
             </div>
           ))}
         </section>
@@ -718,25 +1210,66 @@ export default function MyRestorativeRecordProfile() {
         {/* Employment History */}
         <section className="mb-8">
           <div className="flex justify-between items-center mb-2">
-            <h2 className="text-xl font-semibold text-black">Employment History</h2>
-            <Link href="/restorative-record?section=employment-history" passHref legacyBehavior>
-              <a className="bg-black text-white p-2 rounded-lg" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z" /></svg></a>
+            <h2 className="text-xl font-semibold text-black">
+              Employment History
+            </h2>
+            <Link
+              href="/restorative-record?section=employment-history"
+              passHref
+              legacyBehavior
+            >
+              <a className="bg-black text-white p-2 rounded-lg" title="Edit">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                  />
+                </svg>
+              </a>
             </Link>
           </div>
           {employments.map((job, idx) => (
-            <div key={idx} className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+            <div
+              key={idx}
+              className="bg-white border border-gray-200 rounded-lg p-4 mb-4"
+            >
               <div className="font-semibold text-black mb-1">{job.title}</div>
-              <div className="text-sm text-secondary mb-1">Company: {job.company}</div>
-              <div className="text-sm text-secondary mb-1">Type: {job.type}</div>
-              <div className="text-sm text-secondary mb-1">Location: {job.location}</div>
+              <div className="text-sm text-secondary mb-1">
+                Company: {job.company}
+              </div>
+              <div className="text-sm text-secondary mb-1">
+                Type: {job.type}
+              </div>
+              <div className="text-sm text-secondary mb-1">
+                Location: {job.location}
+              </div>
               <div className="text-sm text-secondary mb-1">
                 {job.startDate} - {job.endDate ? job.endDate : "Present"}
               </div>
-              <div className="text-sm text-black mb-1">Description: {job.description}</div>
+              <div className="text-sm text-black mb-1">
+                Description: {job.description}
+              </div>
               {job.file && (
                 <div className="text-sm mt-2">
-                  <a href={job.file.url} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">{job.file.name}</a>
-                  <span className="ml-2 text-gray-400">{formatFileSize(job.file.size)}</span>
+                  <a
+                    href={job.file.url}
+                    className="text-blue-600 underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {job.file.name}
+                  </a>
+                  <span className="ml-2 text-gray-400">
+                    {formatFileSize(job.file.size)}
+                  </span>
                 </div>
               )}
             </div>
@@ -745,4 +1278,4 @@ export default function MyRestorativeRecordProfile() {
       </div>
     </div>
   );
-} 
+}
