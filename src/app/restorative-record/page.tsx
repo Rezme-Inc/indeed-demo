@@ -6,6 +6,8 @@ import "react-day-picker/dist/style.css";
 import { supabase } from "@/lib/supabase";
 // Import Radix UI components as needed
 // import { Button, Input, Select, ... } from '@radix-ui/react-*';
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 const categories = [
   "introduction",
@@ -60,6 +62,7 @@ interface Employment {
 
 export default function RestorativeRecordBuilder() {
   const [currentCategory, setCurrentCategory] = useState(0);
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState<any>({
     facebook: "",
     linkedin: "",
@@ -3104,6 +3107,17 @@ export default function RestorativeRecordBuilder() {
     fetchRecord();
   }, []);
 
+  useEffect(() => {
+    const section = searchParams.get("section");
+    if (section) {
+      const idx = categories.findIndex(
+        (cat) => cat.replace(/_/g, "-") === section || cat === section
+      );
+      if (idx !== -1) setCurrentCategory(idx);
+    }
+    // eslint-disable-next-line
+  }, []);
+
   // Save to Supabase
   const saveToSupabase = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -3155,7 +3169,14 @@ export default function RestorativeRecordBuilder() {
         {/* Main Content */}
         <main className="flex-1 p-8">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-3xl font-semibold text-black mb-8">Restorative Record Builder</h1>
+            <div className="flex items-center justify-between mb-8">
+              <h1 className="text-3xl font-semibold text-black">Restorative Record Builder</h1>
+              <Link href="/restorative-record/profile" legacyBehavior>
+                <a className="px-5 py-2 bg-primary text-white rounded-lg font-medium shadow hover:bg-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ml-4">
+                  MY RESTORATIVE RECORD
+                </a>
+              </Link>
+            </div>
             <div className="mb-8">{renderSection()}</div>
             <div className="flex justify-between">
               <button 

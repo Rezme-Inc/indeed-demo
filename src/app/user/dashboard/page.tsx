@@ -20,6 +20,8 @@ export default function UserDashboard() {
     date_of_birth: "",
     phone: "",
     address: "",
+    address_line1: "",
+    address_line2: "",
     city: "",
     state: "",
     zip_code: "",
@@ -65,6 +67,8 @@ export default function UserDashboard() {
           date_of_birth: profileData.date_of_birth || "",
           phone: profileData.phone || "",
           address: profileData.address || "",
+          address_line1: profileData.address_line1 || profileData.address || "",
+          address_line2: profileData.address_line2 || "",
           city: profileData.city || "",
           state: profileData.state || "",
           zip_code: profileData.zip_code || "",
@@ -143,11 +147,15 @@ export default function UserDashboard() {
     router.push("/");
   }
 
-  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const { name, value, type, checked } = e.target;
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+    const { name, value } = e.target;
+    let newValue: any = value;
+    if (e.target instanceof HTMLInputElement && e.target.type === "checkbox") {
+      newValue = e.target.checked;
+    }
     setProfileData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: newValue,
     }));
   }
 
@@ -296,76 +304,104 @@ export default function UserDashboard() {
             {activeTab === "contact" && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-black mb-2">
-                      Phone
+                      Email <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={user?.email || ""}
+                      disabled
+                      className="w-full px-4 py-2 border border-gray-100 bg-gray-50 rounded-lg focus:outline-none text-gray-400 cursor-not-allowed"
+                      placeholder="jodi@rezme.app"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-black mb-2">
+                      Phone <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="tel"
                       name="phone"
                       value={profileData.phone}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      className="w-full px-4 py-2 border border-gray-100 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="(000) 000-0000"
+                      required
                     />
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-black mb-2">
-                      Address
+                      Address Line 1 <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
-                      name="address"
-                      value={profileData.address}
+                      name="address_line1"
+                      value={profileData.address_line1 || ""}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      className="w-full px-4 py-2 border border-gray-100 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="Enter address line 1"
+                      required
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-black mb-2">
+                      Address Line 2
+                    </label>
+                    <input
+                      type="text"
+                      name="address_line2"
+                      value={profileData.address_line2 || ""}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-100 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="Enter address line 2"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-black mb-2">
-                      City
+                      City <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       name="city"
                       value={profileData.city}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      className="w-full px-4 py-2 border border-gray-100 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="City"
+                      required
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-black mb-2">
-                      State
+                      State <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="text"
+                    <select
                       name="state"
                       value={profileData.state}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                    />
+                      className="w-full px-4 py-2 border border-gray-100 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      required
+                    >
+                      <option value="">Select...</option>
+                      <option value="CA">California</option>
+                      <option value="NY">New York</option>
+                      <option value="TX">Texas</option>
+                      {/* Add all states as needed */}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-black mb-2">
-                      ZIP Code
+                      Zip code <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       name="zip_code"
                       value={profileData.zip_code}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-black mb-2">
-                      Country
-                    </label>
-                    <input
-                      type="text"
-                      name="country"
-                      value={profileData.country}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      className="w-full px-4 py-2 border border-gray-100 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="Zip code"
+                      required
                     />
                   </div>
                 </div>
@@ -374,44 +410,88 @@ export default function UserDashboard() {
 
             {activeTab === "privacy" && (
               <div className="space-y-6">
-                <div className="space-y-4">
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      name="email_notifications"
-                      checked={profileData.email_notifications}
-                      onChange={handleInputChange}
-                      className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
-                    />
-                    <span className="text-sm font-medium text-black">
-                      Email Notifications
-                    </span>
-                  </label>
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      name="marketing_emails"
-                      checked={profileData.marketing_emails}
-                      onChange={handleInputChange}
-                      className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
-                    />
-                    <span className="text-sm font-medium text-black">
-                      Marketing Emails
-                    </span>
-                  </label>
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      name="security_alerts"
-                      checked={profileData.security_alerts}
-                      onChange={handleInputChange}
-                      className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
-                    />
-                    <span className="text-sm font-medium text-black">
-                      Security Alerts
-                    </span>
-                  </label>
-                </div>
+                <form className="space-y-6">
+                  <h3 className="text-lg font-semibold text-black mb-4">WOTC Pre-Screening Survey</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-1">Full Name</label>
+                      <input type="text" name="wotc_full_name" className="w-full px-4 py-2 border border-gray-200 rounded-lg" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-1">Social Security Number (SSN)</label>
+                      <input type="text" name="wotc_ssn" className="w-full px-4 py-2 border border-gray-200 rounded-lg" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-1">Street Address</label>
+                      <input type="text" name="wotc_address" className="w-full px-4 py-2 border border-gray-200 rounded-lg" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-1">City, State, ZIP Code</label>
+                      <input type="text" name="wotc_city_state_zip" className="w-full px-4 py-2 border border-gray-200 rounded-lg" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-1">County</label>
+                      <input type="text" name="wotc_county" className="w-full px-4 py-2 border border-gray-200 rounded-lg" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-1">Phone Number</label>
+                      <input type="text" name="wotc_phone" className="w-full px-4 py-2 border border-gray-200 rounded-lg" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-1">Date of Birth (if under 40)</label>
+                      <input type="text" name="wotc_dob" className="w-full px-4 py-2 border border-gray-200 rounded-lg" />
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <p className="font-medium mb-2">Please check any of the following statements that apply to you. You may check more than one box.</p>
+                    <div className="space-y-2">
+                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_conditional_cert" className="mt-1" />I received a Conditional Certification (ETA Form 9062) from a state or local workforce agency for the Work Opportunity Tax Credit.</label>
+                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_tanf_9mo" className="mt-1" />I am a member of a family that received TANF (Temporary Assistance for Needy Families) for any 9 months during the past 18 months.</label>
+                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_vet_snap_3mo" className="mt-1" />I am a veteran and a member of a family that received SNAP (food stamps) for at least 3 months during the past 15 months.</label>
+                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_referred" className="mt-1" />I was referred to this job by:</label>
+                      <div className="pl-6 space-y-1">
+                        <label className="flex items-start gap-2"><input type="checkbox" name="wotc_voc_rehab" className="mt-1" />A state-certified vocational rehabilitation agency,</label>
+                        <label className="flex items-start gap-2"><input type="checkbox" name="wotc_ticket_work" className="mt-1" />An employment network under the Ticket to Work program, or</label>
+                        <label className="flex items-start gap-2"><input type="checkbox" name="wotc_va" className="mt-1" />The Department of Veterans Affairs.</label>
+                      </div>
+                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_snap_18_40" className="mt-1" />I am 18 or older but not yet 40, and a member of a family that:</label>
+                      <div className="pl-6 space-y-1">
+                        <label className="flex items-start gap-2"><input type="checkbox" name="wotc_snap_6mo" className="mt-1" />Received SNAP benefits for the past 6 months, OR</label>
+                        <label className="flex items-start gap-2"><input type="checkbox" name="wotc_snap_3of5" className="mt-1" />Received SNAP benefits for at least 3 of the past 5 months but is no longer eligible.</label>
+                      </div>
+                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_felony" className="mt-1" />I was convicted of a felony or released from prison for a felony during the past year.</label>
+                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_ssi" className="mt-1" />I received Supplemental Security Income (SSI) benefits during any month in the past 60 days.</label>
+                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_vet_unemp_4_6" className="mt-1" />I am a veteran who was unemployed for at least 4 weeks but less than 6 months in the past year.</label>
+                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_vet_unemp_6" className="mt-1" />I am a veteran who was unemployed for at least 6 months in the past year.</label>
+                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_vet_disab" className="mt-1" />I am a veteran with a service-connected disability who was:</label>
+                      <div className="pl-6 space-y-1">
+                        <label className="flex items-start gap-2"><input type="checkbox" name="wotc_vet_disab_discharged" className="mt-1" />Discharged or released from active duty in the U.S. Armed Forces in the past year, OR</label>
+                        <label className="flex items-start gap-2"><input type="checkbox" name="wotc_vet_disab_unemp" className="mt-1" />Unemployed for at least 6 months in the past year.</label>
+                      </div>
+                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_tanf_family" className="mt-1" />I am a member of a family that:</label>
+                      <div className="pl-6 space-y-1">
+                        <label className="flex items-start gap-2"><input type="checkbox" name="wotc_tanf_18mo" className="mt-1" />Received TANF payments for at least the past 18 months, OR</label>
+                        <label className="flex items-start gap-2"><input type="checkbox" name="wotc_tanf_18mo_since97" className="mt-1" />Received TANF for any 18 months after August 5, 1997, and the earliest 18-month period ended during the past 2 years, OR</label>
+                        <label className="flex items-start gap-2"><input type="checkbox" name="wotc_tanf_limit" className="mt-1" />Stopped being eligible for TANF payments in the past 2 years due to a federal/state time limit.</label>
+                      </div>
+                      <label className="flex items-start gap-2"><input type="checkbox" name="wotc_unemp_27wks" className="mt-1" />I have been unemployed for at least 27 consecutive weeks, and I received unemployment compensation during all or part of that time.</label>
+                    </div>
+                  </div>
+                  <div className="mt-8 border-t pt-6">
+                    <h4 className="font-semibold mb-2">Certification by Applicant</h4>
+                    <p className="mb-2 text-sm">Under penalties of perjury, I certify that I provided this information to my employer on or before the day I was offered a job, and that it is true and complete to the best of my knowledge.</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-black mb-1">Signature</label>
+                        <input type="text" name="wotc_signature" className="w-full px-4 py-2 border border-gray-200 rounded-lg" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-black mb-1">Date</label>
+                        <input type="date" name="wotc_date" className="w-full px-4 py-2 border border-gray-200 rounded-lg" />
+                      </div>
+                    </div>
+                  </div>
+                </form>
               </div>
             )}
 
