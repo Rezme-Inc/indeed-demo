@@ -1515,7 +1515,9 @@ export default function RestorativeRecordBuilder() {
         )
       );
     } else {
-      setHobbies([...hobbies, { ...hobbiesForm, id: Date.now().toString() }]);
+      // Generate a UUID v4 for new hobby entries
+      const newId = crypto.randomUUID();
+      setHobbies([...hobbies, { ...hobbiesForm, id: newId }]);
     }
 
     handleHobbiesFormClose();
@@ -4321,7 +4323,7 @@ export default function RestorativeRecordBuilder() {
     }
 
     // Save hobbies
-    for (const hobby of hobbyList) {
+    for (const hobby of hobbies) {
       let fileUrl = null;
       let fileName = null;
       let fileSize = null;
@@ -4353,10 +4355,10 @@ export default function RestorativeRecordBuilder() {
       const { error: hobbyError } = await supabase.from("hobbies").upsert({
         user_id: user.id,
         id: hobby.id,
-        general_hobby: hobby.general,
-        sports: hobby.sports,
-        other_interests: hobby.other,
-        narrative: hobby.narrative,
+        general_hobby: hobby.general || null,
+        sports: hobby.sports || null,
+        other_interests: hobby.other || null,
+        narrative: hobby.narrative || null,
         file_url: fileUrl,
         file_name: fileName,
         file_size: fileSize,
