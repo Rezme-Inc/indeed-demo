@@ -1,7 +1,7 @@
 -- Create introduction table
 CREATE TABLE IF NOT EXISTS introduction (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES auth.users(id) NOT NULL,
     facebook_url TEXT,
     linkedin_url TEXT,
     reddit_url TEXT,
@@ -24,8 +24,9 @@ CREATE TABLE IF NOT EXISTS introduction (
         'No Proficiency'
     )),
     other_languages TEXT[],
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    UNIQUE(user_id)
 );
 
 -- Set up Row Level Security (RLS)
@@ -42,18 +43,25 @@ CREATE POLICY "Users can insert their own introduction"
 
 CREATE POLICY "Users can update their own introduction"
     ON introduction FOR UPDATE
-    USING (auth.uid() = user_id)
-    WITH CHECK (auth.uid() = user_id);
+    USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete their own introduction"
     ON introduction FOR DELETE
     USING (auth.uid() = user_id);
 
 -- Create trigger to update updated_at column
-CREATE TRIGGER set_updated_at
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = timezone('utc'::text, now());
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_introduction_updated_at
     BEFORE UPDATE ON introduction
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
 -- Create index for faster lookups
-CREATE INDEX introduction_user_id_idx ON introduction(user_id); 
+CREATE INDEX IF NOT EXISTS introduction_user_id_idx ON introduction(user_id); 

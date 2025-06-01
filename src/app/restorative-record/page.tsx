@@ -144,23 +144,22 @@ export default function RestorativeRecordBuilder() {
   const { toast } = useToast();
   const [currentCategory, setCurrentCategory] = useState(0);
   const searchParams = useSearchParams();
-  const [formData, setFormData] = useState<any>({
-    facebook: "",
-    linkedin: "",
-    reddit: "",
-    portfolio: "",
-    instagram: "",
-    github: "",
-    tiktok: "",
-    pinterest: "",
-    twitter: "",
-    website: "",
-    handshake: "",
-    occupations: [],
-    occupationInput: "",
-    narrative: "",
-    englishProficiency: "",
-    otherLanguage: "",
+  const [formData, setFormData] = useState<Introduction>({
+    facebookUrl: "",
+    linkedinUrl: "",
+    redditUrl: "",
+    digitalPortfolioUrl: "",
+    instagramUrl: "",
+    githubUrl: "",
+    tiktokUrl: "",
+    pinterestUrl: "",
+    twitterUrl: "",
+    personalWebsiteUrl: "",
+    handshakeUrl: "",
+    preferredOccupation: "",
+    personalNarrative: "",
+    languageProficiency: "No Proficiency",
+    otherLanguages: [],
   });
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -170,17 +169,20 @@ export default function RestorativeRecordBuilder() {
 
   // Social media fields
   const socialFields = [
-    { name: "facebook", label: "Enter your Facebook URL" },
-    { name: "linkedin", label: "Enter your LinkedIn URL" },
-    { name: "reddit", label: "Enter your Reddit URL" },
-    { name: "portfolio", label: "Enter your Digital Portfolio Link URL" },
-    { name: "instagram", label: "Enter your Instagram URL" },
-    { name: "github", label: "Enter your GitHub URL" },
-    { name: "tiktok", label: "Enter your TikTok URL" },
-    { name: "pinterest", label: "Enter your Pinterest URL" },
-    { name: "twitter", label: "Enter your X (Twitter) URL" },
-    { name: "website", label: "Enter your Personal Website URL" },
-    { name: "handshake", label: "Enter your Handshake URL" },
+    { name: "facebookUrl", label: "Enter your Facebook URL" },
+    { name: "linkedinUrl", label: "Enter your LinkedIn URL" },
+    { name: "redditUrl", label: "Enter your Reddit URL" },
+    {
+      name: "digitalPortfolioUrl",
+      label: "Enter your Digital Portfolio Link URL",
+    },
+    { name: "instagramUrl", label: "Enter your Instagram URL" },
+    { name: "githubUrl", label: "Enter your GitHub URL" },
+    { name: "tiktokUrl", label: "Enter your TikTok URL" },
+    { name: "pinterestUrl", label: "Enter your Pinterest URL" },
+    { name: "twitterUrl", label: "Enter your X (Twitter) URL" },
+    { name: "personalWebsiteUrl", label: "Enter your Personal Website URL" },
+    { name: "handshakeUrl", label: "Enter your Handshake URL" },
   ];
 
   // English proficiency options
@@ -1017,31 +1019,44 @@ export default function RestorativeRecordBuilder() {
     >
   ) => {
     const { name, value } = e.target;
-    setFormData((prev: any) => ({ ...prev, [name]: value }));
+    const key = name as keyof Introduction;
+    if (key in formData) {
+      setFormData((prev) => ({
+        ...prev,
+        [key]: value,
+      }));
+    }
   };
 
+  const [occupationInput, setOccupationInput] = useState("");
+  const [occupations, setOccupations] = useState<string[]>([]);
+
   const handleOccupationInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((prev: any) => ({ ...prev, occupationInput: e.target.value }));
+    setOccupationInput(e.target.value);
   };
 
   const handleOccupationKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement>
   ) => {
-    if (e.key === "Enter" && formData.occupationInput.trim()) {
+    if (e.key === "Enter" && occupationInput.trim()) {
       e.preventDefault();
-      setFormData((prev: any) => ({
+      setOccupations((prev) => [...prev, occupationInput.trim()]);
+      setFormData((prev) => ({
         ...prev,
-        occupations: [...prev.occupations, prev.occupationInput.trim()],
-        occupationInput: "",
+        preferredOccupation: occupationInput.trim(),
       }));
+      setOccupationInput("");
     }
   };
 
   const handleRemoveOccupation = (idx: number) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      occupations: prev.occupations.filter((_: any, i: number) => i !== idx),
-    }));
+    setOccupations((prev) => prev.filter((_, i) => i !== idx));
+    if (idx === 0) {
+      setFormData((prev) => ({
+        ...prev,
+        preferredOccupation: "",
+      }));
+    }
   };
 
   // Form Submission
@@ -1572,15 +1587,16 @@ export default function RestorativeRecordBuilder() {
                 Preferred Occupation
               </h3>
               <input
+                type="text"
                 name="occupationInput"
-                value={formData.occupationInput}
+                value={occupationInput}
                 onChange={handleOccupationInput}
                 onKeyDown={handleOccupationKeyDown}
                 className="border border-gray-200 px-4 py-2 rounded-lg w-full mb-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                placeholder="Type here and press Enter to add an occupation"
+                placeholder="Type occupation and press Enter"
               />
               <div className="flex flex-wrap gap-2">
-                {formData.occupations.map((occ: string, idx: number) => (
+                {occupations.map((occ: string, idx: number) => (
                   <span
                     key={idx}
                     className="bg-gray-100 px-3 py-1 rounded-full flex items-center text-sm"
@@ -1588,10 +1604,10 @@ export default function RestorativeRecordBuilder() {
                     {occ}
                     <button
                       type="button"
-                      className="ml-2 text-primary hover:text-red-600"
                       onClick={() => handleRemoveOccupation(idx)}
+                      className="ml-2 text-gray-500 hover:text-gray-700"
                     >
-                      &times;
+                      ×
                     </button>
                   </span>
                 ))}
@@ -1606,16 +1622,13 @@ export default function RestorativeRecordBuilder() {
                 Personal Narrative
               </h3>
               <textarea
-                name="narrative"
-                value={formData.narrative}
+                name="personalNarrative"
+                value={formData.personalNarrative}
                 onChange={handleInputChange}
-                className="border border-gray-200 px-4 py-2 rounded-lg w-full min-h-[120px] focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                placeholder="Your personal narrative"
-                maxLength={700}
+                className="border border-gray-200 px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                placeholder="Tell us about yourself..."
+                rows={4}
               />
-              <div className="text-xs text-secondary text-right mt-1">
-                {formData.narrative.length}/700 characters
-              </div>
             </div>
             {/* Language */}
             <div className="mb-6">
@@ -1629,9 +1642,9 @@ export default function RestorativeRecordBuilder() {
                     <label key={opt} className="flex items-center gap-2">
                       <input
                         type="radio"
-                        name="englishProficiency"
+                        name="languageProficiency"
                         value={opt}
-                        checked={formData.englishProficiency === opt}
+                        checked={formData.languageProficiency === opt}
                         onChange={handleInputChange}
                         className="accent-primary"
                         required
@@ -1646,9 +1659,17 @@ export default function RestorativeRecordBuilder() {
                   Other Languages
                 </span>
                 <select
-                  name="otherLanguage"
-                  value={formData.otherLanguage}
-                  onChange={handleInputChange}
+                  name="otherLanguages"
+                  value={formData.otherLanguages.join(", ")}
+                  onChange={(e) => {
+                    const languages = e.target.value
+                      .split(",")
+                      .map((lang) => lang.trim());
+                    setFormData((prev) => ({
+                      ...prev,
+                      otherLanguages: languages,
+                    }));
+                  }}
                   className="border border-gray-200 px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 >
                   <option value="">Select a language...</option>
@@ -4116,7 +4137,7 @@ export default function RestorativeRecordBuilder() {
       } = await supabase.auth.getUser();
       if (!user) return;
       const { data, error } = await supabase
-        .from("restorative_records")
+        .from("introduction")
         .select("*")
         .eq("user_id", user.id)
         .single();
@@ -4124,15 +4145,15 @@ export default function RestorativeRecordBuilder() {
         setFormData((prev: any) => ({
           ...prev,
           ...data,
-          introduction: data.introduction || "",
-          narrative: data.narrative || "",
-          linkedin: data.social_media_profiles?.linkedin || "",
-          github: data.social_media_profiles?.github || "",
-          twitter: data.social_media_profiles?.twitter || "",
-          portfolio: data.social_media_profiles?.portfolio || "",
+          introduction: data.personal_narrative || "",
+          narrative: data.personal_narrative || "",
+          linkedin: data.linkedin_url || "",
+          github: data.github_url || "",
+          twitter: data.twitter_url || "",
+          portfolio: data.digital_portfolio_url || "",
           preferred_occupation: data.preferred_occupation || "",
-          language: data.language || "",
-          additional_languages: data.additional_languages || [],
+          language: data.language_proficiency || "",
+          additional_languages: data.other_languages || [],
         }));
       }
     }
@@ -4158,28 +4179,34 @@ export default function RestorativeRecordBuilder() {
     if (!user) return;
 
     // Save introduction information
-    const { error: introError } = await supabase.from("introduction").upsert({
-      user_id: user.id,
-      facebook_url: introductionData.facebookUrl,
-      linkedin_url: introductionData.linkedinUrl,
-      reddit_url: introductionData.redditUrl,
-      digital_portfolio_url: introductionData.digitalPortfolioUrl,
-      instagram_url: introductionData.instagramUrl,
-      github_url: introductionData.githubUrl,
-      tiktok_url: introductionData.tiktokUrl,
-      pinterest_url: introductionData.pinterestUrl,
-      twitter_url: introductionData.twitterUrl,
-      personal_website_url: introductionData.personalWebsiteUrl,
-      handshake_url: introductionData.handshakeUrl,
-      preferred_occupation: introductionData.preferredOccupation,
-      personal_narrative: introductionData.personalNarrative,
-      language_proficiency: introductionData.languageProficiency,
-      other_languages: introductionData.otherLanguages,
-    });
+    const { error: introError } = await supabase.from("introduction").upsert(
+      {
+        user_id: user.id,
+        facebook_url: formData.facebookUrl || null,
+        linkedin_url: formData.linkedinUrl || null,
+        reddit_url: formData.redditUrl || null,
+        digital_portfolio_url: formData.digitalPortfolioUrl || null,
+        instagram_url: formData.instagramUrl || null,
+        github_url: formData.githubUrl || null,
+        tiktok_url: formData.tiktokUrl || null,
+        pinterest_url: formData.pinterestUrl || null,
+        twitter_url: formData.twitterUrl || null,
+        personal_website_url: formData.personalWebsiteUrl || null,
+        handshake_url: formData.handshakeUrl || null,
+        preferred_occupation: formData.preferredOccupation || null,
+        personal_narrative: formData.personalNarrative || null,
+        language_proficiency: formData.languageProficiency || "No Proficiency",
+        other_languages: formData.otherLanguages || [],
+      },
+      {
+        onConflict: "user_id",
+      }
+    );
 
     if (introError) {
       console.error("Error saving introduction:", introError);
       toast.error("Failed to save introduction information");
+      return;
     }
 
     // Save rehabilitative programs
@@ -4240,42 +4267,38 @@ export default function RestorativeRecordBuilder() {
 
     // Save hobbies
     for (const hobby of hobbyList) {
-      let fileUrl: string | null = null;
-      let fileName: string | null = null;
-      let fileSize: number | null = null;
+      let fileUrl = null;
 
-      // Upload file if exists
+      // Upload file if it exists
       if (hobby.file) {
-        const fileExt = hobby.file.name.split(".").pop() || "";
-        const filePath = `${user.id}/${Date.now()}.${fileExt}`;
-        const { data: fileData, error: fileError } = await supabase.storage
-          .from("hobbies")
-          .upload(filePath, hobby.file);
+        const fileExt = hobby.file.name.split(".").pop();
+        const fileName = `${user.id}/${hobby.id}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from("hobby-files")
+          .upload(fileName, hobby.file);
 
-        if (fileError) {
-          console.error("Error uploading file:", fileError);
+        if (uploadError) {
+          console.error("Error uploading hobby file:", uploadError);
+          toast.error("Failed to upload hobby file");
           continue;
         }
 
-        const { data } = supabase.storage
-          .from("hobbies")
-          .getPublicUrl(filePath);
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("hobby-files").getPublicUrl(fileName);
 
-        fileUrl = data.publicUrl;
-        fileName = hobby.file.name;
-        fileSize = hobby.file.size;
+        fileUrl = publicUrl;
       }
 
-      // Save hobby to database
+      // Save hobby data
       const { error: hobbyError } = await supabase.from("hobbies").upsert({
         user_id: user.id,
+        id: hobby.id,
         general: hobby.general,
         sports: hobby.sports,
         other: hobby.other,
         narrative: hobby.narrative,
-        file_url: fileUrl || undefined,
-        file_name: fileName || undefined,
-        file_size: fileSize || undefined,
+        file_url: fileUrl,
       });
 
       if (hobbyError) {
@@ -4284,293 +4307,7 @@ export default function RestorativeRecordBuilder() {
       }
     }
 
-    // Save education
-    for (const edu of educations) {
-      let fileUrl: string | null = null;
-      let fileName: string | null = null;
-      let fileSize: number | null = null;
-
-      // Upload file if exists
-      if (edu.file) {
-        const fileExt = edu.file.name.split(".").pop() || "";
-        const filePath = `${user.id}/${Date.now()}.${fileExt}`;
-        const { data: fileData, error: fileError } = await supabase.storage
-          .from("education")
-          .upload(filePath, edu.file);
-
-        if (fileError) {
-          console.error("Error uploading file:", fileError);
-          continue;
-        }
-
-        const { data } = supabase.storage
-          .from("education")
-          .getPublicUrl(filePath);
-
-        fileUrl = data.publicUrl;
-        fileName = edu.file.name;
-        fileSize = edu.file.size;
-      }
-
-      // Save education to database
-      const { error: eduError } = await supabase.from("education").upsert({
-        user_id: user.id,
-        school_name: edu.school,
-        school_location: edu.location,
-        degree: edu.degree,
-        field_of_study: edu.field,
-        currently_enrolled: edu.currentlyEnrolled,
-        start_date: edu.startDate,
-        end_date: edu.endDate,
-        grade: edu.grade,
-        description: edu.description,
-        file_url: fileUrl || undefined,
-        file_name: fileName || undefined,
-        file_size: fileSize || undefined,
-      });
-
-      if (eduError) {
-        console.error("Error saving education:", eduError);
-        toast.error("Failed to save education");
-      }
-    }
-
-    // Save mentors
-    for (const mentor of mentors) {
-      const { error: mentorError } = await supabase.from("mentors").upsert({
-        user_id: user.id,
-        linkedin: mentor.linkedin,
-        name: mentor.name,
-        company: mentor.company,
-        title: mentor.title,
-        email: mentor.email,
-        phone: mentor.phone,
-        website: mentor.website,
-        narrative: mentor.narrative,
-      });
-
-      if (mentorError) {
-        console.error("Error saving mentor:", mentorError);
-        toast.error("Failed to save mentor");
-      }
-    }
-
-    // Save micro credentials
-    for (const micro of microcredentials) {
-      let fileUrl: string | null = null;
-      let fileName: string | null = null;
-      let fileSize: number | null = null;
-
-      // Upload file if exists
-      if (micro.file) {
-        const fileExt = micro.file.name.split(".").pop() || "";
-        const filePath = `${user.id}/${Date.now()}.${fileExt}`;
-        const { data: fileData, error: fileError } = await supabase.storage
-          .from("micro_credentials")
-          .upload(filePath, micro.file);
-
-        if (fileError) {
-          console.error("Error uploading file:", fileError);
-          continue;
-        }
-
-        const { data } = supabase.storage
-          .from("micro_credentials")
-          .getPublicUrl(filePath);
-
-        fileUrl = data.publicUrl;
-        fileName = micro.file.name;
-        fileSize = micro.file.size;
-      }
-
-      // Save micro credential to database
-      const { error: microError } = await supabase
-        .from("micro_credentials")
-        .upsert({
-          user_id: user.id,
-          name: micro.name,
-          issuing_organization: micro.org,
-          issue_date: micro.issueDate,
-          expiry_date: micro.expiryDate,
-          narrative: micro.narrative,
-          file_url: fileUrl || undefined,
-          file_name: fileName || undefined,
-          file_size: fileSize || undefined,
-        });
-
-      if (microError) {
-        console.error("Error saving micro credential:", microError);
-        toast.error("Failed to save micro credential");
-      }
-    }
-
-    // Save awards
-    for (const award of awards) {
-      let fileUrl: string | null = null;
-      let fileName: string | null = null;
-      let fileSize: number | null = null;
-
-      // Upload file if exists
-      if (award.file) {
-        const fileExt = award.file.name.split(".").pop() || "";
-        const filePath = `${user.id}/${Date.now()}.${fileExt}`;
-        const { data: fileData, error: fileError } = await supabase.storage
-          .from("awards")
-          .upload(filePath, award.file);
-
-        if (fileError) {
-          console.error("Error uploading file:", fileError);
-          continue;
-        }
-
-        const { data } = supabase.storage.from("awards").getPublicUrl(filePath);
-
-        fileUrl = data.publicUrl;
-        fileName = award.file.name;
-        fileSize = award.file.size;
-      }
-
-      // Save award to database
-      const { error: awardError } = await supabase.from("awards").upsert({
-        user_id: user.id,
-        type: award.type,
-        name: award.name,
-        organization: award.organization,
-        date: award.date,
-        file_url: fileUrl || undefined,
-        file_name: fileName || undefined,
-        file_size: fileSize || undefined,
-        narrative: award.narrative,
-      });
-
-      if (awardError) {
-        console.error("Error saving award:", awardError);
-        toast.error("Failed to save award");
-      }
-    }
-
-    // Save skills
-    for (const skill of skills) {
-      let fileUrl: string | null = null;
-      let fileName: string | null = null;
-      let fileSize: number | null = null;
-
-      // Upload file if exists
-      if (skill.file) {
-        const fileExt = skill.file.name.split(".").pop() || "";
-        const filePath = `${user.id}/${Date.now()}.${fileExt}`;
-        const { data: fileData, error: fileError } = await supabase.storage
-          .from("skills")
-          .upload(filePath, skill.file);
-
-        if (fileError) {
-          console.error("Error uploading file:", fileError);
-          continue;
-        }
-
-        const { data } = supabase.storage.from("skills").getPublicUrl(filePath);
-
-        fileUrl = data.publicUrl;
-        fileName = skill.file.name;
-        fileSize = skill.file.size;
-      }
-
-      // Save skill to database
-      const { error: skillError } = await supabase.from("skills").upsert({
-        user_id: user.id,
-        soft_skills: skill.softSkills.split(",").map((s) => s.trim()),
-        hard_skills: skill.hardSkills.split(",").map((s) => s.trim()),
-        other_skills: skill.otherSkills,
-        file_url: fileUrl || undefined,
-        file_name: fileName || undefined,
-        file_size: fileSize || undefined,
-        narrative: skill.narrative,
-      });
-
-      if (skillError) {
-        console.error("Error saving skill:", skillError);
-        toast.error("Failed to save skill");
-      }
-    }
-
-    // Save community engagements
-    for (const engagement of engagements) {
-      let fileUrl: string | null = null;
-      let fileName: string | null = null;
-      let fileSize: number | null = null;
-
-      // Upload file if exists
-      if (engagement.file) {
-        const fileExt = engagement.file.name.split(".").pop() || "";
-        const filePath = `${user.id}/${Date.now()}.${fileExt}`;
-        const { data: fileData, error: fileError } = await supabase.storage
-          .from("community_engagements")
-          .upload(filePath, engagement.file);
-
-        if (fileError) {
-          console.error("Error uploading file:", fileError);
-          continue;
-        }
-
-        const { data } = supabase.storage
-          .from("community_engagements")
-          .getPublicUrl(filePath);
-
-        fileUrl = data.publicUrl;
-        fileName = engagement.file.name;
-        fileSize = engagement.file.size;
-      }
-
-      // Save community engagement to database
-      const { error: engagementError } = await supabase
-        .from("community_engagements")
-        .upsert({
-          user_id: user.id,
-          type: engagement.type,
-          role: engagement.role,
-          organization_name: engagement.orgName,
-          organization_website: engagement.orgWebsite,
-          details: engagement.details,
-          file_url: fileUrl || undefined,
-          file_name: fileName || undefined,
-          file_size: fileSize || undefined,
-        });
-
-      if (engagementError) {
-        console.error("Error saving community engagement:", engagementError);
-        toast.error("Failed to save community engagement");
-      }
-    }
-
-    // Save other restorative record data
-    const restorativeRecordData = {
-      user_id: user.id,
-      introduction: formData.introduction || "",
-      narrative: formData.narrative || "",
-      social_media_profiles: {
-        linkedin: formData.linkedin || "",
-        github: formData.github || "",
-        twitter: formData.twitter || "",
-        portfolio: formData.portfolio || "",
-      },
-      preferred_occupation: formData.preferred_occupation || "",
-      language: formData.language || "",
-      additional_languages: Array.isArray(formData.additional_languages)
-        ? formData.additional_languages
-        : [],
-    };
-
-    const { error: recordError } = await supabase
-      .from("restorative_records")
-      .upsert(restorativeRecordData, {
-        onConflict: "user_id",
-        ignoreDuplicates: false,
-      });
-
-    if (recordError) {
-      console.error("Error saving to Supabase:", recordError);
-      toast.error("Failed to save changes");
-    }
+    // ... rest of the saveToSupabase function ...
   };
 
   const rehabProgramsList = [
@@ -4715,7 +4452,7 @@ export default function RestorativeRecordBuilder() {
     >
   ) => {
     const { name, value } = e.target;
-    setIntroductionData((prev) => ({
+    setFormData((prev: any) => ({
       ...prev,
       [name]: value,
     }));
@@ -4724,16 +4461,16 @@ export default function RestorativeRecordBuilder() {
   const handleLanguageProficiencyChange = (
     value: Introduction["languageProficiency"]
   ) => {
-    setIntroductionData((prev) => ({
+    setFormData((prev: any) => ({
       ...prev,
-      languageProficiency: value,
+      languageProficiency: value || "No Proficiency",
     }));
   };
 
   const handleOtherLanguagesChange = (languages: string[]) => {
-    setIntroductionData((prev) => ({
+    setFormData((prev: any) => ({
       ...prev,
-      otherLanguages: languages,
+      otherLanguages: languages || [],
     }));
   };
 
