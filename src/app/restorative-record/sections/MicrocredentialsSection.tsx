@@ -5,12 +5,14 @@ import { RecordItem } from "../components/RecordItem";
 import { useFormCRUD } from "../hooks/useFormCRUD";
 import { Microcredential } from "../types";
 import { formatDateForDisplay, formatDateForInput } from "../utils";
+import { useEffect } from "react";
 
 interface MicrocredentialsSectionProps {
   microHook: ReturnType<typeof useFormCRUD<Omit<Microcredential, "id">>>;
   handleMicroFileChange: (file: File | null) => void;
   microFileError: string;
   setMicroFileError: (error: string) => void;
+  onChange?: () => void;
 }
 
 export function MicrocredentialsSection({
@@ -18,7 +20,34 @@ export function MicrocredentialsSection({
   handleMicroFileChange,
   microFileError,
   setMicroFileError,
+  onChange,
 }: MicrocredentialsSectionProps) {
+  // Debug: Log items when they change
+  useEffect(() => {
+    console.log("Microcredentials items updated:", microHook.items.length);
+  }, [microHook.items]);
+
+  const handleSave = () => {
+    const result = microHook.handleSave();
+    if (result && onChange) onChange();
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const success = await microHook.handleDelete(id);
+      if (success) {
+        // Small delay to ensure state updates are processed
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    } catch (error) {
+      console.error("Error in handleDelete:", error);
+    }
+  };
+
+  const handleEdit = (id: string) => {
+    microHook.handleEdit(id);
+  };
+
   return (
     <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
       <div className="flex justify-between items-center mb-2">
@@ -56,10 +85,11 @@ export function MicrocredentialsSection({
                     : ""
                 }`,
                 micro.credentialId ? `ID: ${micro.credentialId}` : "",
+                micro.credentialUrl ? `URL: ${micro.credentialUrl}` : "",
               ].filter(Boolean)}
               narrative={micro.narrative}
-              onEdit={() => microHook.handleEdit(micro.id)}
-              onDelete={() => microHook.handleDelete(micro.id)}
+              onEdit={() => handleEdit(micro.id)}
+              onDelete={() => handleDelete(micro.id)}
             />
           ))}
         </div>
@@ -76,7 +106,7 @@ export function MicrocredentialsSection({
         onClose={microHook.handleFormClose}
         onSubmit={(e) => {
           e.preventDefault();
-          microHook.handleSave();
+          handleSave();
         }}
         submitText="Credential"
         isEditing={!!microHook.editingId}

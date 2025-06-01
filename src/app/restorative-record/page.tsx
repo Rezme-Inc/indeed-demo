@@ -320,6 +320,34 @@ export default function RestorativeRecordBuilder() {
     otherDetails: "",
   });
 
+  // Function to refresh microcredentials data
+  const refreshMicrocredentials = async () => {
+    if (!user) return;
+    
+    const { data: microData } = await supabase
+      .from("micro_credentials")
+      .select("*")
+      .eq("user_id", user.id);
+    if (microData && Array.isArray(microData)) {
+      // Map Supabase fields to form fields
+      const mappedMicrocredentials = microData.map((remote) => ({
+        id: remote.id,
+        name: remote.name || "",
+        org: remote.issuing_organization || "",
+        issueDate: remote.issue_date || "",
+        expiryDate: remote.expiry_date || "",
+        credentialId: remote.credential_id || "",
+        credentialUrl: remote.credential_url || "",
+        narrative: remote.narrative || "",
+        file: null,
+        filePreview: remote.file_url || "",
+      }));
+      microHook.setItems(mappedMicrocredentials);
+    } else {
+      microHook.setItems([]);
+    }
+  };
+
   // Microcredentials state with custom hook
   const microHook = useFormCRUD<Omit<Microcredential, "id">>({
     initialFormState: {
@@ -336,9 +364,54 @@ export default function RestorativeRecordBuilder() {
     validateForm: (form) => {
       return !!(form.name && form.org && form.issueDate);
     },
+    tableName: "micro_credentials",
+    userId: user?.id,
+    toast: (options: { title: string; description: string; variant?: string }) => {
+      if (options.variant === "destructive") {
+        toast.error(options.description);
+      } else {
+        toast.success(options.description);
+      }
+    },
   });
 
   const [microFileError, setMicroFileError] = useState("");
+
+  // Fetch microcredentials from Supabase when navigating to the microcredentials section
+  useEffect(() => {
+    async function fetchMicrocredentials() {
+      if (!user) return;
+      
+      const { data: microData } = await supabase
+        .from("micro_credentials")
+        .select("*")
+        .eq("user_id", user.id);
+      if (microData && Array.isArray(microData)) {
+        // Map Supabase fields to form fields
+        const mappedMicrocredentials = microData.map((remote) => ({
+          id: remote.id,
+          name: remote.name || "",
+          org: remote.issuing_organization || "",
+          issueDate: remote.issue_date || "",
+          expiryDate: remote.expiry_date || "",
+          credentialId: remote.credential_id || "",
+          credentialUrl: remote.credential_url || "",
+          narrative: remote.narrative || "",
+          file: null,
+          filePreview: remote.file_url || "",
+        }));
+        
+        // Merge with existing local data if any
+        const existingIds = microHook.items.map(item => item.id);
+        const newItems = mappedMicrocredentials.filter(item => !existingIds.includes(item.id));
+        microHook.setItems([...microHook.items, ...newItems]);
+      }
+    }
+    
+    if (currentCategory === categories.findIndex(cat => cat === "microcredentials") && user) {
+      fetchMicrocredentials();
+    }
+  }, [currentCategory, user]);
 
   // Mentors state with custom hook
   const mentorHook = useFormCRUD<Omit<Mentor, "id">>({
@@ -760,6 +833,7 @@ export default function RestorativeRecordBuilder() {
             handleMicroFileChange={handleMicroFileChange}
             microFileError={microFileError}
             setMicroFileError={setMicroFileError}
+            onChange={handleSaveToSupabase}
           />
         );
 

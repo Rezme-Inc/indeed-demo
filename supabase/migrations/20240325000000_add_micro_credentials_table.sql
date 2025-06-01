@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS micro_credentials (
     issuing_organization TEXT NOT NULL,
     issue_date DATE NOT NULL,
     expiry_date DATE,
+    credential_id TEXT,
+    credential_url TEXT,
     narrative TEXT,
     file_url TEXT,
     file_name TEXT,

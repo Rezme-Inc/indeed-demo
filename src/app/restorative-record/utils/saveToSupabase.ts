@@ -341,6 +341,8 @@ export async function saveToSupabase({
         issuing_organization: micro.org,
         issue_date: micro.issueDate || null,
         expiry_date: micro.expiryDate || null,
+        credential_id: micro.credentialId || null,
+        credential_url: micro.credentialUrl || null,
         narrative: micro.narrative || null,
         file_url: fileUrl,
         file_name: fileName,

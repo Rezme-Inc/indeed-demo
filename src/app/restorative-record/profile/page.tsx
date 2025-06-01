@@ -1148,6 +1148,21 @@ export default function MyRestorativeRecordProfile() {
                   Credential ID: {cert.credential_id}
                 </div>
               )}
+              {cert.credential_url && (
+                <div className="text-sm text-secondary mb-1">
+                  URL:{" "}
+                  <a
+                    href={cert.credential_url.startsWith("http://") || cert.credential_url.startsWith("https://") 
+                      ? cert.credential_url 
+                      : `https://${cert.credential_url}`}
+                    className="text-primary hover:text-red-600 underline transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {cert.credential_url}
+                  </a>
+                </div>
+              )}
               {cert.narrative && (
                 <div className="text-sm text-black mb-1">
                   Narrative: {cert.narrative}
