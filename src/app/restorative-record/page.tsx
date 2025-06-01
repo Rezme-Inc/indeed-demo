@@ -87,6 +87,45 @@ export default function RestorativeRecordBuilder() {
 
   const [awardFileError, setAwardFileError] = useState("");
 
+  // Fetch awards from Supabase on mount and when navigating to the Personal Achievements section
+  useEffect(() => {
+    async function fetchAwards() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: awardsData } = await supabase
+        .from("awards")
+        .select("*")
+        .eq("user_id", user.id);
+      if (awardsData && Array.isArray(awardsData)) {
+        // Map Supabase fields to form fields
+        const mappedAwards = awardsData.map((remote) => ({
+          id: remote.id,
+          type: remote.type || "",
+          name: remote.name || "",
+          organization: remote.organization || "",
+          date: remote.date || "",
+          file: null, // File upload not restored from DB
+          filePreview: remote.file_url || "",
+          narrative: remote.narrative || "",
+        }));
+        // Merge with local unsaved entries by id
+        const localAwards = awardsHook.items || [];
+        const mergedAwards = [
+          ...mappedAwards.filter(
+            (remote) => !localAwards.some((local) => local.id === remote.id)
+          ),
+          ...localAwards,
+        ];
+        awardsHook.setItems(mergedAwards);
+      }
+    }
+    // Fetch on mount and whenever the Personal Achievements section is active
+    if (categories[currentCategory] === "personal-achievements") {
+      fetchAwards();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentCategory]);
+
   // Skills state with custom hook
   const skillsHook = useFormCRUD<Omit<Skill, "id">>({
     initialFormState: {
