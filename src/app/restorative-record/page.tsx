@@ -104,6 +104,44 @@ export default function RestorativeRecordBuilder() {
 
   const [skillsFileError, setSkillsFileError] = useState("");
 
+  // Fetch skills from Supabase on mount and when navigating to the Skills section
+  useEffect(() => {
+    async function fetchSkills() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: skillsData } = await supabase
+        .from("skills")
+        .select("*")
+        .eq("user_id", user.id);
+      if (skillsData && Array.isArray(skillsData)) {
+        // Map Supabase fields to form fields
+        const mappedSkills = skillsData.map((remote) => ({
+          id: remote.id,
+          softSkills: Array.isArray(remote.soft_skills) ? remote.soft_skills.join(", ") : "",
+          hardSkills: Array.isArray(remote.hard_skills) ? remote.hard_skills.join(", ") : "",
+          otherSkills: remote.other_skills || "",
+          file: null, // File upload not restored from DB
+          filePreview: remote.file_url || "",
+          narrative: remote.narrative || "",
+        }));
+        // Merge with local unsaved entries by id
+        const localSkills = skillsHook.items || [];
+        const mergedSkills = [
+          ...mappedSkills.filter(
+            (remote) => !localSkills.some((local) => local.id === remote.id)
+          ),
+          ...localSkills,
+        ];
+        skillsHook.setItems(mergedSkills);
+      }
+    }
+    // Fetch on mount and whenever the Skills section is active
+    if (categories[currentCategory] === "skills") {
+      fetchSkills();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentCategory]);
+
   // Engagement state with custom hook
   const engagementHook = useFormCRUD<Omit<Engagement, "id">>({
     initialFormState: {
