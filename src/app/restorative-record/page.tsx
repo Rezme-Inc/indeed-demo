@@ -580,7 +580,9 @@ export default function RestorativeRecordBuilder() {
         )
       );
     } else {
-      setMentors([...mentors, { ...mentorForm, id: Date.now().toString() }]);
+      // Generate a UUID v4 for new mentor entries
+      const newId = crypto.randomUUID();
+      setMentors([...mentors, { ...mentorForm, id: newId }]);
     }
 
     handleMentorFormClose();
@@ -1150,7 +1152,9 @@ export default function RestorativeRecordBuilder() {
         )
       );
     } else {
-      setAwards([...awards, { ...awardForm, id: Date.now().toString() }]);
+      // Generate a UUID v4 for new award entries
+      const newId = crypto.randomUUID();
+      setAwards([...awards, { ...awardForm, id: newId }]);
     }
 
     handleAwardFormClose();
@@ -4394,6 +4398,76 @@ export default function RestorativeRecordBuilder() {
       if (employmentError) {
         console.error("Error saving employment:", employmentError);
         toast.error("Failed to save employment");
+      }
+    }
+
+    // Save awards
+    for (const award of awards) {
+      let fileUrl = null;
+      let fileName = null;
+      let fileSize = null;
+
+      // Upload file if it exists
+      if (award.file) {
+        const fileExt = award.file.name.split(".").pop();
+        const filePath = `${user.id}/${award.id}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from("award-files")
+          .upload(filePath, award.file);
+
+        if (uploadError) {
+          console.error("Error uploading award file:", uploadError);
+          toast.error("Failed to upload award file");
+          continue;
+        }
+
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("award-files").getPublicUrl(filePath);
+
+        fileUrl = publicUrl;
+        fileName = award.file.name;
+        fileSize = award.file.size;
+      }
+
+      // Save award data
+      const { error: awardError } = await supabase.from("awards").upsert({
+        user_id: user.id,
+        id: award.id,
+        type: award.type,
+        name: award.name,
+        organization: award.organization,
+        date: award.date,
+        narrative: award.narrative || null,
+        file_url: fileUrl,
+        file_name: fileName,
+        file_size: fileSize,
+      });
+
+      if (awardError) {
+        console.error("Error saving award:", awardError);
+        toast.error("Failed to save award");
+      }
+    }
+
+    // Save mentors
+    for (const mentor of mentors) {
+      const { error: mentorError } = await supabase.from("mentors").upsert({
+        user_id: user.id,
+        id: mentor.id,
+        linkedin_profile: mentor.linkedin || null,
+        name: mentor.name,
+        company: mentor.company || null,
+        title: mentor.title || null,
+        email: mentor.email || null,
+        phone: mentor.phone || null,
+        website: mentor.website || null,
+        narrative: mentor.narrative || null,
+      });
+
+      if (mentorError) {
+        console.error("Error saving mentor:", mentorError);
+        toast.error("Failed to save mentor");
       }
     }
   };
