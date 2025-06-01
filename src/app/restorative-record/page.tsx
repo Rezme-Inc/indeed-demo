@@ -1,11 +1,10 @@
 "use client";
 
-import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import "react-day-picker/dist/style.css";
+import { toast } from "react-hot-toast";
 
 // Import types
 import {
@@ -48,7 +47,7 @@ import {
 import { useFormCRUD } from "./hooks/useFormCRUD";
 
 export default function RestorativeRecordBuilder() {
-  const { toast } = useToast();
+  const router = useRouter();
   const [currentCategory, setCurrentCategory] = useState(0);
   const searchParams = useSearchParams();
   const [formData, setFormData] = useState<Introduction>({
@@ -68,6 +67,7 @@ export default function RestorativeRecordBuilder() {
     languageProficiency: "No Proficiency",
     otherLanguages: [],
   });
+  const [showIncompleteModal, setShowIncompleteModal] = useState(false);
 
   // Award state with custom hook
   const awardsHook = useFormCRUD<Omit<Award, "id">>({
@@ -287,10 +287,32 @@ export default function RestorativeRecordBuilder() {
   // Form Submission
   const handleSubmit = async () => {
     await handleSaveToSupabase();
-    toast({
-      title: "Success",
-      description: "Restorative Record submitted!",
-    });
+
+    // Mark the restorative record as completed in user_profiles
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      const { error } = await supabase
+        .from("user_profiles")
+        .update({
+          rr_completed: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id);
+
+      if (error) {
+        console.error("Error marking record as completed:", error);
+        toast.error("Failed to complete the restorative record");
+        return;
+      }
+    }
+
+    toast.success("Restorative Record submitted successfully!");
+
+    // Redirect to the profile page
+    router.push("/restorative-record/profile");
   };
 
   // Handlers for file uploads
@@ -373,6 +395,19 @@ export default function RestorativeRecordBuilder() {
     } = await supabase.auth.getUser();
     if (!user) return;
 
+    // Create a toast wrapper that matches the expected format
+    const toastWrapper = (options: {
+      title: string;
+      description: string;
+      variant?: string;
+    }) => {
+      if (options.variant === "destructive") {
+        toast.error(options.description);
+      } else {
+        toast.success(options.description);
+      }
+    };
+
     await saveToSupabase({
       user,
       formData,
@@ -385,7 +420,7 @@ export default function RestorativeRecordBuilder() {
       employmentHook,
       awardsHook,
       mentorHook,
-      toast,
+      toast: toastWrapper,
     });
   };
 
@@ -530,6 +565,27 @@ export default function RestorativeRecordBuilder() {
     // eslint-disable-next-line
   }, []);
 
+  const handleViewProfile = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    // Check if the restorative record is completed in user_profiles
+    const { data, error } = await supabase
+      .from("user_profiles")
+      .select("rr_completed")
+      .eq("id", user.id)
+      .single();
+
+    if (error || !data || !data.rr_completed) {
+      setShowIncompleteModal(true);
+    } else {
+      router.push("/restorative-record/profile");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <div className="flex">
@@ -562,11 +618,12 @@ export default function RestorativeRecordBuilder() {
               <h1 className="text-3xl font-semibold text-black">
                 Restorative Record Builder
               </h1>
-              <Link href="/restorative-record/profile" legacyBehavior>
-                <a className="px-5 py-2 bg-primary text-white rounded-lg font-medium shadow hover:bg-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ml-4">
-                  MY RESTORATIVE RECORD
-                </a>
-              </Link>
+              <button
+                onClick={handleViewProfile}
+                className="px-5 py-2 bg-primary text-white rounded-lg font-medium shadow hover:bg-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ml-4"
+              >
+                MY RESTORATIVE RECORD
+              </button>
             </div>
             <div className="mb-8">{renderSection()}</div>
             <div className="flex justify-between">
@@ -596,6 +653,28 @@ export default function RestorativeRecordBuilder() {
           </div>
         </main>
       </div>
+
+      {/* Incomplete Record Modal */}
+      {showIncompleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md mx-4">
+            <h3 className="text-xl font-semibold mb-3">
+              Complete Your Restorative Record
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Please complete the Restorative Record to use this feature. You
+              must go through all sections and submit your record before viewing
+              your profile.
+            </p>
+            <button
+              onClick={() => setShowIncompleteModal(false)}
+              className="w-full px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
+            >
+              Continue Building Record
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

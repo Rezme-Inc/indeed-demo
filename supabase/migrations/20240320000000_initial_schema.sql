@@ -13,6 +13,8 @@ CREATE TABLE user_profiles (
     state TEXT,
     zip_code TEXT,
     country TEXT,
+    avatar_url TEXT,
+    rr_completed BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
@@ -331,40 +333,5 @@ CREATE POLICY "Users can update their own WOTC surveys"
 -- Add trigger for updated_at
 CREATE TRIGGER update_wotc_surveys_updated_at
     BEFORE UPDATE ON wotc_surveys
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
-
--- Create restorative_records table
-CREATE TABLE restorative_records (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES auth.users(id) NOT NULL UNIQUE,
-    introduction TEXT,
-    narrative TEXT,
-    social_media_profiles JSONB DEFAULT '{}',
-    preferred_occupation TEXT,
-    language TEXT,
-    additional_languages TEXT[] DEFAULT '{}',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
-);
-
--- Add RLS policies for restorative records
-ALTER TABLE restorative_records ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view their own restorative records"
-    ON restorative_records FOR SELECT
-    USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert their own restorative records"
-    ON restorative_records FOR INSERT
-    WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update their own restorative records"
-    ON restorative_records FOR UPDATE
-    USING (auth.uid() = user_id);
-
--- Add trigger for updated_at
-CREATE TRIGGER update_restorative_records_updated_at
-    BEFORE UPDATE ON restorative_records
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column(); 

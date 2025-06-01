@@ -3,160 +3,6 @@ import { useUser } from "@/hooks/useUser";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
-
-// Placeholder data arrays for demonstration
-const certifications = [
-  {
-    name: "Certificate of Ethical Conduct",
-    organization: "Tech for Good",
-    issueDate: "2021-06-01",
-    expiryDate: "2024-06-01",
-    credentialId: "12345",
-    credentialUrl: "https://certs.techforgood.org/12345",
-    narrative: "This is a narrative for the certification.",
-    file: {
-      name: "ethics-cert.pdf",
-      url: "https://example.com/ethics-cert.pdf",
-      size: 30720, // in bytes
-    },
-  },
-];
-
-const achievements = [
-  {
-    type: "Community Service",
-    name: "Volunteer of the Year",
-    organization: "LA Food Bank",
-    date: "2022-05-01",
-    narrative: "Recognized for outstanding volunteer service.",
-    file: {
-      name: "award-photo.jpg",
-      url: "https://example.com/award-photo.jpg",
-      size: 204800,
-    },
-  },
-  {
-    type: "Academic Achievement",
-    name: "Dean's List",
-    organization: "State University",
-    date: "2021-12-15",
-    narrative: "Maintained a GPA above 3.8.",
-    file: null,
-  },
-];
-
-const skills = [
-  {
-    softSkills: "Communication, Teamwork",
-    hardSkills: "JavaScript, React",
-    otherSkills: "Public Speaking",
-    narrative: "Developed strong communication skills through group projects.",
-    file: null,
-  },
-  {
-    softSkills: "Problem Solving",
-    hardSkills: "Python, Data Analysis",
-    otherSkills: "Mentoring",
-    narrative: "Mentored peers in coding bootcamp.",
-    file: {
-      name: "skills-certificate.pdf",
-      url: "https://example.com/skills-certificate.pdf",
-      size: 102400,
-    },
-  },
-];
-
-const communityEngagements = [
-  {
-    type: "Mentorship",
-    role: "Mentor",
-    orgName: "Youth Coding Bootcamp",
-    orgWebsite: "https://youthcode.org",
-    details: "Guided students through their first coding projects.",
-    file: null,
-  },
-  {
-    type: "Volunteer Work",
-    role: "Volunteer",
-    orgName: "LA Food Bank",
-    orgWebsite: "https://lafoodbank.org",
-    details: "Helped distribute food to families in need.",
-    file: {
-      name: "volunteer-photo.jpg",
-      url: "https://example.com/volunteer-photo.jpg",
-      size: 51200,
-    },
-  },
-];
-
-const rehabPrograms = [
-  {
-    label: "Substance Use Disorder Treatment",
-    year: "2020",
-    narrative:
-      "Completed a 12-week outpatient program focused on relapse prevention.",
-  },
-  {
-    label: "Life Skills Training",
-    year: "2021",
-    narrative: "Learned financial management and communication skills.",
-  },
-];
-
-const hobbies = [
-  {
-    general: "Reading",
-    sports: "Basketball",
-    other: "Photography",
-    narrative:
-      "Reading helps me relax and learn new things. I enjoy playing basketball with friends and capturing moments through photography.",
-    file: null,
-  },
-  {
-    general: "Gardening",
-    sports: "Running",
-    other: "Cooking",
-    narrative:
-      "Gardening and cooking are my creative outlets. Running keeps me healthy.",
-    file: {
-      name: "garden-photo.jpg",
-      url: "https://example.com/garden-photo.jpg",
-      size: 25600,
-    },
-  },
-];
-
-const mentors = [
-  {
-    name: "Mark Walsh",
-    title: "Mentor",
-    company: "Tech for Good",
-    linkedin: "https://linkedin.com/in/markwalsh",
-    email: "mark@example.com",
-    phone: "555-123-4567",
-    website: "https://markwalsh.com",
-    narrative:
-      "Mark provided invaluable guidance and support during my transition, helping me develop both technical and soft skills.",
-  },
-];
-
-const employments = [
-  {
-    title: "Software Engineer",
-    company: "Tech for Good",
-    type: "Full-time",
-    location: "San Francisco, CA",
-    startDate: "2020-06-01",
-    endDate: null, // Present
-    description: "Worked on social impact projects.",
-    file: {
-      name: "employment-proof.pdf",
-      url: "https://example.com/employment-proof.pdf",
-      size: 40960, // in bytes
-    },
-  },
-];
 
 function formatFileSize(bytes: number) {
   if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + " MB";
@@ -173,25 +19,6 @@ const languages = [
   { value: "tagalog", label: "Tagalog" },
   { value: "other", label: "Other" },
 ];
-
-// Add type definition for the restorative record
-type RestorativeRecord = {
-  id?: string;
-  user_id: string;
-  introduction: string;
-  narrative: string;
-  social_media_profiles: {
-    linkedin: string;
-    github: string;
-    twitter: string;
-    portfolio: string;
-  };
-  preferred_occupation: string;
-  language: string;
-  additional_languages: string[];
-  created_at?: string;
-  updated_at?: string;
-};
 
 export default function MyRestorativeRecordProfile() {
   const { user } = useUser();
@@ -217,22 +44,18 @@ export default function MyRestorativeRecordProfile() {
     employers: "",
   });
   const [legalSubmitted, setLegalSubmitted] = useState(false);
-  const [restorativeRecord, setRestorativeRecord] = useState<RestorativeRecord>(
-    {
-      user_id: "",
-      introduction: "",
-      narrative: "",
-      social_media_profiles: {
-        linkedin: "",
-        github: "",
-        twitter: "",
-        portfolio: "",
-      },
-      preferred_occupation: "",
-      language: "",
-      additional_languages: [],
-    }
-  );
+
+  // State for all restorative record data
+  const [introduction, setIntroduction] = useState<any>(null);
+  const [achievements, setAchievements] = useState<any[]>([]);
+  const [skills, setSkills] = useState<any[]>([]);
+  const [communityEngagements, setCommunityEngagements] = useState<any[]>([]);
+  const [rehabPrograms, setRehabPrograms] = useState<any>(null);
+  const [hobbies, setHobbies] = useState<any[]>([]);
+  const [certifications, setCertifications] = useState<any[]>([]);
+  const [mentors, setMentors] = useState<any[]>([]);
+  const [employments, setEmployments] = useState<any[]>([]);
+  const [education, setEducation] = useState<any[]>([]);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -255,93 +78,87 @@ export default function MyRestorativeRecordProfile() {
   }, []);
 
   useEffect(() => {
-    const fetchRestorativeRecord = async () => {
+    async function fetchRestorativeRecordData() {
       if (!user) return;
 
       try {
-        // First try to get the record with a very basic query
-        const { data, error } = await supabase
-          .from("restorative_records")
+        // Fetch introduction
+        const { data: introData } = await supabase
+          .from("introduction")
           .select("*")
           .eq("user_id", user.id)
-          .maybeSingle();
+          .single();
+        setIntroduction(introData);
 
-        console.log("Initial fetch response:", { data, error });
+        // Fetch awards/achievements
+        const { data: awardsData } = await supabase
+          .from("awards")
+          .select("*")
+          .eq("user_id", user.id);
+        setAchievements(awardsData || []);
 
-        // If no record exists or there's an error, create a new one
-        if (error || !data) {
-          console.log("Creating new restorative record");
+        // Fetch skills
+        const { data: skillsData } = await supabase
+          .from("skills")
+          .select("*")
+          .eq("user_id", user.id);
+        setSkills(skillsData || []);
 
-          const newRecord = {
-            user_id: user.id,
-            introduction: "",
-            narrative: "",
-            social_media_profiles: {
-              linkedin: "",
-              github: "",
-              twitter: "",
-              portfolio: "",
-            },
-            preferred_occupation: "",
-            language: "",
-            additional_languages: [],
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          };
+        // Fetch community engagements
+        const { data: engagementsData } = await supabase
+          .from("community_engagements")
+          .select("*")
+          .eq("user_id", user.id);
+        setCommunityEngagements(engagementsData || []);
 
-          const { data: insertedData, error: insertError } = await supabase
-            .from("restorative_records")
-            .insert([newRecord])
-            .select()
-            .single();
+        // Fetch rehabilitative programs
+        const { data: rehabData } = await supabase
+          .from("rehabilitative_programs")
+          .select("*")
+          .eq("user_id", user.id)
+          .single();
+        setRehabPrograms(rehabData);
 
-          if (insertError) {
-            console.error("Error creating restorative record:", insertError);
-            toast.error("Failed to create restorative record");
-            return;
-          }
+        // Fetch hobbies
+        const { data: hobbiesData } = await supabase
+          .from("hobbies")
+          .select("*")
+          .eq("user_id", user.id);
+        setHobbies(hobbiesData || []);
 
-          if (insertedData) {
-            setRestorativeRecord({
-              user_id: insertedData.user_id,
-              introduction: insertedData.introduction || "",
-              narrative: insertedData.narrative || "",
-              social_media_profiles: insertedData.social_media_profiles || {
-                linkedin: "",
-                github: "",
-                twitter: "",
-                portfolio: "",
-              },
-              preferred_occupation: insertedData.preferred_occupation || "",
-              language: insertedData.language || "",
-              additional_languages: insertedData.additional_languages || [],
-            });
-          }
-          return;
-        }
+        // Fetch microcredentials/certifications
+        const { data: certsData } = await supabase
+          .from("micro_credentials")
+          .select("*")
+          .eq("user_id", user.id);
+        setCertifications(certsData || []);
 
-        // If we have data, set it directly
-        setRestorativeRecord({
-          user_id: data.user_id,
-          introduction: data.introduction || "",
-          narrative: data.narrative || "",
-          social_media_profiles: data.social_media_profiles || {
-            linkedin: "",
-            github: "",
-            twitter: "",
-            portfolio: "",
-          },
-          preferred_occupation: data.preferred_occupation || "",
-          language: data.language || "",
-          additional_languages: data.additional_languages || [],
-        });
+        // Fetch mentors
+        const { data: mentorsData } = await supabase
+          .from("mentors")
+          .select("*")
+          .eq("user_id", user.id);
+        setMentors(mentorsData || []);
+
+        // Fetch employment
+        const { data: employmentData } = await supabase
+          .from("employment")
+          .select("*")
+          .eq("user_id", user.id);
+        setEmployments(employmentData || []);
+
+        // Fetch education
+        const { data: educationData } = await supabase
+          .from("education")
+          .select("*")
+          .eq("user_id", user.id);
+        setEducation(educationData || []);
       } catch (error) {
-        console.error("Unexpected error:", error);
-        toast.error("An unexpected error occurred");
+        console.error("Error fetching restorative record data:", error);
       }
-    };
+    }
 
-    fetchRestorativeRecord();
+    fetchRestorativeRecordData();
   }, [user]);
 
   const handleShare = async (type: string) => {
@@ -393,61 +210,6 @@ export default function MyRestorativeRecordProfile() {
     e.preventDefault();
     setLegalSubmitted(true);
     // TODO: Send form data to backend or legal team
-  };
-
-  const handleSaveRestorativeRecord = async () => {
-    if (!user) return;
-
-    try {
-      // Prepare the data with explicit type checking
-      const recordData = {
-        user_id: user.id,
-        introduction: restorativeRecord.introduction || "",
-        narrative: restorativeRecord.narrative || "",
-        social_media_profiles: {
-          linkedin: restorativeRecord.social_media_profiles?.linkedin || "",
-          github: restorativeRecord.social_media_profiles?.github || "",
-          twitter: restorativeRecord.social_media_profiles?.twitter || "",
-          portfolio: restorativeRecord.social_media_profiles?.portfolio || "",
-        },
-        preferred_occupation: restorativeRecord.preferred_occupation || "",
-        language: restorativeRecord.language || "",
-        additional_languages: Array.isArray(
-          restorativeRecord.additional_languages
-        )
-          ? restorativeRecord.additional_languages
-          : [],
-        updated_at: new Date().toISOString(),
-      };
-
-      console.log("Attempting to save record with data:", recordData);
-
-      // Try to insert first
-      const { error: insertError } = await supabase
-        .from("restorative_records")
-        .insert(recordData);
-
-      if (insertError) {
-        console.log("Insert failed, trying update:", insertError);
-
-        // If insert fails, try update
-        const { error: updateError } = await supabase
-          .from("restorative_records")
-          .update(recordData)
-          .eq("user_id", user.id);
-
-        if (updateError) {
-          console.error("Both insert and update failed:", updateError);
-          toast.error("Failed to save restorative record");
-          return;
-        }
-      }
-
-      toast.success("Restorative record saved successfully");
-    } catch (error) {
-      console.error("Unexpected error while saving:", error);
-      toast.error("An unexpected error occurred");
-    }
   };
 
   if (loading) {
@@ -895,42 +657,70 @@ export default function MyRestorativeRecordProfile() {
               />
             ) : (
               <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center text-3xl font-bold text-secondary">
-                {profile?.first_name?.[0] || "S"}
+                {profile?.first_name?.[0] || "U"}
               </div>
             )}
             <div className="flex-1">
               <div className="font-semibold text-lg mb-1">
-                {profile?.first_name || "Sam"} {profile?.last_name || "Finn"}
+                {profile?.first_name || ""} {profile?.last_name || ""}
               </div>
-              <div className="text-secondary mb-2">
-                Aspiring Software Engineer | Bilingual | Los Angeles, CA
-              </div>
-              <div className="mb-2 text-black">
-                "My journey is about resilience, growth, and giving back. I
-                believe in second chances and the power of community."
-              </div>
-              <div className="flex flex-wrap gap-2 mb-2">
-                <span className="bg-gray-100 px-3 py-1 rounded-full text-sm">
-                  Software Engineer
-                </span>
-                <span className="bg-gray-100 px-3 py-1 rounded-full text-sm">
-                  Mentor
-                </span>
-                <span className="bg-gray-100 px-3 py-1 rounded-full text-sm">
-                  Volunteer
-                </span>
-              </div>
-              <div className="flex gap-3 mt-2">
-                <a href="#" className="text-blue-500 underline text-sm">
-                  LinkedIn
-                </a>
-                <a href="#" className="text-blue-500 underline text-sm">
-                  GitHub
-                </a>
-                <a href="#" className="text-blue-500 underline text-sm">
-                  Portfolio
-                </a>
-              </div>
+              {introduction && (
+                <>
+                  <div className="text-secondary mb-2">
+                    {introduction.preferred_occupation || "Professional"} |{" "}
+                    {introduction.language_proficiency || "English"}
+                    {introduction.other_languages &&
+                      introduction.other_languages.length > 0 &&
+                      ` | ${introduction.other_languages.join(", ")}`}
+                  </div>
+                  <div className="mb-2 text-black">
+                    {introduction.personal_narrative ||
+                      "No narrative provided yet."}
+                  </div>
+                  <div className="flex gap-3 mt-2">
+                    {introduction.linkedin_url && (
+                      <a
+                        href={introduction.linkedin_url}
+                        className="text-blue-500 underline text-sm"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        LinkedIn
+                      </a>
+                    )}
+                    {introduction.github_url && (
+                      <a
+                        href={introduction.github_url}
+                        className="text-blue-500 underline text-sm"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        GitHub
+                      </a>
+                    )}
+                    {introduction.digital_portfolio_url && (
+                      <a
+                        href={introduction.digital_portfolio_url}
+                        className="text-blue-500 underline text-sm"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Portfolio
+                      </a>
+                    )}
+                    {introduction.personal_website_url && (
+                      <a
+                        href={introduction.personal_website_url}
+                        className="text-blue-500 underline text-sm"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Website
+                      </a>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </section>
@@ -964,7 +754,7 @@ export default function MyRestorativeRecordProfile() {
               </a>
             </Link>
           </div>
-          {achievements.map((award, idx) => (
+          {achievements.map((award: any, idx: number) => (
             <div
               key={idx}
               className="bg-white border border-gray-200 rounded-lg p-4 mb-4"
@@ -977,28 +767,35 @@ export default function MyRestorativeRecordProfile() {
                 Organization: {award.organization}
               </div>
               <div className="text-sm text-secondary mb-1">
-                Date: {award.date}
+                Date: {new Date(award.date).toLocaleDateString()}
               </div>
-              <div className="text-sm text-black mb-1">
-                Narrative: {award.narrative}
-              </div>
-              {award.file && (
+              {award.narrative && (
+                <div className="text-sm text-black mb-1">
+                  Narrative: {award.narrative}
+                </div>
+              )}
+              {award.file_url && (
                 <div className="text-sm mt-2">
                   <a
-                    href={award.file.url}
+                    href={award.file_url}
                     className="text-blue-600 underline"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {award.file.name}
+                    {award.file_name || "View attachment"}
                   </a>
-                  <span className="ml-2 text-gray-400">
-                    {formatFileSize(award.file.size)}
-                  </span>
+                  {award.file_size && (
+                    <span className="ml-2 text-gray-400">
+                      {formatFileSize(award.file_size)}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
           ))}
+          {achievements.length === 0 && (
+            <p className="text-gray-500 italic">No achievements added yet.</p>
+          )}
         </section>
 
         {/* Skills */}
@@ -1028,42 +825,53 @@ export default function MyRestorativeRecordProfile() {
               </a>
             </Link>
           </div>
-          {skills.map((skill, idx) => (
+          {skills.map((skill: any, idx: number) => (
             <div
               key={idx}
               className="bg-white border border-gray-200 rounded-lg p-4 mb-4"
             >
-              <div className="text-sm text-secondary mb-1">
-                Soft Skills: {skill.softSkills}
-              </div>
-              <div className="text-sm text-secondary mb-1">
-                Hard Skills: {skill.hardSkills}
-              </div>
-              {skill.otherSkills && (
+              {skill.soft_skills && skill.soft_skills.length > 0 && (
                 <div className="text-sm text-secondary mb-1">
-                  Other Skills: {skill.otherSkills}
+                  Soft Skills: {skill.soft_skills.join(", ")}
                 </div>
               )}
-              <div className="text-sm text-black mb-1">
-                Narrative: {skill.narrative}
-              </div>
-              {skill.file && (
+              {skill.hard_skills && skill.hard_skills.length > 0 && (
+                <div className="text-sm text-secondary mb-1">
+                  Hard Skills: {skill.hard_skills.join(", ")}
+                </div>
+              )}
+              {skill.other_skills && (
+                <div className="text-sm text-secondary mb-1">
+                  Other Skills: {skill.other_skills}
+                </div>
+              )}
+              {skill.narrative && (
+                <div className="text-sm text-black mb-1">
+                  Narrative: {skill.narrative}
+                </div>
+              )}
+              {skill.file_url && (
                 <div className="text-sm mt-2">
                   <a
-                    href={skill.file.url}
+                    href={skill.file_url}
                     className="text-blue-600 underline"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {skill.file.name}
+                    {skill.file_name || "View attachment"}
                   </a>
-                  <span className="ml-2 text-gray-400">
-                    {formatFileSize(skill.file.size)}
-                  </span>
+                  {skill.file_size && (
+                    <span className="ml-2 text-gray-400">
+                      {formatFileSize(skill.file_size)}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
           ))}
+          {skills.length === 0 && (
+            <p className="text-gray-500 italic">No skills added yet.</p>
+          )}
         </section>
 
         {/* Community Engagement */}
@@ -1095,7 +903,7 @@ export default function MyRestorativeRecordProfile() {
               </a>
             </Link>
           </div>
-          {communityEngagements.map((eng, idx) => (
+          {communityEngagements.map((eng: any, idx: number) => (
             <div
               key={idx}
               className="bg-white border border-gray-200 rounded-lg p-4 mb-4"
@@ -1107,16 +915,18 @@ export default function MyRestorativeRecordProfile() {
               <div className="text-sm text-secondary mb-1">
                 Organization: {eng.orgName}
               </div>
-              <div className="text-sm mb-1">
-                <a
-                  href={eng.orgWebsite}
-                  className="text-blue-600 underline"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {eng.orgWebsite}
-                </a>
-              </div>
+              {eng.orgWebsite && (
+                <div className="text-sm mb-1">
+                  <a
+                    href={eng.orgWebsite}
+                    className="text-blue-600 underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {eng.orgWebsite}
+                  </a>
+                </div>
+              )}
               <div className="text-sm text-black mb-1">
                 Details: {eng.details}
               </div>
@@ -1137,6 +947,11 @@ export default function MyRestorativeRecordProfile() {
               )}
             </div>
           ))}
+          {communityEngagements.length === 0 && (
+            <p className="text-gray-500 italic">
+              No community engagements added yet.
+            </p>
+          )}
         </section>
 
         {/* Rehabilitative Programs */}
@@ -1168,20 +983,41 @@ export default function MyRestorativeRecordProfile() {
               </a>
             </Link>
           </div>
-          {rehabPrograms.map((prog, idx) => (
-            <div
-              key={idx}
-              className="bg-white border border-gray-200 rounded-lg p-4 mb-4"
-            >
-              <div className="font-semibold text-black mb-1">{prog.label}</div>
-              <div className="text-sm text-secondary mb-1">
-                Year: {prog.year}
-              </div>
-              <div className="text-sm text-black mb-1">
-                Narrative: {prog.narrative}
-              </div>
+          {rehabPrograms && (
+            <div className="space-y-2">
+              {/* Display each program if it's checked */}
+              {rehabPrograms.substance_use_disorder && (
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div className="font-semibold text-black mb-1">
+                    Substance Use Disorder Treatment
+                  </div>
+                  {rehabPrograms.substance_use_disorder_details && (
+                    <div className="text-sm text-black">
+                      {rehabPrograms.substance_use_disorder_details}
+                    </div>
+                  )}
+                </div>
+              )}
+              {rehabPrograms.life_skills_training && (
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div className="font-semibold text-black mb-1">
+                    Life Skills Training
+                  </div>
+                  {rehabPrograms.life_skills_training_details && (
+                    <div className="text-sm text-black">
+                      {rehabPrograms.life_skills_training_details}
+                    </div>
+                  )}
+                </div>
+              )}
+              {/* Add more programs as needed */}
             </div>
-          ))}
+          )}
+          {!rehabPrograms && (
+            <p className="text-gray-500 italic">
+              No rehabilitative programs added yet.
+            </p>
+          )}
         </section>
 
         {/* Hobbies & Interests */}
@@ -1213,40 +1049,53 @@ export default function MyRestorativeRecordProfile() {
               </a>
             </Link>
           </div>
-          {hobbies.map((hobby, idx) => (
+          {hobbies.map((hobby: any, idx: number) => (
             <div
               key={idx}
               className="bg-white border border-gray-200 rounded-lg p-4 mb-4"
             >
-              <div className="text-sm text-secondary mb-1">
-                General: {hobby.general}
-              </div>
-              <div className="text-sm text-secondary mb-1">
-                Sports: {hobby.sports}
-              </div>
-              <div className="text-sm text-secondary mb-1">
-                Other: {hobby.other}
-              </div>
-              <div className="text-sm text-black mb-1">
-                Narrative: {hobby.narrative}
-              </div>
-              {hobby.file && (
+              {hobby.general_hobby && (
+                <div className="text-sm text-secondary mb-1">
+                  General: {hobby.general_hobby}
+                </div>
+              )}
+              {hobby.sports && (
+                <div className="text-sm text-secondary mb-1">
+                  Sports: {hobby.sports}
+                </div>
+              )}
+              {hobby.other_interests && (
+                <div className="text-sm text-secondary mb-1">
+                  Other: {hobby.other_interests}
+                </div>
+              )}
+              {hobby.narrative && (
+                <div className="text-sm text-black mb-1">
+                  Narrative: {hobby.narrative}
+                </div>
+              )}
+              {hobby.file_url && (
                 <div className="text-sm mt-2">
                   <a
-                    href={hobby.file.url}
+                    href={hobby.file_url}
                     className="text-blue-600 underline"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {hobby.file.name}
+                    {hobby.file_name || "View attachment"}
                   </a>
-                  <span className="ml-2 text-gray-400">
-                    {formatFileSize(hobby.file.size)}
-                  </span>
+                  {hobby.file_size && (
+                    <span className="ml-2 text-gray-400">
+                      {formatFileSize(hobby.file_size)}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
           ))}
+          {hobbies.length === 0 && (
+            <p className="text-gray-500 italic">No hobbies added yet.</p>
+          )}
         </section>
 
         {/* Certifications and Licenses */}
@@ -1278,54 +1127,58 @@ export default function MyRestorativeRecordProfile() {
               </a>
             </Link>
           </div>
-          {certifications.map((cert, idx) => (
+          {certifications.map((cert: any, idx: number) => (
             <div
               key={idx}
               className="bg-white border border-gray-200 rounded-lg p-4 mb-4"
             >
               <div className="font-semibold text-black mb-1">{cert.name}</div>
               <div className="text-sm text-secondary mb-1">
-                Organization: {cert.organization}
+                Organization: {cert.issuing_organization}
               </div>
               <div className="text-sm text-secondary mb-1">
-                Issue Date: {cert.issueDate}
+                Issue Date:{" "}
+                {cert.issue_date
+                  ? new Date(cert.issue_date).toLocaleDateString()
+                  : "N/A"}
               </div>
-              <div className="text-sm text-secondary mb-1">
-                Expiry Date: {cert.expiryDate}
-              </div>
-              <div className="text-sm text-secondary mb-1">
-                Credential ID: {cert.credentialId}
-              </div>
-              <div className="text-sm mb-1">
-                <a
-                  href={cert.credentialUrl}
-                  className="text-blue-600 underline"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {cert.credentialUrl}
-                </a>
-              </div>
-              <div className="text-sm text-black mb-1">
-                Narrative: {cert.narrative}
-              </div>
-              {cert.file && (
+              {cert.expiry_date && (
+                <div className="text-sm text-secondary mb-1">
+                  Expiry Date: {new Date(cert.expiry_date).toLocaleDateString()}
+                </div>
+              )}
+              {cert.credential_id && (
+                <div className="text-sm text-secondary mb-1">
+                  Credential ID: {cert.credential_id}
+                </div>
+              )}
+              {cert.narrative && (
+                <div className="text-sm text-black mb-1">
+                  Narrative: {cert.narrative}
+                </div>
+              )}
+              {cert.file_url && (
                 <div className="text-sm mt-2">
                   <a
-                    href={cert.file.url}
+                    href={cert.file_url}
                     className="text-blue-600 underline"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {cert.file.name}
+                    {cert.file_name || "View attachment"}
                   </a>
-                  <span className="ml-2 text-gray-400">
-                    {formatFileSize(cert.file.size)}
-                  </span>
+                  {cert.file_size && (
+                    <span className="ml-2 text-gray-400">
+                      {formatFileSize(cert.file_size)}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
           ))}
+          {certifications.length === 0 && (
+            <p className="text-gray-500 italic">No certifications added yet.</p>
+          )}
         </section>
 
         {/* Mentors */}
@@ -1355,49 +1208,66 @@ export default function MyRestorativeRecordProfile() {
               </a>
             </Link>
           </div>
-          {mentors.map((mentor, idx) => (
+          {mentors.map((mentor: any, idx: number) => (
             <div
               key={idx}
               className="bg-white border border-gray-200 rounded-lg p-4 mb-4"
             >
               <div className="font-semibold text-black mb-1">{mentor.name}</div>
-              <div className="text-sm text-secondary mb-1">
-                Title: {mentor.title}
-              </div>
-              <div className="text-sm text-secondary mb-1">
-                Company: {mentor.company}
-              </div>
-              <div className="text-sm mb-1">
-                <a
-                  href={mentor.linkedin}
-                  className="text-blue-600 underline"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {mentor.linkedin}
-                </a>
-              </div>
-              <div className="text-sm text-secondary mb-1">
-                Email: {mentor.email}
-              </div>
-              <div className="text-sm text-secondary mb-1">
-                Phone: {mentor.phone}
-              </div>
-              <div className="text-sm mb-1">
-                <a
-                  href={mentor.website}
-                  className="text-blue-600 underline"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {mentor.website}
-                </a>
-              </div>
-              <div className="text-sm text-black mb-1">
-                Narrative: {mentor.narrative}
-              </div>
+              {mentor.title && (
+                <div className="text-sm text-secondary mb-1">
+                  Title: {mentor.title}
+                </div>
+              )}
+              {mentor.company && (
+                <div className="text-sm text-secondary mb-1">
+                  Company: {mentor.company}
+                </div>
+              )}
+              {mentor.linkedin_profile && (
+                <div className="text-sm mb-1">
+                  <a
+                    href={mentor.linkedin_profile}
+                    className="text-blue-600 underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    LinkedIn Profile
+                  </a>
+                </div>
+              )}
+              {mentor.email && (
+                <div className="text-sm text-secondary mb-1">
+                  Email: {mentor.email}
+                </div>
+              )}
+              {mentor.phone && (
+                <div className="text-sm text-secondary mb-1">
+                  Phone: {mentor.phone}
+                </div>
+              )}
+              {mentor.website && (
+                <div className="text-sm mb-1">
+                  <a
+                    href={mentor.website}
+                    className="text-blue-600 underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {mentor.website}
+                  </a>
+                </div>
+              )}
+              {mentor.narrative && (
+                <div className="text-sm text-black mb-1">
+                  Narrative: {mentor.narrative}
+                </div>
+              )}
             </div>
           ))}
+          {mentors.length === 0 && (
+            <p className="text-gray-500 italic">No mentors added yet.</p>
+          )}
         </section>
 
         {/* Employment History */}
@@ -1429,7 +1299,7 @@ export default function MyRestorativeRecordProfile() {
               </a>
             </Link>
           </div>
-          {employments.map((job, idx) => (
+          {employments.map((job: any, idx: number) => (
             <div
               key={idx}
               className="bg-white border border-gray-200 rounded-lg p-4 mb-4"
@@ -1439,236 +1309,35 @@ export default function MyRestorativeRecordProfile() {
                 Company: {job.company}
               </div>
               <div className="text-sm text-secondary mb-1">
-                Type: {job.type}
+                Type: {job.employment_type}
               </div>
               <div className="text-sm text-secondary mb-1">
-                Location: {job.location}
+                Location: {job.city}, {job.state}
               </div>
               <div className="text-sm text-secondary mb-1">
-                {job.startDate} - {job.endDate ? job.endDate : "Present"}
+                {job.start_date
+                  ? new Date(job.start_date).toLocaleDateString()
+                  : "N/A"}{" "}
+                -{" "}
+                {job.currently_employed
+                  ? "Present"
+                  : job.end_date
+                  ? new Date(job.end_date).toLocaleDateString()
+                  : "N/A"}
               </div>
-              <div className="text-sm text-black mb-1">
-                Description: {job.description}
-              </div>
-              {job.file && (
-                <div className="text-sm mt-2">
-                  <a
-                    href={job.file.url}
-                    className="text-blue-600 underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {job.file.name}
-                  </a>
-                  <span className="ml-2 text-gray-400">
-                    {formatFileSize(job.file.size)}
-                  </span>
+              {job.incarcerated && (
+                <div className="text-sm text-secondary mb-1">
+                  Employed while incarcerated
                 </div>
               )}
             </div>
           ))}
+          {employments.length === 0 && (
+            <p className="text-gray-500 italic">
+              No employment history added yet.
+            </p>
+          )}
         </section>
-
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">
-            Restorative Record
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <label
-                htmlFor="introduction"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Introduction
-              </label>
-              <textarea
-                id="introduction"
-                rows={4}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                value={restorativeRecord.introduction}
-                onChange={(e) =>
-                  setRestorativeRecord((prev) => ({
-                    ...prev,
-                    introduction: e.target.value,
-                  }))
-                }
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="narrative"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Personal Narrative
-              </label>
-              <textarea
-                id="narrative"
-                rows={6}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                value={restorativeRecord.narrative}
-                onChange={(e) =>
-                  setRestorativeRecord((prev) => ({
-                    ...prev,
-                    narrative: e.target.value,
-                  }))
-                }
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="preferred_occupation"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Preferred Occupation
-              </label>
-              <input
-                type="text"
-                id="preferred_occupation"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                value={restorativeRecord.preferred_occupation}
-                onChange={(e) =>
-                  setRestorativeRecord((prev) => ({
-                    ...prev,
-                    preferred_occupation: e.target.value,
-                  }))
-                }
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="language"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Language
-              </label>
-              <input
-                type="text"
-                id="language"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                value={restorativeRecord.language}
-                onChange={(e) =>
-                  setRestorativeRecord((prev) => ({
-                    ...prev,
-                    language: e.target.value,
-                  }))
-                }
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Social Media Profiles
-              </label>
-              <div className="space-y-2">
-                <div>
-                  <label
-                    htmlFor="linkedin"
-                    className="block text-sm text-gray-600"
-                  >
-                    LinkedIn
-                  </label>
-                  <input
-                    type="url"
-                    id="linkedin"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    value={restorativeRecord.social_media_profiles.linkedin}
-                    onChange={(e) =>
-                      setRestorativeRecord((prev) => ({
-                        ...prev,
-                        social_media_profiles: {
-                          ...prev.social_media_profiles,
-                          linkedin: e.target.value,
-                        },
-                      }))
-                    }
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="github"
-                    className="block text-sm text-gray-600"
-                  >
-                    GitHub
-                  </label>
-                  <input
-                    type="url"
-                    id="github"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    value={restorativeRecord.social_media_profiles.github}
-                    onChange={(e) =>
-                      setRestorativeRecord((prev) => ({
-                        ...prev,
-                        social_media_profiles: {
-                          ...prev.social_media_profiles,
-                          github: e.target.value,
-                        },
-                      }))
-                    }
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="twitter"
-                    className="block text-sm text-gray-600"
-                  >
-                    Twitter
-                  </label>
-                  <input
-                    type="url"
-                    id="twitter"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    value={restorativeRecord.social_media_profiles.twitter}
-                    onChange={(e) =>
-                      setRestorativeRecord((prev) => ({
-                        ...prev,
-                        social_media_profiles: {
-                          ...prev.social_media_profiles,
-                          twitter: e.target.value,
-                        },
-                      }))
-                    }
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="portfolio"
-                    className="block text-sm text-gray-600"
-                  >
-                    Portfolio
-                  </label>
-                  <input
-                    type="url"
-                    id="portfolio"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    value={restorativeRecord.social_media_profiles.portfolio}
-                    onChange={(e) =>
-                      setRestorativeRecord((prev) => ({
-                        ...prev,
-                        social_media_profiles: {
-                          ...prev.social_media_profiles,
-                          portfolio: e.target.value,
-                        },
-                      }))
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={handleSaveRestorativeRecord}
-                className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-              >
-                Save Restorative Record
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
