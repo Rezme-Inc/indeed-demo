@@ -95,7 +95,7 @@ export default function SignUp() {
         if (profileError) throw profileError;
       }
 
-      router.push("/login");
+      router.push("/user/dashboard");
     } catch (err) {
       console.error("Error during signup:", err);
       setError("An error occurred during signup. Please try again.");

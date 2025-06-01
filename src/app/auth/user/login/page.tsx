@@ -1,110 +1,98 @@
 "use client";
 
-import { supabase } from "@/lib/supabase";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { supabase } from "@/lib/supabase";
 
-export default function UserLogin() {
-  const router = useRouter();
+export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    setError("");
 
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-      if (error) {
-        setError(error.message);
-        return;
-      }
-
-      if (data.user) {
-        router.push("/user/dashboard");
-      }
-    } catch {
-      setError("An unexpected error occurred.");
-    } finally {
+    if (error) {
+      setError(error.message);
       setLoading(false);
+    } else {
+      // Redirect to dashboard after successful login
+      router.push("/user/dashboard");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            User Login
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Access your personal profile and manage your information
-          </p>
+    <div className="min-h-screen bg-white flex items-center justify-center px-4">
+      <div className="max-w-md w-full">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-semibold text-black mb-2">Welcome Back</h1>
+          <p className="text-secondary">Sign in to access your account</p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email-address" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email-address"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+        
+        <form onSubmit={handleLogin} className="space-y-6">
+          {error && (
+            <div className="bg-red-50 border border-primary rounded-lg p-4">
+              <p className="text-sm text-primary">{error}</p>
             </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
+          )}
+          
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-black mb-2">
+              Email Address
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              placeholder="you@example.com"
+            />
           </div>
-
-          {error && <div className="text-red-500 text-sm">{error}</div>}
 
           <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              {loading ? "Logging in..." : "Login"}
-            </button>
+            <label htmlFor="password" className="block text-sm font-medium text-black mb-2">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 px-4 bg-primary text-white font-medium rounded-lg hover:bg-red-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? "Signing in..." : "Sign In"}
+          </button>
+
+          <div className="text-center">
+            <p className="text-secondary">
+              Don't have an account?{" "}
+              <Link href="/auth/user/signup" className="text-primary hover:text-red-600 font-medium transition-colors">
+                Sign up
+              </Link>
+            </p>
           </div>
         </form>
-        <div className="text-center">
-          <Link
-            href="/auth/user/signup"
-            className="text-indigo-600 hover:text-indigo-500"
-          >
-            Don&apos;t have an account? Sign up
-          </Link>
-        </div>
       </div>
     </div>
   );

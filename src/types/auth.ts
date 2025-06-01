@@ -10,6 +10,11 @@ export interface UserProfile {
   is_visible_to_hr: boolean;
   created_at?: string;
   updated_at?: string;
+  avatar_url?: string;
+  legal_name?: string;
+  preferred_name?: string;
+  gender?: string;
+  pronouns?: string;
 }
 
 export interface HrAdminProfile {

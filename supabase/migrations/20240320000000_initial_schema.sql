@@ -6,6 +6,13 @@ CREATE TABLE user_profiles (
     last_name TEXT NOT NULL,
     birthday DATE,
     interests TEXT[] DEFAULT '{}',
+    phone TEXT,
+    address_line1 TEXT,
+    address_line2 TEXT,
+    city TEXT,
+    state TEXT,
+    zip_code TEXT,
+    country TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
@@ -274,4 +281,90 @@ CREATE POLICY "Rezme Admins can view all assessment decisions"
             SELECT 1 FROM rezme_admin_profiles
             WHERE id = auth.uid()
         )
-    ); 
+    );
+
+-- Create WOTC surveys table
+CREATE TABLE wotc_surveys (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES auth.users(id) NOT NULL,
+    ssn TEXT NOT NULL,
+    county TEXT NOT NULL,
+    conditional_cert BOOLEAN DEFAULT FALSE,
+    tanf_9mo BOOLEAN DEFAULT FALSE,
+    vet_snap_3mo BOOLEAN DEFAULT FALSE,
+    voc_rehab BOOLEAN DEFAULT FALSE,
+    ticket_work BOOLEAN DEFAULT FALSE,
+    va BOOLEAN DEFAULT FALSE,
+    snap_6mo BOOLEAN DEFAULT FALSE,
+    snap_3of5 BOOLEAN DEFAULT FALSE,
+    felony BOOLEAN DEFAULT FALSE,
+    ssi BOOLEAN DEFAULT FALSE,
+    vet_unemp_4_6 BOOLEAN DEFAULT FALSE,
+    vet_unemp_6 BOOLEAN DEFAULT FALSE,
+    vet_disab_discharged BOOLEAN DEFAULT FALSE,
+    vet_disab_unemp BOOLEAN DEFAULT FALSE,
+    tanf_18mo BOOLEAN DEFAULT FALSE,
+    tanf_18mo_since97 BOOLEAN DEFAULT FALSE,
+    tanf_limit BOOLEAN DEFAULT FALSE,
+    unemp_27wks BOOLEAN DEFAULT FALSE,
+    signature TEXT NOT NULL,
+    signature_date DATE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- Add RLS policies for WOTC surveys
+ALTER TABLE wotc_surveys ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view their own WOTC surveys"
+    ON wotc_surveys FOR SELECT
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own WOTC surveys"
+    ON wotc_surveys FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own WOTC surveys"
+    ON wotc_surveys FOR UPDATE
+    USING (auth.uid() = user_id);
+
+-- Add trigger for updated_at
+CREATE TRIGGER update_wotc_surveys_updated_at
+    BEFORE UPDATE ON wotc_surveys
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Create restorative_records table
+CREATE TABLE restorative_records (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES auth.users(id) NOT NULL UNIQUE,
+    introduction TEXT,
+    narrative TEXT,
+    social_media_profiles JSONB DEFAULT '{}',
+    preferred_occupation TEXT,
+    language TEXT,
+    additional_languages TEXT[] DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- Add RLS policies for restorative records
+ALTER TABLE restorative_records ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view their own restorative records"
+    ON restorative_records FOR SELECT
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own restorative records"
+    ON restorative_records FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own restorative records"
+    ON restorative_records FOR UPDATE
+    USING (auth.uid() = user_id);
+
+-- Add trigger for updated_at
+CREATE TRIGGER update_restorative_records_updated_at
+    BEFORE UPDATE ON restorative_records
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column(); 
