@@ -240,7 +240,6 @@ export default function RestorativeRecordBuilder() {
         toast.success(options.description);
       }
     },
-    onDelete: refreshEngagements, // Add callback to refresh after deletion
   });
 
   const [engagementFileError, setEngagementFileError] = useState("");
@@ -410,6 +409,33 @@ export default function RestorativeRecordBuilder() {
     },
   });
 
+  const [hobbiesFileError, setHobbiesFileError] = useState("");
+
+  // Function to refresh hobbies data
+  const refreshHobbies = async () => {
+    if (!user) return;
+    
+    const { data: hobbiesData } = await supabase
+      .from("hobbies")
+      .select("*")
+      .eq("user_id", user.id);
+    if (hobbiesData && Array.isArray(hobbiesData)) {
+      // Map Supabase fields to form fields
+      const mappedHobbies = hobbiesData.map((remote) => ({
+        id: remote.id,
+        general: remote.general_hobby || "",
+        sports: remote.sports || "",
+        other: remote.other_interests || "",
+        narrative: remote.narrative || "",
+        file: null,
+        filePreview: remote.file_url || "",
+      }));
+      hobbiesHook.setItems(mappedHobbies);
+    } else {
+      hobbiesHook.setItems([]);
+    }
+  };
+
   // Hobbies state with custom hook
   const hobbiesHook = useFormCRUD<Omit<Hobby, "id">>({
     initialFormState: {
@@ -423,9 +449,49 @@ export default function RestorativeRecordBuilder() {
     validateForm: (form) => {
       return !!(form.general || form.sports || form.other);
     },
+    tableName: "hobbies",
+    userId: user?.id,
+    toast: (options: { title: string; description: string; variant?: string }) => {
+      if (options.variant === "destructive") {
+        toast.error(options.description);
+      } else {
+        toast.success(options.description);
+      }
+    },
   });
 
-  const [hobbiesFileError, setHobbiesFileError] = useState("");
+  // Fetch hobbies from Supabase when navigating to the hobbies section
+  useEffect(() => {
+    async function fetchHobbies() {
+      if (!user) return;
+      
+      const { data: hobbiesData } = await supabase
+        .from("hobbies")
+        .select("*")
+        .eq("user_id", user.id);
+      if (hobbiesData && Array.isArray(hobbiesData)) {
+        // Map Supabase fields to form fields
+        const mappedHobbies = hobbiesData.map((remote) => ({
+          id: remote.id,
+          general: remote.general_hobby || "",
+          sports: remote.sports || "",
+          other: remote.other_interests || "",
+          narrative: remote.narrative || "",
+          file: null,
+          filePreview: remote.file_url || "",
+        }));
+        
+        // Merge with existing local data if any
+        const existingIds = hobbiesHook.items.map(item => item.id);
+        const newItems = mappedHobbies.filter(item => !existingIds.includes(item.id));
+        hobbiesHook.setItems([...hobbiesHook.items, ...newItems]);
+      }
+    }
+    
+    if (currentCategory === categories.findIndex(cat => cat === "hobbies") && user) {
+      fetchHobbies();
+    }
+  }, [currentCategory, user]);
 
   // Navigation
   const handleNext = async () => {
@@ -720,6 +786,7 @@ export default function RestorativeRecordBuilder() {
             handleHobbiesFileChange={handleHobbiesFileChange}
             hobbiesFileError={hobbiesFileError}
             setHobbiesFileError={setHobbiesFileError}
+            onChange={handleSaveToSupabase}
           />
         );
 

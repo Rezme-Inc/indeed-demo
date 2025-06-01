@@ -4,12 +4,14 @@ import { RecordItem } from "../components/RecordItem";
 import { generalHobbyOptions, sportsOptions } from "../constants";
 import { useFormCRUD } from "../hooks/useFormCRUD";
 import { Hobby } from "../types";
+import { useEffect } from "react";
 
 interface HobbiesSectionProps {
   hobbiesHook: ReturnType<typeof useFormCRUD<Omit<Hobby, "id">>>;
   handleHobbiesFileChange: (file: File | null) => void;
   hobbiesFileError: string;
   setHobbiesFileError: (error: string) => void;
+  onChange?: () => void;
 }
 
 export function HobbiesSection({
@@ -17,7 +19,34 @@ export function HobbiesSection({
   handleHobbiesFileChange,
   hobbiesFileError,
   setHobbiesFileError,
+  onChange,
 }: HobbiesSectionProps) {
+  // Debug: Log items when they change
+  useEffect(() => {
+    console.log("Hobbies items updated:", hobbiesHook.items.length);
+  }, [hobbiesHook.items]);
+
+  const handleSave = () => {
+    const result = hobbiesHook.handleSave();
+    if (result && onChange) onChange();
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const success = await hobbiesHook.handleDelete(id);
+      if (success) {
+        // Small delay to ensure state updates are processed
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    } catch (error) {
+      console.error("Error in handleDelete:", error);
+    }
+  };
+
+  const handleEdit = (id: string) => {
+    hobbiesHook.handleEdit(id);
+  };
+
   return (
     <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
       <div className="flex justify-between items-center mb-2">
@@ -51,8 +80,8 @@ export function HobbiesSection({
                 hobby.other && `Other: ${hobby.other}`,
               ].filter(Boolean)}
               narrative={hobby.narrative}
-              onEdit={() => hobbiesHook.handleEdit(hobby.id)}
-              onDelete={() => hobbiesHook.handleDelete(hobby.id)}
+              onEdit={() => handleEdit(hobby.id)}
+              onDelete={() => handleDelete(hobby.id)}
             />
           ))}
         </div>
@@ -65,7 +94,7 @@ export function HobbiesSection({
         onClose={hobbiesHook.handleFormClose}
         onSubmit={(e) => {
           e.preventDefault();
-          hobbiesHook.handleSave();
+          handleSave();
         }}
         submitText="Hobby"
         isEditing={!!hobbiesHook.editingId}
