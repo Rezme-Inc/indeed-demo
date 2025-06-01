@@ -753,10 +753,9 @@ export default function RestorativeRecordBuilder() {
         )
       );
     } else {
-      setEducations([
-        ...educations,
-        { ...educationForm, id: Date.now().toString() },
-      ]);
+      // Generate a UUID v4 for new education entries
+      const newId = crypto.randomUUID();
+      setEducations([...educations, { ...educationForm, id: newId }]);
     }
 
     handleEducationFormClose();
@@ -4209,6 +4208,63 @@ export default function RestorativeRecordBuilder() {
       return;
     }
 
+    // Save education information
+    for (const education of educations) {
+      let fileUrl = null;
+      let fileName = null;
+      let fileSize = null;
+
+      // Upload file if it exists
+      if (education.file) {
+        const fileExt = education.file.name.split(".").pop();
+        const filePath = `${user.id}/${education.id}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from("education-files")
+          .upload(filePath, education.file);
+
+        if (uploadError) {
+          console.error("Error uploading education file:", uploadError);
+          toast.error("Failed to upload education file");
+          continue;
+        }
+
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("education-files").getPublicUrl(filePath);
+
+        fileUrl = publicUrl;
+        fileName = education.file.name;
+        fileSize = education.file.size;
+      }
+
+      // Save education data
+      const { error: educationError } = await supabase
+        .from("education")
+        .upsert({
+          user_id: user.id,
+          id: education.id,
+          school_name: education.school,
+          school_location: education.location,
+          degree: education.degree,
+          field_of_study: education.field,
+          currently_enrolled: education.currentlyEnrolled,
+          start_date: education.startDate || null,
+          end_date: education.currentlyEnrolled
+            ? null
+            : education.endDate || null,
+          grade: education.grade || null,
+          description: education.description || null,
+          file_url: fileUrl,
+          file_name: fileName,
+          file_size: fileSize,
+        });
+
+      if (educationError) {
+        console.error("Error saving education:", educationError);
+        toast.error("Failed to save education");
+      }
+    }
+
     // Save rehabilitative programs
     const { error: rehabError } = await supabase
       .from("rehabilitative_programs")
@@ -4268,14 +4324,16 @@ export default function RestorativeRecordBuilder() {
     // Save hobbies
     for (const hobby of hobbyList) {
       let fileUrl = null;
+      let fileName = null;
+      let fileSize = null;
 
       // Upload file if it exists
       if (hobby.file) {
         const fileExt = hobby.file.name.split(".").pop();
-        const fileName = `${user.id}/${hobby.id}.${fileExt}`;
+        const filePath = `${user.id}/${hobby.id}.${fileExt}`;
         const { error: uploadError } = await supabase.storage
           .from("hobby-files")
-          .upload(fileName, hobby.file);
+          .upload(filePath, hobby.file);
 
         if (uploadError) {
           console.error("Error uploading hobby file:", uploadError);
@@ -4285,20 +4343,24 @@ export default function RestorativeRecordBuilder() {
 
         const {
           data: { publicUrl },
-        } = supabase.storage.from("hobby-files").getPublicUrl(fileName);
+        } = supabase.storage.from("hobby-files").getPublicUrl(filePath);
 
         fileUrl = publicUrl;
+        fileName = hobby.file.name;
+        fileSize = hobby.file.size;
       }
 
       // Save hobby data
       const { error: hobbyError } = await supabase.from("hobbies").upsert({
         user_id: user.id,
         id: hobby.id,
-        general: hobby.general,
+        general_hobby: hobby.general,
         sports: hobby.sports,
-        other: hobby.other,
+        other_interests: hobby.other,
         narrative: hobby.narrative,
         file_url: fileUrl,
+        file_name: fileName,
+        file_size: fileSize,
       });
 
       if (hobbyError) {
@@ -4306,8 +4368,6 @@ export default function RestorativeRecordBuilder() {
         toast.error("Failed to save hobby");
       }
     }
-
-    // ... rest of the saveToSupabase function ...
   };
 
   const rehabProgramsList = [
