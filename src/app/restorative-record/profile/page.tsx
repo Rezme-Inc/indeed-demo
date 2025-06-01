@@ -3,6 +3,7 @@ import { useUser } from "@/hooks/useUser";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
+import { socialFields } from "@/app/restorative-record/constants";
 
 function formatFileSize(bytes: number) {
   if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + " MB";
@@ -677,47 +678,25 @@ export default function MyRestorativeRecordProfile() {
                     {introduction.personal_narrative ||
                       "No narrative provided yet."}
                   </div>
-                  <div className="flex gap-3 mt-2">
-                    {introduction.linkedin_url && (
-                      <a
-                        href={introduction.linkedin_url}
-                        className="text-blue-500 underline text-sm"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        LinkedIn
-                      </a>
-                    )}
-                    {introduction.github_url && (
-                      <a
-                        href={introduction.github_url}
-                        className="text-blue-500 underline text-sm"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        GitHub
-                      </a>
-                    )}
-                    {introduction.digital_portfolio_url && (
-                      <a
-                        href={introduction.digital_portfolio_url}
-                        className="text-blue-500 underline text-sm"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Portfolio
-                      </a>
-                    )}
-                    {introduction.personal_website_url && (
-                      <a
-                        href={introduction.personal_website_url}
-                        className="text-blue-500 underline text-sm"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Website
-                      </a>
-                    )}
+                  {/* Social Media Links */}
+                  <div className="flex flex-wrap gap-3 mt-2">
+                    {socialFields.map((field) => {
+                      const dbField = field.name.replace(/Url$/, "_url").replace(/([A-Z])/g, "_$1").toLowerCase();
+                      const url = introduction[dbField] || introduction[field.name] || "";
+                      if (!url) return null;
+                      return (
+                        <a
+                          key={field.name}
+                          href={url}
+                          className="text-blue-500 underline text-sm"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={field.label.replace("Enter your ", "")}
+                        >
+                          {field.label.replace("Enter your ", "").replace(" URL", "")}
+                        </a>
+                      );
+                    })}
                   </div>
                 </>
               )}

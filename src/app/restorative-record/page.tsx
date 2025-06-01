@@ -462,6 +462,60 @@ export default function RestorativeRecordBuilder() {
     });
   };
 
+  // Fetch introduction from Supabase on mount and when navigating to the Introduction section
+  useEffect(() => {
+    async function fetchIntroduction() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("introduction")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+      if (data) {
+        setFormData({
+          facebookUrl: data.facebook_url || "",
+          linkedinUrl: data.linkedin_url || "",
+          redditUrl: data.reddit_url || "",
+          digitalPortfolioUrl: data.digital_portfolio_url || "",
+          instagramUrl: data.instagram_url || "",
+          githubUrl: data.github_url || "",
+          tiktokUrl: data.tiktok_url || "",
+          pinterestUrl: data.pinterest_url || "",
+          twitterUrl: data.twitter_url || "",
+          personalWebsiteUrl: data.personal_website_url || "",
+          handshakeUrl: data.handshake_url || "",
+          preferredOccupation: data.preferred_occupation || "",
+          personalNarrative: data.personal_narrative || "",
+          languageProficiency: data.language_proficiency || "No Proficiency",
+          otherLanguages: data.other_languages || [],
+        });
+      } else {
+        setFormData({
+          facebookUrl: "",
+          linkedinUrl: "",
+          redditUrl: "",
+          digitalPortfolioUrl: "",
+          instagramUrl: "",
+          githubUrl: "",
+          tiktokUrl: "",
+          pinterestUrl: "",
+          twitterUrl: "",
+          personalWebsiteUrl: "",
+          handshakeUrl: "",
+          preferredOccupation: "",
+          personalNarrative: "",
+          languageProficiency: "No Proficiency",
+          otherLanguages: [],
+        });
+      }
+    }
+    if (categories[currentCategory] === "introduction") {
+      fetchIntroduction();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentCategory]);
+
   // Render current section
   const renderSection = () => {
     switch (categories[currentCategory]) {
@@ -472,6 +526,7 @@ export default function RestorativeRecordBuilder() {
             onChange={(updates) =>
               setFormData((prev) => ({ ...prev, ...updates }))
             }
+            onDelete={handleDeleteIntroduction}
           />
         );
 
@@ -622,6 +677,30 @@ export default function RestorativeRecordBuilder() {
     } else {
       router.push("/restorative-record/profile");
     }
+  };
+
+  const handleDeleteIntroduction = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from("introduction").delete().eq("user_id", user.id);
+    setFormData({
+      facebookUrl: "",
+      linkedinUrl: "",
+      redditUrl: "",
+      digitalPortfolioUrl: "",
+      instagramUrl: "",
+      githubUrl: "",
+      tiktokUrl: "",
+      pinterestUrl: "",
+      twitterUrl: "",
+      personalWebsiteUrl: "",
+      handshakeUrl: "",
+      preferredOccupation: "",
+      personalNarrative: "",
+      languageProficiency: "No Proficiency",
+      otherLanguages: [],
+    });
+    toast.success("Introduction deleted.");
   };
 
   return (
