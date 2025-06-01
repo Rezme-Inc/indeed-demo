@@ -348,6 +348,33 @@ export default function RestorativeRecordBuilder() {
     }
   };
 
+  // Function to refresh mentors data
+  const refreshMentors = async () => {
+    if (!user) return;
+    
+    const { data: mentorsData } = await supabase
+      .from("mentors")
+      .select("*")
+      .eq("user_id", user.id);
+    if (mentorsData && Array.isArray(mentorsData)) {
+      // Map Supabase fields to form fields
+      const mappedMentors = mentorsData.map((remote) => ({
+        id: remote.id,
+        linkedin: remote.linkedin_profile || "",
+        name: remote.name || "",
+        company: remote.company || "",
+        title: remote.title || "",
+        email: remote.email || "",
+        phone: remote.phone || "",
+        website: remote.website || "",
+        narrative: remote.narrative || "",
+      }));
+      mentorHook.setItems(mappedMentors);
+    } else {
+      mentorHook.setItems([]);
+    }
+  };
+
   // Microcredentials state with custom hook
   const microHook = useFormCRUD<Omit<Microcredential, "id">>({
     initialFormState: {
@@ -427,6 +454,15 @@ export default function RestorativeRecordBuilder() {
     },
     validateForm: (form) => {
       return !!(form.name && form.company && form.title);
+    },
+    tableName: "mentors",
+    userId: user?.id,
+    toast: (options: { title: string; description: string; variant?: string }) => {
+      if (options.variant === "destructive") {
+        toast.error(options.description);
+      } else {
+        toast.success(options.description);
+      }
     },
   });
 
@@ -563,6 +599,41 @@ export default function RestorativeRecordBuilder() {
     
     if (currentCategory === categories.findIndex(cat => cat === "hobbies") && user) {
       fetchHobbies();
+    }
+  }, [currentCategory, user]);
+
+  // Fetch mentors from Supabase when navigating to the mentors section
+  useEffect(() => {
+    async function fetchMentors() {
+      if (!user) return;
+      
+      const { data: mentorsData } = await supabase
+        .from("mentors")
+        .select("*")
+        .eq("user_id", user.id);
+      if (mentorsData && Array.isArray(mentorsData)) {
+        // Map Supabase fields to form fields
+        const mappedMentors = mentorsData.map((remote) => ({
+          id: remote.id,
+          linkedin: remote.linkedin_profile || "",
+          name: remote.name || "",
+          company: remote.company || "",
+          title: remote.title || "",
+          email: remote.email || "",
+          phone: remote.phone || "",
+          website: remote.website || "",
+          narrative: remote.narrative || "",
+        }));
+        
+        // Merge with existing local data if any
+        const existingIds = mentorHook.items.map(item => item.id);
+        const newItems = mappedMentors.filter(item => !existingIds.includes(item.id));
+        mentorHook.setItems([...mentorHook.items, ...newItems]);
+      }
+    }
+    
+    if (currentCategory === categories.findIndex(cat => cat === "mentors") && user) {
+      fetchMentors();
     }
   }, [currentCategory, user]);
 
@@ -838,7 +909,7 @@ export default function RestorativeRecordBuilder() {
         );
 
       case "mentors":
-        return <MentorsSection mentorHook={mentorHook} />;
+        return <MentorsSection mentorHook={mentorHook} onChange={handleSaveToSupabase} />;
 
       case "education":
         return (
