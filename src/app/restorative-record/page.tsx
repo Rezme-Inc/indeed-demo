@@ -954,10 +954,9 @@ export default function RestorativeRecordBuilder() {
         )
       );
     } else {
-      setEmployments([
-        ...employments,
-        { ...employmentForm, id: Date.now().toString() },
-      ]);
+      // Generate a UUID v4 for new employment entries
+      const newId = crypto.randomUUID();
+      setEmployments([...employments, { ...employmentForm, id: newId }]);
     }
 
     handleEmploymentFormClose();
@@ -4366,6 +4365,33 @@ export default function RestorativeRecordBuilder() {
       if (hobbyError) {
         console.error("Error saving hobby:", hobbyError);
         toast.error("Failed to save hobby");
+      }
+    }
+
+    // Save employment information
+    for (const employment of employments) {
+      const { error: employmentError } = await supabase
+        .from("employment")
+        .upsert({
+          user_id: user.id,
+          id: employment.id,
+          state: employment.state,
+          city: employment.city,
+          employment_type: employment.employmentType,
+          title: employment.title,
+          company: employment.company,
+          company_url: employment.companyUrl || null,
+          start_date: employment.startDate || null,
+          end_date: employment.currentlyEmployed
+            ? null
+            : employment.endDate || null,
+          currently_employed: employment.currentlyEmployed,
+          incarcerated: employment.employedWhileIncarcerated,
+        });
+
+      if (employmentError) {
+        console.error("Error saving employment:", employmentError);
+        toast.error("Failed to save employment");
       }
     }
   };
