@@ -4430,6 +4430,9 @@ export default function RestorativeRecordBuilder() {
         fileSize = award.file.size;
       }
 
+      // Format the date to ensure it's in the correct timezone
+      const awardDate = award.date ? new Date(award.date + "T00:00:00") : null;
+
       // Save award data
       const { error: awardError } = await supabase.from("awards").upsert({
         user_id: user.id,
@@ -4437,7 +4440,7 @@ export default function RestorativeRecordBuilder() {
         type: award.type,
         name: award.name,
         organization: award.organization,
-        date: award.date,
+        date: awardDate ? awardDate.toISOString().split("T")[0] : null,
         narrative: award.narrative || null,
         file_url: fileUrl,
         file_name: fileName,
