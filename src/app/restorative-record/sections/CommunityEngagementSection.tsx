@@ -4,12 +4,14 @@ import { RecordItem } from "../components/RecordItem";
 import { engagementTypes } from "../constants";
 import { useFormCRUD } from "../hooks/useFormCRUD";
 import { Engagement } from "../types";
+import { useEffect } from "react";
 
 interface CommunityEngagementSectionProps {
   engagementHook: ReturnType<typeof useFormCRUD<Omit<Engagement, "id">>>;
   handleEngagementFileChange: (file: File | null) => void;
   engagementFileError: string;
   setEngagementFileError: (error: string) => void;
+  onChange?: () => void;
 }
 
 export function CommunityEngagementSection({
@@ -17,7 +19,36 @@ export function CommunityEngagementSection({
   handleEngagementFileChange,
   engagementFileError,
   setEngagementFileError,
+  onChange,
 }: CommunityEngagementSectionProps) {
+  // Debug: log items changes
+  useEffect(() => {
+    console.log("Community Engagement items changed:", engagementHook.items.length, engagementHook.items);
+  }, [engagementHook.items]);
+
+  const handleSave = () => {
+    const result = engagementHook.handleSave();
+    if (result && onChange) onChange();
+  };
+
+  const handleDelete = async (id: string) => {
+    console.log("Attempting to delete engagement with ID:", id);
+    try {
+      const success = await engagementHook.handleDelete(id);
+      console.log("Delete operation result:", success);
+      if (success) {
+        console.log("Items after deletion:", engagementHook.items.length);
+        // Small delay to ensure state updates are processed
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    } catch (error) {
+      console.error("Error in handleDelete:", error);
+    }
+  };
+
+  const handleEdit = (id: string) => {
+    engagementHook.handleEdit(id);
+  };
   return (
     <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
       <div className="flex justify-between items-center mb-2">
@@ -51,8 +82,8 @@ export function CommunityEngagementSection({
                 subtitle={`${engagement.type} • ${engagement.orgName}`}
                 details={engagement.orgWebsite ? [engagement.orgWebsite] : []}
                 narrative={engagement.details}
-                onEdit={() => engagementHook.handleEdit(engagement.id)}
-                onDelete={() => engagementHook.handleDelete(engagement.id)}
+                onEdit={() => handleEdit(engagement.id)}
+                onDelete={() => handleDelete(engagement.id)}
               />
             )
           )}
@@ -70,7 +101,7 @@ export function CommunityEngagementSection({
         onClose={engagementHook.handleFormClose}
         onSubmit={(e) => {
           e.preventDefault();
-          engagementHook.handleSave();
+          handleSave();
         }}
         submitText="Engagement"
         isEditing={!!engagementHook.editingId}

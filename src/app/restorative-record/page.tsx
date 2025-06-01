@@ -50,6 +50,7 @@ export default function RestorativeRecordBuilder() {
   const router = useRouter();
   const [currentCategory, setCurrentCategory] = useState(0);
   const searchParams = useSearchParams();
+  const [user, setUser] = useState<any>(null);
   const [formData, setFormData] = useState<Introduction>({
     facebookUrl: "",
     linkedinUrl: "",
@@ -181,6 +182,41 @@ export default function RestorativeRecordBuilder() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentCategory]);
 
+  // Get user on mount
+  useEffect(() => {
+    async function getUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    }
+    getUser();
+  }, []);
+
+  // Function to refresh community engagement data
+  const refreshEngagements = async () => {
+    if (!user) return;
+    
+    const { data: engagementData } = await supabase
+      .from("community_engagements")
+      .select("*")
+      .eq("user_id", user.id);
+    if (engagementData && Array.isArray(engagementData)) {
+      // Map Supabase fields to form fields
+      const mappedEngagements = engagementData.map((remote) => ({
+        id: remote.id,
+        type: remote.type || "",
+        role: remote.role || "",
+        orgName: remote.organization_name || "",
+        orgWebsite: remote.organization_website || "",
+        details: remote.details || "",
+        file: null, // File upload not restored from DB
+        filePreview: remote.file_url || "",
+      }));
+      engagementHook.setItems(mappedEngagements);
+    } else {
+      engagementHook.setItems([]);
+    }
+  };
+
   // Engagement state with custom hook
   const engagementHook = useFormCRUD<Omit<Engagement, "id">>({
     initialFormState: {
@@ -195,9 +231,51 @@ export default function RestorativeRecordBuilder() {
     validateForm: (form) => {
       return !!(form.type && form.role && form.orgName && form.details);
     },
+    tableName: "community_engagements",
+    userId: user?.id,
+    toast: (options) => {
+      if (options.variant === "destructive") {
+        toast.error(options.description);
+      } else {
+        toast.success(options.description);
+      }
+    },
+    onDelete: refreshEngagements, // Add callback to refresh after deletion
   });
 
   const [engagementFileError, setEngagementFileError] = useState("");
+
+  // Fetch community engagement from Supabase on mount and when navigating to the Community Engagement section
+  useEffect(() => {
+    async function fetchEngagements() {
+      if (!user) return;
+      
+      const { data: engagementData } = await supabase
+        .from("community_engagements")
+        .select("*")
+        .eq("user_id", user.id);
+      if (engagementData && Array.isArray(engagementData)) {
+        // Map Supabase fields to form fields
+        const mappedEngagements = engagementData.map((remote) => ({
+          id: remote.id,
+          type: remote.type || "",
+          role: remote.role || "",
+          orgName: remote.organization_name || "",
+          orgWebsite: remote.organization_website || "",
+          details: remote.details || "",
+          file: null, // File upload not restored from DB
+          filePreview: remote.file_url || "",
+        }));
+        engagementHook.setItems(mappedEngagements);
+      } else {
+        engagementHook.setItems([]);
+      }
+    }
+    // Always fetch when entering the community engagement section and user is available
+    if (categories[currentCategory] === "community-engagement" && user) {
+      fetchEngagements();
+    }
+  }, [currentCategory, user]);
 
   // Rehabilitative Programs state
   const [rehabPrograms, setRehabPrograms] = useState<RehabPrograms>({
@@ -596,6 +674,7 @@ export default function RestorativeRecordBuilder() {
             handleEngagementFileChange={handleEngagementFileChange}
             engagementFileError={engagementFileError}
             setEngagementFileError={setEngagementFileError}
+            onChange={handleSaveToSupabase}
           />
         );
 

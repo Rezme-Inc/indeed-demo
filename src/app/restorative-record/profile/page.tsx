@@ -106,11 +106,26 @@ export default function MyRestorativeRecordProfile() {
         setSkills(skillsData || []);
 
         // Fetch community engagements
-        const { data: engagementsData } = await supabase
+        const { data: engagementData } = await supabase
           .from("community_engagements")
           .select("*")
           .eq("user_id", user.id);
-        setCommunityEngagements(engagementsData || []);
+        if (engagementData && Array.isArray(engagementData)) {
+          const mappedEngagements = engagementData.map((remote) => ({
+            id: remote.id,
+            type: remote.type || "",
+            role: remote.role || "",
+            orgName: remote.organization_name || "",
+            orgWebsite: remote.organization_website || "",
+            details: remote.details || "",
+            file_url: remote.file_url || "",
+            file_name: remote.file_name || "",
+            file_size: remote.file_size || null,
+          }));
+          setCommunityEngagements(mappedEngagements);
+        } else {
+          setCommunityEngagements([]);
+        }
 
         // Fetch rehabilitative programs
         const { data: rehabData } = await supabase
@@ -909,19 +924,21 @@ export default function MyRestorativeRecordProfile() {
               <div className="text-sm text-black mb-1">
                 Details: {eng.details}
               </div>
-              {eng.file && (
+              {eng.file_url && (
                 <div className="text-sm mt-2">
                   <a
-                    href={eng.file.url}
+                    href={eng.file_url}
                     className="text-blue-600 underline"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {eng.file.name}
+                    {eng.file_name || "View attachment"}
                   </a>
-                  <span className="ml-2 text-gray-400">
-                    {formatFileSize(eng.file.size)}
-                  </span>
+                  {eng.file_size && (
+                    <span className="ml-2 text-gray-400">
+                      {formatFileSize(eng.file_size)}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
