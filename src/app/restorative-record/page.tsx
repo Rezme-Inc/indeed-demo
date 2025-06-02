@@ -1270,7 +1270,7 @@ export default function RestorativeRecordBuilder() {
               onClick={() => setShowIncompleteModal(false)}
               className="w-full px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
             >
-              Continue Building Record
+              Continue Building Your Restorative Record
             </button>
           </div>
         </div>
