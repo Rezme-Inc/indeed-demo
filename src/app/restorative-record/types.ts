@@ -120,6 +120,18 @@ export interface Hobby {
   filePreview: string;
 }
 
+export interface RehabProgram {
+  id: string;
+  program: string;
+  programType: string;
+  startDate: string;
+  endDate: string;
+  details: string;
+  narrative: string;
+  file: File | null;
+  filePreview: string;
+}
+
 export interface Skill {
   id: string;
   softSkills: string;

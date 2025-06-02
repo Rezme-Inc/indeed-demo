@@ -51,7 +51,7 @@ export default function MyRestorativeRecordProfile() {
   const [achievements, setAchievements] = useState<any[]>([]);
   const [skills, setSkills] = useState<any[]>([]);
   const [communityEngagements, setCommunityEngagements] = useState<any[]>([]);
-  const [rehabPrograms, setRehabPrograms] = useState<any>(null);
+  const [newRehabPrograms, setNewRehabPrograms] = useState<any[]>([]);
   const [hobbies, setHobbies] = useState<any[]>([]);
   const [certifications, setCertifications] = useState<any[]>([]);
   const [mentors, setMentors] = useState<any[]>([]);
@@ -127,13 +127,12 @@ export default function MyRestorativeRecordProfile() {
           setCommunityEngagements([]);
         }
 
-        // Fetch rehabilitative programs
-        const { data: rehabData } = await supabase
-          .from("rehabilitative_programs")
+        // Fetch new rehab programs (CRUD format)
+        const { data: newRehabData } = await supabase
+          .from("rehab_programs")
           .select("*")
-          .eq("user_id", user.id)
-          .single();
-        setRehabPrograms(rehabData);
+          .eq("user_id", user.id);
+        setNewRehabPrograms(newRehabData || []);
 
         // Fetch hobbies
         const { data: hobbiesData } = await supabase
@@ -175,6 +174,38 @@ export default function MyRestorativeRecordProfile() {
     }
 
     fetchRestorativeRecordData();
+
+    // Refetch data when page becomes visible (e.g., returning from builder)
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user) {
+        fetchRestorativeRecordData();
+      }
+    };
+
+    const handleFocus = () => {
+      if (user) {
+        fetchRestorativeRecordData();
+      }
+    };
+
+    // Listen for data updates from other tabs/windows (e.g., builder page)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'restorative-record-updated' && user) {
+        fetchRestorativeRecordData();
+        // Clear the flag
+        localStorage.removeItem('restorative-record-updated');
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [user]);
 
   const handleShare = async (type: string) => {
@@ -979,37 +1010,61 @@ export default function MyRestorativeRecordProfile() {
               </a>
             </Link>
           </div>
-          {rehabPrograms && (
-            <div className="space-y-2">
-              {/* Display each program if it's checked */}
-              {rehabPrograms.substance_use_disorder && (
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                  <div className="font-semibold text-black mb-1">
-                    Substance Use Disorder Treatment
-                  </div>
-                  {rehabPrograms.substance_use_disorder_details && (
-                    <div className="text-sm text-black">
-                      {rehabPrograms.substance_use_disorder_details}
-                    </div>
+          
+          {/* Display new format rehab programs */}
+          {newRehabPrograms.map((program: any, idx: number) => (
+            <div
+              key={idx}
+              className="bg-white border border-gray-200 rounded-lg p-4 mb-4"
+            >
+              <div className="font-semibold text-black mb-1">{program.program}</div>
+              <div className="text-sm text-secondary mb-1">
+                Type: {program.program_type}
+              </div>
+              {(program.start_date || program.end_date) && (
+                <div className="text-sm text-secondary mb-1">
+                  {program.start_date
+                    ? new Date(program.start_date).toLocaleDateString()
+                    : "N/A"}{" "}
+                  -{" "}
+                  {program.end_date
+                    ? new Date(program.end_date).toLocaleDateString()
+                    : "Present"}
+                </div>
+              )}
+              {program.details && (
+                <div className="text-sm text-secondary mb-1">
+                  Details: {program.details}
+                </div>
+              )}
+              {program.narrative && (
+                <div className="text-sm text-black mb-1">
+                  Narrative: {program.narrative}
+                </div>
+              )}
+              {program.file_url && (
+                <div className="text-sm mt-2">
+                  <a
+                    href={program.file_url}
+                    className="text-blue-600 underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {program.file_name || "View attachment"}
+                  </a>
+                  {program.file_size && (
+                    <span className="ml-2 text-gray-400">
+                      {formatFileSize(program.file_size)}
+                    </span>
                   )}
                 </div>
               )}
-              {rehabPrograms.life_skills_training && (
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                  <div className="font-semibold text-black mb-1">
-                    Life Skills Training
-                  </div>
-                  {rehabPrograms.life_skills_training_details && (
-                    <div className="text-sm text-black">
-                      {rehabPrograms.life_skills_training_details}
-                    </div>
-                  )}
-                </div>
-              )}
-              {/* Add more programs as needed */}
             </div>
-          )}
-          {!rehabPrograms && (
+          ))}
+
+          {/* Display old format rehab programs (for backward compatibility) */}
+          
+          {newRehabPrograms.length === 0 && (
             <p className="text-gray-500 italic">
               No rehabilitative programs added yet.
             </p>

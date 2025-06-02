@@ -120,6 +120,37 @@ export const sportsOptions = [
   "Wrestling", "Track and Field", "Golf", "Martial Arts", "Dancing", "Other",
 ];
 
+export const rehabProgramOptions = [
+  "Substance Use Disorder Treatment",
+  "Women's Justice Centers", 
+  "Employment-Focused Programs",
+  "Adaptable Justice Programs",
+  "Life Skills Training",
+  "Community Service",
+  "Family and Community Reintegration Programs",
+  "Parenting Classes",
+  "Mental and Wellness Programs",
+  "Faith-Based Initiatives",
+  "Peer Support Groups",
+  "Arts and Recreation Programs",
+  "Housing Assistance Programs",
+  "Legal Compliance",
+  "Civic Engagement Activities",
+  "Veterans Services",
+  "Domestic Violence Reduction",
+  "Sex Offender Treatment Programs",
+  "Medical and Physical Health Care",
+  "Other",
+];
+
+export const rehabProgramTypeOptions = [
+  "Completed Before Incarceration",
+  "Completed During Incarceration", 
+  "Completed After Release",
+  "Currently Participating",
+  "Alternative-to-Incarceration Program",
+];
+
 export const rehabProgramsList = [
   {
     key: "substanceUseDisorder",
