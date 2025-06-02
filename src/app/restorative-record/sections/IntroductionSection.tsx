@@ -5,11 +5,13 @@ import { Introduction } from "../types";
 interface IntroductionSectionProps {
   formData: Introduction;
   onChange: (updates: Partial<Introduction>) => void;
+  onDelete?: () => void;
 }
 
 export const IntroductionSection: React.FC<IntroductionSectionProps> = ({
   formData,
   onChange,
+  onDelete,
 }) => {
   const [occupationInput, setOccupationInput] = useState("");
   const [occupations, setOccupations] = useState<string[]>([]);
@@ -55,6 +57,16 @@ export const IntroductionSection: React.FC<IntroductionSectionProps> = ({
         the foundation for your restorative record.
       </p>
 
+      {onDelete && (
+        <button
+          type="button"
+          className="mb-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+          onClick={onDelete}
+        >
+          Delete Introduction
+        </button>
+      )}
+
       {/* Social Media Profiles */}
       <div className="mb-6">
         <h3 className="font-medium text-black mb-3">Social Media Profiles</h3>
@@ -83,6 +95,13 @@ export const IntroductionSection: React.FC<IntroductionSectionProps> = ({
           className="border border-gray-200 px-4 py-2 rounded-lg w-full mb-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
           placeholder="Type occupation and press Enter"
         />
+        {formData.preferredOccupation && (
+          <div className="mt-2">
+            <span className="inline-block bg-primary/10 text-primary rounded px-3 py-1 text-sm font-medium">
+              {formData.preferredOccupation}
+            </span>
+          </div>
+        )}
         <div className="flex flex-wrap gap-2">
           {occupations.map((occ, idx) => (
             <span

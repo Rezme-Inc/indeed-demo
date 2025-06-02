@@ -1,15 +1,20 @@
 import { useState } from "react";
 import { generateId } from "../utils";
+import { deleteFromSupabase } from "../utils/saveToSupabase";
 
 interface UseFormCRUDOptions<T> {
   initialFormState: T;
   validateForm?: (form: T) => boolean;
+  tableName?: string;
+  userId?: string;
+  toast?: (options: { title: string; description: string; variant?: string }) => void;
+  onDelete?: () => void | Promise<void>;
 }
 
 export function useFormCRUD<T>(
   options: UseFormCRUDOptions<T>
 ) {
-  const { initialFormState, validateForm } = options;
+  const { initialFormState, validateForm, tableName, userId, toast, onDelete } = options;
   const [items, setItems] = useState<(T & { id: string })[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -60,8 +65,45 @@ export function useFormCRUD<T>(
     }
   };
 
-  const handleDelete = (id: string) => {
-    setItems(items.filter((i) => i.id !== id));
+  const handleDelete = async (id: string) => {
+    if (tableName && userId && toast) {
+      try {
+        const success = await deleteFromSupabase(tableName, id, userId, toast);
+        if (success) {
+          setItems((prevItems) => {
+            const newItems = prevItems.filter((i) => i.id !== id);
+            console.log(`Deleted item ${id}, remaining items:`, newItems.length);
+            return newItems;
+          });
+          toast({
+            title: "Success",
+            description: "Item deleted successfully",
+          });
+          if (onDelete) {
+            await onDelete();
+          }
+          return true;
+        }
+      } catch (error) {
+        console.error("Error deleting item:", error);
+        toast({
+          title: "Error",
+          description: "Failed to delete item",
+          variant: "destructive",
+        });
+      }
+      return false;
+    } else {
+      setItems((prevItems) => {
+        const newItems = prevItems.filter((i) => i.id !== id);
+        console.log(`Deleted item ${id} locally, remaining items:`, newItems.length);
+        return newItems;
+      });
+      if (onDelete) {
+        await onDelete();
+      }
+      return true;
+    }
   };
 
   const updateForm = (updates: Partial<T>) => {

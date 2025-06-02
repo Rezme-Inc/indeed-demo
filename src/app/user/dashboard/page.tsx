@@ -62,11 +62,11 @@ export default function UserDashboard() {
   }, []);
 
   async function checkUser() {
-    try {
-      const {
-        data: { user },
+      try {
+        const {
+          data: { user },
         error: authError,
-      } = await supabase.auth.getUser();
+        } = await supabase.auth.getUser();
       if (authError || !user) {
         router.push("/auth/user/login");
         return;
@@ -75,10 +75,10 @@ export default function UserDashboard() {
       setUser(user);
 
       const { data: profileData, error: profileError } = await supabase
-        .from("user_profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
+            .from("user_profiles")
+            .select("*")
+            .eq("id", user.id)
+            .single();
 
       if (profileError && profileError.code !== "PGRST116") {
         console.error("Error fetching profile:", profileError);
@@ -106,14 +106,14 @@ export default function UserDashboard() {
         if (profileData.avatar_url) {
           setAvatarPreview(profileData.avatar_url);
         }
-      }
-    } catch (error) {
+        }
+      } catch (error) {
       console.error("Error checking user:", error);
       router.push("/auth/user/login");
-    } finally {
-      setLoading(false);
+      } finally {
+        setLoading(false);
+      }
     }
-  }
 
   async function handleSaveProfile() {
     if (!user) return;
@@ -473,7 +473,7 @@ export default function UserDashboard() {
                       placeholder="City"
                       required
                     />
-                  </div>
+            </div>
                   <div>
                     <label className="block text-sm font-medium text-black mb-2">
                       State <span className="text-red-500">*</span>
@@ -868,7 +868,7 @@ export default function UserDashboard() {
                     </button>
                   </div>
                 </form>
-              </div>
+            </div>
             )}
 
             {/* Save Button */}

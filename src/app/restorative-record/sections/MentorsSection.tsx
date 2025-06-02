@@ -2,12 +2,40 @@ import { FormDialog } from "../components/FormDialog";
 import { RecordItem } from "../components/RecordItem";
 import { useFormCRUD } from "../hooks/useFormCRUD";
 import { Mentor } from "../types";
+import { useEffect } from "react";
 
 interface MentorsSectionProps {
   mentorHook: ReturnType<typeof useFormCRUD<Omit<Mentor, "id">>>;
+  onChange?: () => void;
 }
 
-export function MentorsSection({ mentorHook }: MentorsSectionProps) {
+export function MentorsSection({ mentorHook, onChange }: MentorsSectionProps) {
+  // Debug: Log items when they change
+  useEffect(() => {
+    console.log("Mentors items updated:", mentorHook.items.length);
+  }, [mentorHook.items]);
+
+  const handleSave = () => {
+    const result = mentorHook.handleSave();
+    if (result && onChange) onChange();
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const success = await mentorHook.handleDelete(id);
+      if (success) {
+        // Small delay to ensure state updates are processed
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    } catch (error) {
+      console.error("Error in handleDelete:", error);
+    }
+  };
+
+  const handleEdit = (id: string) => {
+    mentorHook.handleEdit(id);
+  };
+
   return (
     <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
       <div className="flex justify-between items-center mb-2">
@@ -47,8 +75,8 @@ export function MentorsSection({ mentorHook }: MentorsSectionProps) {
                 mentor.phone ? `Phone: ${mentor.phone}` : "",
               ].filter(Boolean)}
               narrative={mentor.narrative}
-              onEdit={() => mentorHook.handleEdit(mentor.id)}
-              onDelete={() => mentorHook.handleDelete(mentor.id)}
+              onEdit={() => handleEdit(mentor.id)}
+              onDelete={() => handleDelete(mentor.id)}
             />
           ))}
         </div>
@@ -61,7 +89,7 @@ export function MentorsSection({ mentorHook }: MentorsSectionProps) {
         onClose={mentorHook.handleFormClose}
         onSubmit={(e) => {
           e.preventDefault();
-          mentorHook.handleSave();
+          handleSave();
         }}
         submitText="Mentor"
         isEditing={!!mentorHook.editingId}

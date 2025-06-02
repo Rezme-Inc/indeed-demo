@@ -4,6 +4,7 @@ import { RecordItem } from "../components/RecordItem";
 import { hardSkillsOptions, softSkillsOptions } from "../constants";
 import { useFormCRUD } from "../hooks/useFormCRUD";
 import { Skill } from "../types";
+import { supabase } from "@/lib/supabase";
 
 interface SkillsSectionProps {
   skillsHook: ReturnType<typeof useFormCRUD<Omit<Skill, "id">>>;
@@ -18,6 +19,34 @@ export function SkillsSection({
   skillsFileError,
   setSkillsFileError,
 }: SkillsSectionProps) {
+  // Delete skill from Supabase and local state
+  const handleDeleteSkill = async (id: string) => {
+    // Remove from Supabase
+    await supabase.from("skills").delete().eq("id", id);
+    // Remove from local state
+    skillsHook.handleDelete(id);
+    // Optionally, refresh from Supabase to ensure sync
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: skillsData } = await supabase
+        .from("skills")
+        .select("*")
+        .eq("user_id", user.id);
+      if (skillsData && Array.isArray(skillsData)) {
+        const mappedSkills = skillsData.map((remote) => ({
+          id: remote.id,
+          softSkills: Array.isArray(remote.soft_skills) ? remote.soft_skills.join(", ") : "",
+          hardSkills: Array.isArray(remote.hard_skills) ? remote.hard_skills.join(", ") : "",
+          otherSkills: remote.other_skills || "",
+          file: null,
+          filePreview: remote.file_url || "",
+          narrative: remote.narrative || "",
+        }));
+        skillsHook.setItems(mappedSkills);
+      }
+    }
+  };
+
   return (
     <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
       <div className="flex justify-between items-center mb-2">
@@ -52,7 +81,7 @@ export function SkillsSection({
               ].filter(Boolean)}
               narrative={skill.narrative}
               onEdit={() => skillsHook.handleEdit(skill.id)}
-              onDelete={() => skillsHook.handleDelete(skill.id)}
+              onDelete={() => handleDeleteSkill(skill.id)}
             />
           ))}
         </div>

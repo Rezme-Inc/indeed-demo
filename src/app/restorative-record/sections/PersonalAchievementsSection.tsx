@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DatePickerField } from "../components/DatePicker";
 import { FileUpload } from "../components/FileUpload";
 import { FormDialog } from "../components/FormDialog";
@@ -11,6 +11,7 @@ import {
   formatDateForInput,
   MAX_AWARD_FILE_SIZE,
 } from "../utils";
+import { supabase } from "@/lib/supabase";
 
 interface PersonalAchievementsSectionProps {
   awardsHook: ReturnType<typeof useFormCRUD<Omit<Award, "id">>>;
@@ -26,6 +27,41 @@ export function PersonalAchievementsSection({
   setAwardFileError,
 }: PersonalAchievementsSectionProps) {
   const [awardFormTouched, setAwardFormTouched] = useState(false);
+
+  // Reset form when editing is cancelled
+  useEffect(() => {
+    if (!awardsHook.showForm) {
+      setAwardFormTouched(false);
+    }
+  }, [awardsHook.showForm]);
+
+  // Delete award from Supabase and local state
+  const handleDeleteAward = async (id: string) => {
+    // Remove from Supabase
+    await supabase.from("awards").delete().eq("id", id);
+    // Remove from local state
+    awardsHook.handleDelete(id);
+    // Optionally, refresh from Supabase to ensure sync
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data: awardsData } = await supabase
+      .from("awards")
+      .select("*")
+      .eq("user_id", user.id);
+    if (awardsData && Array.isArray(awardsData)) {
+      const mappedAwards = awardsData.map((remote) => ({
+        id: remote.id,
+        type: remote.type || "",
+        name: remote.name || "",
+        organization: remote.organization || "",
+        date: remote.date || "",
+        file: null,
+        filePreview: remote.file_url || "",
+        narrative: remote.narrative || "",
+      }));
+      awardsHook.setItems(mappedAwards);
+    }
+  };
 
   return (
     <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
@@ -60,7 +96,7 @@ export function PersonalAchievementsSection({
               details={[`Awarded: ${formatDateForDisplay(award.date)}`]}
               narrative={award.narrative}
               onEdit={() => awardsHook.handleEdit(award.id)}
-              onDelete={() => awardsHook.handleDelete(award.id)}
+              onDelete={() => handleDeleteAward(award.id)}
             />
           ))}
         </div>
@@ -70,13 +106,16 @@ export function PersonalAchievementsSection({
       <FormDialog
         isOpen={awardsHook.showForm}
         title={awardsHook.editingId ? "Edit Award" : "Add Award or Recognition"}
-        onClose={awardsHook.handleFormClose}
+        onClose={() => {
+          awardsHook.handleFormClose();
+          setAwardFormTouched(false);
+        }}
         onSubmit={(e) => {
           e.preventDefault();
           setAwardFormTouched(true);
           awardsHook.handleSave();
         }}
-        submitText="Award"
+        submitText="Save Award"
         isEditing={!!awardsHook.editingId}
       >
         <div>
@@ -109,7 +148,12 @@ export function PersonalAchievementsSection({
           <input
             value={awardsHook.form.name}
             onChange={(e) => awardsHook.updateForm({ name: e.target.value })}
-            className="border border-gray-200 px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            onBlur={() => setAwardFormTouched(true)}
+            className={`border ${
+              awardFormTouched && !awardsHook.form.name
+                ? "border-primary"
+                : "border-gray-200"
+            } px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all`}
             placeholder="Enter name of Award"
             required
           />
@@ -123,13 +167,18 @@ export function PersonalAchievementsSection({
             onChange={(e) =>
               awardsHook.updateForm({ organization: e.target.value })
             }
-            className="border border-gray-200 px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            onBlur={() => setAwardFormTouched(true)}
+            className={`border ${
+              awardFormTouched && !awardsHook.form.organization
+                ? "border-primary"
+                : "border-gray-200"
+            } px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all`}
             placeholder="Enter Award Organization name"
             required
           />
         </div>
         <DatePickerField
-          label="Date Awarded"
+          label="Date Awarded *"
           value={awardsHook.form.date}
           onChange={(date) =>
             awardsHook.updateForm({ date: formatDateForInput(date) })

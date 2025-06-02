@@ -341,6 +341,8 @@ export async function saveToSupabase({
         issuing_organization: micro.org,
         issue_date: micro.issueDate || null,
         expiry_date: micro.expiryDate || null,
+        credential_id: micro.credentialId || null,
+        credential_url: micro.credentialUrl || null,
         narrative: micro.narrative || null,
         file_url: fileUrl,
         file_name: fileName,
@@ -517,5 +519,44 @@ export async function saveToSupabase({
         variant: "destructive",
       });
     }
+  }
+}
+
+export async function deleteFromSupabase(
+  table: string,
+  id: string,
+  userId: string,
+  toast: (options: { title: string; description: string; variant?: string }) => void
+) {
+  try {
+    console.log(`Attempting to delete item ${id} from ${table} for user ${userId}`);
+    
+    // Delete the item directly - no need to check existence first
+    const { error: deleteError } = await supabase
+      .from(table)
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId);
+
+    if (deleteError) {
+      console.error(`Error deleting from ${table}:`, deleteError);
+      toast({
+        title: "Error",
+        description: `Failed to delete from ${table}`,
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    console.log(`Successfully deleted item ${id} from ${table}`);
+    return true;
+  } catch (error) {
+    console.error(`Unexpected error deleting from ${table}:`, error);
+    toast({
+      title: "Error",
+      description: "An unexpected error occurred while deleting",
+      variant: "destructive",
+    });
+    return false;
   }
 } 
