@@ -375,6 +375,35 @@ export default function RestorativeRecordBuilder() {
     }
   };
 
+  // Function to refresh employment data
+  const refreshEmployment = async () => {
+    if (!user) return;
+    
+    const { data: employmentData } = await supabase
+      .from("employment")
+      .select("*")
+      .eq("user_id", user.id);
+    if (employmentData && Array.isArray(employmentData)) {
+      // Map Supabase fields to form fields
+      const mappedEmployment = employmentData.map((remote) => ({
+        id: remote.id,
+        state: remote.state || "",
+        city: remote.city || "",
+        employmentType: remote.employment_type || "",
+        title: remote.title || "",
+        company: remote.company || "",
+        companyUrl: remote.company_url || "",
+        startDate: remote.start_date || "",
+        endDate: remote.end_date || "",
+        currentlyEmployed: remote.currently_employed || false,
+        employedWhileIncarcerated: remote.incarcerated || false,
+      }));
+      employmentHook.setItems(mappedEmployment);
+    } else {
+      employmentHook.setItems([]);
+    }
+  };
+
   // Microcredentials state with custom hook
   const microHook = useFormCRUD<Omit<Microcredential, "id">>({
     initialFormState: {
@@ -516,6 +545,15 @@ export default function RestorativeRecordBuilder() {
         form.startDate
       );
     },
+    tableName: "employment",
+    userId: user?.id,
+    toast: (options: { title: string; description: string; variant?: string }) => {
+      if (options.variant === "destructive") {
+        toast.error(options.description);
+      } else {
+        toast.success(options.description);
+      }
+    },
   });
 
   const [hobbiesFileError, setHobbiesFileError] = useState("");
@@ -634,6 +672,43 @@ export default function RestorativeRecordBuilder() {
     
     if (currentCategory === categories.findIndex(cat => cat === "mentors") && user) {
       fetchMentors();
+    }
+  }, [currentCategory, user]);
+
+  // Fetch employment from Supabase when navigating to the employment section
+  useEffect(() => {
+    async function fetchEmployment() {
+      if (!user) return;
+      
+      const { data: employmentData } = await supabase
+        .from("employment")
+        .select("*")
+        .eq("user_id", user.id);
+      if (employmentData && Array.isArray(employmentData)) {
+        // Map Supabase fields to form fields
+        const mappedEmployment = employmentData.map((remote) => ({
+          id: remote.id,
+          state: remote.state || "",
+          city: remote.city || "",
+          employmentType: remote.employment_type || "",
+          title: remote.title || "",
+          company: remote.company || "",
+          companyUrl: remote.company_url || "",
+          startDate: remote.start_date || "",
+          endDate: remote.end_date || "",
+          currentlyEmployed: remote.currently_employed || false,
+          employedWhileIncarcerated: remote.incarcerated || false,
+        }));
+        
+        // Merge with existing local data if any
+        const existingIds = employmentHook.items.map(item => item.id);
+        const newItems = mappedEmployment.filter(item => !existingIds.includes(item.id));
+        employmentHook.setItems([...employmentHook.items, ...newItems]);
+      }
+    }
+    
+    if (currentCategory === categories.findIndex(cat => cat === "employment-history") && user) {
+      fetchEmployment();
     }
   }, [currentCategory, user]);
 
@@ -922,7 +997,7 @@ export default function RestorativeRecordBuilder() {
         );
 
       case "employment-history":
-        return <EmploymentHistorySection employmentHook={employmentHook} />;
+        return <EmploymentHistorySection employmentHook={employmentHook} onChange={handleSaveToSupabase} />;
 
       case "hobbies":
         return (

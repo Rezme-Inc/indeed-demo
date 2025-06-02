@@ -5,14 +5,43 @@ import { employmentTypeOptions, usStates } from "../constants";
 import { useFormCRUD } from "../hooks/useFormCRUD";
 import { Employment } from "../types";
 import { formatDateForDisplay, formatDateForInput } from "../utils";
+import { useEffect } from "react";
 
 interface EmploymentHistorySectionProps {
   employmentHook: ReturnType<typeof useFormCRUD<Omit<Employment, "id">>>;
+  onChange?: () => void;
 }
 
 export function EmploymentHistorySection({
   employmentHook,
+  onChange,
 }: EmploymentHistorySectionProps) {
+  // Debug: Log items when they change
+  useEffect(() => {
+    console.log("Employment items updated:", employmentHook.items.length);
+  }, [employmentHook.items]);
+
+  const handleSave = () => {
+    const result = employmentHook.handleSave();
+    if (result && onChange) onChange();
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const success = await employmentHook.handleDelete(id);
+      if (success) {
+        // Small delay to ensure state updates are processed
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    } catch (error) {
+      console.error("Error in handleDelete:", error);
+    }
+  };
+
+  const handleEdit = (id: string) => {
+    employmentHook.handleEdit(id);
+  };
+
   return (
     <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
       <div className="flex justify-between items-center mb-2">
@@ -55,8 +84,8 @@ export function EmploymentHistorySection({
                     ? "Employed while incarcerated"
                     : "",
                 ].filter(Boolean)}
-                onEdit={() => employmentHook.handleEdit(employment.id)}
-                onDelete={() => employmentHook.handleDelete(employment.id)}
+                onEdit={() => handleEdit(employment.id)}
+                onDelete={() => handleDelete(employment.id)}
               />
             )
           )}
@@ -74,7 +103,7 @@ export function EmploymentHistorySection({
         onClose={employmentHook.handleFormClose}
         onSubmit={(e) => {
           e.preventDefault();
-          employmentHook.handleSave();
+          handleSave();
         }}
         submitText="Employment"
         isEditing={!!employmentHook.editingId}

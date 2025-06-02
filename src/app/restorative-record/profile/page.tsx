@@ -1319,6 +1319,20 @@ export default function MyRestorativeRecordProfile() {
               <div className="text-sm text-secondary mb-1">
                 Company: {job.company}
               </div>
+              {job.company_url && (
+                <div className="text-sm mb-1">
+                  <a
+                    href={job.company_url.startsWith("http://") || job.company_url.startsWith("https://") 
+                      ? job.company_url 
+                      : `https://${job.company_url}`}
+                    className="text-blue-600 underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {job.company_url}
+                  </a>
+                </div>
+              )}
               <div className="text-sm text-secondary mb-1">
                 Type: {job.employment_type}
               </div>
