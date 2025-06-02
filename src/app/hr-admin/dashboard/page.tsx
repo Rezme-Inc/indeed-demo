@@ -1,6 +1,7 @@
 "use client";
 
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 interface User {
@@ -10,7 +11,8 @@ interface User {
   last_name: string;
   birthday: string | null;
   interests: string[];
-  is_visible_to_hr: boolean;
+  rr_completed: boolean;
+  granted_at?: string;
 }
 
 interface HRAdmin {
@@ -19,7 +21,6 @@ interface HRAdmin {
   first_name: string;
   last_name: string;
   company: string;
-  connected_users: string[];
   invitation_code: string;
 }
 
@@ -42,11 +43,11 @@ function generateSecureCode(): string {
 }
 
 export default function HRAdminDashboard() {
-  const [connectedUsers, setConnectedUsers] = useState<User[]>([]);
-  const [visibleUsers, setVisibleUsers] = useState<User[]>([]);
+  const [permittedUsers, setPermittedUsers] = useState<User[]>([]);
   const [hrAdmin, setHRAdmin] = useState<HRAdmin | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     fetchHRAdminProfile();
@@ -54,8 +55,7 @@ export default function HRAdminDashboard() {
 
   useEffect(() => {
     if (hrAdmin) {
-      fetchConnectedUsers();
-      fetchVisibleUsers();
+      fetchPermittedUsers();
     }
   }, [hrAdmin]);
 
@@ -81,41 +81,53 @@ export default function HRAdminDashboard() {
     }
   };
 
-  const fetchConnectedUsers = async () => {
+  const fetchPermittedUsers = async () => {
     try {
-      if (!hrAdmin?.connected_users?.length) {
-        setConnectedUsers([]);
+      if (!hrAdmin) return;
+
+      console.log(
+        "Fetching users who granted permission to HR admin:",
+        hrAdmin.id
+      );
+
+      // First fetch the permissions
+      const { data: permissions, error: permError } = await supabase
+        .from("user_hr_permissions")
+        .select("user_id, granted_at")
+        .eq("hr_admin_id", hrAdmin.id)
+        .eq("is_active", true);
+
+      if (permError) throw permError;
+
+      if (!permissions || permissions.length === 0) {
+        setPermittedUsers([]);
         return;
       }
 
-      console.log("Fetching connected users for IDs:", hrAdmin.connected_users);
-      const { data, error } = await supabase
+      // Then fetch the user profiles
+      const userIds = permissions.map((p) => p.user_id);
+      const { data: userProfiles, error: userError } = await supabase
         .from("user_profiles")
         .select("*")
-        .in("id", hrAdmin.connected_users);
+        .in("id", userIds);
 
-      if (error) throw error;
-      console.log("Fetched connected users:", data);
-      setConnectedUsers(data || []);
+      if (userError) throw userError;
+
+      // Combine the data
+      const users =
+        userProfiles?.map((profile) => {
+          const permission = permissions.find((p) => p.user_id === profile.id);
+          return {
+            ...profile,
+            granted_at: permission?.granted_at,
+          };
+        }) || [];
+
+      console.log("Fetched permitted users:", users);
+      setPermittedUsers(users);
     } catch (err) {
-      console.error("Error fetching connected users:", err);
-      setError("Failed to load connected users");
-    }
-  };
-
-  const fetchVisibleUsers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("user_profiles")
-        .select("*")
-        .eq("is_visible_to_hr", true);
-
-      if (error) throw error;
-      console.log("Fetched visible users:", data);
-      setVisibleUsers(data || []);
-    } catch (err) {
-      console.error("Error fetching visible users:", err);
-      setError("Failed to load visible users");
+      console.error("Error fetching permitted users:", err);
+      setError("Failed to load permitted users");
     }
   };
 
@@ -134,25 +146,6 @@ export default function HRAdminDashboard() {
         console.error("Error updating invitation code:", updateError);
         throw updateError;
       }
-
-      // Verify the code was actually stored
-      const { data: verifyData, error: verifyError } = await supabase
-        .from("hr_admin_profiles")
-        .select("invitation_code")
-        .eq("id", hrAdmin?.id)
-        .single();
-
-      if (verifyError) {
-        console.error("Error verifying invitation code storage:", verifyError);
-        throw verifyError;
-      }
-
-      console.log(
-        "Verification - Stored invitation code:",
-        verifyData?.invitation_code
-      );
-      console.log("Original code:", code);
-      console.log("Codes match:", verifyData?.invitation_code === code);
 
       // Then fetch the updated profile
       const { data, error: fetchError } = await supabase
@@ -177,32 +170,8 @@ export default function HRAdminDashboard() {
     }
   };
 
-  const connectWithUser = async (userId: string) => {
-    try {
-      if (!hrAdmin) return;
-
-      const updatedConnectedUsers = [
-        ...(hrAdmin.connected_users || []),
-        userId,
-      ];
-      const { error } = await supabase
-        .from("hr_admin_profiles")
-        .update({ connected_users: updatedConnectedUsers })
-        .eq("id", hrAdmin.id);
-
-      if (error) throw error;
-
-      setHRAdmin((prev) =>
-        prev ? { ...prev, connected_users: updatedConnectedUsers } : null
-      );
-      fetchConnectedUsers();
-      setSuccess("Successfully connected with user");
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
-      console.error("Error connecting with user:", err);
-      setError("Failed to connect with user");
-      setTimeout(() => setError(null), 3000);
-    }
+  const viewUserProfile = (userId: string) => {
+    router.push(`/hr-admin/dashboard/${userId}`);
   };
 
   const startAssessment = async (userId: string) => {
@@ -218,8 +187,7 @@ export default function HRAdminDashboard() {
 
   const refreshData = async () => {
     await fetchHRAdminProfile();
-    await fetchConnectedUsers();
-    await fetchVisibleUsers();
+    await fetchPermittedUsers();
   };
 
   return (
@@ -294,10 +262,10 @@ export default function HRAdminDashboard() {
         )}
       </div>
 
-      {/* Connected Users Section */}
+      {/* Users with Granted Access */}
       <div className="bg-white shadow rounded-lg p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          Connected Users
+          Users Who Granted You Access
         </h2>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -310,7 +278,10 @@ export default function HRAdminDashboard() {
                   Email
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
-                  Interests
+                  RR Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
+                  Access Granted
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
                   Actions
@@ -318,7 +289,7 @@ export default function HRAdminDashboard() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {connectedUsers.map((user) => (
+              {permittedUsers.map((user) => (
                 <tr key={user.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-900">
                     {user.first_name} {user.last_name}
@@ -326,14 +297,25 @@ export default function HRAdminDashboard() {
                   <td className="px-6 py-4 whitespace-nowrap text-gray-900">
                     {user.email}
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        user.rr_completed
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {user.rr_completed ? "Completed" : "In Progress"}
+                    </span>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-900">
-                    {user.interests?.join(", ") || "None"}
+                    {user.granted_at
+                      ? new Date(user.granted_at).toLocaleDateString()
+                      : "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-900 space-x-4">
                     <button
-                      onClick={() => {
-                        /* TODO: View user profile */
-                      }}
+                      onClick={() => viewUserProfile(user.id)}
                       className="text-indigo-600 hover:text-indigo-900"
                     >
                       View Profile
@@ -347,76 +329,14 @@ export default function HRAdminDashboard() {
                   </td>
                 </tr>
               ))}
-              {connectedUsers.length === 0 && (
+              {permittedUsers.length === 0 && (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={5}
                     className="px-6 py-4 text-center text-gray-900"
                   >
-                    No connected users yet
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Visible Users Section */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          Visible Users
-        </h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
-                  Interests
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {visibleUsers.map((user) => (
-                <tr key={user.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900">
-                    {user.first_name} {user.last_name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900">
-                    {user.email}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900">
-                    {user.interests?.join(", ") || "None"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900">
-                    <button
-                      onClick={() => connectWithUser(user.id)}
-                      className="text-indigo-600 hover:text-indigo-900"
-                      disabled={hrAdmin?.connected_users?.includes(user.id)}
-                    >
-                      {hrAdmin?.connected_users?.includes(user.id)
-                        ? "Connected"
-                        : "Connect"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {visibleUsers.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="px-6 py-4 text-center text-gray-900"
-                  >
-                    No visible users yet
+                    No users have granted you access yet. Share your invitation
+                    code with users to get started.
                   </td>
                 </tr>
               )}
