@@ -1363,6 +1363,92 @@ export default function MyRestorativeRecordProfile() {
             </p>
           )}
         </section>
+
+        {/* Education */}
+        <section className="mb-8">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-xl font-semibold text-black">Education</h2>
+            <Link
+              href="/restorative-record?section=education"
+              passHref
+              legacyBehavior
+            >
+              <a className="bg-black text-white p-2 rounded-lg" title="Edit">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                  />
+                </svg>
+              </a>
+            </Link>
+          </div>
+          {education.map((edu: any, idx: number) => (
+            <div
+              key={idx}
+              className="bg-white border border-gray-200 rounded-lg p-4 mb-4"
+            >
+              <div className="font-semibold text-black mb-1">
+                {edu.degree} in {edu.field_of_study}
+              </div>
+              <div className="text-sm text-secondary mb-1">
+                School: {edu.school_name}
+              </div>
+              <div className="text-sm text-secondary mb-1">
+                Location: {edu.school_location}
+              </div>
+              <div className="text-sm text-secondary mb-1">
+                {edu.start_date
+                  ? new Date(edu.start_date).toLocaleDateString()
+                  : "N/A"}{" "}
+                -{" "}
+                {edu.currently_enrolled
+                  ? "Present"
+                  : edu.end_date
+                  ? new Date(edu.end_date).toLocaleDateString()
+                  : "N/A"}
+              </div>
+              {edu.grade && (
+                <div className="text-sm text-secondary mb-1">
+                  Grade: {edu.grade}
+                </div>
+              )}
+              {edu.description && (
+                <div className="text-sm text-black mb-1">
+                  Description: {edu.description}
+                </div>
+              )}
+              {edu.file_url && (
+                <div className="text-sm mt-2">
+                  <a
+                    href={edu.file_url}
+                    className="text-blue-600 underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {edu.file_name || "View attachment"}
+                  </a>
+                  {edu.file_size && (
+                    <span className="ml-2 text-gray-400">
+                      {formatFileSize(edu.file_size)}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+          {education.length === 0 && (
+            <p className="text-gray-500 italic">No education added yet.</p>
+          )}
+        </section>
       </div>
     </div>
   );

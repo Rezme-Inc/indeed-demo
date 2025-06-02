@@ -5,12 +5,14 @@ import { RecordItem } from "../components/RecordItem";
 import { useFormCRUD } from "../hooks/useFormCRUD";
 import { Education } from "../types";
 import { formatDateForDisplay, formatDateForInput } from "../utils";
+import { useEffect } from "react";
 
 interface EducationSectionProps {
   educationHook: ReturnType<typeof useFormCRUD<Omit<Education, "id">>>;
   handleEducationFileChange: (file: File | null) => void;
   educationFileError: string;
   setEducationFileError: (error: string) => void;
+  onChange?: () => void;
 }
 
 export function EducationSection({
@@ -18,7 +20,34 @@ export function EducationSection({
   handleEducationFileChange,
   educationFileError,
   setEducationFileError,
+  onChange,
 }: EducationSectionProps) {
+  // Debug: Log items when they change
+  useEffect(() => {
+    console.log("Education items updated:", educationHook.items.length);
+  }, [educationHook.items]);
+
+  const handleSave = () => {
+    const result = educationHook.handleSave();
+    if (result && onChange) onChange();
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const success = await educationHook.handleDelete(id);
+      if (success) {
+        // Small delay to ensure state updates are processed
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    } catch (error) {
+      console.error("Error in handleDelete:", error);
+    }
+  };
+
+  const handleEdit = (id: string) => {
+    educationHook.handleEdit(id);
+  };
+
   return (
     <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
       <div className="flex justify-between items-center mb-2">
@@ -60,8 +89,8 @@ export function EducationSection({
                 education.grade ? `Grade: ${education.grade}` : "",
               ].filter(Boolean)}
               narrative={education.description}
-              onEdit={() => educationHook.handleEdit(education.id)}
-              onDelete={() => educationHook.handleDelete(education.id)}
+              onEdit={() => handleEdit(education.id)}
+              onDelete={() => handleDelete(education.id)}
             />
           ))}
         </div>
@@ -74,7 +103,7 @@ export function EducationSection({
         onClose={educationHook.handleFormClose}
         onSubmit={(e) => {
           e.preventDefault();
-          educationHook.handleSave();
+          handleSave();
         }}
         submitText="Education"
         isEditing={!!educationHook.editingId}

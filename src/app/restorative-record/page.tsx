@@ -404,6 +404,36 @@ export default function RestorativeRecordBuilder() {
     }
   };
 
+  // Function to refresh education data
+  const refreshEducation = async () => {
+    if (!user) return;
+    
+    const { data: educationData } = await supabase
+      .from("education")
+      .select("*")
+      .eq("user_id", user.id);
+    if (educationData && Array.isArray(educationData)) {
+      // Map Supabase fields to form fields
+      const mappedEducation = educationData.map((remote) => ({
+        id: remote.id,
+        school: remote.school_name || "",
+        location: remote.school_location || "",
+        degree: remote.degree || "",
+        field: remote.field_of_study || "",
+        currentlyEnrolled: remote.currently_enrolled || false,
+        startDate: remote.start_date || "",
+        endDate: remote.end_date || "",
+        grade: remote.grade || "",
+        description: remote.description || "",
+        file: null,
+        filePreview: remote.file_url || "",
+      }));
+      educationHook.setItems(mappedEducation);
+    } else {
+      educationHook.setItems([]);
+    }
+  };
+
   // Microcredentials state with custom hook
   const microHook = useFormCRUD<Omit<Microcredential, "id">>({
     initialFormState: {
@@ -518,6 +548,15 @@ export default function RestorativeRecordBuilder() {
         form.field &&
         form.startDate
       );
+    },
+    tableName: "education",
+    userId: user?.id,
+    toast: (options: { title: string; description: string; variant?: string }) => {
+      if (options.variant === "destructive") {
+        toast.error(options.description);
+      } else {
+        toast.success(options.description);
+      }
     },
   });
 
@@ -709,6 +748,44 @@ export default function RestorativeRecordBuilder() {
     
     if (currentCategory === categories.findIndex(cat => cat === "employment-history") && user) {
       fetchEmployment();
+    }
+  }, [currentCategory, user]);
+
+  // Fetch education from Supabase when navigating to the education section
+  useEffect(() => {
+    async function fetchEducation() {
+      if (!user) return;
+      
+      const { data: educationData } = await supabase
+        .from("education")
+        .select("*")
+        .eq("user_id", user.id);
+      if (educationData && Array.isArray(educationData)) {
+        // Map Supabase fields to form fields
+        const mappedEducation = educationData.map((remote) => ({
+          id: remote.id,
+          school: remote.school_name || "",
+          location: remote.school_location || "",
+          degree: remote.degree || "",
+          field: remote.field_of_study || "",
+          currentlyEnrolled: remote.currently_enrolled || false,
+          startDate: remote.start_date || "",
+          endDate: remote.end_date || "",
+          grade: remote.grade || "",
+          description: remote.description || "",
+          file: null,
+          filePreview: remote.file_url || "",
+        }));
+        
+        // Merge with existing local data if any
+        const existingIds = educationHook.items.map(item => item.id);
+        const newItems = mappedEducation.filter(item => !existingIds.includes(item.id));
+        educationHook.setItems([...educationHook.items, ...newItems]);
+      }
+    }
+    
+    if (currentCategory === categories.findIndex(cat => cat === "education") && user) {
+      fetchEducation();
     }
   }, [currentCategory, user]);
 
@@ -993,6 +1070,7 @@ export default function RestorativeRecordBuilder() {
             handleEducationFileChange={handleEducationFileChange}
             educationFileError={educationFileError}
             setEducationFileError={setEducationFileError}
+            onChange={handleSaveToSupabase}
           />
         );
 
