@@ -16,6 +16,7 @@ import {
   Introduction,
   Mentor,
   Microcredential,
+  RehabProgram,
   RehabProgramDetailsKey,
   RehabProgramKey,
   RehabPrograms,
@@ -789,6 +790,180 @@ export default function RestorativeRecordBuilder() {
     }
   }, [currentCategory, user]);
 
+  // Function to refresh rehab programs data
+  const refreshRehabPrograms = async () => {
+    console.log("🔄 refreshRehabPrograms called");
+    
+    if (!user) {
+      console.log("❌ No user, skipping refresh");
+      return;
+    }
+    
+    console.log("📥 Fetching from Supabase...");
+    const { data: rehabData } = await supabase
+      .from("rehab_programs")
+      .select("*")
+      .eq("user_id", user.id);
+      
+    console.log("📥 Fetched data:", rehabData);
+    
+    if (rehabData && Array.isArray(rehabData)) {
+      // Map Supabase fields to form fields
+      const mappedRehabPrograms = rehabData.map((remote) => ({
+        id: remote.id,
+        program: remote.program || "",
+        programType: remote.program_type || "",
+        startDate: remote.start_date || "",
+        endDate: remote.end_date || "",
+        details: remote.details || "",
+        narrative: remote.narrative || "",
+        file: null,
+        filePreview: remote.file_url || "",
+      }));
+      
+      console.log("🗂️ Mapped programs:", mappedRehabPrograms);
+      rehabHook.setItems(mappedRehabPrograms);
+      console.log("✅ Items set, current count:", mappedRehabPrograms.length);
+    } else {
+      console.log("📭 No data found, clearing items");
+      rehabHook.setItems([]);
+    }
+    
+    // Signal that data has been updated for cross-page synchronization
+    localStorage.setItem('restorative-record-updated', Date.now().toString());
+    console.log("🔄 Refresh complete");
+  };
+
+  // Rehab programs state with custom hook
+  const rehabHook = useFormCRUD<Omit<RehabProgram, "id">>({
+    initialFormState: {
+      program: "",
+      programType: "",
+      startDate: "",
+      endDate: "",
+      details: "",
+      narrative: "",
+      file: null,
+      filePreview: "",
+    },
+    validateForm: (form) => {
+      return !!(form.program && form.programType);
+    },
+    tableName: "rehab_programs",
+    userId: user?.id,
+    toast: (options: { title: string; description: string; variant?: string }) => {
+      if (options.variant === "destructive") {
+        toast.error(options.description);
+      } else {
+        toast.success(options.description);
+      }
+    },
+  });
+
+  const [rehabFileError, setRehabFileError] = useState("");
+
+  // Fetch rehab programs on mount when user is available
+  useEffect(() => {
+    async function fetchRehabProgramsOnMount() {
+      if (!user) return;
+      
+      const { data: rehabData } = await supabase
+        .from("rehab_programs")
+        .select("*")
+        .eq("user_id", user.id);
+      if (rehabData && Array.isArray(rehabData)) {
+        // Map Supabase fields to form fields
+        const mappedRehabPrograms = rehabData.map((remote) => ({
+          id: remote.id,
+          program: remote.program || "",
+          programType: remote.program_type || "",
+          startDate: remote.start_date || "",
+          endDate: remote.end_date || "",
+          details: remote.details || "",
+          narrative: remote.narrative || "",
+          file: null,
+          filePreview: remote.file_url || "",
+        }));
+        
+        // Get current local items
+        const currentItems = rehabHook.items || [];
+        
+        // Find unsaved local items (those without an ID that exists in Supabase)
+        const savedIds = new Set(mappedRehabPrograms.map(item => item.id));
+        const unsavedLocalItems = currentItems.filter(item => !savedIds.has(item.id));
+        
+        // Merge saved data from Supabase with unsaved local items
+        const mergedItems = [
+          ...mappedRehabPrograms, // All saved items from Supabase
+          ...unsavedLocalItems    // Any unsaved local items
+        ];
+        
+        rehabHook.setItems(mergedItems);
+      }
+    }
+    
+    fetchRehabProgramsOnMount();
+  }, [user]);
+
+  // Fetch rehab programs from Supabase when navigating to the rehab programs section
+  useEffect(() => {
+    async function fetchRehabPrograms() {
+      if (!user) return;
+      
+      const { data: rehabData } = await supabase
+        .from("rehab_programs")
+        .select("*")
+        .eq("user_id", user.id);
+      if (rehabData && Array.isArray(rehabData)) {
+        // Map Supabase fields to form fields
+        const mappedRehabPrograms = rehabData.map((remote) => ({
+          id: remote.id,
+          program: remote.program || "",
+          programType: remote.program_type || "",
+          startDate: remote.start_date || "",
+          endDate: remote.end_date || "",
+          details: remote.details || "",
+          narrative: remote.narrative || "",
+          file: null,
+          filePreview: remote.file_url || "",
+        }));
+        
+        // Get current local items
+        const currentItems = rehabHook.items || [];
+        
+        // Find unsaved local items (those without an ID that exists in Supabase)
+        const savedIds = new Set(mappedRehabPrograms.map(item => item.id));
+        const unsavedLocalItems = currentItems.filter(item => !savedIds.has(item.id));
+        
+        // Merge saved data from Supabase with unsaved local items
+        const mergedItems = [
+          ...mappedRehabPrograms, // All saved items from Supabase
+          ...unsavedLocalItems    // Any unsaved local items
+        ];
+        
+        rehabHook.setItems(mergedItems);
+      } else {
+        // If no data in Supabase, keep any local unsaved items
+        const currentItems = rehabHook.items || [];
+        rehabHook.setItems(currentItems);
+      }
+    }
+    
+    if (currentCategory === categories.findIndex(cat => cat === "rehabilitative-programs") && user) {
+      fetchRehabPrograms();
+    }
+
+    // Also refetch when page gains focus (e.g., returning from profile page)
+    const handleFocus = () => {
+      if (currentCategory === categories.findIndex(cat => cat === "rehabilitative-programs") && user) {
+        fetchRehabPrograms();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [currentCategory, user]);
+
   // Navigation
   const handleNext = async () => {
     if (currentCategory < categories.length - 1) {
@@ -887,6 +1062,15 @@ export default function RestorativeRecordBuilder() {
     }
   };
 
+  const handleRehabFileChange = (file: File | null) => {
+    if (file) {
+      rehabHook.updateForm({
+        file,
+        filePreview: createFilePreview(file),
+      });
+    }
+  };
+
   // Rehab programs handlers
   const handleRehabCheckbox = (key: RehabProgramKey) => {
     setRehabPrograms((prev) => ({
@@ -903,6 +1087,109 @@ export default function RestorativeRecordBuilder() {
       ...prev,
       [`${key}Details`]: value.slice(0, 500),
     }));
+  };
+
+  // Save rehab programs specifically to Supabase
+  const saveRehabProgramsToSupabase = async (formData: RehabProgram & { id: string }, isEdit: boolean) => {
+    console.log("🚀 saveRehabProgramsToSupabase called with:", { formData, isEdit });
+    
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      console.error("❌ No user found");
+      return;
+    }
+
+    console.log("👤 User ID:", user.id);
+
+    // Create a toast wrapper that matches the expected format
+    const toastWrapper = (options: {
+      title: string;
+      description: string;
+      variant?: string;
+    }) => {
+      if (options.variant === "destructive") {
+        toast.error(options.description);
+      } else {
+        toast.success(options.description);
+      }
+    };
+
+    try {
+      // Import upload function
+      const { uploadFileToSupabase } = await import("./utils");
+      
+      let fileUrl = null;
+      let fileName = null;
+      let fileSize = null;
+
+      // Upload file if it exists
+      if (formData.file) {
+        console.log("📎 Uploading file...", formData.file.name);
+        const fileData = await uploadFileToSupabase(
+          "rehab-program-files",
+          user.id,
+          formData.id,
+          formData.file
+        );
+        if (fileData) {
+          fileUrl = fileData.url;
+          fileName = fileData.fileName;
+          fileSize = fileData.fileSize;
+          console.log("✅ File uploaded:", fileUrl);
+        } else {
+          console.error("❌ File upload failed");
+          toastWrapper({
+            title: "Error",
+            description: "Failed to upload rehab program file",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // Save rehab program data
+      console.log("💾 Saving to database...");
+      const dataToSave = {
+        user_id: user.id,
+        id: formData.id,
+        program: formData.program,
+        program_type: formData.programType,
+        start_date: formData.startDate || null,
+        end_date: formData.endDate || null,
+        details: formData.details || null,
+        narrative: formData.narrative || null,
+        file_url: fileUrl || formData.filePreview || null,
+        file_name: fileName,
+        file_size: fileSize,
+      };
+      
+      console.log("💾 Data to save:", dataToSave);
+      
+      const { error: rehabProgramError } = await supabase
+        .from("rehab_programs")
+        .upsert(dataToSave);
+
+      if (rehabProgramError) {
+        console.error("❌ Database save error:", rehabProgramError);
+        toastWrapper({
+          title: "Error",
+          description: "Failed to save rehab program",
+          variant: "destructive",
+        });
+        throw rehabProgramError;
+      } else {
+        console.log("✅ Database save successful");
+        toastWrapper({
+          title: "Success",
+          description: `Rehab program ${isEdit ? 'updated' : 'saved'} successfully`,
+        });
+      }
+    } catch (error) {
+      console.error("❌ Error in saveRehabProgramsToSupabase:", error);
+      throw error;
+    }
   };
 
   // Save to Supabase
@@ -930,6 +1217,7 @@ export default function RestorativeRecordBuilder() {
       formData,
       educationHook,
       rehabPrograms,
+      rehabHook,
       skillsHook,
       engagementHook,
       microHook,
@@ -1043,9 +1331,12 @@ export default function RestorativeRecordBuilder() {
       case "rehabilitative-programs":
         return (
           <RehabilitativeProgramsSection
-            rehabPrograms={rehabPrograms}
-            handleRehabCheckbox={handleRehabCheckbox}
-            handleRehabDetailsChange={handleRehabDetailsChange}
+            rehabHook={rehabHook}
+            handleRehabFileChange={handleRehabFileChange}
+            rehabFileError={rehabFileError}
+            setRehabFileError={setRehabFileError}
+            onSave={saveRehabProgramsToSupabase}
+            onChange={refreshRehabPrograms}
           />
         );
 

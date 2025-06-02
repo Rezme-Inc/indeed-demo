@@ -9,6 +9,7 @@ import {
     Introduction,
     Mentor,
     Microcredential,
+    RehabProgram,
     RehabPrograms,
     Skill,
 } from "../types";
@@ -19,6 +20,7 @@ interface SaveToSupabaseParams {
   formData: Introduction;
   educationHook: ReturnType<typeof useFormCRUD<Omit<Education, "id">>>;
   rehabPrograms: RehabPrograms;
+  rehabHook: ReturnType<typeof useFormCRUD<Omit<RehabProgram, "id">>>;
   skillsHook: ReturnType<typeof useFormCRUD<Omit<Skill, "id">>>;
   engagementHook: ReturnType<typeof useFormCRUD<Omit<Engagement, "id">>>;
   microHook: ReturnType<typeof useFormCRUD<Omit<Microcredential, "id">>>;
@@ -34,6 +36,7 @@ export async function saveToSupabase({
   formData,
   educationHook,
   rehabPrograms,
+  rehabHook,
   skillsHook,
   engagementHook,
   microHook,
@@ -196,6 +199,61 @@ export async function saveToSupabase({
       description: "Failed to save rehabilitative programs",
       variant: "destructive",
     });
+  }
+
+  // Save new rehab programs (CRUD format)
+  for (const rehabProgram of rehabHook.items) {
+    let fileUrl = null;
+    let fileName = null;
+    let fileSize = null;
+
+    // Upload file if it exists
+    if (rehabProgram.file) {
+      const fileData = await uploadFileToSupabase(
+        "rehab-program-files",
+        user.id,
+        rehabProgram.id,
+        rehabProgram.file
+      );
+      if (fileData) {
+        fileUrl = fileData.url;
+        fileName = fileData.fileName;
+        fileSize = fileData.fileSize;
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to upload rehab program file",
+          variant: "destructive",
+        });
+        continue;
+      }
+    }
+
+    // Save rehab program data
+    const { error: rehabProgramError } = await supabase
+      .from("rehab_programs")
+      .upsert({
+        user_id: user.id,
+        id: rehabProgram.id,
+        program: rehabProgram.program,
+        program_type: rehabProgram.programType,
+        start_date: rehabProgram.startDate || null,
+        end_date: rehabProgram.endDate || null,
+        details: rehabProgram.details || null,
+        narrative: rehabProgram.narrative || null,
+        file_url: fileUrl,
+        file_name: fileName,
+        file_size: fileSize,
+      });
+
+    if (rehabProgramError) {
+      console.error("Error saving rehab program:", rehabProgramError);
+      toast({
+        title: "Error",
+        description: "Failed to save rehab program",
+        variant: "destructive",
+      });
+    }
   }
 
   // Save skills
