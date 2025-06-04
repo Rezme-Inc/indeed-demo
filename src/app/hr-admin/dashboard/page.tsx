@@ -13,6 +13,14 @@ interface User {
   interests: string[];
   rr_completed: boolean;
   granted_at?: string;
+  compliance_steps?: {
+    conditional_job_offer: boolean;
+    individualized_assessment: boolean;
+    preliminary_job_offer_revocation: boolean;
+    individualized_reassessment: boolean;
+    final_revocation_notice: boolean;
+    decision: boolean;
+  };
 }
 
 interface HRAdmin {
@@ -113,17 +121,45 @@ export default function HRAdminDashboard() {
 
       if (userError) throw userError;
 
+      // Fetch compliance steps for each user
+      const { data: complianceSteps, error: complianceError } = await supabase
+        .from("compliance_steps")
+        .select("*")
+        .eq("hr_admin_id", hrAdmin.id)
+        .in("user_id", userIds);
+
+      if (complianceError) {
+        console.warn("Error fetching compliance steps:", complianceError);
+      }
+
       // Combine the data
       const users =
         userProfiles?.map((profile) => {
           const permission = permissions.find((p) => p.user_id === profile.id);
+          const userComplianceSteps = complianceSteps?.find((cs) => cs.user_id === profile.id);
+          
           return {
             ...profile,
             granted_at: permission?.granted_at,
+            compliance_steps: userComplianceSteps ? {
+              conditional_job_offer: userComplianceSteps.conditional_job_offer,
+              individualized_assessment: userComplianceSteps.individualized_assessment,
+              preliminary_job_offer_revocation: userComplianceSteps.preliminary_job_offer_revocation,
+              individualized_reassessment: userComplianceSteps.individualized_reassessment,
+              final_revocation_notice: userComplianceSteps.final_revocation_notice,
+              decision: userComplianceSteps.decision,
+            } : {
+              conditional_job_offer: false,
+              individualized_assessment: false,
+              preliminary_job_offer_revocation: false,
+              individualized_reassessment: false,
+              final_revocation_notice: false,
+              decision: false,
+            }
           };
         }) || [];
 
-      console.log("Fetched permitted users:", users);
+      console.log("Fetched permitted users with compliance steps:", users);
       setPermittedUsers(users);
     } catch (err) {
       console.error("Error fetching permitted users:", err);
@@ -188,6 +224,38 @@ export default function HRAdminDashboard() {
   const refreshData = async () => {
     await fetchHRAdminProfile();
     await fetchPermittedUsers();
+  };
+
+  const renderComplianceSteps = (user: User) => {
+    const steps = [
+      { key: 'conditional_job_offer', label: 'Conditional Job Offer' },
+      { key: 'individualized_assessment', label: 'Individualized Assessment' },
+      { key: 'preliminary_job_offer_revocation', label: 'Preliminary Job Offer Revocation' },
+      { key: 'individualized_reassessment', label: 'Individualized Reassessment' },
+      { key: 'final_revocation_notice', label: 'Final Revocation Notice' },
+      { key: 'decision', label: 'Decision' }
+    ];
+
+    return (
+      <div className="flex flex-wrap gap-1">
+        {steps.map((step) => {
+          const isCompleted = user.compliance_steps?.[step.key as keyof typeof user.compliance_steps] || false;
+          return (
+            <span
+              key={step.key}
+              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                isCompleted
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-gray-100 text-gray-500'
+              }`}
+              title={step.label}
+            >
+              {step.label}
+            </span>
+          );
+        })}
+      </div>
+    );
   };
 
   return (
@@ -286,6 +354,9 @@ export default function HRAdminDashboard() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
                   Actions
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
+                  Compliance Steps
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -327,12 +398,15 @@ export default function HRAdminDashboard() {
                       Begin Assessment
                     </button>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {renderComplianceSteps(user)}
+                  </td>
                 </tr>
               ))}
               {permittedUsers.length === 0 && (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-6 py-4 text-center text-gray-900"
                   >
                     No users have granted you access yet. Share your invitation
