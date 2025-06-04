@@ -1362,7 +1362,20 @@ export default function AssessmentPage({
                       <span className="font-semibold">Once you have considered any mitigating information provided by the applicant, you may still decide to revoke the conditional job offer due to relevant criminal history.</span> <br />
                       The following notice meets your responsibility to notify the applicant in writing.
                     </div>
-                    <button className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600 w-full" onClick={() => setShowFinalRevocationModal(true)}>Issue Final Revocation Notice</button>
+                    <div className="flex gap-4">
+                      <button
+                        className="px-8 py-3 rounded text-lg font-semibold bg-green-500 text-white hover:bg-green-600 w-full"
+                        onClick={handleProceedWithHire}
+                      >
+                        Extend Offer of Employment
+                      </button>
+                      <button
+                        className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600 w-full"
+                        onClick={() => setShowFinalRevocationModal(true)}
+                      >
+                        Issue Final Revocation Notice
+                      </button>
+                    </div>
                   </div>
                 </div>
                 {/* Final Revocation Notice Modal */}
