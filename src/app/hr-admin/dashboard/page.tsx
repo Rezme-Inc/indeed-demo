@@ -121,45 +121,17 @@ export default function HRAdminDashboard() {
 
       if (userError) throw userError;
 
-      // Fetch compliance steps for each user
-      const { data: complianceSteps, error: complianceError } = await supabase
-        .from("compliance_steps")
-        .select("*")
-        .eq("hr_admin_id", hrAdmin.id)
-        .in("user_id", userIds);
-
-      if (complianceError) {
-        console.warn("Error fetching compliance steps:", complianceError);
-      }
-
       // Combine the data
       const users =
         userProfiles?.map((profile) => {
           const permission = permissions.find((p) => p.user_id === profile.id);
-          const userComplianceSteps = complianceSteps?.find((cs) => cs.user_id === profile.id);
-          
           return {
             ...profile,
             granted_at: permission?.granted_at,
-            compliance_steps: userComplianceSteps ? {
-              conditional_job_offer: userComplianceSteps.conditional_job_offer,
-              individualized_assessment: userComplianceSteps.individualized_assessment,
-              preliminary_job_offer_revocation: userComplianceSteps.preliminary_job_offer_revocation,
-              individualized_reassessment: userComplianceSteps.individualized_reassessment,
-              final_revocation_notice: userComplianceSteps.final_revocation_notice,
-              decision: userComplianceSteps.decision,
-            } : {
-              conditional_job_offer: false,
-              individualized_assessment: false,
-              preliminary_job_offer_revocation: false,
-              individualized_reassessment: false,
-              final_revocation_notice: false,
-              decision: false,
-            }
           };
         }) || [];
 
-      console.log("Fetched permitted users with compliance steps:", users);
+      console.log("Fetched permitted users:", users);
       setPermittedUsers(users);
     } catch (err) {
       console.error("Error fetching permitted users:", err);

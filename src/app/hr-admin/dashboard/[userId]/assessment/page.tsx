@@ -1432,9 +1432,9 @@ export default function AssessmentPage({
             </div>
             <h1 className="text-3xl font-bold text-center mb-4">Final Revocation Notice Sent</h1>
             <p className="text-lg text-gray-600 text-center mb-8">
-              The final decision notice has been sent to the candidate. This completes the Fair Chance hiring process.
+              You have indicated that you will not be proceeding with an offer of employment to the candidate. Please update your records accordingly. We will store the assessments and actions you conducted on Rézme including the steps you took to ensure compliance with San Diego County Fair Chance Ordinance and The Office of Labor Standards and Enforcement (OLSE).
             </p>
-            <button className="px-8 py-4 rounded-lg text-lg font-semibold bg-blue-600 text-white hover:bg-blue-700 mb-8" onClick={() => { setShowFinalRevocationSuccessModal(false); /* Optionally, add navigation here */ }}>
+            <button className="px-8 py-4 rounded-lg text-lg font-semibold bg-blue-600 text-white hover:bg-blue-700 mb-8" onClick={() => { setShowFinalRevocationSuccessModal(false); router.push('/hr-admin/dashboard'); }}>
               Return to Dashboard
             </button>
             <div className="w-full border-t border-gray-200 pt-8 flex flex-col items-center">
