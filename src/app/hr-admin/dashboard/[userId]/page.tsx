@@ -46,7 +46,7 @@ interface RestorativeData {
   hobbies: any[];
   mentors: any[];
   micro_credentials: any[];
-  rehabilitative_programs: any[];
+  rehab_programs: any[];
 }
 
 export default function UserProfilePage({
@@ -110,7 +110,7 @@ export default function UserProfilePage({
         hobbies,
         mentors,
         micro_credentials,
-        rehabilitative_programs,
+        rehab_programs,
       ] = await Promise.all([
         supabase
           .from("introduction")
@@ -132,7 +132,7 @@ export default function UserProfilePage({
           .select("*")
           .eq("user_id", params.userId),
         supabase
-          .from("rehabilitative_programs")
+          .from("rehab_programs")
           .select("*")
           .eq("user_id", params.userId),
       ]);
@@ -147,7 +147,7 @@ export default function UserProfilePage({
         hobbies: hobbies.data || [],
         mentors: mentors.data || [],
         micro_credentials: micro_credentials.data || [],
-        rehabilitative_programs: rehabilitative_programs.data || [],
+        rehab_programs: rehab_programs.data || [],
       });
     } catch (err) {
       console.error("Error fetching data:", err);
@@ -335,41 +335,57 @@ export default function UserProfilePage({
                       Social Links
                     </h3>
                     <div className="flex flex-wrap gap-2">
-                      {restorativeData.introduction.linkedin_url && (
-                        <a
-                          href={restorativeData.introduction.linkedin_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100"
-                        >
-                          <Linkedin className="h-4 w-4" />
-                          LinkedIn
-                        </a>
-                      )}
-                      {restorativeData.introduction.github_url && (
-                        <a
-                          href={restorativeData.introduction.github_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200"
-                        >
-                          <Github className="h-4 w-4" />
-                          GitHub
-                        </a>
-                      )}
-                      {restorativeData.introduction.personal_website_url && (
-                        <a
-                          href={
-                            restorativeData.introduction.personal_website_url
-                          }
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 px-3 py-1 bg-purple-50 text-purple-600 rounded-full hover:bg-purple-100"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                          Website
-                        </a>
-                      )}
+                      {(() => {
+                        const socialPlatforms = [
+                          { key: 'facebook_url', label: 'Facebook', icon: Facebook, bgColor: 'bg-blue-50', textColor: 'text-blue-600', hoverColor: 'hover:bg-blue-100' },
+                          { key: 'linkedin_url', label: 'LinkedIn', icon: Linkedin, bgColor: 'bg-blue-50', textColor: 'text-blue-600', hoverColor: 'hover:bg-blue-100' },
+                          { key: 'reddit_url', label: 'Reddit', icon: Globe, bgColor: 'bg-orange-50', textColor: 'text-orange-600', hoverColor: 'hover:bg-orange-100' },
+                          { key: 'digital_portfolio_url', label: 'Portfolio', icon: Globe, bgColor: 'bg-purple-50', textColor: 'text-purple-600', hoverColor: 'hover:bg-purple-100' },
+                          { key: 'instagram_url', label: 'Instagram', icon: Instagram, bgColor: 'bg-pink-50', textColor: 'text-pink-600', hoverColor: 'hover:bg-pink-100' },
+                          { key: 'github_url', label: 'GitHub', icon: Github, bgColor: 'bg-gray-50', textColor: 'text-gray-700', hoverColor: 'hover:bg-gray-100' },
+                          { key: 'tiktok_url', label: 'TikTok', icon: Globe, bgColor: 'bg-red-50', textColor: 'text-red-600', hoverColor: 'hover:bg-red-100' },
+                          { key: 'pinterest_url', label: 'Pinterest', icon: Globe, bgColor: 'bg-red-50', textColor: 'text-red-600', hoverColor: 'hover:bg-red-100' },
+                          { key: 'twitter_url', label: 'X (Twitter)', icon: Twitter, bgColor: 'bg-black', textColor: 'text-white', hoverColor: 'hover:bg-gray-800' },
+                          { key: 'personal_website_url', label: 'Website', icon: ExternalLink, bgColor: 'bg-purple-50', textColor: 'text-purple-600', hoverColor: 'hover:bg-purple-100' },
+                          { key: 'handshake_url', label: 'Handshake', icon: Globe, bgColor: 'bg-green-50', textColor: 'text-green-600', hoverColor: 'hover:bg-green-100' }
+                        ];
+
+                        return socialPlatforms.map(platform => {
+                          const url = restorativeData.introduction[platform.key];
+                          if (!url) return null;
+
+                          const IconComponent = platform.icon;
+                          return (
+                            <a
+                              key={platform.key}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`flex items-center gap-1 px-3 py-1 ${platform.bgColor} ${platform.textColor} rounded-full ${platform.hoverColor} transition-colors`}
+                            >
+                              <IconComponent className="h-4 w-4" />
+                              {platform.label}
+                            </a>
+                          );
+                        }).filter(Boolean);
+                      })()}
+                      {(() => {
+                        const socialPlatforms = [
+                          'facebook_url', 'linkedin_url', 'reddit_url', 'digital_portfolio_url', 
+                          'instagram_url', 'github_url', 'tiktok_url', 'pinterest_url', 
+                          'twitter_url', 'personal_website_url', 'handshake_url'
+                        ];
+                        const hasAnySocialLinks = socialPlatforms.some(key => restorativeData.introduction[key]);
+                        
+                        if (!hasAnySocialLinks) {
+                          return (
+                            <span className="text-gray-500 italic text-sm">
+                              No social media links provided
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -734,45 +750,53 @@ export default function UserProfilePage({
             <h2 className="text-xl font-semibold mb-4">
               Rehabilitative Programs
             </h2>
-            {restorativeData.rehabilitative_programs.length > 0 ? (
-              restorativeData.rehabilitative_programs.map((program, index) => (
+            {restorativeData.rehab_programs.length > 0 ? (
+              restorativeData.rehab_programs.map((program, index) => (
                 <Card key={index} className="p-6">
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">
-                      Program Participation
-                    </h3>
-                    <div className="space-y-3">
-                      {Object.entries(program).map(([key, value]) => {
-                        if (
-                          key === "id" ||
-                          key === "user_id" ||
-                          key === "created_at" ||
-                          key === "updated_at"
-                        )
-                          return null;
-                        if (typeof value === "boolean" && value) {
-                          const programName = key
-                            .replace(/_/g, " ")
-                            .replace(/\b\w/g, (l) => l.toUpperCase());
-                          const detailsKey = key + "_details";
-                          const details = program[detailsKey];
-                          return (
-                            <div
-                              key={key}
-                              className="border-l-4 border-green-500 pl-4"
-                            >
-                              <h4 className="font-medium">{programName}</h4>
-                              {details && (
-                                <p className="text-gray-600 text-sm mt-1">
-                                  {details}
-                                </p>
-                              )}
-                            </div>
-                          );
-                        }
-                        return null;
-                      })}
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-2">
+                      <h3 className="font-semibold text-lg">{program.program}</h3>
+                      <p className="text-gray-600">
+                        Type: {program.program_type}
+                      </p>
+                      {(program.start_date || program.end_date) && (
+                        <p className="text-sm text-gray-500">
+                          {program.start_date 
+                            ? new Date(program.start_date).toLocaleDateString()
+                            : "N/A"} - {program.end_date 
+                            ? new Date(program.end_date).toLocaleDateString() 
+                            : "Present"}
+                        </p>
+                      )}
+                      {program.details && (
+                        <p className="text-gray-600 mt-2">
+                          <span className="font-medium">Details:</span> {program.details}
+                        </p>
+                      )}
+                      {program.narrative && (
+                        <p className="text-gray-600 mt-2">
+                          <span className="font-medium">Narrative:</span> {program.narrative}
+                        </p>
+                      )}
+                      {program.file_url && (
+                        <div className="mt-2">
+                          <a
+                            href={program.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-blue-600 hover:underline text-sm"
+                          >
+                            {program.file_name || "View attachment"} <ExternalLink className="h-3 w-3" />
+                          </a>
+                          {program.file_size && (
+                            <span className="ml-2 text-gray-400 text-xs">
+                              ({(program.file_size / 1024).toFixed(1)} KB)
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
+                    <Shield className="h-6 w-6 text-gray-400" />
                   </div>
                 </Card>
               ))
