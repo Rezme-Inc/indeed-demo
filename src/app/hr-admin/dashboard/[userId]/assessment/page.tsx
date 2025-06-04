@@ -91,7 +91,7 @@ export default function AssessmentPage({
     reportDate: '',
     performedBy: '',
     error: '',
-    errorYesNo: '',
+    errorYesNo: 'No',
     workExperience: '',
     jobTraining: '',
     education: '',
@@ -101,6 +101,10 @@ export default function AssessmentPage({
     lettersOfSupport: '',
     religiousAttendance: '',
     rescindReason: '',
+    evidenceA: '',
+    evidenceB: '',
+    evidenceC: '',
+    evidenceD: '',
   });
   const [reassessmentPreview, setReassessmentPreview] = useState(false);
   const [initialAssessmentResults, setInitialAssessmentResults] = useState<any>(null);
@@ -1168,6 +1172,100 @@ export default function AssessmentPage({
                           <input type="text" name="performedBy" value={reassessmentForm.performedBy} onChange={handleReassessmentFormChange} className="w-full border rounded px-3 py-2" />
                         </div>
                       </div>
+                      
+                      {/* Additional Assessment Questions */}
+                      <div className="border-t pt-6 mt-6">
+                        <h3 className="text-lg font-semibold mb-4">Assessment Questions</h3>
+                        
+                        {/* Question 1: Error in Criminal History Report */}
+                        <div className="mb-6">
+                          <label className="block text-sm font-semibold mb-3">1. Was there an error in the Criminal History Report?</label>
+                          <div className="flex items-center gap-6 mb-3">
+                            <label className="flex items-center gap-2">
+                              <input 
+                                type="radio" 
+                                name="errorYesNo" 
+                                value="Yes" 
+                                checked={reassessmentForm.errorYesNo === 'Yes'} 
+                                onChange={handleReassessmentFormChange} 
+                              /> 
+                               Yes
+                            </label>
+                            <label className="flex items-center gap-2">
+                              <input 
+                                type="radio" 
+                                name="errorYesNo" 
+                                value="No" 
+                                checked={reassessmentForm.errorYesNo === 'No'} 
+                                onChange={handleReassessmentFormChange} 
+                              /> 
+                               No
+                            </label>
+                          </div>
+                          {reassessmentForm.errorYesNo === 'Yes' && (
+                            <div>
+                              <label className="block text-sm font-semibold mb-1">If yes, describe the error:</label>
+                              <textarea 
+                                name="error" 
+                                value={reassessmentForm.error} 
+                                onChange={handleReassessmentFormChange} 
+                                className="w-full border rounded px-3 py-2 min-h-[80px]" 
+                                placeholder="Describe the error in detail"
+                              />
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Question 2: Evidence of Rehabilitation */}
+                        <div className="mb-6">
+                          <label className="block text-sm font-semibold mb-3">
+                            2. Evidence of rehabilitation and good conduct (this evidence may include, but is not limited to, documents or other information demonstrating that the Applicant attended school, a religious institution, job training, or counseling, or is involved with the community. This evidence can include letters from people who know the Applicant, such as teachers, counselors, supervisors, clergy, and parole or probation officers):
+                          </label>
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-sm font-medium mb-1">a.</label>
+                              <textarea 
+                                name="evidenceA" 
+                                value={reassessmentForm.evidenceA} 
+                                onChange={handleReassessmentFormChange} 
+                                className="w-full border rounded px-3 py-2 min-h-[60px]" 
+                                placeholder="Evidence item A"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">b.</label>
+                              <textarea 
+                                name="evidenceB" 
+                                value={reassessmentForm.evidenceB} 
+                                onChange={handleReassessmentFormChange} 
+                                className="w-full border rounded px-3 py-2 min-h-[60px]" 
+                                placeholder="Evidence item B"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">c.</label>
+                              <textarea 
+                                name="evidenceC" 
+                                value={reassessmentForm.evidenceC} 
+                                onChange={handleReassessmentFormChange} 
+                                className="w-full border rounded px-3 py-2 min-h-[60px]" 
+                                placeholder="Evidence item C"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">d.</label>
+                              <textarea 
+                                name="evidenceD" 
+                                value={reassessmentForm.evidenceD} 
+                                onChange={handleReassessmentFormChange} 
+                                className="w-full border rounded px-3 py-2 min-h-[60px]" 
+                                placeholder="Evidence item D"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
                       <div>
                         <label className="block text-sm font-semibold mb-1">Decision</label>
                         <div className="flex items-center gap-6 mb-2">
@@ -1212,6 +1310,21 @@ export default function AssessmentPage({
                       {reassessmentForm.errorYesNo === 'Yes' && (
                         <div className="mb-2"><b>If yes, describe the error:</b> {reassessmentForm.error}</div>
                       )}
+                      <div className="mt-4">
+                        <b>2. Evidence of rehabilitation and good conduct:</b>
+                        {reassessmentForm.evidenceA && (
+                          <div className="mt-2"><b>a.</b> {reassessmentForm.evidenceA}</div>
+                        )}
+                        {reassessmentForm.evidenceB && (
+                          <div className="mt-2"><b>b.</b> {reassessmentForm.evidenceB}</div>
+                        )}
+                        {reassessmentForm.evidenceC && (
+                          <div className="mt-2"><b>c.</b> {reassessmentForm.evidenceC}</div>
+                        )}
+                        {reassessmentForm.evidenceD && (
+                          <div className="mt-2"><b>d.</b> {reassessmentForm.evidenceD}</div>
+                        )}
+                      </div>
                       <div className="mt-2">
                         {reassessmentDecision === 'rescind' ? (
                           <><b>Based on the factors above, we are rescinding our offer of employment because:</b><br />{reassessmentForm.rescindReason}</>
