@@ -131,6 +131,7 @@ export default function AssessmentPage({
   });
   const [finalRevocationPreview, setFinalRevocationPreview] = useState(false);
   const [showFinalRevocationSuccessModal, setShowFinalRevocationSuccessModal] = useState(false);
+  const [showCandidateResponseModal, setShowCandidateResponseModal] = useState(false);
 
   const questions: AssessmentQuestion[] = [
     {
@@ -503,6 +504,24 @@ export default function AssessmentPage({
                     onClick={() => router.push(`/hr-admin/dashboard/${params.userId}/assessment/ordinance-summary`)}
                   >
                     View Ordinance Summary
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            {/* View Candidate Response Button */}
+            <div className="bg-white rounded-lg shadow p-4 mb-8">
+              <div className="flex flex-col items-center text-center space-y-3">
+                <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <span className="text-2xl text-blue-500">👤</span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900 mb-2">Candidate Information</h3>
+                  <button 
+                    className="px-3 py-2 border border-blue-400 text-blue-500 text-xs rounded hover:bg-blue-50"
+                    onClick={() => setShowCandidateResponseModal(true)}
+                  >
+                    View Candidate Response
                   </button>
                 </div>
               </div>
@@ -1410,16 +1429,59 @@ export default function AssessmentPage({
       </div>
         </div>
       </div>
+      
+      {/* Footer with Disclaimer */}
+      <footer className="bg-white border-t border-gray-200 py-12 mt-16">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left: Logo and Tagline */}
+            <div>
+              <div className="text-black font-bold text-2xl mb-3">
+                réz<span className="text-red-500">me</span>.
+              </div>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Automating Fair Chance Hiring<br />
+                compliance for modern HR teams.
+              </p>
+            </div>
+            
+            {/* Right: Legal Disclaimer */}
+            <div className="lg:col-span-2">
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Rézme provides compliance support tools, not legal advice. Use of this site or platform does not create an attorney-client relationship. Employers retain full responsibility for final hiring decisions and for compliance with applicable laws. Rézme is not a Consumer Reporting Agency and does not furnish consumer reports under the Fair Credit Reporting Act. While our software assists clients in documenting individualized assessments and related compliance steps, Rézme's role is limited to producing records created within our system in the event of an audit. All data sources, partner integrations, and outputs are provided "as-is," without warranty of completeness or accuracy. Tax credit calculations are estimates only and do not guarantee financial outcomes. By using this site, you agree to our Terms of Service, including limitations of liability, indemnification provisions, and governing law clauses.
+              </p>
+            </div>
+          </div>
+          
+          {/* Copyright */}
+          <div className="mt-12 pt-8 border-t border-gray-200 text-center">
+            <p className="text-gray-500 text-sm">
+              © 2024 Rézme. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
+      
       {showExtendSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-10 flex flex-col items-center">
+          <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-10 flex flex-col items-center relative">
+            {/* X Close Button */}
+            <button 
+              className="absolute top-4 left-4 text-gray-400 hover:text-gray-600"
+              onClick={() => setShowExtendSuccessModal(false)}
+            >
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
             <div className="rounded-full bg-green-100 p-4 mb-4">
               <svg className="h-10 w-10 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
             </div>
             <h2 className="text-2xl font-bold text-center mb-4">Applicant Hired!</h2>
             <div className="text-gray-700 text-lg text-center mb-8">You have indicated that you intend to extend an offer of employment to the candidate. Please update your records accordingly. We will store the assessments you conducted on Rézme.</div>
             <button className="px-8 py-3 rounded text-lg font-semibold bg-blue-600 text-white hover:bg-blue-700" onClick={() => { setShowExtendSuccessModal(false); setShowReassessmentSplit(false); setReassessmentPreview(false); router.push('/hr-admin/dashboard'); }}>
-              Close
+              Return to Dashboard
             </button>
           </div>
         </div>
@@ -1452,6 +1514,47 @@ export default function AssessmentPage({
                   619-531-5129
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Candidate Response Modal */}
+      {showCandidateResponseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full p-8 relative max-h-screen overflow-y-auto">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Candidate Response - Restorative Record</h2>
+              <button 
+                className="text-gray-400 hover:text-gray-600"
+                onClick={() => setShowCandidateResponseModal(false)}
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Content Placeholder */}
+            <div className="text-center py-12">
+              <div className="h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl text-blue-500">📄</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Candidate Response</h3>
+              <p className="text-gray-600">
+                The candidate's restorative record and response will be displayed here.
+              </p>
+            </div>
+            
+            {/* Footer */}
+            <div className="flex justify-end mt-8">
+              <button 
+                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200" 
+                onClick={() => setShowCandidateResponseModal(false)}
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
