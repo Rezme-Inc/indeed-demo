@@ -132,6 +132,9 @@ export default function AssessmentPage({
   const [finalRevocationPreview, setFinalRevocationPreview] = useState(false);
   const [showFinalRevocationSuccessModal, setShowFinalRevocationSuccessModal] = useState(false);
   const [showCandidateResponseModal, setShowCandidateResponseModal] = useState(false);
+  
+  // Critical Information Tab State
+  const [activeTab, setActiveTab] = useState('Legal');
 
   const questions: AssessmentQuestion[] = [
     {
@@ -1419,14 +1422,133 @@ export default function AssessmentPage({
                 <span className="mr-2 text-xl text-gray-700">ℹ️</span>
                 <h3 className="text-lg font-bold">Critical Information</h3>
               </div>
-              <div className="flex space-x-4 mb-4">
-                <button className="px-4 py-2 rounded-full bg-red-100 text-red-600 font-semibold">Legal</button>
-                <button className="px-4 py-2 rounded-full bg-red-500 text-white font-semibold">Company Policy</button>
-                <button className="px-4 py-2 rounded-full bg-red-100 text-red-600 font-semibold">Candidate Context</button>
+              
+              {/* Tab Navigation */}
+              <div className="flex space-x-1 mb-6 border-b border-gray-200">
+                {['Legal', 'Company Policy', 'Candidate Context'].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`px-4 py-2 font-semibold text-sm transition-colors relative ${
+                      activeTab === tab
+                        ? 'text-red-600 border-b-2 border-red-600'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+              
+              {/* Tab Content */}
+              <div className="min-h-[200px]">
+                {activeTab === 'Legal' && (
+                  <div className="space-y-4">
+                    {currentStep === 1 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">San Diego Fair Chance Ordinance Requirements</h4>
+                        <p>Internal policy requires documented confirmation of conditional offer before accessing any conviction history information. This ensures compliance with local fair chance hiring legislation.</p>
+                      </div>
+                    )}
+                    {currentStep === 2 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Individualized Assessment Guidelines</h4>
+                        <p>Legal requirements for conducting fair and compliant individualized assessments under San Diego Fair Chance Ordinance will be displayed here.</p>
+                      </div>
+                    )}
+                    {currentStep === 3 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Preliminary Decision Legal Framework</h4>
+                        <p>Legal guidelines for preliminary job offer decisions and revocation procedures will be displayed here.</p>
+                      </div>
+                    )}
+                    {currentStep === 4 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Reassessment Legal Requirements</h4>
+                        <p>Legal framework for conducting reassessments and handling candidate responses will be displayed here.</p>
+                      </div>
+                    )}
+                    {currentStep === 5 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Final Decision Legal Compliance</h4>
+                        <p>Legal requirements for final hiring decisions and documentation will be displayed here.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {activeTab === 'Company Policy' && (
+                  <div className="space-y-4">
+                    {currentStep === 1 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Conditional Offer Policy</h4>
+                        <p>Company-specific policies regarding conditional job offers and documentation requirements will be displayed here.</p>
+                      </div>
+                    )}
+                    {currentStep === 2 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Assessment Procedures</h4>
+                        <p>Internal company policies for conducting individualized assessments will be displayed here.</p>
+                      </div>
+                    )}
+                    {currentStep === 3 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Decision Making Policy</h4>
+                        <p>Company policies for preliminary hiring decisions and notification procedures will be displayed here.</p>
+                      </div>
+                    )}
+                    {currentStep === 4 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Reassessment Guidelines</h4>
+                        <p>Company policies for handling candidate responses and conducting reassessments will be displayed here.</p>
+                      </div>
+                    )}
+                    {currentStep === 5 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Final Decision Policy</h4>
+                        <p>Company policies for final hiring decisions and record keeping will be displayed here.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {activeTab === 'Candidate Context' && (
+                  <div className="space-y-4">
+                    {currentStep === 1 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Candidate Background</h4>
+                        <p>Relevant candidate information and context for the conditional offer stage will be displayed here.</p>
+                      </div>
+                    )}
+                    {currentStep === 2 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Assessment Context</h4>
+                        <p>Candidate-specific context and considerations for the individualized assessment will be displayed here.</p>
+                      </div>
+                    )}
+                    {currentStep === 3 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Decision Context</h4>
+                        <p>Relevant candidate context for preliminary decision making will be displayed here.</p>
+                      </div>
+                    )}
+                    {currentStep === 4 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Response Context</h4>
+                        <p>Candidate response and relevant context for reassessment will be displayed here.</p>
+                      </div>
+                    )}
+                    {currentStep === 5 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Final Decision Context</h4>
+                        <p>Complete candidate context for final hiring decision will be displayed here.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-              <div className="text-gray-700">Internal policy requires documented confirmation of conditional offer before accessing any conviction history information.</div>
-        </div>
-      </div>
+          </div>
         </div>
       </div>
       
