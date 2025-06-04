@@ -414,6 +414,11 @@ export default function AssessmentPage({
     // You can add logic to send/store the revocation here
   };
 
+  const handleProceedWithHire = () => {
+    setShowExtendSuccessModal(true);
+    // You can add logic to finalize the hire here
+  };
+
   const handleReassessmentFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setReassessmentForm({ ...reassessmentForm, [e.target.name]: e.target.value });
   };
@@ -451,61 +456,60 @@ export default function AssessmentPage({
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-6 gap-8">
           {/* Left Column: Assessment Progress */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 lg:-ml-16">
             <div className="bg-white rounded-lg shadow p-6 mb-8">
-              <h2 className="text-2xl font-bold mb-6">Assessment Progress</h2>
+              <h2 className="text-xl font-bold mb-6">Assessment Progress</h2>
                       <div className="space-y-4">
                 {progressSteps.map((step, idx) => (
                   <div
                     key={step}
-                    className={`flex items-center px-4 py-3 rounded border transition-colors ${
+                    className={`flex items-center px-3 py-2 rounded border transition-colors ${
                       currentStep - 1 === idx
                         ? "border-red-500 bg-red-50"
                         : "border-gray-200 bg-white"
                     }`}
                   >
                     <span
-                      className={`mr-3 h-5 w-5 flex items-center justify-center rounded-full border-2 ${
+                      className={`mr-2 h-4 w-4 flex items-center justify-center rounded-full border-2 ${
                         currentStep - 1 === idx
                           ? "border-red-500 bg-red-500 text-white"
                           : "border-gray-300 bg-white text-gray-400"
                       }`}
                     >
                       {currentStep - 1 > idx ? (
-                        <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        <svg className="h-2 w-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                       ) : (
-                        <span className="block h-2 w-2 rounded-full bg-current"></span>
+                        <span className="block h-1 w-1 rounded-full bg-current"></span>
                       )}
                     </span>
-                    <span className={`font-medium text-base ${currentStep - 1 === idx ? "text-red-600" : "text-gray-800"}`}>{step}</span>
+                    <span className={`font-medium text-sm ${currentStep - 1 === idx ? "text-red-600" : "text-gray-800"}`}>{step}</span>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
-          {/* Right Column: Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Regulations Card Placeholder */}
-            <div className="bg-white rounded-lg shadow p-6 mb-8 flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="h-16 w-16 bg-red-100 rounded-full flex items-center justify-center">
-                  {/* Icon placeholder */}
-                  <span className="text-3xl text-red-500">📄</span>
-        </div>
-                    <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">San Diego Fair Chance Ordinance Legal Overview</h3>
+            
+            {/* San Diego Fair Chance Ordinance Legal Overview Card */}
+            <div className="bg-white rounded-lg shadow p-4 mb-8">
+              <div className="flex flex-col items-center text-center space-y-3">
+                <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center">
+                  <span className="text-2xl text-red-500">📄</span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900 mb-2">San Diego Fair Chance Ordinance Legal Overview</h3>
                   <button 
-                    className="mt-2 px-4 py-2 border border-red-400 text-red-500 rounded hover:bg-red-50"
+                    className="px-3 py-2 border border-red-400 text-red-500 text-xs rounded hover:bg-red-50"
                     onClick={() => router.push(`/hr-admin/dashboard/${params.userId}/assessment/ordinance-summary`)}
                   >
                     View Ordinance Summary
                   </button>
                 </div>
               </div>
-              <div className="w-1/2 h-24 bg-gray-50 rounded-lg" />
             </div>
+          </div>
+          {/* Right Column: Main Content */}
+          <div className="lg:col-span-5 space-y-8">
             {/* Main Question Card Placeholder */}
             {currentStep === 1 && (
               <div className="bg-white rounded-lg shadow p-8 mb-8 border border-gray-200">
@@ -796,9 +800,14 @@ export default function AssessmentPage({
                   <p className="text-lg mb-6">
                     The following may be used to inform a job applicant in writing of the intent to revoke a conditional job offer due to relevant criminal history
                   </p>
-                  <button className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={() => setShowRevocationModal(true)}>
-                    Issue Preliminary Job Offer Revocation
-                  </button>
+                  <div className="flex gap-4">
+                    <button className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={() => setShowRevocationModal(true)}>
+                      Issue Preliminary Job Offer Revocation
+                    </button>
+                    <button className="px-8 py-3 rounded text-lg font-semibold bg-green-500 text-white hover:bg-green-600" onClick={handleProceedWithHire}>
+                      Proceed with hire
+                    </button>
+                  </div>
                 </div>
                 {/* Modal for Preliminary Job Offer Revocation */}
                 {showRevocationModal && (
@@ -1408,8 +1417,8 @@ export default function AssessmentPage({
               <svg className="h-10 w-10 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
             </div>
             <h2 className="text-2xl font-bold text-center mb-4">Applicant Hired!</h2>
-            <div className="text-gray-700 text-lg text-center mb-8">You have successfully extended an offer of employment. We will update the applicant's records accordingly.</div>
-            <button className="px-8 py-3 rounded text-lg font-semibold bg-blue-600 text-white hover:bg-blue-700" onClick={() => { setShowExtendSuccessModal(false); setShowReassessmentSplit(false); setReassessmentPreview(false); }}>
+            <div className="text-gray-700 text-lg text-center mb-8">You have indicated that you intend to extend an offer of employment to the candidate. Please update your records accordingly. We will store the assessments you conducted on Rézme.</div>
+            <button className="px-8 py-3 rounded text-lg font-semibold bg-blue-600 text-white hover:bg-blue-700" onClick={() => { setShowExtendSuccessModal(false); setShowReassessmentSplit(false); setReassessmentPreview(false); router.push('/hr-admin/dashboard'); }}>
               Close
             </button>
           </div>
