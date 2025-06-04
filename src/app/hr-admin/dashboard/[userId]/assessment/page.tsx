@@ -11,8 +11,9 @@ import {
   ChevronRight,
   Info,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
+import { supabase } from "@/lib/supabase";
 
 interface AssessmentQuestion {
   id: string;
@@ -135,6 +136,32 @@ export default function AssessmentPage({
   
   // Critical Information Tab State
   const [activeTab, setActiveTab] = useState('Legal');
+
+  // HR Admin profile state
+  const [hrAdminProfile, setHrAdminProfile] = useState<any>(null);
+  const [headerLoading, setHeaderLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchHRAdminProfile() {
+      setHeaderLoading(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const { data, error } = await supabase
+          .from("hr_admin_profiles")
+          .select("first_name, last_name, company")
+          .eq("id", session.user.id)
+          .single();
+        if (error) throw error;
+        setHrAdminProfile(data);
+      } catch (err) {
+        setHrAdminProfile(null);
+      } finally {
+        setHeaderLoading(false);
+      }
+    }
+    fetchHRAdminProfile();
+  }, []);
 
   const questions: AssessmentQuestion[] = [
     {
@@ -459,6 +486,32 @@ export default function AssessmentPage({
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
+      {/* Sleek Sticky Header */}
+      <header className="w-full bg-white shadow-sm flex items-center justify-between px-8 py-4 mb-8 sticky top-0 z-30">
+        <div className="flex items-center gap-3">
+          <span className="text-black font-bold text-xl tracking-tight flex items-center">
+            <span className="mr-2">
+              réz<span className="text-red-500">me</span>.
+            </span>
+            <span className="font-semibold text-gray-800 text-lg">
+              {headerLoading ? <span className="animate-pulse text-gray-400">Loading...</span> : hrAdminProfile?.company || ""}
+            </span>
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          {headerLoading ? (
+            <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse" />
+          ) : hrAdminProfile ? (
+            <>
+              <div className="w-9 h-9 rounded-full bg-yellow-400 flex items-center justify-center text-white font-bold text-lg mr-2">
+                {hrAdminProfile.first_name?.[0]}{hrAdminProfile.last_name?.[0]}
+              </div>
+              <span className="text-gray-800 font-medium text-base">{hrAdminProfile.first_name} {hrAdminProfile.last_name}</span>
+            </>
+          ) : null}
+        </div>
+      </header>
+      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-6 gap-8">
           {/* Left Column: Assessment Progress */}
