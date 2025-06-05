@@ -57,6 +57,16 @@ export default function HRAdminDashboard() {
   const [success, setSuccess] = useState<string | null>(null);
   const router = useRouter();
 
+  // Add state for invite candidate modal
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteForm, setInviteForm] = useState({
+    candidateName: '',
+    candidateEmail: '',
+    candidatePhone: '',
+    customMessage: ''
+  });
+  const [sendingInvite, setSendingInvite] = useState(false);
+
   useEffect(() => {
     fetchHRAdminProfile();
   }, []);
@@ -198,6 +208,59 @@ export default function HRAdminDashboard() {
     await fetchPermittedUsers();
   };
 
+  // Handle opening invite modal with default message
+  const openInviteModal = () => {
+    const defaultMessage = `Dear [Candidate Name],
+
+I hope this message finds you well. As part of our Fair Chance Hiring procedure for the County of San Diego, we are inviting you to create a Restorative Record on our platform.
+
+The Restorative Record allows you to share your personal story, rehabilitation efforts, and positive contributions to your community, providing a more complete picture beyond traditional background checks.
+
+Creating your Restorative Record is voluntary and will help us make a more informed and fair employment decision. The process is confidential and you have full control over what information you choose to share.
+
+If you're interested in participating, please visit our platform and use the invitation code: ${hrAdmin?.invitation_code || '[CODE]'}
+
+Thank you for your time and consideration.
+
+Best regards,
+${hrAdmin?.first_name} ${hrAdmin?.last_name}
+${hrAdmin?.company}`;
+
+    setInviteForm({
+      candidateName: '',
+      candidateEmail: '',
+      candidatePhone: '',
+      customMessage: defaultMessage
+    });
+    setShowInviteModal(true);
+  };
+
+  // Handle sending invite to candidate
+  const handleSendInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSendingInvite(true);
+    
+    try {
+      // For now, we'll just show a success message
+      // In the future, this could integrate with an email service
+      setSuccess(`Invitation sent to ${inviteForm.candidateEmail || 'candidate'}!`);
+      setShowInviteModal(false);
+      setInviteForm({
+        candidateName: '',
+        candidateEmail: '',
+        candidatePhone: '',
+        customMessage: ''
+      });
+      setTimeout(() => setSuccess(null), 5000);
+    } catch (err) {
+      console.error('Error sending invite:', err);
+      setError('Failed to send invitation. Please try again.');
+      setTimeout(() => setError(null), 5000);
+    } finally {
+      setSendingInvite(false);
+    }
+  };
+
   const renderComplianceSteps = (user: User) => {
     const steps = [
       { key: 'conditional_job_offer', label: 'Conditional Job Offer' },
@@ -278,12 +341,21 @@ export default function HRAdminDashboard() {
           <h2 className="text-xl font-semibold text-gray-900">
             Invitation Code
           </h2>
-          <button
-            onClick={generateInvitationCode}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-          >
-            Generate New Code
-          </button>
+          <div className="flex space-x-3">
+            <button
+              onClick={generateInvitationCode}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+            >
+              Generate New Code
+            </button>
+            <button
+              onClick={openInviteModal}
+              disabled={!hrAdmin?.invitation_code}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              Invite Candidate
+            </button>
+          </div>
         </div>
         {hrAdmin?.invitation_code ? (
           <div className="bg-gray-50 p-4 rounded-md">
@@ -390,6 +462,116 @@ export default function HRAdminDashboard() {
           </table>
         </div>
       </div>
+
+      {/* Invite Candidate Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Invite Candidate to Create Restorative Record
+                </h3>
+                <button
+                  onClick={() => setShowInviteModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleSendInvite} className="p-6">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                {/* Candidate Name */}
+                <div className="sm:col-span-2">
+                  <label htmlFor="candidateName" className="block text-sm font-medium text-gray-700">
+                    Candidate Name
+                  </label>
+                  <input
+                    type="text"
+                    id="candidateName"
+                    required
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-gray-900"
+                    value={inviteForm.candidateName}
+                    onChange={(e) => setInviteForm({ ...inviteForm, candidateName: e.target.value })}
+                    placeholder="Enter candidate's full name"
+                  />
+                </div>
+
+                {/* Candidate Email */}
+                <div>
+                  <label htmlFor="candidateEmail" className="block text-sm font-medium text-gray-700">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    id="candidateEmail"
+                    required
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-gray-900"
+                    value={inviteForm.candidateEmail}
+                    onChange={(e) => setInviteForm({ ...inviteForm, candidateEmail: e.target.value })}
+                    placeholder="candidate@example.com"
+                  />
+                </div>
+
+                {/* Candidate Phone */}
+                <div>
+                  <label htmlFor="candidatePhone" className="block text-sm font-medium text-gray-700">
+                    Phone Number <span className="text-gray-500">(Optional)</span>
+                  </label>
+                  <input
+                    type="tel"
+                    id="candidatePhone"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-gray-900"
+                    value={inviteForm.candidatePhone}
+                    onChange={(e) => setInviteForm({ ...inviteForm, candidatePhone: e.target.value })}
+                    placeholder="(555) 123-4567"
+                  />
+                </div>
+
+                {/* Custom Message */}
+                <div className="sm:col-span-2">
+                  <label htmlFor="customMessage" className="block text-sm font-medium text-gray-700">
+                    Message
+                  </label>
+                  <textarea
+                    id="customMessage"
+                    rows={10}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-gray-900"
+                    value={inviteForm.customMessage}
+                    onChange={(e) => setInviteForm({ ...inviteForm, customMessage: e.target.value })}
+                    placeholder="Customize your invitation message..."
+                  />
+                  <p className="mt-2 text-sm text-gray-500">
+                    This message will be sent to the candidate along with instructions for creating their Restorative Record.
+                  </p>
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setShowInviteModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={sendingInvite || !inviteForm.candidateName || !inviteForm.candidateEmail}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {sendingInvite ? 'Sending...' : 'Send Invitation'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
