@@ -143,6 +143,10 @@ export default function AssessmentPage({
   const [candidateProfile, setCandidateProfile] = useState<any>(null);
   const [loadingCandidateData, setLoadingCandidateData] = useState(false);
   
+  // Conditional Offer Letter State
+  const [savedOfferLetter, setSavedOfferLetter] = useState<any>(null);
+  const [showOfferLetterModal, setShowOfferLetterModal] = useState(false);
+  
   // Critical Information Tab State
   const [activeTab, setActiveTab] = useState('Legal');
 
@@ -387,6 +391,17 @@ export default function AssessmentPage({
   ];
 
   const handleSendOffer = () => {
+    // Save the offer letter data with timestamp
+    const offerLetterData = {
+      ...offerForm,
+      sentDate: new Date().toISOString(),
+      candidateId: params.userId,
+      hrAdminName: hrAdminProfile ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}` : '',
+      company: hrAdminProfile?.company || '',
+      timestamp: Date.now()
+    };
+    
+    setSavedOfferLetter(offerLetterData);
     setShowOfferModal(false);
     handleNext();
   }
@@ -548,6 +563,10 @@ export default function AssessmentPage({
     fetchCandidateShareToken();
   };
 
+  const handleViewOfferLetter = () => {
+    setShowOfferLetterModal(true);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       {/* Sleek Sticky Header */}
@@ -563,6 +582,14 @@ export default function AssessmentPage({
           </span>
         </div>
         <div className="flex items-center gap-3">
+          {savedOfferLetter && (
+            <button
+              onClick={handleViewOfferLetter}
+              className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium"
+            >
+              📄 View Offer Letter
+            </button>
+          )}
           {headerLoading ? (
             <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse" />
           ) : hrAdminProfile ? (
@@ -1997,6 +2024,125 @@ export default function AssessmentPage({
                 onClick={() => setShowCandidateResponseModal(false)}
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* View Offer Letter Modal */}
+      {showOfferLetterModal && savedOfferLetter && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg max-w-7xl w-full p-16 relative max-h-screen overflow-y-auto">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Conditional Job Offer Letter</h2>
+              <button 
+                className="text-gray-400 hover:text-gray-600"
+                onClick={() => setShowOfferLetterModal(false)}
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Saved Offer Letter Content */}
+            <div className="prose max-w-none text-gray-900 text-base">
+              <div className="mb-2">
+                <span className="font-semibold">{savedOfferLetter.date}</span>
+              </div>
+              <div className="mb-2">RE: Conditional Offer of Employment & Notice of Conviction Background Check</div>
+              <div className="mb-2">
+                Dear <span className="font-semibold">{savedOfferLetter.applicant}</span>:
+              </div>
+              <div className="mb-2">
+                We are writing to make you a conditional offer of employment for the position of <span className="font-semibold">{savedOfferLetter.position}</span>. Before this job offer becomes final, we will check your conviction history. The form attached to this letter asks for your permission to check your conviction history and provides more information about that background check.
+              </div>
+              <div className="mb-2">
+                After reviewing your conviction history report, we will either:<br />
+                a. Notify you that this conditional job offer has become final; or<br />
+                b. Notify you in writing that we intend to revoke (take back) this job offer because of your conviction history.
+              </div>
+              <div className="mb-2">
+                As required by California state and San Diego County law, we will NOT consider any of the following information:<br />
+                • Arrest not followed by conviction;<br />
+                • Referral to or participation in a pretrial or posttrial diversion program; or<br />
+                • Convictions that have been sealed, dismissed, expunged, or pardoned.
+              </div>
+              <div className="mb-2">
+                As required by the California Fair Chance Act and the San Diego County Fair Chance Ordinance, we will consider whether your conviction history is directly related to the duties of the job we have offered you. We will consider all of the following:<br />
+                • The nature and seriousness of the offense<br />
+                • The amount of time since the offense<br />
+                • The nature of the job
+              </div>
+              <div className="mb-2">
+                We will notify you in writing if we plan to revoke (take back) this job offer after reviewing your conviction history. That decision will be preliminary, and you will have an opportunity to respond before it becomes final. We will identify conviction(s) that concern us, give you a copy of the background check report, as well as a copy of the written individualized assessment of the report and the relevance of your history to the position. We will then hold the position open, except in emergent circumstances to allow you at least 5 business days to provide information about your rehabilitation or mitigating circumstances and/or provide notice that you will provide information showing the conviction history report is inaccurate. Should you provide notice that you will provide information showing the conviction history report is inaccurate, you will have an additional 5 business days to provide that evidence. Should you provide additional information, we will then conduct a written individualized reassessment and decide whether to finalize or take back this conditional job offer. We will notify you of that decision in writing.
+              </div>
+              <div className="mb-2">
+                Sincerely,<br />
+                <span className="font-semibold">{savedOfferLetter.employer}</span>
+              </div>
+              <div className="mb-2">
+                Enclosure: Authorization for Background Check (as required by the U.S. Fair Credit Reporting Act and California Investigative Consumer Reporting Agencies Act)
+              </div>
+              
+              {/* Document Metadata */}
+              <div className="mt-8 pt-6 border-t border-gray-200 bg-gray-50 rounded-lg p-4">
+                <h3 className="text-lg font-semibold mb-3">Document Information</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Sent Date:</span> {new Date(savedOfferLetter.sentDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <div>
+                    <span className="font-medium">Sent By:</span> {savedOfferLetter.hrAdminName}
+                  </div>
+                  <div>
+                    <span className="font-medium">Company:</span> {savedOfferLetter.company}
+                  </div>
+                  <div>
+                    <span className="font-medium">Candidate ID:</span> {savedOfferLetter.candidateId}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="flex justify-end space-x-4 mt-6">
+              <button 
+                type="button" 
+                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200" 
+                onClick={() => setShowOfferLetterModal(false)}
+              >
+                Close
+              </button>
+              <button 
+                type="button" 
+                className="px-6 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
+                onClick={() => {
+                  const printContent = document.createElement('div');
+                  printContent.innerHTML = document.querySelector('.prose')?.innerHTML || '';
+                  const printWindow = window.open('', '_blank');
+                  if (printWindow) {
+                    printWindow.document.write(`
+                      <html>
+                        <head>
+                          <title>Conditional Job Offer Letter</title>
+                          <style>
+                            body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }
+                            .font-semibold { font-weight: 600; }
+                            .mb-2 { margin-bottom: 0.5rem; }
+                          </style>
+                        </head>
+                        <body>${printContent.innerHTML}</body>
+                      </html>
+                    `);
+                    printWindow.document.close();
+                    printWindow.print();
+                  }
+                }}
+              >
+                📄 Print/Save
               </button>
             </div>
           </div>
