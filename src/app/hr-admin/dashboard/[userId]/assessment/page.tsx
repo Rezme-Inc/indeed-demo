@@ -138,6 +138,11 @@ export default function AssessmentPage({
   const [showFinalRevocationSuccessModal, setShowFinalRevocationSuccessModal] = useState(false);
   const [showCandidateResponseModal, setShowCandidateResponseModal] = useState(false);
   
+  // Candidate Response Modal State
+  const [candidateShareToken, setCandidateShareToken] = useState<string | null>(null);
+  const [candidateProfile, setCandidateProfile] = useState<any>(null);
+  const [loadingCandidateData, setLoadingCandidateData] = useState(false);
+  
   // Critical Information Tab State
   const [activeTab, setActiveTab] = useState('Legal');
 
@@ -468,6 +473,13 @@ export default function AssessmentPage({
     // You can add logic to send/store the reassessment here
   };
 
+  // Fetch candidate data when reassessment split is shown
+  useEffect(() => {
+    if (showReassessmentSplit && !candidateShareToken && !loadingCandidateData) {
+      fetchCandidateShareToken();
+    }
+  }, [showReassessmentSplit]);
+
   const handleFinalRevocationFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     let fieldValue: any = value;
@@ -487,6 +499,54 @@ export default function AssessmentPage({
   };
 
   const router = useRouter();
+
+  const handleSendFinalRevocation = () => {
+    setShowFinalRevocationModal(false);
+    setFinalRevocationPreview(false);
+    setShowFinalRevocationSuccessModal(true);
+  };
+
+  // Function to fetch candidate's share token for iframe
+  const fetchCandidateShareToken = async () => {
+    setLoadingCandidateData(true);
+    try {
+      // Get the candidate's share_token and basic profile info
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('share_token, first_name, last_name, email')
+        .eq('id', params.userId)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching candidate profile:', profileError);
+        setCandidateProfile(null);
+        setCandidateShareToken(null);
+        return;
+      }
+
+      // Set the profile data regardless of share token status
+      setCandidateProfile(profileData);
+
+      if (!profileData.share_token) {
+        // Profile exists but sharing is not enabled
+        setCandidateShareToken(null);
+        return;
+      }
+
+      setCandidateShareToken(profileData.share_token);
+    } catch (error) {
+      console.error('Error fetching candidate share token:', error);
+      setCandidateProfile(null);
+      setCandidateShareToken(null);
+    } finally {
+      setLoadingCandidateData(false);
+    }
+  };
+
+  const handleViewCandidateResponse = () => {
+    setShowCandidateResponseModal(true);
+    fetchCandidateShareToken();
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -579,7 +639,7 @@ export default function AssessmentPage({
                   <h3 className="text-sm font-bold text-gray-900 mb-2">Candidate Information</h3>
                   <button 
                     className="px-3 py-2 border border-blue-400 text-blue-500 text-xs rounded hover:bg-blue-50"
-                    onClick={() => setShowCandidateResponseModal(true)}
+                    onClick={handleViewCandidateResponse}
                   >
                     View Candidate Response
                   </button>
@@ -1346,11 +1406,50 @@ export default function AssessmentPage({
                 {/* Right: Candidate Response Iframe */}
                 <div className="flex-1 bg-white rounded-lg shadow p-8 border border-gray-200">
                   <h2 className="text-2xl font-bold mb-6">Candidate Response</h2>
-                  <iframe
-                    src="https://example.com/candidate-response"
-                    title="Candidate Response"
-                    className="w-full h-[500px] rounded border"
-                  />
+                  {loadingCandidateData ? (
+                    <div className="text-center py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                      <p className="text-gray-600">Loading candidate's restorative record...</p>
+                    </div>
+                  ) : candidateShareToken ? (
+                    <iframe
+                      src={`${window.location.origin}/restorative-record/share/${candidateShareToken}`}
+                      title="Candidate Restorative Record"
+                      className="w-full h-[500px] rounded border border-gray-200"
+                      frameBorder="0"
+                    />
+                  ) : candidateProfile ? (
+                    <div className="text-center py-12">
+                      <div className="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-4">Profile is Private</h3>
+                      <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                        {candidateProfile.first_name} {candidateProfile.last_name} has chosen to keep their restorative record private. The candidate would need to enable sharing to make their record accessible.
+                      </p>
+                      <button className="px-6 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors mb-6">
+                        Request Restorative Record
+                      </button>
+                      <div className="bg-blue-50 rounded-lg p-6 max-w-md mx-auto">
+                        <h4 className="text-blue-800 font-semibold mb-3">How to Enable Sharing:</h4>
+                        <p className="text-blue-700 text-sm leading-relaxed">
+                          The candidate can enable sharing by visiting their restorative record profile page and clicking the "Share" button to generate a shareable link.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <div className="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-3xl text-gray-400">📄</span>
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Restorative Record Available</h3>
+                      <p className="text-gray-600">
+                        This candidate has not yet created a restorative record or it may not be available for sharing.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1518,7 +1617,7 @@ export default function AssessmentPage({
                             <button type="button" className="px-8 py-3 rounded text-lg font-semibold bg-gray-300 text-gray-700 hover:bg-gray-400" onClick={() => setShowFinalRevocationModal(false)}>
                               Cancel
                             </button>
-                            <button type="button" className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={() => { setShowFinalRevocationModal(false); setFinalRevocationPreview(false); setShowFinalRevocationSuccessModal(true); }}>Send</button>
+                            <button type="button" className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={handleSendFinalRevocation}>Send</button>
                           </div>
                         </form>
                       ) : (
@@ -1586,7 +1685,7 @@ export default function AssessmentPage({
                             <button type="button" className="px-8 py-3 rounded text-lg font-semibold bg-gray-300 text-gray-700 hover:bg-gray-400" onClick={() => setFinalRevocationPreview(false)}>
                               Edit
                             </button>
-                            <button type="button" className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={() => { setShowFinalRevocationModal(false); setFinalRevocationPreview(false); setShowFinalRevocationSuccessModal(true); }}>Send</button>
+                            <button type="button" className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={handleSendFinalRevocation}>Send</button>
                           </div>
                         </div>
                       )}
@@ -1823,10 +1922,13 @@ export default function AssessmentPage({
       {/* Candidate Response Modal */}
       {showCandidateResponseModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full p-8 relative max-h-screen overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-lg max-w-6xl w-full p-8 relative max-h-screen overflow-hidden">
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Candidate Response - Restorative Record</h2>
+              <h2 className="text-2xl font-bold">
+                Candidate Response - Restorative Record
+                {candidateProfile && ` - ${candidateProfile.first_name} ${candidateProfile.last_name}`}
+              </h2>
               <button 
                 className="text-gray-400 hover:text-gray-600"
                 onClick={() => setShowCandidateResponseModal(false)}
@@ -1837,19 +1939,59 @@ export default function AssessmentPage({
               </button>
             </div>
             
-            {/* Content Placeholder */}
-            <div className="text-center py-12">
-              <div className="h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl text-blue-500">📄</span>
+            {/* Loading State */}
+            {loadingCandidateData ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading candidate's restorative record...</p>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Candidate Response</h3>
-              <p className="text-gray-600">
-                The candidate's restorative record and response will be displayed here.
-              </p>
-            </div>
+            ) : candidateShareToken ? (
+              /* Iframe Content */
+              <div className="h-[70vh]">
+                <iframe
+                  src={`${window.location.origin}/restorative-record/share/${candidateShareToken}`}
+                  title="Candidate Restorative Record"
+                  className="w-full h-full rounded border border-gray-200"
+                  frameBorder="0"
+                />
+              </div>
+            ) : candidateProfile ? (
+              /* Private Profile State */
+              <div className="text-center py-12">
+                <div className="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Profile is Private</h3>
+                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                  {candidateProfile.first_name} {candidateProfile.last_name} has chosen to keep their restorative record private. The candidate would need to enable sharing to make their record accessible.
+                </p>
+                <button className="px-6 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors mb-6">
+                  Request Restorative Record
+                </button>
+                <div className="bg-blue-50 rounded-lg p-6 max-w-md mx-auto">
+                  <h4 className="text-blue-800 font-semibold mb-3">How to Enable Sharing:</h4>
+                  <p className="text-blue-700 text-sm leading-relaxed">
+                    The candidate can enable sharing by visiting their restorative record profile page and clicking the "Share" button to generate a shareable link.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              /* No Data State */
+              <div className="text-center py-12">
+                <div className="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-3xl text-gray-400">📄</span>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Restorative Record Available</h3>
+                <p className="text-gray-600">
+                  This candidate has not yet created a restorative record or it may not be available for sharing.
+                </p>
+              </div>
+            )}
             
             {/* Footer */}
-            <div className="flex justify-end mt-8">
+            <div className="flex justify-end mt-6">
               <button 
                 className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200" 
                 onClick={() => setShowCandidateResponseModal(false)}
