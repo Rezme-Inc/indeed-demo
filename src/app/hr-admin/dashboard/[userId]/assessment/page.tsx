@@ -147,6 +147,10 @@ export default function AssessmentPage({
   const [savedOfferLetter, setSavedOfferLetter] = useState<any>(null);
   const [showOfferLetterModal, setShowOfferLetterModal] = useState(false);
   
+  // Individual Assessment State
+  const [savedAssessment, setSavedAssessment] = useState<any>(null);
+  const [showAssessmentViewModal, setShowAssessmentViewModal] = useState(false);
+  
   // Critical Information Tab State
   const [activeTab, setActiveTab] = useState('Legal');
 
@@ -416,6 +420,16 @@ export default function AssessmentPage({
     });
   };
   const handleSendAssessment = () => {
+    // Save the assessment with metadata
+    const assessmentData = {
+      ...assessmentForm,
+      sentAt: new Date().toISOString(),
+      candidateId: params.userId,
+      hrAdminName: hrAdminProfile ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}` : '',
+      companyName: hrAdminProfile?.company || '',
+    };
+    setSavedAssessment(assessmentData);
+    
     setShowAssessmentModal(false);
     setAssessmentPreview(false);
     setInitialAssessmentResults({ ...assessmentForm });
@@ -588,6 +602,14 @@ export default function AssessmentPage({
               className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium"
             >
               📄 View Offer Letter
+            </button>
+          )}
+          {savedAssessment && (
+            <button
+              onClick={() => setShowAssessmentViewModal(true)}
+              className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+            >
+              📋 View Assessment
             </button>
           )}
           {headerLoading ? (
@@ -2139,6 +2161,116 @@ export default function AssessmentPage({
                     `);
                     printWindow.document.close();
                     printWindow.print();
+                  }
+                }}
+              >
+                📄 Print/Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* View Assessment Modal */}
+      {showAssessmentViewModal && savedAssessment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg max-w-7xl w-full p-16 relative max-h-screen overflow-y-auto">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Criminal History Individual Assessment Form</h2>
+              <button 
+                className="text-gray-400 hover:text-gray-600"
+                onClick={() => setShowAssessmentViewModal(false)}
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Saved Assessment Content */}
+            <div className="prose max-w-none text-gray-900 text-base bg-gray-50 p-8 rounded">
+              <h3 className="font-bold mb-2">INFORMATION</h3>
+              <div><b>Employer Name:</b> {savedAssessment.employer}</div>
+              <div><b>Applicant Name:</b> {savedAssessment.applicant}</div>
+              <div><b>Position Applied For:</b> {savedAssessment.position}</div>
+              <div><b>Date of Conditional Offer:</b> {savedAssessment.offerDate}</div>
+              <div><b>Date of Assessment:</b> {savedAssessment.assessmentDate}</div>
+              <div><b>Date of Criminal History Report:</b> {savedAssessment.reportDate}</div>
+              <div><b>Assessment Performed by:</b> {savedAssessment.performedBy}</div>
+              
+              <h3 className="font-bold mt-6 mb-2">ASSESSMENT</h3>
+              <div><b>1. The specific duties and responsibilities of the job are:</b>
+                <ul className="list-disc ml-6">
+                  {savedAssessment.duties.map((duty: string, idx: number) => duty && <li key={idx}>{duty}</li>)}
+                </ul>
+              </div>
+              <div className="mt-2"><b>2. Description of the criminal conduct and why the conduct is of concern with respect to the position in question:</b><br />{savedAssessment.conduct}</div>
+              <div className="mt-2"><b>3. How long ago did the criminal activity occur:</b> {savedAssessment.howLongAgo}</div>
+              <div className="mt-2"><b>4. Activities since criminal activity, such as work experience, job training, rehabilitation, community service, etc.:</b>
+                <ul className="list-disc ml-6">
+                  {savedAssessment.activities.map((act: string, idx: number) => act && <li key={idx}>{act}</li>)}
+                </ul>
+              </div>
+              <div className="mt-2"><b>Based on the factors above, we are considering rescinding our offer of employment because:</b><br />{savedAssessment.rescindReason}</div>
+              
+              {/* Document Metadata */}
+              <div className="mt-8 pt-6 border-t border-gray-200 bg-white rounded-lg p-4">
+                <h3 className="text-lg font-semibold mb-3">Document Information</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Sent Date:</span> {new Date(savedAssessment.sentAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <div>
+                    <span className="font-medium">Sent By:</span> {savedAssessment.hrAdminName}
+                  </div>
+                  <div>
+                    <span className="font-medium">Company:</span> {savedAssessment.companyName}
+                  </div>
+                  <div>
+                    <span className="font-medium">Candidate ID:</span> {savedAssessment.candidateId}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="flex justify-end space-x-4 mt-6">
+              <button 
+                type="button" 
+                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200" 
+                onClick={() => setShowAssessmentViewModal(false)}
+              >
+                Close
+              </button>
+              <button 
+                type="button" 
+                className="px-6 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
+                onClick={() => {
+                  const printContent = document.querySelector('.prose:last-of-type');
+                  if (printContent) {
+                    const printWindow = window.open('', '_blank');
+                    if (printWindow) {
+                      printWindow.document.write(`
+                        <html>
+                          <head>
+                            <title>Criminal History Individual Assessment Form</title>
+                            <style>
+                              body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }
+                              .font-bold { font-weight: bold; }
+                              .mt-2 { margin-top: 0.5rem; }
+                              .mt-6 { margin-top: 1.5rem; }
+                              .mb-2 { margin-bottom: 0.5rem; }
+                              .list-disc { list-style-type: disc; }
+                              .ml-6 { margin-left: 1.5rem; }
+                            </style>
+                          </head>
+                          <body>${printContent.innerHTML}</body>
+                        </html>
+                      `);
+                      printWindow.document.close();
+                      printWindow.print();
+                    }
                   }
                 }}
               >
