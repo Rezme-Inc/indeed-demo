@@ -159,6 +159,10 @@ export default function AssessmentPage({
   const [savedReassessment, setSavedReassessment] = useState<any>(null);
   const [showReassessmentViewModal, setShowReassessmentViewModal] = useState(false);
   
+  // Final Revocation Notice State
+  const [savedFinalRevocationNotice, setSavedFinalRevocationNotice] = useState<any>(null);
+  const [showFinalRevocationViewModal, setShowFinalRevocationViewModal] = useState(false);
+  
   // Critical Information Tab State
   const [activeTab, setActiveTab] = useState('Legal');
 
@@ -560,6 +564,16 @@ export default function AssessmentPage({
   const router = useRouter();
 
   const handleSendFinalRevocation = () => {
+    // Save the final revocation notice with metadata
+    const finalRevocationData = {
+      ...finalRevocationForm,
+      sentAt: new Date().toISOString(),
+      candidateId: params.userId,
+      hrAdminName: hrAdminProfile ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}` : '',
+      companyName: hrAdminProfile?.company || '',
+    };
+    setSavedFinalRevocationNotice(finalRevocationData);
+    
     setShowFinalRevocationModal(false);
     setFinalRevocationPreview(false);
     setShowFinalRevocationSuccessModal(true);
@@ -656,6 +670,14 @@ export default function AssessmentPage({
               className="px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm font-medium"
             >
               🔄 View Reassessment
+            </button>
+          )}
+          {savedFinalRevocationNotice && (
+            <button
+              onClick={() => setShowFinalRevocationViewModal(true)}
+              className="px-3 py-2 bg-red-800 text-white rounded-md hover:bg-red-900 text-sm font-medium"
+            >
+              ⚠️ View Final Revocation Notice
             </button>
           )}
           {headerLoading ? (
@@ -1983,7 +2005,17 @@ export default function AssessmentPage({
       )}
       {showFinalRevocationSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-2xl shadow-lg p-12 max-w-6xl w-full flex flex-col items-center">
+          <div className="bg-white rounded-2xl shadow-lg p-12 max-w-6xl w-full flex flex-col items-center relative">
+            {/* X button in top right corner */}
+            <button 
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              onClick={() => setShowFinalRevocationSuccessModal(false)}
+            >
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
             <div className="rounded-full bg-green-100 p-6 mb-6">
               <svg className="h-16 w-16 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
             </div>
@@ -2564,6 +2596,130 @@ export default function AssessmentPage({
                               .mt-8 { margin-top: 2rem; }
                               .mb-2 { margin-bottom: 0.5rem; }
                               .mb-3 { margin-bottom: 0.75rem; }
+                            </style>
+                          </head>
+                          <body>${printContent.innerHTML}</body>
+                        </html>
+                      `);
+                      printWindow.document.close();
+                      printWindow.print();
+                    }
+                  }
+                }}
+              >
+                📄 Print/Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* View Final Revocation Notice Modal */}
+      {showFinalRevocationViewModal && savedFinalRevocationNotice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg max-w-7xl w-full p-16 relative max-h-screen overflow-y-auto">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Notice of Final Decision to Revoke Job Offer Because of Conviction History</h2>
+              <button 
+                className="text-gray-400 hover:text-gray-600"
+                onClick={() => setShowFinalRevocationViewModal(false)}
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Saved Final Revocation Notice Content */}
+            <div className="prose max-w-none text-gray-900 text-base bg-gray-50 p-8 rounded">
+              <div className="mb-6">{savedFinalRevocationNotice.date}</div>
+              <div className="mb-6 font-bold">Re: Final Decision to Revoke Job Offer Because of Conviction History</div>
+              <div className="mb-6">Dear {savedFinalRevocationNotice.applicant || '[APPLICANT NAME]'}:</div>
+              <div className="mb-6">We are following up about our letter dated {savedFinalRevocationNotice.dateOfNotice || '[DATE OF NOTICE]'} which notified you of our initial decision to revoke (take back) the conditional job offer:</div>
+              <div className="mb-6 font-semibold">(Please check one:)</div>
+              <ul className="list-disc ml-6">
+                {savedFinalRevocationNotice.noResponse && <li>We did not receive a timely response from you after sending you that letter, and our decision to revoke the job offer is now final.</li>}
+                {savedFinalRevocationNotice.infoSubmitted && <li>We made a final decision to revoke the job offer after considering the information you submitted, which included: {savedFinalRevocationNotice.infoSubmittedList}</li>}
+              </ul>
+              <div className="mb-6">After reviewing the information you submitted, we have determined that there
+                <b>{savedFinalRevocationNotice.errorOnReport === 'was' ? 'was' : savedFinalRevocationNotice.errorOnReport === 'was not' ? 'was not' : '[check one]'}</b> (check one) an error on your conviction history report. We have decided to revoke our job offer because of the following conviction(s):</div>
+              <ul className="list-disc ml-6">
+                {savedFinalRevocationNotice.convictions.map((conv: string, idx: number) => conv && <li key={idx}>{conv}</li>)}
+              </ul>
+              <div className="mb-6 font-semibold">Our Individualized Assessment:</div>
+              <ol className="list-decimal ml-8 mb-8 space-y-4">
+                <li>The nature and seriousness of the conduct that led to your conviction(s), which we assessed as follows: {savedFinalRevocationNotice.seriousReason}</li>
+                <li>How long ago the conduct occurred that led to your conviction, which was: {savedFinalRevocationNotice.timeSinceConduct} and how long ago you completed your sentence, which was: {savedFinalRevocationNotice.timeSinceSentence}.</li>
+                <li>The specific duties and responsibilities of the position of {savedFinalRevocationNotice.position}, which are:
+                  <ul className="list-disc ml-6">
+                    {savedFinalRevocationNotice.jobDuties.map((duty: string, idx: number) => duty && <li key={idx}>{duty}</li>)}
+                  </ul>
+                </li>
+              </ol>
+              <div className="mb-6">We believe your conviction record lessens your fitness/ability to perform the job duties and have made a final decision to revoke the job offer because:</div>
+              <div className="mb-6">{savedFinalRevocationNotice.fitnessReason}</div>
+              <div className="mb-6 font-semibold">Request for Reconsideration:</div>
+              <ul className="list-disc ml-6">
+                {savedFinalRevocationNotice.reconsideration === 'none' && <li>We do not offer any way to challenge this decision or request reconsideration.</li>}
+                {savedFinalRevocationNotice.reconsideration === 'procedure' && <li>If you would like to challenge this decision or request reconsideration, you may: {savedFinalRevocationNotice.reconsiderationProcedure}</li>}
+              </ul>
+              <div className="mb-6 font-semibold">Your Right to File a Complaint:</div>
+              <div className="mb-6">You also have the right to file a complaint with the Enforcement Unit of the San Diego County Office of Labor Standards and Enforcement within 180 days after the alleged violation of the San Diego County Fair Chance Ordinance. To file a complaint online or request information, visit the Office of Labor Standards and Enforcement online. You may also file a complaint by calling 858-694-2440.</div>
+              <div className="mb-6">Sincerely,<br />{savedFinalRevocationNotice.contactName}<br />{savedFinalRevocationNotice.companyName}<br />{savedFinalRevocationNotice.address}<br />{savedFinalRevocationNotice.phone}</div>
+              
+              {/* Document Metadata */}
+              <div className="mt-8 pt-6 border-t border-gray-200 bg-white rounded-lg p-4">
+                <h3 className="text-lg font-semibold mb-3">Document Information</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Sent Date:</span> {new Date(savedFinalRevocationNotice.sentAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <div>
+                    <span className="font-medium">Sent By:</span> {savedFinalRevocationNotice.hrAdminName}
+                  </div>
+                  <div>
+                    <span className="font-medium">Company:</span> {savedFinalRevocationNotice.companyName}
+                  </div>
+                  <div>
+                    <span className="font-medium">Candidate ID:</span> {savedFinalRevocationNotice.candidateId}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="flex justify-end space-x-4 mt-6">
+              <button 
+                type="button" 
+                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200" 
+                onClick={() => setShowFinalRevocationViewModal(false)}
+              >
+                Close
+              </button>
+              <button 
+                type="button" 
+                className="px-6 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
+                onClick={() => {
+                  const printContent = document.querySelector('.prose:last-of-type');
+                  if (printContent) {
+                    const printWindow = window.open('', '_blank');
+                    if (printWindow) {
+                      printWindow.document.write(`
+                        <html>
+                          <head>
+                            <title>Notice of Final Decision to Revoke Job Offer</title>
+                            <style>
+                              body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }
+                              .font-bold, b { font-weight: bold; }
+                              .mb-2 { margin-bottom: 0.5rem; }
+                              .mb-6 { margin-bottom: 1.5rem; }
+                              .mt-8 { margin-top: 2rem; }
+                              .list-disc { list-style-type: disc; }
+                              .list-decimal { list-style-type: decimal; }
+                              .ml-6 { margin-left: 1.5rem; }
+                              .ml-8 { margin-left: 2rem; }
+                              .space-y-4 > * + * { margin-top: 1rem; }
                             </style>
                           </head>
                           <body>${printContent.innerHTML}</body>
