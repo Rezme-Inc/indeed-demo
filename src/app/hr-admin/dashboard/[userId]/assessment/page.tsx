@@ -11,8 +11,30 @@ import {
   ChevronRight,
   Info,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
+import { supabase } from "@/lib/supabase";
+
+/**
+ * HR Admin Assessment Page with Form Persistence
+ * 
+ * This component manages the criminal history assessment workflow for HR admins.
+ * All forms filled out by HR admins are automatically saved to localStorage using
+ * the candidate's user ID as a unique key. This ensures:
+ * 
+ * 1. Forms remain accessible when HR admins return to continue assessments
+ * 2. Assessment progress (answers, current step, notes) is preserved
+ * 3. View buttons in the header show saved forms even after navigating away
+ * 4. All compliance documentation is retained throughout the process
+ * 
+ * Persisted Data:
+ * - Offer Letter: `offerLetter_${candidateId}`
+ * - Individual Assessment: `assessment_${candidateId}`
+ * - Preliminary Revocation Notice: `revocationNotice_${candidateId}`
+ * - Individualized Reassessment: `reassessment_${candidateId}`
+ * - Final Revocation Notice: `finalRevocationNotice_${candidateId}`
+ * - Assessment Progress: `assessmentAnswers_${candidateId}`, `assessmentCurrentStep_${candidateId}`, `assessmentNotes_${candidateId}`
+ */
 
 interface AssessmentQuestion {
   id: string;
@@ -90,7 +112,7 @@ export default function AssessmentPage({
     reportDate: '',
     performedBy: '',
     error: '',
-    errorYesNo: '',
+    errorYesNo: 'No',
     workExperience: '',
     jobTraining: '',
     education: '',
@@ -100,6 +122,10 @@ export default function AssessmentPage({
     lettersOfSupport: '',
     religiousAttendance: '',
     rescindReason: '',
+    evidenceA: '',
+    evidenceB: '',
+    evidenceC: '',
+    evidenceD: '',
   });
   const [reassessmentPreview, setReassessmentPreview] = useState(false);
   const [initialAssessmentResults, setInitialAssessmentResults] = useState<any>(null);
@@ -131,6 +157,156 @@ export default function AssessmentPage({
   });
   const [finalRevocationPreview, setFinalRevocationPreview] = useState(false);
   const [showFinalRevocationSuccessModal, setShowFinalRevocationSuccessModal] = useState(false);
+  const [showCandidateResponseModal, setShowCandidateResponseModal] = useState(false);
+  
+  // Candidate Response Modal State
+  const [candidateShareToken, setCandidateShareToken] = useState<string | null>(null);
+  const [candidateProfile, setCandidateProfile] = useState<any>(null);
+  const [loadingCandidateData, setLoadingCandidateData] = useState(false);
+  
+  // Conditional Offer Letter State
+  const [savedOfferLetter, setSavedOfferLetter] = useState<any>(null);
+  const [showOfferLetterModal, setShowOfferLetterModal] = useState(false);
+  
+  // Individual Assessment State
+  const [savedAssessment, setSavedAssessment] = useState<any>(null);
+  const [showAssessmentViewModal, setShowAssessmentViewModal] = useState(false);
+  
+  // Preliminary Revocation Notice State
+  const [savedRevocationNotice, setSavedRevocationNotice] = useState<any>(null);
+  const [showRevocationViewModal, setShowRevocationViewModal] = useState(false);
+  
+  // Individualized Reassessment State
+  const [savedReassessment, setSavedReassessment] = useState<any>(null);
+  const [showReassessmentViewModal, setShowReassessmentViewModal] = useState(false);
+  
+  // Final Revocation Notice State
+  const [savedFinalRevocationNotice, setSavedFinalRevocationNotice] = useState<any>(null);
+  const [showFinalRevocationViewModal, setShowFinalRevocationViewModal] = useState(false);
+  
+  // Critical Information Tab State
+  const [activeTab, setActiveTab] = useState('Legal');
+
+  // HR Admin profile state
+  const [hrAdminProfile, setHrAdminProfile] = useState<any>(null);
+  const [headerLoading, setHeaderLoading] = useState(true);
+
+  // Load saved forms from localStorage on mount
+  useEffect(() => {
+    const candidateId = params.userId;
+    
+    // Load saved forms from localStorage
+    const savedOfferLetterData = localStorage.getItem(`offerLetter_${candidateId}`);
+    if (savedOfferLetterData) {
+      setSavedOfferLetter(JSON.parse(savedOfferLetterData));
+    }
+    
+    const savedAssessmentData = localStorage.getItem(`assessment_${candidateId}`);
+    if (savedAssessmentData) {
+      setSavedAssessment(JSON.parse(savedAssessmentData));
+    }
+    
+    const savedRevocationNoticeData = localStorage.getItem(`revocationNotice_${candidateId}`);
+    if (savedRevocationNoticeData) {
+      setSavedRevocationNotice(JSON.parse(savedRevocationNoticeData));
+    }
+    
+    const savedReassessmentData = localStorage.getItem(`reassessment_${candidateId}`);
+    if (savedReassessmentData) {
+      setSavedReassessment(JSON.parse(savedReassessmentData));
+    }
+    
+    const savedFinalRevocationNoticeData = localStorage.getItem(`finalRevocationNotice_${candidateId}`);
+    if (savedFinalRevocationNoticeData) {
+      setSavedFinalRevocationNotice(JSON.parse(savedFinalRevocationNoticeData));
+    }
+    
+    // Load assessment progress from localStorage
+    const savedAnswers = localStorage.getItem(`assessmentAnswers_${candidateId}`);
+    if (savedAnswers) {
+      setAnswers(JSON.parse(savedAnswers));
+    }
+    
+    const savedCurrentStep = localStorage.getItem(`assessmentCurrentStep_${candidateId}`);
+    if (savedCurrentStep) {
+      setCurrentStep(parseInt(savedCurrentStep, 10));
+    }
+    
+    const savedNotes = localStorage.getItem(`assessmentNotes_${candidateId}`);
+    if (savedNotes) {
+      setNotes(savedNotes);
+    }
+  }, [params.userId]);
+
+  // Save forms to localStorage whenever they change
+  useEffect(() => {
+    if (savedOfferLetter) {
+      localStorage.setItem(`offerLetter_${params.userId}`, JSON.stringify(savedOfferLetter));
+    }
+  }, [savedOfferLetter, params.userId]);
+
+  useEffect(() => {
+    if (savedAssessment) {
+      localStorage.setItem(`assessment_${params.userId}`, JSON.stringify(savedAssessment));
+    }
+  }, [savedAssessment, params.userId]);
+
+  useEffect(() => {
+    if (savedRevocationNotice) {
+      localStorage.setItem(`revocationNotice_${params.userId}`, JSON.stringify(savedRevocationNotice));
+    }
+  }, [savedRevocationNotice, params.userId]);
+
+  useEffect(() => {
+    if (savedReassessment) {
+      localStorage.setItem(`reassessment_${params.userId}`, JSON.stringify(savedReassessment));
+    }
+  }, [savedReassessment, params.userId]);
+
+  useEffect(() => {
+    if (savedFinalRevocationNotice) {
+      localStorage.setItem(`finalRevocationNotice_${params.userId}`, JSON.stringify(savedFinalRevocationNotice));
+    }
+  }, [savedFinalRevocationNotice, params.userId]);
+
+  // Save assessment progress to localStorage whenever it changes
+  useEffect(() => {
+    if (Object.keys(answers).length > 0) {
+      localStorage.setItem(`assessmentAnswers_${params.userId}`, JSON.stringify(answers));
+    }
+  }, [answers, params.userId]);
+
+  useEffect(() => {
+    localStorage.setItem(`assessmentCurrentStep_${params.userId}`, currentStep.toString());
+  }, [currentStep, params.userId]);
+
+  useEffect(() => {
+    if (notes) {
+      localStorage.setItem(`assessmentNotes_${params.userId}`, notes);
+    }
+  }, [notes, params.userId]);
+
+  useEffect(() => {
+    async function fetchHRAdminProfile() {
+      setHeaderLoading(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const { data, error } = await supabase
+          .from("hr_admin_profiles")
+          .select("first_name, last_name, company")
+          .eq("id", session.user.id)
+          .single();
+        if (error) throw error;
+        setHrAdminProfile(data);
+      } catch (err) {
+        setHrAdminProfile(null);
+      } finally {
+        setHeaderLoading(false);
+      }
+    }
+    fetchHRAdminProfile();
+  }, []);
 
   const questions: AssessmentQuestion[] = [
     {
@@ -274,6 +450,32 @@ export default function AssessmentPage({
     }
   };
 
+  const clearAssessmentProgress = () => {
+    // Clear assessment progress from localStorage
+    localStorage.removeItem(`assessmentAnswers_${params.userId}`);
+    localStorage.removeItem(`assessmentCurrentStep_${params.userId}`);
+    localStorage.removeItem(`assessmentNotes_${params.userId}`);
+  };
+
+  // Utility function to clear all saved forms for this candidate
+  // This could be useful for testing or if an assessment needs to be reset
+  const clearAllSavedForms = () => {
+    const candidateId = params.userId;
+    localStorage.removeItem(`offerLetter_${candidateId}`);
+    localStorage.removeItem(`assessment_${candidateId}`);
+    localStorage.removeItem(`revocationNotice_${candidateId}`);
+    localStorage.removeItem(`reassessment_${candidateId}`);
+    localStorage.removeItem(`finalRevocationNotice_${candidateId}`);
+    clearAssessmentProgress();
+    
+    // Reset state
+    setSavedOfferLetter(null);
+    setSavedAssessment(null);
+    setSavedRevocationNotice(null);
+    setSavedReassessment(null);
+    setSavedFinalRevocationNotice(null);
+  };
+
   const handleComplete = () => {
     // Determine decision based on answers
     let decision = "proceed";
@@ -300,6 +502,9 @@ export default function AssessmentPage({
         reason = "Insufficient time elapsed since conviction";
       }
     }
+
+    // Clear assessment progress since it's completed
+    clearAssessmentProgress();
 
     // Log results and redirect
     console.log("Assessment completed:", { decision, reason, answers, notes });
@@ -347,6 +552,17 @@ export default function AssessmentPage({
   ];
 
   const handleSendOffer = () => {
+    // Save the offer letter data with timestamp
+    const offerLetterData = {
+      ...offerForm,
+      sentDate: new Date().toISOString(),
+      candidateId: params.userId,
+      hrAdminName: hrAdminProfile ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}` : '',
+      company: hrAdminProfile?.company || '',
+      timestamp: Date.now()
+    };
+    
+    setSavedOfferLetter(offerLetterData);
     setShowOfferModal(false);
     handleNext();
   }
@@ -361,6 +577,16 @@ export default function AssessmentPage({
     });
   };
   const handleSendAssessment = () => {
+    // Save the assessment with metadata
+    const assessmentData = {
+      ...assessmentForm,
+      sentAt: new Date().toISOString(),
+      candidateId: params.userId,
+      hrAdminName: hrAdminProfile ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}` : '',
+      companyName: hrAdminProfile?.company || '',
+    };
+    setSavedAssessment(assessmentData);
+    
     setShowAssessmentModal(false);
     setAssessmentPreview(false);
     setInitialAssessmentResults({ ...assessmentForm });
@@ -407,6 +633,16 @@ export default function AssessmentPage({
   const businessDaysRemaining = revocationSentDate ? getBusinessDaysRemaining(revocationSentDate) : 5;
 
   const handleSendRevocation = () => {
+    // Save the revocation notice with metadata
+    const revocationData = {
+      ...revocationForm,
+      sentAt: new Date().toISOString(),
+      candidateId: params.userId,
+      hrAdminName: hrAdminProfile ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}` : '',
+      companyName: hrAdminProfile?.company || '',
+    };
+    setSavedRevocationNotice(revocationData);
+    
     setShowRevocationModal(false);
     setRevocationPreview(false);
     setRevocationSentDate(new Date());
@@ -414,10 +650,27 @@ export default function AssessmentPage({
     // You can add logic to send/store the revocation here
   };
 
+  const handleProceedWithHire = () => {
+    setShowExtendSuccessModal(true);
+    // You can add logic to finalize the hire here
+  };
+
   const handleReassessmentFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setReassessmentForm({ ...reassessmentForm, [e.target.name]: e.target.value });
   };
   const handleSendReassessment = () => {
+    // Save the reassessment with metadata
+    const reassessmentData = {
+      ...reassessmentForm,
+      decision: reassessmentDecision,
+      extendReason: reassessmentDecision === 'extend' ? extendReason : '',
+      sentAt: new Date().toISOString(),
+      candidateId: params.userId,
+      hrAdminName: hrAdminProfile ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}` : '',
+      companyName: hrAdminProfile?.company || '',
+    };
+    setSavedReassessment(reassessmentData);
+    
     if (reassessmentDecision === 'extend') {
       setShowExtendSuccessModal(true);
     } else {
@@ -427,6 +680,13 @@ export default function AssessmentPage({
     }
     // You can add logic to send/store the reassessment here
   };
+
+  // Fetch candidate data when reassessment split is shown
+  useEffect(() => {
+    if (showReassessmentSplit && !candidateShareToken && !loadingCandidateData) {
+      fetchCandidateShareToken();
+    }
+  }, [showReassessmentSplit]);
 
   const handleFinalRevocationFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -448,64 +708,216 @@ export default function AssessmentPage({
 
   const router = useRouter();
 
+  const handleSendFinalRevocation = () => {
+    // Save the final revocation notice with metadata
+    const finalRevocationData = {
+      ...finalRevocationForm,
+      sentAt: new Date().toISOString(),
+      candidateId: params.userId,
+      hrAdminName: hrAdminProfile ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}` : '',
+      companyName: hrAdminProfile?.company || '',
+    };
+    setSavedFinalRevocationNotice(finalRevocationData);
+    
+    setShowFinalRevocationModal(false);
+    setFinalRevocationPreview(false);
+    setShowFinalRevocationSuccessModal(true);
+  };
+
+  // Function to fetch candidate's share token for iframe
+  const fetchCandidateShareToken = async () => {
+    setLoadingCandidateData(true);
+    try {
+      // Get the candidate's share_token and basic profile info
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('share_token, first_name, last_name, email')
+        .eq('id', params.userId)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching candidate profile:', profileError);
+        setCandidateProfile(null);
+        setCandidateShareToken(null);
+        return;
+      }
+
+      // Set the profile data regardless of share token status
+      setCandidateProfile(profileData);
+
+      if (!profileData.share_token) {
+        // Profile exists but sharing is not enabled
+        setCandidateShareToken(null);
+        return;
+      }
+
+      setCandidateShareToken(profileData.share_token);
+    } catch (error) {
+      console.error('Error fetching candidate share token:', error);
+      setCandidateProfile(null);
+      setCandidateShareToken(null);
+    } finally {
+      setLoadingCandidateData(false);
+    }
+  };
+
+  const handleViewCandidateResponse = () => {
+    setShowCandidateResponseModal(true);
+    fetchCandidateShareToken();
+  };
+
+  const handleViewOfferLetter = () => {
+    setShowOfferLetterModal(true);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-12">
+      {/* Sleek Sticky Header */}
+      <header className="w-full bg-white shadow-sm flex items-center justify-between px-8 py-4 mb-8 sticky top-0 z-30">
+        <div className="flex items-center gap-3">
+          <span className="text-black font-bold text-xl tracking-tight flex items-center">
+            <span className="mr-2">
+              réz<span className="text-red-500">me</span>.
+            </span>
+            <span className="font-semibold text-gray-800 text-lg">
+              {headerLoading ? <span className="animate-pulse text-gray-400">Loading...</span> : hrAdminProfile?.company || ""}
+            </span>
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          {savedOfferLetter && (
+            <button
+              onClick={handleViewOfferLetter}
+              className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium"
+            >
+              📄 View Offer Letter
+            </button>
+          )}
+          {savedAssessment && (
+            <button
+              onClick={() => setShowAssessmentViewModal(true)}
+              className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+            >
+              📋 View Assessment
+            </button>
+          )}
+          {savedRevocationNotice && (
+            <button
+              onClick={() => setShowRevocationViewModal(true)}
+              className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
+            >
+              📋 View Revocation Notice
+            </button>
+          )}
+          {savedReassessment && (
+            <button
+              onClick={() => setShowReassessmentViewModal(true)}
+              className="px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm font-medium"
+            >
+              🔄 View Reassessment
+            </button>
+          )}
+          {savedFinalRevocationNotice && (
+            <button
+              onClick={() => setShowFinalRevocationViewModal(true)}
+              className="px-3 py-2 bg-red-800 text-white rounded-md hover:bg-red-900 text-sm font-medium"
+            >
+              ⚠️ View Final Revocation Notice
+            </button>
+          )}
+          {/* Return to Dashboard Button */}
+          <button
+            onClick={() => router.push('/hr-admin/dashboard')}
+            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm font-medium flex items-center gap-2 border-l border-gray-300 ml-2 pl-4"
+          >
+            ← Return to Dashboard
+          </button>
+          {headerLoading ? (
+            <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse" />
+          ) : hrAdminProfile ? (
+            <>
+              <div className="w-9 h-9 rounded-full bg-yellow-400 flex items-center justify-center text-white font-bold text-lg mr-2">
+                {hrAdminProfile.first_name?.[0]}{hrAdminProfile.last_name?.[0]}
+              </div>
+              <span className="text-gray-800 font-medium text-base">{hrAdminProfile.first_name} {hrAdminProfile.last_name}</span>
+            </>
+          ) : null}
+        </div>
+      </header>
+      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-6 gap-8">
           {/* Left Column: Assessment Progress */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 lg:-ml-16">
             <div className="bg-white rounded-lg shadow p-6 mb-8">
-              <h2 className="text-2xl font-bold mb-6">Assessment Progress</h2>
+              <h2 className="text-xl font-bold mb-6">Assessment Progress</h2>
                       <div className="space-y-4">
                 {progressSteps.map((step, idx) => (
                   <div
                     key={step}
-                    className={`flex items-center px-4 py-3 rounded border transition-colors ${
+                    className={`flex items-center px-3 py-2 rounded border transition-colors ${
                       currentStep - 1 === idx
                         ? "border-red-500 bg-red-50"
                         : "border-gray-200 bg-white"
                     }`}
                   >
                     <span
-                      className={`mr-3 h-5 w-5 flex items-center justify-center rounded-full border-2 ${
+                      className={`mr-2 h-4 w-4 flex items-center justify-center rounded-full border-2 ${
                         currentStep - 1 === idx
                           ? "border-red-500 bg-red-500 text-white"
                           : "border-gray-300 bg-white text-gray-400"
                       }`}
                     >
                       {currentStep - 1 > idx ? (
-                        <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        <svg className="h-2 w-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                       ) : (
-                        <span className="block h-2 w-2 rounded-full bg-current"></span>
+                        <span className="block h-1 w-1 rounded-full bg-current"></span>
                       )}
                     </span>
-                    <span className={`font-medium text-base ${currentStep - 1 === idx ? "text-red-600" : "text-gray-800"}`}>{step}</span>
+                    <span className={`font-medium text-sm ${currentStep - 1 === idx ? "text-red-600" : "text-gray-800"}`}>{step}</span>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
-          {/* Right Column: Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Regulations Card Placeholder */}
-            <div className="bg-white rounded-lg shadow p-6 mb-8 flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="h-16 w-16 bg-red-100 rounded-full flex items-center justify-center">
-                  {/* Icon placeholder */}
-                  <span className="text-3xl text-red-500">📄</span>
+            
+            {/* San Diego Fair Chance Ordinance Legal Overview Card */}
+            <div className="bg-white rounded-lg shadow p-4 mb-8">
+              <div className="flex flex-col items-center text-center space-y-3">
+                <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center">
+                  <span className="text-2xl text-red-500">📄</span>
         </div>
                     <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">San Diego Fair Chance Ordinance Legal Overview</h3>
+                  <h3 className="text-sm font-bold text-gray-900 mb-2">San Diego Fair Chance Ordinance Legal Overview</h3>
                   <button 
-                    className="mt-2 px-4 py-2 border border-red-400 text-red-500 rounded hover:bg-red-50"
+                    className="px-3 py-2 border border-red-400 text-red-500 text-xs rounded hover:bg-red-50"
                     onClick={() => router.push(`/hr-admin/dashboard/${params.userId}/assessment/ordinance-summary`)}
                   >
                     View Ordinance Summary
                   </button>
                 </div>
               </div>
-              <div className="w-1/2 h-24 bg-gray-50 rounded-lg" />
             </div>
+            
+            {/* View Candidate Response Button */}
+            <div className="bg-white rounded-lg shadow p-4 mb-8">
+              <div className="flex flex-col items-center text-center space-y-3">
+                <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <span className="text-2xl text-blue-500">👤</span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900 mb-2">Candidate Information</h3>
+                  <button 
+                    className="px-3 py-2 border border-blue-400 text-blue-500 text-xs rounded hover:bg-blue-50"
+                    onClick={handleViewCandidateResponse}
+                  >
+                    View Candidate Response
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* Right Column: Main Content */}
+          <div className="lg:col-span-5 space-y-8">
             {/* Main Question Card Placeholder */}
             {currentStep === 1 && (
               <div className="bg-white rounded-lg shadow p-8 mb-8 border border-gray-200">
@@ -796,9 +1208,14 @@ export default function AssessmentPage({
                   <p className="text-lg mb-6">
                     The following may be used to inform a job applicant in writing of the intent to revoke a conditional job offer due to relevant criminal history
                   </p>
+                  <div className="flex gap-4">
                   <button className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={() => setShowRevocationModal(true)}>
                     Issue Preliminary Job Offer Revocation
                   </button>
+                    <button className="px-8 py-3 rounded text-lg font-semibold bg-green-500 text-white hover:bg-green-600" onClick={handleProceedWithHire}>
+                      Proceed with hire
+                    </button>
+                  </div>
                 </div>
                 {/* Modal for Preliminary Job Offer Revocation */}
                 {showRevocationModal && (
@@ -1004,7 +1421,7 @@ export default function AssessmentPage({
                     </ul>
                   </div>
                   <div className="flex flex-row gap-4 mt-2">
-                    <button className="px-8 py-3 rounded text-lg font-semibold bg-blue-600 text-white hover:bg-blue-700">View Candidate Response</button>
+                    <button className="px-8 py-3 rounded text-lg font-semibold bg-blue-600 text-white hover:bg-blue-700" onClick={handleProceedWithHire}>Proceed with hire</button>
                     <button className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={() => setShowReassessmentInfoModal(true)}>Begin Individualized Reassessment</button>
                   </div>
                 </div>
@@ -1084,6 +1501,100 @@ export default function AssessmentPage({
                           <input type="text" name="performedBy" value={reassessmentForm.performedBy} onChange={handleReassessmentFormChange} className="w-full border rounded px-3 py-2" />
                         </div>
                       </div>
+                      
+                      {/* Additional Assessment Questions */}
+                      <div className="border-t pt-6 mt-6">
+                        <h3 className="text-lg font-semibold mb-4">Assessment Questions</h3>
+                        
+                        {/* Question 1: Error in Criminal History Report */}
+                        <div className="mb-6">
+                          <label className="block text-sm font-semibold mb-3">1. Was there an error in the Criminal History Report?</label>
+                          <div className="flex items-center gap-6 mb-3">
+                            <label className="flex items-center gap-2">
+                              <input 
+                                type="radio" 
+                                name="errorYesNo" 
+                                value="Yes" 
+                                checked={reassessmentForm.errorYesNo === 'Yes'} 
+                                onChange={handleReassessmentFormChange} 
+                              /> 
+                               Yes
+                            </label>
+                            <label className="flex items-center gap-2">
+                              <input 
+                                type="radio" 
+                                name="errorYesNo" 
+                                value="No" 
+                                checked={reassessmentForm.errorYesNo === 'No'} 
+                                onChange={handleReassessmentFormChange} 
+                              /> 
+                               No
+                            </label>
+                          </div>
+                          {reassessmentForm.errorYesNo === 'Yes' && (
+                            <div>
+                              <label className="block text-sm font-semibold mb-1">If yes, describe the error:</label>
+                              <textarea 
+                                name="error" 
+                                value={reassessmentForm.error} 
+                                onChange={handleReassessmentFormChange} 
+                                className="w-full border rounded px-3 py-2 min-h-[80px]" 
+                                placeholder="Describe the error in detail"
+                              />
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Question 2: Evidence of Rehabilitation */}
+                        <div className="mb-6">
+                          <label className="block text-sm font-semibold mb-3">
+                            2. Evidence of rehabilitation and good conduct (this evidence may include, but is not limited to, documents or other information demonstrating that the Applicant attended school, a religious institution, job training, or counseling, or is involved with the community. This evidence can include letters from people who know the Applicant, such as teachers, counselors, supervisors, clergy, and parole or probation officers):
+                          </label>
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-sm font-medium mb-1">a.</label>
+                              <textarea 
+                                name="evidenceA" 
+                                value={reassessmentForm.evidenceA} 
+                                onChange={handleReassessmentFormChange} 
+                                className="w-full border rounded px-3 py-2 min-h-[60px]" 
+                                placeholder="Evidence item A"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">b.</label>
+                              <textarea 
+                                name="evidenceB" 
+                                value={reassessmentForm.evidenceB} 
+                                onChange={handleReassessmentFormChange} 
+                                className="w-full border rounded px-3 py-2 min-h-[60px]" 
+                                placeholder="Evidence item B"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">c.</label>
+                              <textarea 
+                                name="evidenceC" 
+                                value={reassessmentForm.evidenceC} 
+                                onChange={handleReassessmentFormChange} 
+                                className="w-full border rounded px-3 py-2 min-h-[60px]" 
+                                placeholder="Evidence item C"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">d.</label>
+                              <textarea 
+                                name="evidenceD" 
+                                value={reassessmentForm.evidenceD} 
+                                onChange={handleReassessmentFormChange} 
+                                className="w-full border rounded px-3 py-2 min-h-[60px]" 
+                                placeholder="Evidence item D"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
                       <div>
                         <label className="block text-sm font-semibold mb-1">Decision</label>
                         <div className="flex items-center gap-6 mb-2">
@@ -1128,6 +1639,21 @@ export default function AssessmentPage({
                       {reassessmentForm.errorYesNo === 'Yes' && (
                         <div className="mb-2"><b>If yes, describe the error:</b> {reassessmentForm.error}</div>
                       )}
+                      <div className="mt-4">
+                        <b>2. Evidence of rehabilitation and good conduct:</b>
+                        {reassessmentForm.evidenceA && (
+                          <div className="mt-2"><b>a.</b> {reassessmentForm.evidenceA}</div>
+                        )}
+                        {reassessmentForm.evidenceB && (
+                          <div className="mt-2"><b>b.</b> {reassessmentForm.evidenceB}</div>
+                        )}
+                        {reassessmentForm.evidenceC && (
+                          <div className="mt-2"><b>c.</b> {reassessmentForm.evidenceC}</div>
+                        )}
+                        {reassessmentForm.evidenceD && (
+                          <div className="mt-2"><b>d.</b> {reassessmentForm.evidenceD}</div>
+                        )}
+                      </div>
                       <div className="mt-2">
                         {reassessmentDecision === 'rescind' ? (
                           <><b>Based on the factors above, we are rescinding our offer of employment because:</b><br />{reassessmentForm.rescindReason}</>
@@ -1149,11 +1675,50 @@ export default function AssessmentPage({
                 {/* Right: Candidate Response Iframe */}
                 <div className="flex-1 bg-white rounded-lg shadow p-8 border border-gray-200">
                   <h2 className="text-2xl font-bold mb-6">Candidate Response</h2>
+                  {loadingCandidateData ? (
+                    <div className="text-center py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                      <p className="text-gray-600">Loading candidate's restorative record...</p>
+                    </div>
+                  ) : candidateShareToken ? (
                   <iframe
-                    src="https://example.com/candidate-response"
-                    title="Candidate Response"
-                    className="w-full h-[500px] rounded border"
-                  />
+                      src={`${window.location.origin}/restorative-record/share/${candidateShareToken}`}
+                      title="Candidate Restorative Record"
+                      className="w-full h-[500px] rounded border border-gray-200"
+                      frameBorder="0"
+                    />
+                  ) : candidateProfile ? (
+                    <div className="text-center py-12">
+                      <div className="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-4">Profile is Private</h3>
+                      <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                        {candidateProfile.first_name} {candidateProfile.last_name} has chosen to keep their restorative record private. The candidate would need to enable sharing to make their record accessible.
+                      </p>
+                      <button className="px-6 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors mb-6">
+                        Request Restorative Record
+                      </button>
+                      <div className="bg-blue-50 rounded-lg p-6 max-w-md mx-auto">
+                        <h4 className="text-blue-800 font-semibold mb-3">How to Enable Sharing:</h4>
+                        <p className="text-blue-700 text-sm leading-relaxed">
+                          The candidate can enable sharing by visiting their restorative record profile page and clicking the "Share" button to generate a shareable link.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <div className="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-3xl text-gray-400">📄</span>
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Restorative Record Available</h3>
+                      <p className="text-gray-600">
+                        This candidate has not yet created a restorative record or it may not be available for sharing.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1165,7 +1730,20 @@ export default function AssessmentPage({
                       <span className="font-semibold">Once you have considered any mitigating information provided by the applicant, you may still decide to revoke the conditional job offer due to relevant criminal history.</span> <br />
                       The following notice meets your responsibility to notify the applicant in writing.
                     </div>
-                    <button className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600 w-full" onClick={() => setShowFinalRevocationModal(true)}>Issue Final Revocation Notice</button>
+                    <div className="flex gap-4">
+                      <button
+                        className="px-8 py-3 rounded text-lg font-semibold bg-green-500 text-white hover:bg-green-600 w-full"
+                        onClick={handleProceedWithHire}
+                      >
+                        Extend Offer of Employment
+                      </button>
+                      <button
+                        className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600 w-full"
+                        onClick={() => setShowFinalRevocationModal(true)}
+                      >
+                        Issue Final Revocation Notice
+                      </button>
+                    </div>
                   </div>
                 </div>
                 {/* Final Revocation Notice Modal */}
@@ -1308,7 +1886,7 @@ export default function AssessmentPage({
                             <button type="button" className="px-8 py-3 rounded text-lg font-semibold bg-gray-300 text-gray-700 hover:bg-gray-400" onClick={() => setShowFinalRevocationModal(false)}>
                               Cancel
                             </button>
-                            <button type="button" className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={() => { setShowFinalRevocationModal(false); setFinalRevocationPreview(false); setShowFinalRevocationSuccessModal(true); }}>Send</button>
+                            <button type="button" className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={handleSendFinalRevocation}>Send</button>
                           </div>
                         </form>
                       ) : (
@@ -1376,7 +1954,7 @@ export default function AssessmentPage({
                             <button type="button" className="px-8 py-3 rounded text-lg font-semibold bg-gray-300 text-gray-700 hover:bg-gray-400" onClick={() => setFinalRevocationPreview(false)}>
                               Edit
                             </button>
-                            <button type="button" className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={() => { setShowFinalRevocationModal(false); setFinalRevocationPreview(false); setShowFinalRevocationSuccessModal(true); }}>Send</button>
+                            <button type="button" className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={handleSendFinalRevocation}>Send</button>
                           </div>
                         </div>
                       )}
@@ -1391,41 +1969,213 @@ export default function AssessmentPage({
                 <span className="mr-2 text-xl text-gray-700">ℹ️</span>
                 <h3 className="text-lg font-bold">Critical Information</h3>
               </div>
-              <div className="flex space-x-4 mb-4">
-                <button className="px-4 py-2 rounded-full bg-red-100 text-red-600 font-semibold">Legal</button>
-                <button className="px-4 py-2 rounded-full bg-red-500 text-white font-semibold">Company Policy</button>
-                <button className="px-4 py-2 rounded-full bg-red-100 text-red-600 font-semibold">Candidate Context</button>
+              
+              {/* Tab Navigation */}
+              <div className="flex space-x-1 mb-6 border-b border-gray-200">
+                {['Legal', 'Company Policy', 'Candidate Context'].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`px-4 py-2 font-semibold text-sm transition-colors relative ${
+                      activeTab === tab
+                        ? 'text-red-600 border-b-2 border-red-600'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
             </div>
-              <div className="text-gray-700">Internal policy requires documented confirmation of conditional offer before accessing any conviction history information.</div>
+              
+              {/* Tab Content */}
+              <div className="min-h-[200px]">
+                {activeTab === 'Legal' && (
+                  <div className="space-y-4">
+                    {currentStep === 1 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">San Diego Fair Chance Ordinance Requirements</h4>
+                        <p>Internal policy requires documented confirmation of conditional offer before accessing any conviction history information. This ensures compliance with local fair chance hiring legislation.</p>
+        </div>
+                    )}
+                    {currentStep === 2 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Individualized Assessment Guidelines</h4>
+                        <p>Legal requirements for conducting fair and compliant individualized assessments under San Diego Fair Chance Ordinance will be displayed here.</p>
+      </div>
+                    )}
+                    {currentStep === 3 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Preliminary Decision Legal Framework</h4>
+                        <p>Legal guidelines for preliminary job offer decisions and revocation procedures will be displayed here.</p>
+        </div>
+                    )}
+                    {currentStep === 4 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Reassessment Legal Requirements</h4>
+                        <p>Legal framework for conducting reassessments and handling candidate responses will be displayed here.</p>
+      </div>
+                    )}
+                    {currentStep === 5 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Final Decision Legal Compliance</h4>
+                        <p>Legal requirements for final hiring decisions and documentation will be displayed here.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {activeTab === 'Company Policy' && (
+                  <div className="space-y-4">
+                    {currentStep === 1 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Conditional Offer Policy</h4>
+                        <p>Company-specific policies regarding conditional job offers and documentation requirements will be displayed here.</p>
+                      </div>
+                    )}
+                    {currentStep === 2 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Assessment Procedures</h4>
+                        <p>Internal company policies for conducting individualized assessments will be displayed here.</p>
+                      </div>
+                    )}
+                    {currentStep === 3 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Decision Making Policy</h4>
+                        <p>Company policies for preliminary hiring decisions and notification procedures will be displayed here.</p>
+                      </div>
+                    )}
+                    {currentStep === 4 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Reassessment Guidelines</h4>
+                        <p>Company policies for handling candidate responses and conducting reassessments will be displayed here.</p>
+                      </div>
+                    )}
+                    {currentStep === 5 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Final Decision Policy</h4>
+                        <p>Company policies for final hiring decisions and record keeping will be displayed here.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {activeTab === 'Candidate Context' && (
+                  <div className="space-y-4">
+                    {currentStep === 1 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Candidate Background</h4>
+                        <p>Relevant candidate information and context for the conditional offer stage will be displayed here.</p>
+                      </div>
+                    )}
+                    {currentStep === 2 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Assessment Context</h4>
+                        <p>Candidate-specific context and considerations for the individualized assessment will be displayed here.</p>
+                      </div>
+                    )}
+                    {currentStep === 3 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Decision Context</h4>
+                        <p>Relevant candidate context for preliminary decision making will be displayed here.</p>
+                      </div>
+                    )}
+                    {currentStep === 4 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Response Context</h4>
+                        <p>Candidate response and relevant context for reassessment will be displayed here.</p>
+                      </div>
+                    )}
+                    {currentStep === 5 && (
+                      <div className="text-gray-700">
+                        <h4 className="font-semibold mb-2">Final Decision Context</h4>
+                        <p>Complete candidate context for final hiring decision will be displayed here.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+      
+      {/* Footer with Disclaimer */}
+      <footer className="bg-white border-t border-gray-200 py-12 mt-16">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left: Logo and Tagline */}
+            <div>
+              <div className="text-black font-bold text-2xl mb-3">
+                réz<span className="text-red-500">me</span>.
+              </div>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Automating Fair Chance Hiring<br />
+                compliance for modern HR teams.
+              </p>
+            </div>
+            
+            {/* Right: Legal Disclaimer */}
+            <div className="lg:col-span-2">
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Rézme provides compliance support tools, not legal advice. Use of this site or platform does not create an attorney-client relationship. Employers retain full responsibility for final hiring decisions and for compliance with applicable laws. Rézme is not a Consumer Reporting Agency and does not furnish consumer reports under the Fair Credit Reporting Act. While our software assists clients in documenting individualized assessments and related compliance steps, Rézme's role is limited to producing records created within our system in the event of an audit. All data sources, partner integrations, and outputs are provided "as-is," without warranty of completeness or accuracy. Tax credit calculations are estimates only and do not guarantee financial outcomes. By using this site, you agree to our Terms of Service, including limitations of liability, indemnification provisions, and governing law clauses.
+              </p>
+            </div>
+          </div>
+          
+          {/* Copyright */}
+          <div className="mt-12 pt-8 border-t border-gray-200 text-center">
+            <p className="text-gray-500 text-sm">
+              © 2024 Rézme. All rights reserved.
+            </p>
+          </div>
         </div>
-      </div>
+      </footer>
+      
       {showExtendSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-10 flex flex-col items-center">
+          <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-10 flex flex-col items-center relative">
+            {/* X Close Button */}
+            <button 
+              className="absolute top-4 left-4 text-gray-400 hover:text-gray-600"
+              onClick={() => setShowExtendSuccessModal(false)}
+            >
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
             <div className="rounded-full bg-green-100 p-4 mb-4">
               <svg className="h-10 w-10 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
             </div>
             <h2 className="text-2xl font-bold text-center mb-4">Applicant Hired!</h2>
-            <div className="text-gray-700 text-lg text-center mb-8">You have successfully extended an offer of employment. We will update the applicant's records accordingly.</div>
-            <button className="px-8 py-3 rounded text-lg font-semibold bg-blue-600 text-white hover:bg-blue-700" onClick={() => { setShowExtendSuccessModal(false); setShowReassessmentSplit(false); setReassessmentPreview(false); }}>
-              Close
+            <div className="text-gray-700 text-lg text-center mb-8">You have indicated that you intend to extend an offer of employment to the candidate. Please update your records accordingly. We will store the assessments you conducted on Rézme.</div>
+            <button className="px-8 py-3 rounded text-lg font-semibold bg-blue-600 text-white hover:bg-blue-700" onClick={() => { setShowExtendSuccessModal(false); setShowReassessmentSplit(false); setReassessmentPreview(false); router.push('/hr-admin/dashboard'); }}>
+              Return to Dashboard
             </button>
           </div>
         </div>
       )}
       {showFinalRevocationSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-2xl shadow-lg p-12 max-w-6xl w-full flex flex-col items-center">
+          <div className="bg-white rounded-2xl shadow-lg p-12 max-w-6xl w-full flex flex-col items-center relative">
+            {/* X button in top right corner */}
+            <button 
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              onClick={() => setShowFinalRevocationSuccessModal(false)}
+            >
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
             <div className="rounded-full bg-green-100 p-6 mb-6">
               <svg className="h-16 w-16 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
             </div>
             <h1 className="text-3xl font-bold text-center mb-4">Final Revocation Notice Sent</h1>
             <p className="text-lg text-gray-600 text-center mb-8">
-              The final decision notice has been sent to the candidate. This completes the Fair Chance hiring process.
+              You have indicated that you will not be proceeding with an offer of employment to the candidate. Please update your records accordingly. We will store the assessments and actions you conducted on Rézme including the steps you took to ensure compliance with San Diego County Fair Chance Ordinance and The Office of Labor Standards and Enforcement (OLSE).
             </p>
-            <button className="px-8 py-4 rounded-lg text-lg font-semibold bg-blue-600 text-white hover:bg-blue-700 mb-8" onClick={() => { setShowFinalRevocationSuccessModal(false); /* Optionally, add navigation here */ }}>
+            <button className="px-8 py-4 rounded-lg text-lg font-semibold bg-blue-600 text-white hover:bg-blue-700 mb-8" onClick={() => { setShowFinalRevocationSuccessModal(false); router.push('/hr-admin/dashboard'); }}>
               Return to Dashboard
             </button>
             <div className="w-full border-t border-gray-200 pt-8 flex flex-col items-center">
@@ -1443,6 +2193,698 @@ export default function AssessmentPage({
                   619-531-5129
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Candidate Response Modal */}
+      {showCandidateResponseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg max-w-6xl w-full p-8 relative max-h-screen overflow-hidden">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">
+                Candidate Response - Restorative Record
+                {candidateProfile && ` - ${candidateProfile.first_name} ${candidateProfile.last_name}`}
+              </h2>
+              <button 
+                className="text-gray-400 hover:text-gray-600"
+                onClick={() => setShowCandidateResponseModal(false)}
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Loading State */}
+            {loadingCandidateData ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading candidate's restorative record...</p>
+              </div>
+            ) : candidateShareToken ? (
+              /* Iframe Content */
+              <div className="h-[70vh]">
+                <iframe
+                  src={`${window.location.origin}/restorative-record/share/${candidateShareToken}`}
+                  title="Candidate Restorative Record"
+                  className="w-full h-full rounded border border-gray-200"
+                  frameBorder="0"
+                />
+              </div>
+            ) : candidateProfile ? (
+              /* Private Profile State */
+              <div className="text-center py-12">
+                <div className="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Profile is Private</h3>
+                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                  {candidateProfile.first_name} {candidateProfile.last_name} has chosen to keep their restorative record private. The candidate would need to enable sharing to make their record accessible.
+                </p>
+                <button className="px-6 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors mb-6">
+                  Request Restorative Record
+                </button>
+                <div className="bg-blue-50 rounded-lg p-6 max-w-md mx-auto">
+                  <h4 className="text-blue-800 font-semibold mb-3">How to Enable Sharing:</h4>
+                  <p className="text-blue-700 text-sm leading-relaxed">
+                    The candidate can enable sharing by visiting their restorative record profile page and clicking the "Share" button to generate a shareable link.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              /* No Data State */
+              <div className="text-center py-12">
+                <div className="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-3xl text-gray-400">📄</span>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Restorative Record Available</h3>
+                <p className="text-gray-600">
+                  This candidate has not yet created a restorative record or it may not be available for sharing.
+                </p>
+              </div>
+            )}
+            
+            {/* Footer */}
+            <div className="flex justify-end mt-6">
+              <button 
+                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200" 
+                onClick={() => setShowCandidateResponseModal(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* View Offer Letter Modal */}
+      {showOfferLetterModal && savedOfferLetter && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg max-w-7xl w-full p-16 relative max-h-screen overflow-y-auto">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Conditional Job Offer Letter</h2>
+              <button 
+                className="text-gray-400 hover:text-gray-600"
+                onClick={() => setShowOfferLetterModal(false)}
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Saved Offer Letter Content */}
+            <div className="prose max-w-none text-gray-900 text-base">
+              <div className="mb-2">
+                <span className="font-semibold">{savedOfferLetter.date}</span>
+              </div>
+              <div className="mb-2">RE: Conditional Offer of Employment & Notice of Conviction Background Check</div>
+              <div className="mb-2">
+                Dear <span className="font-semibold">{savedOfferLetter.applicant}</span>:
+              </div>
+              <div className="mb-2">
+                We are writing to make you a conditional offer of employment for the position of <span className="font-semibold">{savedOfferLetter.position}</span>. Before this job offer becomes final, we will check your conviction history. The form attached to this letter asks for your permission to check your conviction history and provides more information about that background check.
+              </div>
+              <div className="mb-2">
+                After reviewing your conviction history report, we will either:<br />
+                a. Notify you that this conditional job offer has become final; or<br />
+                b. Notify you in writing that we intend to revoke (take back) this job offer because of your conviction history.
+              </div>
+              <div className="mb-2">
+                As required by California state and San Diego County law, we will NOT consider any of the following information:<br />
+                • Arrest not followed by conviction;<br />
+                • Referral to or participation in a pretrial or posttrial diversion program; or<br />
+                • Convictions that have been sealed, dismissed, expunged, or pardoned.
+              </div>
+              <div className="mb-2">
+                As required by the California Fair Chance Act and the San Diego County Fair Chance Ordinance, we will consider whether your conviction history is directly related to the duties of the job we have offered you. We will consider all of the following:<br />
+                • The nature and seriousness of the offense<br />
+                • The amount of time since the offense<br />
+                • The nature of the job
+              </div>
+              <div className="mb-2">
+                We will notify you in writing if we plan to revoke (take back) this job offer after reviewing your conviction history. That decision will be preliminary, and you will have an opportunity to respond before it becomes final. We will identify conviction(s) that concern us, give you a copy of the background check report, as well as a copy of the written individualized assessment of the report and the relevance of your history to the position. We will then hold the position open, except in emergent circumstances to allow you at least 5 business days to provide information about your rehabilitation or mitigating circumstances and/or provide notice that you will provide information showing the conviction history report is inaccurate. Should you provide notice that you will provide information showing the conviction history report is inaccurate, you will have an additional 5 business days to provide that evidence. Should you provide additional information, we will then conduct a written individualized reassessment and decide whether to finalize or take back this conditional job offer. We will notify you of that decision in writing.
+              </div>
+              <div className="mb-2">
+                Sincerely,<br />
+                <span className="font-semibold">{savedOfferLetter.employer}</span>
+              </div>
+              <div className="mb-2">
+                Enclosure: Authorization for Background Check (as required by the U.S. Fair Credit Reporting Act and California Investigative Consumer Reporting Agencies Act)
+              </div>
+              
+              {/* Document Metadata */}
+              <div className="mt-8 pt-6 border-t border-gray-200 bg-gray-50 rounded-lg p-4">
+                <h3 className="text-lg font-semibold mb-3">Document Information</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Sent Date:</span> {new Date(savedOfferLetter.sentDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <div>
+                    <span className="font-medium">Sent By:</span> {savedOfferLetter.hrAdminName}
+                  </div>
+                  <div>
+                    <span className="font-medium">Company:</span> {savedOfferLetter.company}
+                  </div>
+                  <div>
+                    <span className="font-medium">Candidate ID:</span> {savedOfferLetter.candidateId}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="flex justify-end space-x-4 mt-6">
+              <button 
+                type="button" 
+                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200" 
+                onClick={() => setShowOfferLetterModal(false)}
+              >
+                Close
+              </button>
+              <button 
+                type="button" 
+                className="px-6 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
+                onClick={() => {
+                  const printContent = document.createElement('div');
+                  printContent.innerHTML = document.querySelector('.prose')?.innerHTML || '';
+                  const printWindow = window.open('', '_blank');
+                  if (printWindow) {
+                    printWindow.document.write(`
+                      <html>
+                        <head>
+                          <title>Conditional Job Offer Letter</title>
+                          <style>
+                            body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }
+                            .font-semibold { font-weight: 600; }
+                            .mb-2 { margin-bottom: 0.5rem; }
+                          </style>
+                        </head>
+                        <body>${printContent.innerHTML}</body>
+                      </html>
+                    `);
+                    printWindow.document.close();
+                    printWindow.print();
+                  }
+                }}
+              >
+                📄 Print/Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* View Assessment Modal */}
+      {showAssessmentViewModal && savedAssessment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg max-w-7xl w-full p-16 relative max-h-screen overflow-y-auto">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Criminal History Individual Assessment Form</h2>
+              <button 
+                className="text-gray-400 hover:text-gray-600"
+                onClick={() => setShowAssessmentViewModal(false)}
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Saved Assessment Content */}
+            <div className="prose max-w-none text-gray-900 text-base bg-gray-50 p-8 rounded">
+              <h3 className="font-bold mb-2">INFORMATION</h3>
+              <div><b>Employer Name:</b> {savedAssessment.employer}</div>
+              <div><b>Applicant Name:</b> {savedAssessment.applicant}</div>
+              <div><b>Position Applied For:</b> {savedAssessment.position}</div>
+              <div><b>Date of Conditional Offer:</b> {savedAssessment.offerDate}</div>
+              <div><b>Date of Assessment:</b> {savedAssessment.assessmentDate}</div>
+              <div><b>Date of Criminal History Report:</b> {savedAssessment.reportDate}</div>
+              <div><b>Assessment Performed by:</b> {savedAssessment.performedBy}</div>
+              
+              <h3 className="font-bold mt-6 mb-2">ASSESSMENT</h3>
+              <div><b>1. The specific duties and responsibilities of the job are:</b>
+                <ul className="list-disc ml-6">
+                  {savedAssessment.duties.map((duty: string, idx: number) => duty && <li key={idx}>{duty}</li>)}
+                </ul>
+              </div>
+              <div className="mt-2"><b>2. Description of the criminal conduct and why the conduct is of concern with respect to the position in question:</b><br />{savedAssessment.conduct}</div>
+              <div className="mt-2"><b>3. How long ago did the criminal activity occur:</b> {savedAssessment.howLongAgo}</div>
+              <div className="mt-2"><b>4. Activities since criminal activity, such as work experience, job training, rehabilitation, community service, etc.:</b>
+                <ul className="list-disc ml-6">
+                  {savedAssessment.activities.map((act: string, idx: number) => act && <li key={idx}>{act}</li>)}
+                </ul>
+              </div>
+              <div className="mt-2"><b>Based on the factors above, we are considering rescinding our offer of employment because:</b><br />{savedAssessment.rescindReason}</div>
+              
+              {/* Document Metadata */}
+              <div className="mt-8 pt-6 border-t border-gray-200 bg-white rounded-lg p-4">
+                <h3 className="text-lg font-semibold mb-3">Document Information</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Sent Date:</span> {new Date(savedAssessment.sentAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <div>
+                    <span className="font-medium">Sent By:</span> {savedAssessment.hrAdminName}
+                  </div>
+                  <div>
+                    <span className="font-medium">Company:</span> {savedAssessment.companyName}
+                  </div>
+                  <div>
+                    <span className="font-medium">Candidate ID:</span> {savedAssessment.candidateId}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="flex justify-end space-x-4 mt-6">
+              <button 
+                type="button" 
+                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200" 
+                onClick={() => setShowAssessmentViewModal(false)}
+              >
+                Close
+              </button>
+              <button 
+                type="button" 
+                className="px-6 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
+                onClick={() => {
+                  const printContent = document.querySelector('.prose:last-of-type');
+                  if (printContent) {
+                    const printWindow = window.open('', '_blank');
+                    if (printWindow) {
+                      printWindow.document.write(`
+                        <html>
+                          <head>
+                            <title>Criminal History Individual Assessment Form</title>
+                            <style>
+                              body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }
+                              .font-bold { font-weight: bold; }
+                              .mt-2 { margin-top: 0.5rem; }
+                              .mt-6 { margin-top: 1.5rem; }
+                              .mb-2 { margin-bottom: 0.5rem; }
+                              .list-disc { list-style-type: disc; }
+                              .ml-6 { margin-left: 1.5rem; }
+                            </style>
+                          </head>
+                          <body>${printContent.innerHTML}</body>
+                        </html>
+                      `);
+                      printWindow.document.close();
+                      printWindow.print();
+                    }
+                  }
+                }}
+              >
+                📄 Print/Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* View Revocation Notice Modal */}
+      {showRevocationViewModal && savedRevocationNotice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg max-w-7xl w-full p-16 relative max-h-screen overflow-y-auto">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Notice of Preliminary Decision to Revoke Job Offer Because of Conviction History</h2>
+              <button 
+                className="text-gray-400 hover:text-gray-600"
+                onClick={() => setShowRevocationViewModal(false)}
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Saved Revocation Notice Content */}
+            <div className="prose max-w-none text-gray-900 text-base bg-gray-50 p-8 rounded">
+              <div className="mb-2">{savedRevocationNotice.date}</div>
+              <div className="mb-2">Re: Preliminary Decision to Revoke Job Offer Because of Conviction History</div>
+              <div className="mb-2">Dear {savedRevocationNotice.applicant}:</div>
+              <div className="mb-2">After reviewing the results of your conviction history background check, we have made a preliminary (non-final) decision to revoke (take back) our previous job offer for the position of {savedRevocationNotice.position} because of the following conviction(s):
+                <ul className="list-disc ml-6">
+                  {savedRevocationNotice.convictions.map((conv: string, idx: number) => conv && <li key={idx}>{conv}</li>)}
+                </ul>
+                A copy of your conviction history report is attached to this letter. More information about our concerns is included in the "Individualized Assessment" below.
+              </div>
+              <div className="mb-2">As prohibited by Local and California law, we have NOT considered any of the following:
+                <ul className="list-disc ml-6">
+                  <li>Arrest(s) not followed by conviction;</li>
+                  <li>Participation in a pretrial or posttrial diversion program; or</li>
+                  <li>Convictions that have been sealed, dismissed, expunged, or pardoned.</li>
+                </ul>
+              </div>
+              <div className="mb-2"><b>Your Right to Respond:</b><br />
+                The conditional job you were offered will remain available for five business days so that you may respond to this letter before our decision to revoke the job offer becomes final. Within {savedRevocationNotice.numBusinessDays} business days* from when you first receive this notice, you may send us:
+                <ul className="list-disc ml-6">
+                  <li>Evidence of rehabilitation or mitigating circumstances</li>
+                  <li>Information challenging the accuracy of the conviction history listed above. If, within 5 business days, you notify us that you are challenging the accuracy of the attached conviction history report, you shall have another 5 business days to respond to this notice with evidence of inaccuracy.</li>
+                </ul>
+                Please send any additional information you would like us to consider to: {savedRevocationNotice.contactName}, {savedRevocationNotice.companyName}, {savedRevocationNotice.address}, {savedRevocationNotice.phone}
+              </div>
+              <div className="mb-2">We are required to review the information you submit and make another individualized assessment of whether to hire you or revoke the job offer. We will notify you in writing if we make a final decision to revoke the job offer.</div>
+              <div className="mb-2"><b>Our Individualized Assessment:</b><br />
+                We have individually assessed whether your conviction history is directly related to the duties of the job we offered you. We considered the following:
+                <ol className="list-decimal ml-6">
+                  <li>The nature and seriousness of the conduct that led to your conviction(s), which we assessed as follows: {savedRevocationNotice.seriousReason}</li>
+                  <li>How long ago the conduct occurred that led to your conviction, which was: {savedRevocationNotice.timeSinceConduct} and how long ago you completed your sentence, which was: {savedRevocationNotice.timeSinceSentence}.</li>
+                  <li>The specific duties and responsibilities of the position of {savedRevocationNotice.position}, which are: {savedRevocationNotice.jobDuties}</li>
+                </ol>
+                We believe your conviction record lessens your fitness/ability to perform the job duties because: {savedRevocationNotice.fitnessReason}
+              </div>
+              <div className="mb-2">Sincerely,<br />{savedRevocationNotice.contactName}<br />{savedRevocationNotice.companyName}<br />{savedRevocationNotice.address}<br />{savedRevocationNotice.phone}</div>
+              <div className="mb-2">Enclosure: Copy of conviction history report</div>
+              <div className="mb-2 text-xs">* The applicant must be allowed at least 5 business days to respond. If the applicant indicates their intent to provide such evidence, they must be given an additional 5 business days to gather and deliver the information</div>
+              
+              {/* Document Metadata */}
+              <div className="mt-8 pt-6 border-t border-gray-200 bg-white rounded-lg p-4">
+                <h3 className="text-lg font-semibold mb-3">Document Information</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Sent Date:</span> {new Date(savedRevocationNotice.sentAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <div>
+                    <span className="font-medium">Sent By:</span> {savedRevocationNotice.hrAdminName}
+                  </div>
+                  <div>
+                    <span className="font-medium">Company:</span> {savedRevocationNotice.companyName}
+                  </div>
+                  <div>
+                    <span className="font-medium">Candidate ID:</span> {savedRevocationNotice.candidateId}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="flex justify-end space-x-4 mt-6">
+              <button 
+                type="button" 
+                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200" 
+                onClick={() => setShowRevocationViewModal(false)}
+              >
+                Close
+              </button>
+              <button 
+                type="button" 
+                className="px-6 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
+                onClick={() => {
+                  const printContent = document.querySelector('.prose:last-of-type');
+                  if (printContent) {
+                    const printWindow = window.open('', '_blank');
+                    if (printWindow) {
+                      printWindow.document.write(`
+                        <html>
+                          <head>
+                            <title>Notice of Preliminary Decision to Revoke Job Offer</title>
+                            <style>
+                              body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }
+                              .font-bold, b { font-weight: bold; }
+                              .mb-2 { margin-bottom: 0.5rem; }
+                              .mt-8 { margin-top: 2rem; }
+                              .list-disc { list-style-type: disc; }
+                              .list-decimal { list-style-type: decimal; }
+                              .ml-6 { margin-left: 1.5rem; }
+                              .text-xs { font-size: 0.75rem; }
+                            </style>
+                          </head>
+                          <body>${printContent.innerHTML}</body>
+                        </html>
+                      `);
+                      printWindow.document.close();
+                      printWindow.print();
+                    }
+                  }
+                }}
+              >
+                📄 Print/Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* View Reassessment Modal */}
+      {showReassessmentViewModal && savedReassessment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg max-w-7xl w-full p-16 relative max-h-screen overflow-y-auto">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Individualized Reassessment Form</h2>
+              <button 
+                className="text-gray-400 hover:text-gray-600"
+                onClick={() => setShowReassessmentViewModal(false)}
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Saved Reassessment Content */}
+            <div className="prose max-w-none text-gray-900 text-base bg-gray-50 p-8 rounded">
+              <h3 className="font-bold mb-2">INFORMATION</h3>
+              <div><b>Employer Name:</b> {savedReassessment.employer}</div>
+              <div><b>Applicant Name:</b> {savedReassessment.applicant}</div>
+              <div><b>Position Applied For:</b> {savedReassessment.position}</div>
+              <div><b>Date of Conditional Offer:</b> {savedReassessment.offerDate}</div>
+              <div><b>Date of Reassessment:</b> {savedReassessment.reassessmentDate}</div>
+              <div><b>Date of Criminal History Report:</b> {savedReassessment.reportDate}</div>
+              <div><b>Assessment Performed by:</b> {savedReassessment.performedBy}</div>
+              
+              <h3 className="font-bold mt-6 mb-2">REASSESSMENT</h3>
+              <div><b>1. Was there an error in the Criminal History Report?</b> {savedReassessment.errorYesNo}</div>
+              {savedReassessment.errorYesNo === 'Yes' && (
+                <div className="mb-2"><b>If yes, describe the error:</b> {savedReassessment.error}</div>
+              )}
+              
+              <div className="mt-4">
+                <b>2. Evidence of rehabilitation and good conduct:</b>
+                {savedReassessment.evidenceA && (
+                  <div className="mt-2"><b>a.</b> {savedReassessment.evidenceA}</div>
+                )}
+                {savedReassessment.evidenceB && (
+                  <div className="mt-2"><b>b.</b> {savedReassessment.evidenceB}</div>
+                )}
+                {savedReassessment.evidenceC && (
+                  <div className="mt-2"><b>c.</b> {savedReassessment.evidenceC}</div>
+                )}
+                {savedReassessment.evidenceD && (
+                  <div className="mt-2"><b>d.</b> {savedReassessment.evidenceD}</div>
+                )}
+              </div>
+              
+              <div className="mt-4">
+                <b>Decision:</b> {savedReassessment.decision === 'rescind' ? 'Rescind Offer' : 'Extend Offer'}
+              </div>
+              
+              <div className="mt-2">
+                {savedReassessment.decision === 'rescind' ? (
+                  <><b>Based on the factors above, we are rescinding our offer of employment because:</b><br />{savedReassessment.rescindReason}</>
+                ) : (
+                  <><b>Based on the factors above, we are extending our offer of employment.</b><br />{savedReassessment.extendReason}</>
+                )}
+              </div>
+              
+              {/* Document Metadata */}
+              <div className="mt-8 pt-6 border-t border-gray-200 bg-white rounded-lg p-4">
+                <h3 className="text-lg font-semibold mb-3">Document Information</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Sent Date:</span> {new Date(savedReassessment.sentAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <div>
+                    <span className="font-medium">Sent By:</span> {savedReassessment.hrAdminName}
+                  </div>
+                  <div>
+                    <span className="font-medium">Company:</span> {savedReassessment.companyName}
+                  </div>
+                  <div>
+                    <span className="font-medium">Candidate ID:</span> {savedReassessment.candidateId}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="flex justify-end space-x-4 mt-6">
+              <button 
+                type="button" 
+                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200" 
+                onClick={() => setShowReassessmentViewModal(false)}
+              >
+                Close
+              </button>
+              <button 
+                type="button" 
+                className="px-6 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
+                onClick={() => {
+                  const printContent = document.querySelector('.prose:last-of-type');
+                  if (printContent) {
+                    const printWindow = window.open('', '_blank');
+                    if (printWindow) {
+                      printWindow.document.write(`
+                        <html>
+                          <head>
+                            <title>Individualized Reassessment Form</title>
+                            <style>
+                              body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }
+                              .font-bold, b { font-weight: bold; }
+                              .mt-2 { margin-top: 0.5rem; }
+                              .mt-4 { margin-top: 1rem; }
+                              .mt-6 { margin-top: 1.5rem; }
+                              .mt-8 { margin-top: 2rem; }
+                              .mb-2 { margin-bottom: 0.5rem; }
+                              .mb-3 { margin-bottom: 0.75rem; }
+                            </style>
+                          </head>
+                          <body>${printContent.innerHTML}</body>
+                        </html>
+                      `);
+                      printWindow.document.close();
+                      printWindow.print();
+                    }
+                  }
+                }}
+              >
+                📄 Print/Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* View Final Revocation Notice Modal */}
+      {showFinalRevocationViewModal && savedFinalRevocationNotice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg max-w-7xl w-full p-16 relative max-h-screen overflow-y-auto">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Notice of Final Decision to Revoke Job Offer Because of Conviction History</h2>
+              <button 
+                className="text-gray-400 hover:text-gray-600"
+                onClick={() => setShowFinalRevocationViewModal(false)}
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Saved Final Revocation Notice Content */}
+            <div className="prose max-w-none text-gray-900 text-base bg-gray-50 p-8 rounded">
+              <div className="mb-6">{savedFinalRevocationNotice.date}</div>
+              <div className="mb-6 font-bold">Re: Final Decision to Revoke Job Offer Because of Conviction History</div>
+              <div className="mb-6">Dear {savedFinalRevocationNotice.applicant || '[APPLICANT NAME]'}:</div>
+              <div className="mb-6">We are following up about our letter dated {savedFinalRevocationNotice.dateOfNotice || '[DATE OF NOTICE]'} which notified you of our initial decision to revoke (take back) the conditional job offer:</div>
+              <div className="mb-6 font-semibold">(Please check one:)</div>
+              <ul className="list-disc ml-6">
+                {savedFinalRevocationNotice.noResponse && <li>We did not receive a timely response from you after sending you that letter, and our decision to revoke the job offer is now final.</li>}
+                {savedFinalRevocationNotice.infoSubmitted && <li>We made a final decision to revoke the job offer after considering the information you submitted, which included: {savedFinalRevocationNotice.infoSubmittedList}</li>}
+              </ul>
+              <div className="mb-6">After reviewing the information you submitted, we have determined that there
+                <b>{savedFinalRevocationNotice.errorOnReport === 'was' ? 'was' : savedFinalRevocationNotice.errorOnReport === 'was not' ? 'was not' : '[check one]'}</b> (check one) an error on your conviction history report. We have decided to revoke our job offer because of the following conviction(s):</div>
+              <ul className="list-disc ml-6">
+                {savedFinalRevocationNotice.convictions.map((conv: string, idx: number) => conv && <li key={idx}>{conv}</li>)}
+              </ul>
+              <div className="mb-6 font-semibold">Our Individualized Assessment:</div>
+              <ol className="list-decimal ml-8 mb-8 space-y-4">
+                <li>The nature and seriousness of the conduct that led to your conviction(s), which we assessed as follows: {savedFinalRevocationNotice.seriousReason}</li>
+                <li>How long ago the conduct occurred that led to your conviction, which was: {savedFinalRevocationNotice.timeSinceConduct} and how long ago you completed your sentence, which was: {savedFinalRevocationNotice.timeSinceSentence}.</li>
+                <li>The specific duties and responsibilities of the position of {savedFinalRevocationNotice.position}, which are:
+                  <ul className="list-disc ml-6">
+                    {savedFinalRevocationNotice.jobDuties.map((duty: string, idx: number) => duty && <li key={idx}>{duty}</li>)}
+                  </ul>
+                </li>
+              </ol>
+              <div className="mb-6">We believe your conviction record lessens your fitness/ability to perform the job duties and have made a final decision to revoke the job offer because:</div>
+              <div className="mb-6">{savedFinalRevocationNotice.fitnessReason}</div>
+              <div className="mb-6 font-semibold">Request for Reconsideration:</div>
+              <ul className="list-disc ml-6">
+                {savedFinalRevocationNotice.reconsideration === 'none' && <li>We do not offer any way to challenge this decision or request reconsideration.</li>}
+                {savedFinalRevocationNotice.reconsideration === 'procedure' && <li>If you would like to challenge this decision or request reconsideration, you may: {savedFinalRevocationNotice.reconsiderationProcedure}</li>}
+              </ul>
+              <div className="mb-6 font-semibold">Your Right to File a Complaint:</div>
+              <div className="mb-6">You also have the right to file a complaint with the Enforcement Unit of the San Diego County Office of Labor Standards and Enforcement within 180 days after the alleged violation of the San Diego County Fair Chance Ordinance. To file a complaint online or request information, visit the Office of Labor Standards and Enforcement online. You may also file a complaint by calling 858-694-2440.</div>
+              <div className="mb-6">Sincerely,<br />{savedFinalRevocationNotice.contactName}<br />{savedFinalRevocationNotice.companyName}<br />{savedFinalRevocationNotice.address}<br />{savedFinalRevocationNotice.phone}</div>
+              
+              {/* Document Metadata */}
+              <div className="mt-8 pt-6 border-t border-gray-200 bg-white rounded-lg p-4">
+                <h3 className="text-lg font-semibold mb-3">Document Information</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Sent Date:</span> {new Date(savedFinalRevocationNotice.sentAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <div>
+                    <span className="font-medium">Sent By:</span> {savedFinalRevocationNotice.hrAdminName}
+                  </div>
+                  <div>
+                    <span className="font-medium">Company:</span> {savedFinalRevocationNotice.companyName}
+                  </div>
+                  <div>
+                    <span className="font-medium">Candidate ID:</span> {savedFinalRevocationNotice.candidateId}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="flex justify-end space-x-4 mt-6">
+              <button 
+                type="button" 
+                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200" 
+                onClick={() => setShowFinalRevocationViewModal(false)}
+              >
+                Close
+              </button>
+              <button 
+                type="button" 
+                className="px-6 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
+                onClick={() => {
+                  const printContent = document.querySelector('.prose:last-of-type');
+                  if (printContent) {
+                    const printWindow = window.open('', '_blank');
+                    if (printWindow) {
+                      printWindow.document.write(`
+                        <html>
+                          <head>
+                            <title>Notice of Final Decision to Revoke Job Offer</title>
+                            <style>
+                              body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }
+                              .font-bold, b { font-weight: bold; }
+                              .mb-2 { margin-bottom: 0.5rem; }
+                              .mb-6 { margin-bottom: 1.5rem; }
+                              .mt-8 { margin-top: 2rem; }
+                              .list-disc { list-style-type: disc; }
+                              .list-decimal { list-style-type: decimal; }
+                              .ml-6 { margin-left: 1.5rem; }
+                              .ml-8 { margin-left: 2rem; }
+                              .space-y-4 > * + * { margin-top: 1rem; }
+                            </style>
+                          </head>
+                          <body>${printContent.innerHTML}</body>
+                        </html>
+                      `);
+                      printWindow.document.close();
+                      printWindow.print();
+                    }
+                  }
+                }}
+              >
+                📄 Print/Save
+              </button>
             </div>
           </div>
         </div>

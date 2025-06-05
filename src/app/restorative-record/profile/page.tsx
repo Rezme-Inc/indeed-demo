@@ -231,8 +231,22 @@ export default function MyRestorativeRecordProfile() {
           setShareStatus("employer");
           break;
         case "copy":
-          const url = window.location.href;
-          await navigator.clipboard.writeText(url);
+          // Generate or get the share token
+          const { data: shareTokenResult, error: tokenError } = await supabase
+            .rpc('generate_new_share_token', { user_id: user.id });
+          
+          if (tokenError) {
+            console.error("Error generating share token:", tokenError);
+            alert("Error generating share link. Please try again.");
+            return;
+          }
+          
+          // Create the shareable URL
+          const baseUrl = window.location.origin;
+          const shareUrl = `${baseUrl}/restorative-record/share/${shareTokenResult}`;
+          
+          // Copy to clipboard
+          await navigator.clipboard.writeText(shareUrl);
           setCopySuccess(true);
           setTimeout(() => setCopySuccess(false), 2000);
           break;

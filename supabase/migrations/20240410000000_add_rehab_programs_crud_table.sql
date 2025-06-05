@@ -34,6 +34,17 @@ CREATE POLICY "Users can update their own rehab programs" ON public.rehab_progra
 CREATE POLICY "Users can delete their own rehab programs" ON public.rehab_programs
     FOR DELETE USING (auth.uid() = user_id);
 
+-- Policy: HR admins can view rehab programs for permitted users
+CREATE POLICY "HR admins can view rehab programs for permitted users" ON public.rehab_programs
+    FOR SELECT USING (
+        EXISTS (
+            SELECT 1 FROM user_hr_permissions uhp
+            WHERE uhp.user_id = rehab_programs.user_id
+                AND uhp.hr_admin_id = auth.uid()
+                AND uhp.is_active = true
+        )
+    );
+
 -- Add indexes for better performance
 CREATE INDEX idx_rehab_programs_user_id ON public.rehab_programs(user_id);
 CREATE INDEX idx_rehab_programs_created_at ON public.rehab_programs(created_at);

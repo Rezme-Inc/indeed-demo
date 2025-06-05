@@ -1,5 +1,6 @@
 "use client";
 
+import HRAdminSelector from "@/components/HRAdminSelector";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -13,6 +14,10 @@ export default function UserDashboard() {
   const [activeTab, setActiveTab] = useState("personal");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [selectedHRAdmins, setSelectedHRAdmins] = useState<string[]>([]);
+  const [currentHRPermissions, setCurrentHRPermissions] = useState<string[]>(
+    []
+  );
 
   const [profileData, setProfileData] = useState({
     first_name: "",
@@ -149,7 +154,7 @@ export default function UserDashboard() {
         email: user.email,
         first_name: profileData.first_name,
         last_name: profileData.last_name,
-        birthday: profileData.date_of_birth,
+        birthday: profileData.date_of_birth || null,
         phone: profileData.phone || null,
         address_line1: profileData.address_line1 || null,
         address_line2: profileData.address_line2 || null,
@@ -265,6 +270,95 @@ export default function UserDashboard() {
     }));
   }
 
+  // Fetch HR permissions
+  async function fetchHRPermissions() {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("user_hr_permissions")
+        .select("hr_admin_id")
+        .eq("user_id", user.id)
+        .eq("is_active", true);
+
+      if (error) {
+        console.error("Error fetching HR permissions:", error);
+        return;
+      }
+
+      const adminIds = data?.map((p) => p.hr_admin_id) || [];
+      setSelectedHRAdmins(adminIds);
+      setCurrentHRPermissions(adminIds);
+    } catch (error) {
+      console.error("Error fetching HR permissions:", error);
+    }
+  }
+
+  useEffect(() => {
+    if (user) {
+      fetchHRPermissions();
+    }
+  }, [user]);
+
+  // Handle HR admin permission toggle
+  async function handleHRAdminToggle(adminId: string, isSelected: boolean) {
+    if (!user) return;
+
+    try {
+      if (isSelected) {
+        // First check if a permission already exists (even if inactive)
+        const { data: existing } = await supabase
+          .from("user_hr_permissions")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("hr_admin_id", adminId)
+          .single();
+
+        if (existing) {
+          // Update existing permission
+          const { error } = await supabase
+            .from("user_hr_permissions")
+            .update({
+              is_active: true,
+              revoked_at: null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("user_id", user.id)
+            .eq("hr_admin_id", adminId);
+
+          if (error) throw error;
+        } else {
+          // Insert new permission
+          const { error } = await supabase.from("user_hr_permissions").insert({
+            user_id: user.id,
+            hr_admin_id: adminId,
+            is_active: true,
+          });
+
+          if (error) throw error;
+        }
+
+        setSelectedHRAdmins([...selectedHRAdmins, adminId]);
+      } else {
+        // Revoke permission (soft delete)
+        const { error } = await supabase
+          .from("user_hr_permissions")
+          .update({
+            is_active: false,
+            revoked_at: new Date().toISOString(),
+          })
+          .eq("user_id", user.id)
+          .eq("hr_admin_id", adminId);
+
+        if (error) throw error;
+        setSelectedHRAdmins(selectedHRAdmins.filter((id) => id !== adminId));
+      }
+    } catch (error) {
+      console.error("Error updating HR admin permission:", error);
+      alert("Failed to update HR admin permission. Please try again.");
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -337,24 +431,28 @@ export default function UserDashboard() {
           {/* Tabs */}
           <div className="border-b border-gray-200">
             <nav className="flex space-x-8 px-6" aria-label="Tabs">
-              {["personal", "contact", "privacy"].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                    activeTab === tab
-                      ? "border-primary text-primary"
-                      : "border-transparent text-secondary hover:text-black hover:border-gray-300"
-                  }`}
-                >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}{" "}
-                  {tab === "personal"
-                    ? "Info"
-                    : tab === "contact"
-                    ? "Info"
-                    : "Settings"}
-                </button>
-              ))}
+              {["personal", "contact", "privacy", "hr-permissions"].map(
+                (tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                      activeTab === tab
+                        ? "border-primary text-primary"
+                        : "border-transparent text-secondary hover:text-black hover:border-gray-300"
+                    }`}
+                  >
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}{" "}
+                    {tab === "personal"
+                      ? "Info"
+                      : tab === "contact"
+                      ? "Info"
+                      : tab === "privacy"
+                      ? "Settings"
+                      : "HR Access"}
+                  </button>
+                )
+              )}
             </nav>
           </div>
 
@@ -473,7 +571,7 @@ export default function UserDashboard() {
                       placeholder="City"
                       required
                     />
-            </div>
+                  </div>
                   <div>
                     <label className="block text-sm font-medium text-black mb-2">
                       State <span className="text-red-500">*</span>
@@ -857,7 +955,7 @@ export default function UserDashboard() {
                         />
                       </div>
                     </div>
-                  </div>
+            </div>
                   <div className="mt-8 flex justify-end">
                     <button
                       type="submit"
@@ -868,20 +966,54 @@ export default function UserDashboard() {
                     </button>
                   </div>
                 </form>
-            </div>
+              </div>
+            )}
+
+            {activeTab === "hr-permissions" && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-black mb-2">
+                    Manage HR Admin Access
+                  </h3>
+                  <p className="text-secondary mb-6">
+                    Control which HR administrators can view your restorative
+                    record. You can grant or revoke access at any time.
+                  </p>
+
+                  {user && (
+                    <HRAdminSelector
+                      userId={user.id}
+                      selectedAdmins={selectedHRAdmins}
+                      onAdminToggle={handleHRAdminToggle}
+                    />
+                  )}
+
+                  {selectedHRAdmins.length > 0 && (
+                    <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-800">
+                        <strong>Note:</strong> The selected HR administrators
+                        will be able to view your restorative record when you
+                        appear on their dashboard.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
 
             {/* Save Button */}
-            <div className="mt-8 flex justify-end">
-              <button
-                onClick={handleSaveProfile}
-                disabled={saving}
-                className="px-6 py-2 bg-primary text-white font-medium rounded-lg hover:bg-red-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {saving ? "Saving..." : "Save Changes"}
-              </button>
+            {(activeTab === "personal" || activeTab === "contact") && (
+              <div className="mt-8 flex justify-end">
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={saving}
+                  className="px-6 py-2 bg-primary text-white font-medium rounded-lg hover:bg-red-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {saving ? "Saving..." : "Save Changes"}
+                </button>
             </div>
-          </div>
+            )}
+            </div>
         </div>
       </main>
     </div>
