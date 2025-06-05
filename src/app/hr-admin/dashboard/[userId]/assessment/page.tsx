@@ -15,6 +15,27 @@ import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { supabase } from "@/lib/supabase";
 
+/**
+ * HR Admin Assessment Page with Form Persistence
+ * 
+ * This component manages the criminal history assessment workflow for HR admins.
+ * All forms filled out by HR admins are automatically saved to localStorage using
+ * the candidate's user ID as a unique key. This ensures:
+ * 
+ * 1. Forms remain accessible when HR admins return to continue assessments
+ * 2. Assessment progress (answers, current step, notes) is preserved
+ * 3. View buttons in the header show saved forms even after navigating away
+ * 4. All compliance documentation is retained throughout the process
+ * 
+ * Persisted Data:
+ * - Offer Letter: `offerLetter_${candidateId}`
+ * - Individual Assessment: `assessment_${candidateId}`
+ * - Preliminary Revocation Notice: `revocationNotice_${candidateId}`
+ * - Individualized Reassessment: `reassessment_${candidateId}`
+ * - Final Revocation Notice: `finalRevocationNotice_${candidateId}`
+ * - Assessment Progress: `assessmentAnswers_${candidateId}`, `assessmentCurrentStep_${candidateId}`, `assessmentNotes_${candidateId}`
+ */
+
 interface AssessmentQuestion {
   id: string;
   question: string;
@@ -169,6 +190,101 @@ export default function AssessmentPage({
   // HR Admin profile state
   const [hrAdminProfile, setHrAdminProfile] = useState<any>(null);
   const [headerLoading, setHeaderLoading] = useState(true);
+
+  // Load saved forms from localStorage on mount
+  useEffect(() => {
+    const candidateId = params.userId;
+    
+    // Load saved forms from localStorage
+    const savedOfferLetterData = localStorage.getItem(`offerLetter_${candidateId}`);
+    if (savedOfferLetterData) {
+      setSavedOfferLetter(JSON.parse(savedOfferLetterData));
+    }
+    
+    const savedAssessmentData = localStorage.getItem(`assessment_${candidateId}`);
+    if (savedAssessmentData) {
+      setSavedAssessment(JSON.parse(savedAssessmentData));
+    }
+    
+    const savedRevocationNoticeData = localStorage.getItem(`revocationNotice_${candidateId}`);
+    if (savedRevocationNoticeData) {
+      setSavedRevocationNotice(JSON.parse(savedRevocationNoticeData));
+    }
+    
+    const savedReassessmentData = localStorage.getItem(`reassessment_${candidateId}`);
+    if (savedReassessmentData) {
+      setSavedReassessment(JSON.parse(savedReassessmentData));
+    }
+    
+    const savedFinalRevocationNoticeData = localStorage.getItem(`finalRevocationNotice_${candidateId}`);
+    if (savedFinalRevocationNoticeData) {
+      setSavedFinalRevocationNotice(JSON.parse(savedFinalRevocationNoticeData));
+    }
+    
+    // Load assessment progress from localStorage
+    const savedAnswers = localStorage.getItem(`assessmentAnswers_${candidateId}`);
+    if (savedAnswers) {
+      setAnswers(JSON.parse(savedAnswers));
+    }
+    
+    const savedCurrentStep = localStorage.getItem(`assessmentCurrentStep_${candidateId}`);
+    if (savedCurrentStep) {
+      setCurrentStep(parseInt(savedCurrentStep, 10));
+    }
+    
+    const savedNotes = localStorage.getItem(`assessmentNotes_${candidateId}`);
+    if (savedNotes) {
+      setNotes(savedNotes);
+    }
+  }, [params.userId]);
+
+  // Save forms to localStorage whenever they change
+  useEffect(() => {
+    if (savedOfferLetter) {
+      localStorage.setItem(`offerLetter_${params.userId}`, JSON.stringify(savedOfferLetter));
+    }
+  }, [savedOfferLetter, params.userId]);
+
+  useEffect(() => {
+    if (savedAssessment) {
+      localStorage.setItem(`assessment_${params.userId}`, JSON.stringify(savedAssessment));
+    }
+  }, [savedAssessment, params.userId]);
+
+  useEffect(() => {
+    if (savedRevocationNotice) {
+      localStorage.setItem(`revocationNotice_${params.userId}`, JSON.stringify(savedRevocationNotice));
+    }
+  }, [savedRevocationNotice, params.userId]);
+
+  useEffect(() => {
+    if (savedReassessment) {
+      localStorage.setItem(`reassessment_${params.userId}`, JSON.stringify(savedReassessment));
+    }
+  }, [savedReassessment, params.userId]);
+
+  useEffect(() => {
+    if (savedFinalRevocationNotice) {
+      localStorage.setItem(`finalRevocationNotice_${params.userId}`, JSON.stringify(savedFinalRevocationNotice));
+    }
+  }, [savedFinalRevocationNotice, params.userId]);
+
+  // Save assessment progress to localStorage whenever it changes
+  useEffect(() => {
+    if (Object.keys(answers).length > 0) {
+      localStorage.setItem(`assessmentAnswers_${params.userId}`, JSON.stringify(answers));
+    }
+  }, [answers, params.userId]);
+
+  useEffect(() => {
+    localStorage.setItem(`assessmentCurrentStep_${params.userId}`, currentStep.toString());
+  }, [currentStep, params.userId]);
+
+  useEffect(() => {
+    if (notes) {
+      localStorage.setItem(`assessmentNotes_${params.userId}`, notes);
+    }
+  }, [notes, params.userId]);
 
   useEffect(() => {
     async function fetchHRAdminProfile() {
@@ -334,6 +450,32 @@ export default function AssessmentPage({
     }
   };
 
+  const clearAssessmentProgress = () => {
+    // Clear assessment progress from localStorage
+    localStorage.removeItem(`assessmentAnswers_${params.userId}`);
+    localStorage.removeItem(`assessmentCurrentStep_${params.userId}`);
+    localStorage.removeItem(`assessmentNotes_${params.userId}`);
+  };
+
+  // Utility function to clear all saved forms for this candidate
+  // This could be useful for testing or if an assessment needs to be reset
+  const clearAllSavedForms = () => {
+    const candidateId = params.userId;
+    localStorage.removeItem(`offerLetter_${candidateId}`);
+    localStorage.removeItem(`assessment_${candidateId}`);
+    localStorage.removeItem(`revocationNotice_${candidateId}`);
+    localStorage.removeItem(`reassessment_${candidateId}`);
+    localStorage.removeItem(`finalRevocationNotice_${candidateId}`);
+    clearAssessmentProgress();
+    
+    // Reset state
+    setSavedOfferLetter(null);
+    setSavedAssessment(null);
+    setSavedRevocationNotice(null);
+    setSavedReassessment(null);
+    setSavedFinalRevocationNotice(null);
+  };
+
   const handleComplete = () => {
     // Determine decision based on answers
     let decision = "proceed";
@@ -360,6 +502,9 @@ export default function AssessmentPage({
         reason = "Insufficient time elapsed since conviction";
       }
     }
+
+    // Clear assessment progress since it's completed
+    clearAssessmentProgress();
 
     // Log results and redirect
     console.log("Assessment completed:", { decision, reason, answers, notes });
@@ -680,6 +825,13 @@ export default function AssessmentPage({
               ⚠️ View Final Revocation Notice
             </button>
           )}
+          {/* Return to Dashboard Button */}
+          <button
+            onClick={() => router.push('/hr-admin/dashboard')}
+            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm font-medium flex items-center gap-2 border-l border-gray-300 ml-2 pl-4"
+          >
+            ← Return to Dashboard
+          </button>
           {headerLoading ? (
             <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse" />
           ) : hrAdminProfile ? (
@@ -733,8 +885,8 @@ export default function AssessmentPage({
               <div className="flex flex-col items-center text-center space-y-3">
                 <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center">
                   <span className="text-2xl text-red-500">📄</span>
-                </div>
-                <div>
+        </div>
+                    <div>
                   <h3 className="text-sm font-bold text-gray-900 mb-2">San Diego Fair Chance Ordinance Legal Overview</h3>
                   <button 
                     className="px-3 py-2 border border-red-400 text-red-500 text-xs rounded hover:bg-red-50"
@@ -1057,9 +1209,9 @@ export default function AssessmentPage({
                     The following may be used to inform a job applicant in writing of the intent to revoke a conditional job offer due to relevant criminal history
                   </p>
                   <div className="flex gap-4">
-                    <button className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={() => setShowRevocationModal(true)}>
-                      Issue Preliminary Job Offer Revocation
-                    </button>
+                  <button className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={() => setShowRevocationModal(true)}>
+                    Issue Preliminary Job Offer Revocation
+                  </button>
                     <button className="px-8 py-3 rounded text-lg font-semibold bg-green-500 text-white hover:bg-green-600" onClick={handleProceedWithHire}>
                       Proceed with hire
                     </button>
@@ -1529,7 +1681,7 @@ export default function AssessmentPage({
                       <p className="text-gray-600">Loading candidate's restorative record...</p>
                     </div>
                   ) : candidateShareToken ? (
-                    <iframe
+                  <iframe
                       src={`${window.location.origin}/restorative-record/share/${candidateShareToken}`}
                       title="Candidate Restorative Record"
                       className="w-full h-[500px] rounded border border-gray-200"
@@ -1833,7 +1985,7 @@ export default function AssessmentPage({
                     {tab}
                   </button>
                 ))}
-              </div>
+            </div>
               
               {/* Tab Content */}
               <div className="min-h-[200px]">
@@ -1843,25 +1995,25 @@ export default function AssessmentPage({
                       <div className="text-gray-700">
                         <h4 className="font-semibold mb-2">San Diego Fair Chance Ordinance Requirements</h4>
                         <p>Internal policy requires documented confirmation of conditional offer before accessing any conviction history information. This ensures compliance with local fair chance hiring legislation.</p>
-                      </div>
+        </div>
                     )}
                     {currentStep === 2 && (
                       <div className="text-gray-700">
                         <h4 className="font-semibold mb-2">Individualized Assessment Guidelines</h4>
                         <p>Legal requirements for conducting fair and compliant individualized assessments under San Diego Fair Chance Ordinance will be displayed here.</p>
-                      </div>
+      </div>
                     )}
                     {currentStep === 3 && (
                       <div className="text-gray-700">
                         <h4 className="font-semibold mb-2">Preliminary Decision Legal Framework</h4>
                         <p>Legal guidelines for preliminary job offer decisions and revocation procedures will be displayed here.</p>
-                      </div>
+        </div>
                     )}
                     {currentStep === 4 && (
                       <div className="text-gray-700">
                         <h4 className="font-semibold mb-2">Reassessment Legal Requirements</h4>
                         <p>Legal framework for conducting reassessments and handling candidate responses will be displayed here.</p>
-                      </div>
+      </div>
                     )}
                     {currentStep === 5 && (
                       <div className="text-gray-700">
