@@ -155,6 +155,10 @@ export default function AssessmentPage({
   const [savedRevocationNotice, setSavedRevocationNotice] = useState<any>(null);
   const [showRevocationViewModal, setShowRevocationViewModal] = useState(false);
   
+  // Individualized Reassessment State
+  const [savedReassessment, setSavedReassessment] = useState<any>(null);
+  const [showReassessmentViewModal, setShowReassessmentViewModal] = useState(false);
+  
   // Critical Information Tab State
   const [activeTab, setActiveTab] = useState('Legal');
 
@@ -506,6 +510,18 @@ export default function AssessmentPage({
     setReassessmentForm({ ...reassessmentForm, [e.target.name]: e.target.value });
   };
   const handleSendReassessment = () => {
+    // Save the reassessment with metadata
+    const reassessmentData = {
+      ...reassessmentForm,
+      decision: reassessmentDecision,
+      extendReason: reassessmentDecision === 'extend' ? extendReason : '',
+      sentAt: new Date().toISOString(),
+      candidateId: params.userId,
+      hrAdminName: hrAdminProfile ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}` : '',
+      companyName: hrAdminProfile?.company || '',
+    };
+    setSavedReassessment(reassessmentData);
+    
     if (reassessmentDecision === 'extend') {
       setShowExtendSuccessModal(true);
     } else {
@@ -632,6 +648,14 @@ export default function AssessmentPage({
               className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
             >
               📋 View Revocation Notice
+            </button>
+          )}
+          {savedReassessment && (
+            <button
+              onClick={() => setShowReassessmentViewModal(true)}
+              className="px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm font-medium"
+            >
+              🔄 View Reassessment
             </button>
           )}
           {headerLoading ? (
@@ -2410,6 +2434,136 @@ export default function AssessmentPage({
                               .list-decimal { list-style-type: decimal; }
                               .ml-6 { margin-left: 1.5rem; }
                               .text-xs { font-size: 0.75rem; }
+                            </style>
+                          </head>
+                          <body>${printContent.innerHTML}</body>
+                        </html>
+                      `);
+                      printWindow.document.close();
+                      printWindow.print();
+                    }
+                  }
+                }}
+              >
+                📄 Print/Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* View Reassessment Modal */}
+      {showReassessmentViewModal && savedReassessment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg max-w-7xl w-full p-16 relative max-h-screen overflow-y-auto">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Individualized Reassessment Form</h2>
+              <button 
+                className="text-gray-400 hover:text-gray-600"
+                onClick={() => setShowReassessmentViewModal(false)}
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Saved Reassessment Content */}
+            <div className="prose max-w-none text-gray-900 text-base bg-gray-50 p-8 rounded">
+              <h3 className="font-bold mb-2">INFORMATION</h3>
+              <div><b>Employer Name:</b> {savedReassessment.employer}</div>
+              <div><b>Applicant Name:</b> {savedReassessment.applicant}</div>
+              <div><b>Position Applied For:</b> {savedReassessment.position}</div>
+              <div><b>Date of Conditional Offer:</b> {savedReassessment.offerDate}</div>
+              <div><b>Date of Reassessment:</b> {savedReassessment.reassessmentDate}</div>
+              <div><b>Date of Criminal History Report:</b> {savedReassessment.reportDate}</div>
+              <div><b>Assessment Performed by:</b> {savedReassessment.performedBy}</div>
+              
+              <h3 className="font-bold mt-6 mb-2">REASSESSMENT</h3>
+              <div><b>1. Was there an error in the Criminal History Report?</b> {savedReassessment.errorYesNo}</div>
+              {savedReassessment.errorYesNo === 'Yes' && (
+                <div className="mb-2"><b>If yes, describe the error:</b> {savedReassessment.error}</div>
+              )}
+              
+              <div className="mt-4">
+                <b>2. Evidence of rehabilitation and good conduct:</b>
+                {savedReassessment.evidenceA && (
+                  <div className="mt-2"><b>a.</b> {savedReassessment.evidenceA}</div>
+                )}
+                {savedReassessment.evidenceB && (
+                  <div className="mt-2"><b>b.</b> {savedReassessment.evidenceB}</div>
+                )}
+                {savedReassessment.evidenceC && (
+                  <div className="mt-2"><b>c.</b> {savedReassessment.evidenceC}</div>
+                )}
+                {savedReassessment.evidenceD && (
+                  <div className="mt-2"><b>d.</b> {savedReassessment.evidenceD}</div>
+                )}
+              </div>
+              
+              <div className="mt-4">
+                <b>Decision:</b> {savedReassessment.decision === 'rescind' ? 'Rescind Offer' : 'Extend Offer'}
+              </div>
+              
+              <div className="mt-2">
+                {savedReassessment.decision === 'rescind' ? (
+                  <><b>Based on the factors above, we are rescinding our offer of employment because:</b><br />{savedReassessment.rescindReason}</>
+                ) : (
+                  <><b>Based on the factors above, we are extending our offer of employment.</b><br />{savedReassessment.extendReason}</>
+                )}
+              </div>
+              
+              {/* Document Metadata */}
+              <div className="mt-8 pt-6 border-t border-gray-200 bg-white rounded-lg p-4">
+                <h3 className="text-lg font-semibold mb-3">Document Information</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Sent Date:</span> {new Date(savedReassessment.sentAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <div>
+                    <span className="font-medium">Sent By:</span> {savedReassessment.hrAdminName}
+                  </div>
+                  <div>
+                    <span className="font-medium">Company:</span> {savedReassessment.companyName}
+                  </div>
+                  <div>
+                    <span className="font-medium">Candidate ID:</span> {savedReassessment.candidateId}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="flex justify-end space-x-4 mt-6">
+              <button 
+                type="button" 
+                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200" 
+                onClick={() => setShowReassessmentViewModal(false)}
+              >
+                Close
+              </button>
+              <button 
+                type="button" 
+                className="px-6 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
+                onClick={() => {
+                  const printContent = document.querySelector('.prose:last-of-type');
+                  if (printContent) {
+                    const printWindow = window.open('', '_blank');
+                    if (printWindow) {
+                      printWindow.document.write(`
+                        <html>
+                          <head>
+                            <title>Individualized Reassessment Form</title>
+                            <style>
+                              body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }
+                              .font-bold, b { font-weight: bold; }
+                              .mt-2 { margin-top: 0.5rem; }
+                              .mt-4 { margin-top: 1rem; }
+                              .mt-6 { margin-top: 1.5rem; }
+                              .mt-8 { margin-top: 2rem; }
+                              .mb-2 { margin-bottom: 0.5rem; }
+                              .mb-3 { margin-bottom: 0.75rem; }
                             </style>
                           </head>
                           <body>${printContent.innerHTML}</body>
