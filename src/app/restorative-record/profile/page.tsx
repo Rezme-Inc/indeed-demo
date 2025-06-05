@@ -222,24 +222,65 @@ export default function MyRestorativeRecordProfile() {
           setShareEmail("");
           break;
         case "public":
+          // Generate a new share token
+          const { data: tokenData, error: tokenError } = await supabase
+            .rpc('generate_new_share_token', { user_id: user.id });
+          
+          if (tokenError) throw tokenError;
+          
           setShareStatus("public");
+          // Update the copy link functionality to use the share token
+          const shareUrl = `${window.location.origin}/restorative-record/share/${tokenData}`;
+          await navigator.clipboard.writeText(shareUrl);
+          setCopySuccess(true);
+          setTimeout(() => setCopySuccess(false), 2000);
           break;
         case "private":
+          // Remove the share token
+          const { error: removeError } = await supabase
+            .from('user_profiles')
+            .update({ share_token: null })
+            .eq('id', user.id);
+          
+          if (removeError) throw removeError;
+          
           setShareStatus("private");
           break;
         case "employer":
           setShareStatus("employer");
           break;
         case "copy":
-          const url = window.location.href;
-          await navigator.clipboard.writeText(url);
-          setCopySuccess(true);
-          setTimeout(() => setCopySuccess(false), 2000);
+          // Get the current share token
+          const { data: profileData, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('share_token')
+            .eq('id', user.id)
+            .single();
+          
+          if (profileError) throw profileError;
+          
+          if (profileData?.share_token) {
+            const shareUrl = `${window.location.origin}/restorative-record/share/${profileData.share_token}`;
+            await navigator.clipboard.writeText(shareUrl);
+            setCopySuccess(true);
+            setTimeout(() => setCopySuccess(false), 2000);
+          } else {
+            // If no share token exists, generate one
+            const { data: tokenData, error: tokenError } = await supabase
+              .rpc('generate_new_share_token', { user_id: user.id });
+            
+            if (tokenError) throw tokenError;
+            
+            const shareUrl = `${window.location.origin}/restorative-record/share/${tokenData}`;
+            await navigator.clipboard.writeText(shareUrl);
+            setCopySuccess(true);
+            setTimeout(() => setCopySuccess(false), 2000);
+          }
           break;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sharing:", error);
-      alert("Error sharing record. Please try again.");
+      alert("Error sharing record: " + (error?.message || JSON.stringify(error)));
     }
   };
 
