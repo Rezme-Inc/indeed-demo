@@ -151,6 +151,10 @@ export default function AssessmentPage({
   const [savedAssessment, setSavedAssessment] = useState<any>(null);
   const [showAssessmentViewModal, setShowAssessmentViewModal] = useState(false);
   
+  // Preliminary Revocation Notice State
+  const [savedRevocationNotice, setSavedRevocationNotice] = useState<any>(null);
+  const [showRevocationViewModal, setShowRevocationViewModal] = useState(false);
+  
   // Critical Information Tab State
   const [activeTab, setActiveTab] = useState('Legal');
 
@@ -476,6 +480,16 @@ export default function AssessmentPage({
   const businessDaysRemaining = revocationSentDate ? getBusinessDaysRemaining(revocationSentDate) : 5;
 
   const handleSendRevocation = () => {
+    // Save the revocation notice with metadata
+    const revocationData = {
+      ...revocationForm,
+      sentAt: new Date().toISOString(),
+      candidateId: params.userId,
+      hrAdminName: hrAdminProfile ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}` : '',
+      companyName: hrAdminProfile?.company || '',
+    };
+    setSavedRevocationNotice(revocationData);
+    
     setShowRevocationModal(false);
     setRevocationPreview(false);
     setRevocationSentDate(new Date());
@@ -610,6 +624,14 @@ export default function AssessmentPage({
               className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
             >
               📋 View Assessment
+            </button>
+          )}
+          {savedRevocationNotice && (
+            <button
+              onClick={() => setShowRevocationViewModal(true)}
+              className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
+            >
+              📋 View Revocation Notice
             </button>
           )}
           {headerLoading ? (
@@ -2263,6 +2285,131 @@ export default function AssessmentPage({
                               .mb-2 { margin-bottom: 0.5rem; }
                               .list-disc { list-style-type: disc; }
                               .ml-6 { margin-left: 1.5rem; }
+                            </style>
+                          </head>
+                          <body>${printContent.innerHTML}</body>
+                        </html>
+                      `);
+                      printWindow.document.close();
+                      printWindow.print();
+                    }
+                  }
+                }}
+              >
+                📄 Print/Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* View Revocation Notice Modal */}
+      {showRevocationViewModal && savedRevocationNotice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg max-w-7xl w-full p-16 relative max-h-screen overflow-y-auto">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Notice of Preliminary Decision to Revoke Job Offer Because of Conviction History</h2>
+              <button 
+                className="text-gray-400 hover:text-gray-600"
+                onClick={() => setShowRevocationViewModal(false)}
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Saved Revocation Notice Content */}
+            <div className="prose max-w-none text-gray-900 text-base bg-gray-50 p-8 rounded">
+              <div className="mb-2">{savedRevocationNotice.date}</div>
+              <div className="mb-2">Re: Preliminary Decision to Revoke Job Offer Because of Conviction History</div>
+              <div className="mb-2">Dear {savedRevocationNotice.applicant}:</div>
+              <div className="mb-2">After reviewing the results of your conviction history background check, we have made a preliminary (non-final) decision to revoke (take back) our previous job offer for the position of {savedRevocationNotice.position} because of the following conviction(s):
+                <ul className="list-disc ml-6">
+                  {savedRevocationNotice.convictions.map((conv: string, idx: number) => conv && <li key={idx}>{conv}</li>)}
+                </ul>
+                A copy of your conviction history report is attached to this letter. More information about our concerns is included in the "Individualized Assessment" below.
+              </div>
+              <div className="mb-2">As prohibited by Local and California law, we have NOT considered any of the following:
+                <ul className="list-disc ml-6">
+                  <li>Arrest(s) not followed by conviction;</li>
+                  <li>Participation in a pretrial or posttrial diversion program; or</li>
+                  <li>Convictions that have been sealed, dismissed, expunged, or pardoned.</li>
+                </ul>
+              </div>
+              <div className="mb-2"><b>Your Right to Respond:</b><br />
+                The conditional job you were offered will remain available for five business days so that you may respond to this letter before our decision to revoke the job offer becomes final. Within {savedRevocationNotice.numBusinessDays} business days* from when you first receive this notice, you may send us:
+                <ul className="list-disc ml-6">
+                  <li>Evidence of rehabilitation or mitigating circumstances</li>
+                  <li>Information challenging the accuracy of the conviction history listed above. If, within 5 business days, you notify us that you are challenging the accuracy of the attached conviction history report, you shall have another 5 business days to respond to this notice with evidence of inaccuracy.</li>
+                </ul>
+                Please send any additional information you would like us to consider to: {savedRevocationNotice.contactName}, {savedRevocationNotice.companyName}, {savedRevocationNotice.address}, {savedRevocationNotice.phone}
+              </div>
+              <div className="mb-2">We are required to review the information you submit and make another individualized assessment of whether to hire you or revoke the job offer. We will notify you in writing if we make a final decision to revoke the job offer.</div>
+              <div className="mb-2"><b>Our Individualized Assessment:</b><br />
+                We have individually assessed whether your conviction history is directly related to the duties of the job we offered you. We considered the following:
+                <ol className="list-decimal ml-6">
+                  <li>The nature and seriousness of the conduct that led to your conviction(s), which we assessed as follows: {savedRevocationNotice.seriousReason}</li>
+                  <li>How long ago the conduct occurred that led to your conviction, which was: {savedRevocationNotice.timeSinceConduct} and how long ago you completed your sentence, which was: {savedRevocationNotice.timeSinceSentence}.</li>
+                  <li>The specific duties and responsibilities of the position of {savedRevocationNotice.position}, which are: {savedRevocationNotice.jobDuties}</li>
+                </ol>
+                We believe your conviction record lessens your fitness/ability to perform the job duties because: {savedRevocationNotice.fitnessReason}
+              </div>
+              <div className="mb-2">Sincerely,<br />{savedRevocationNotice.contactName}<br />{savedRevocationNotice.companyName}<br />{savedRevocationNotice.address}<br />{savedRevocationNotice.phone}</div>
+              <div className="mb-2">Enclosure: Copy of conviction history report</div>
+              <div className="mb-2 text-xs">* The applicant must be allowed at least 5 business days to respond. If the applicant indicates their intent to provide such evidence, they must be given an additional 5 business days to gather and deliver the information</div>
+              
+              {/* Document Metadata */}
+              <div className="mt-8 pt-6 border-t border-gray-200 bg-white rounded-lg p-4">
+                <h3 className="text-lg font-semibold mb-3">Document Information</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Sent Date:</span> {new Date(savedRevocationNotice.sentAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <div>
+                    <span className="font-medium">Sent By:</span> {savedRevocationNotice.hrAdminName}
+                  </div>
+                  <div>
+                    <span className="font-medium">Company:</span> {savedRevocationNotice.companyName}
+                  </div>
+                  <div>
+                    <span className="font-medium">Candidate ID:</span> {savedRevocationNotice.candidateId}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="flex justify-end space-x-4 mt-6">
+              <button 
+                type="button" 
+                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200" 
+                onClick={() => setShowRevocationViewModal(false)}
+              >
+                Close
+              </button>
+              <button 
+                type="button" 
+                className="px-6 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
+                onClick={() => {
+                  const printContent = document.querySelector('.prose:last-of-type');
+                  if (printContent) {
+                    const printWindow = window.open('', '_blank');
+                    if (printWindow) {
+                      printWindow.document.write(`
+                        <html>
+                          <head>
+                            <title>Notice of Preliminary Decision to Revoke Job Offer</title>
+                            <style>
+                              body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }
+                              .font-bold, b { font-weight: bold; }
+                              .mb-2 { margin-bottom: 0.5rem; }
+                              .mt-8 { margin-top: 2rem; }
+                              .list-disc { list-style-type: disc; }
+                              .list-decimal { list-style-type: decimal; }
+                              .ml-6 { margin-left: 1.5rem; }
+                              .text-xs { font-size: 0.75rem; }
                             </style>
                           </head>
                           <body>${printContent.innerHTML}</body>
