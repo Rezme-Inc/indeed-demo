@@ -94,7 +94,7 @@ export default function UserDashboard() {
         setProfileData({
           first_name: profileData.first_name || "",
           last_name: profileData.last_name || "",
-          date_of_birth: profileData.date_of_birth || "",
+          date_of_birth: profileData.birthday || "",
           phone: profileData.phone || "",
           address: profileData.address || "",
           address_line1: profileData.address_line1 || profileData.address || "",
@@ -134,11 +134,11 @@ export default function UserDashboard() {
 
         const { error: uploadError } = await supabase.storage
           .from("avatars")
-          .upload(filePath, avatarFile);
+          .upload(filePath, avatarFile, { upsert: true });
 
         if (uploadError) {
-          console.error("Error uploading avatar:", uploadError);
-          alert("Error uploading avatar. Please try again.");
+          console.error("Error uploading avatar:", uploadError.message || uploadError);
+          alert(`Error uploading avatar: ${uploadError.message || uploadError}. Please try again.`);
           setSaving(false);
           return;
         }
