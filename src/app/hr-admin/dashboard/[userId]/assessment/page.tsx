@@ -1152,7 +1152,7 @@ export default function AssessmentPage({
                     </ul>
                   </div>
                   <div className="flex flex-row gap-4 mt-2">
-                    <button className="px-8 py-3 rounded text-lg font-semibold bg-blue-600 text-white hover:bg-blue-700">View Candidate Response</button>
+                    <button className="px-8 py-3 rounded text-lg font-semibold bg-blue-600 text-white hover:bg-blue-700" onClick={handleProceedWithHire}>Proceed with hire</button>
                     <button className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={() => setShowReassessmentInfoModal(true)}>Begin Individualized Reassessment</button>
                   </div>
                 </div>
