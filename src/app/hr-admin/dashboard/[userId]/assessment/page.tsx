@@ -14,6 +14,7 @@ import {
 import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { supabase } from "@/lib/supabase";
+import { sendOfferLetterEmail } from '@/app/restorative-record/utils/sendEmail';
 
 /**
  * HR Admin Assessment Page with Form Persistence
@@ -158,32 +159,32 @@ export default function AssessmentPage({
   const [finalRevocationPreview, setFinalRevocationPreview] = useState(false);
   const [showFinalRevocationSuccessModal, setShowFinalRevocationSuccessModal] = useState(false);
   const [showCandidateResponseModal, setShowCandidateResponseModal] = useState(false);
-  
+
   // Candidate Response Modal State
   const [candidateShareToken, setCandidateShareToken] = useState<string | null>(null);
   const [candidateProfile, setCandidateProfile] = useState<any>(null);
   const [loadingCandidateData, setLoadingCandidateData] = useState(false);
-  
+
   // Conditional Offer Letter State
   const [savedOfferLetter, setSavedOfferLetter] = useState<any>(null);
   const [showOfferLetterModal, setShowOfferLetterModal] = useState(false);
-  
+
   // Individual Assessment State
   const [savedAssessment, setSavedAssessment] = useState<any>(null);
   const [showAssessmentViewModal, setShowAssessmentViewModal] = useState(false);
-  
+
   // Preliminary Revocation Notice State
   const [savedRevocationNotice, setSavedRevocationNotice] = useState<any>(null);
   const [showRevocationViewModal, setShowRevocationViewModal] = useState(false);
-  
+
   // Individualized Reassessment State
   const [savedReassessment, setSavedReassessment] = useState<any>(null);
   const [showReassessmentViewModal, setShowReassessmentViewModal] = useState(false);
-  
+
   // Final Revocation Notice State
   const [savedFinalRevocationNotice, setSavedFinalRevocationNotice] = useState<any>(null);
   const [showFinalRevocationViewModal, setShowFinalRevocationViewModal] = useState(false);
-  
+
   // Critical Information Tab State
   const [activeTab, setActiveTab] = useState('Legal');
 
@@ -194,44 +195,44 @@ export default function AssessmentPage({
   // Load saved forms from localStorage on mount
   useEffect(() => {
     const candidateId = params.userId;
-    
+
     // Load saved forms from localStorage
     const savedOfferLetterData = localStorage.getItem(`offerLetter_${candidateId}`);
     if (savedOfferLetterData) {
       setSavedOfferLetter(JSON.parse(savedOfferLetterData));
     }
-    
+
     const savedAssessmentData = localStorage.getItem(`assessment_${candidateId}`);
     if (savedAssessmentData) {
       setSavedAssessment(JSON.parse(savedAssessmentData));
     }
-    
+
     const savedRevocationNoticeData = localStorage.getItem(`revocationNotice_${candidateId}`);
     if (savedRevocationNoticeData) {
       setSavedRevocationNotice(JSON.parse(savedRevocationNoticeData));
     }
-    
+
     const savedReassessmentData = localStorage.getItem(`reassessment_${candidateId}`);
     if (savedReassessmentData) {
       setSavedReassessment(JSON.parse(savedReassessmentData));
     }
-    
+
     const savedFinalRevocationNoticeData = localStorage.getItem(`finalRevocationNotice_${candidateId}`);
     if (savedFinalRevocationNoticeData) {
       setSavedFinalRevocationNotice(JSON.parse(savedFinalRevocationNoticeData));
     }
-    
+
     // Load assessment progress from localStorage
     const savedAnswers = localStorage.getItem(`assessmentAnswers_${candidateId}`);
     if (savedAnswers) {
       setAnswers(JSON.parse(savedAnswers));
     }
-    
+
     const savedCurrentStep = localStorage.getItem(`assessmentCurrentStep_${candidateId}`);
     if (savedCurrentStep) {
       setCurrentStep(parseInt(savedCurrentStep, 10));
     }
-    
+
     const savedNotes = localStorage.getItem(`assessmentNotes_${candidateId}`);
     if (savedNotes) {
       setNotes(savedNotes);
@@ -467,7 +468,7 @@ export default function AssessmentPage({
     localStorage.removeItem(`reassessment_${candidateId}`);
     localStorage.removeItem(`finalRevocationNotice_${candidateId}`);
     clearAssessmentProgress();
-    
+
     // Reset state
     setSavedOfferLetter(null);
     setSavedAssessment(null);
@@ -551,7 +552,7 @@ export default function AssessmentPage({
     "Final Revocation Notice",
   ];
 
-  const handleSendOffer = () => {
+  const handleSendOffer = async () => {
     // Save the offer letter data with timestamp
     const offerLetterData = {
       ...offerForm,
@@ -561,10 +562,38 @@ export default function AssessmentPage({
       company: hrAdminProfile?.company || '',
       timestamp: Date.now()
     };
-    
-    setSavedOfferLetter(offerLetterData);
-    setShowOfferModal(false);
-    handleNext();
+
+    try {
+      const { data: candidateEmail, error: candidateEmailError } = await supabase
+        .from("user_profiles")
+        .select("email")
+        .eq("id", params.userId)
+        .single();
+
+      if (candidateEmailError) {
+        console.error("Error fetching candidate email:", candidateEmailError);
+        return;
+      }
+
+      const offerLetterDataWithEmail = {
+        ...offerLetterData,
+        candidateEmail: candidateEmail.email
+      };
+
+      // Send the offer letter email
+      const emailResult = await sendOfferLetterEmail(offerLetterDataWithEmail);
+
+      if (!emailResult.success) {
+        console.error("Failed to send offer letter email:", emailResult.error);
+        // You might want to show an error message to the user here
+      }
+
+      setSavedOfferLetter(offerLetterDataWithEmail);
+      setShowOfferModal(false);
+      handleNext();
+    } catch (error) {
+      console.error("Error in handleSendOffer:", error);
+    }
   }
 
   const handleAssessmentFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -586,7 +615,6 @@ export default function AssessmentPage({
       companyName: hrAdminProfile?.company || '',
     };
     setSavedAssessment(assessmentData);
-    
     setShowAssessmentModal(false);
     setAssessmentPreview(false);
     setInitialAssessmentResults({ ...assessmentForm });
@@ -642,7 +670,7 @@ export default function AssessmentPage({
       companyName: hrAdminProfile?.company || '',
     };
     setSavedRevocationNotice(revocationData);
-    
+
     setShowRevocationModal(false);
     setRevocationPreview(false);
     setRevocationSentDate(new Date());
@@ -670,7 +698,7 @@ export default function AssessmentPage({
       companyName: hrAdminProfile?.company || '',
     };
     setSavedReassessment(reassessmentData);
-    
+
     if (reassessmentDecision === 'extend') {
       setShowExtendSuccessModal(true);
     } else {
@@ -718,7 +746,7 @@ export default function AssessmentPage({
       companyName: hrAdminProfile?.company || '',
     };
     setSavedFinalRevocationNotice(finalRevocationData);
-    
+
     setShowFinalRevocationModal(false);
     setFinalRevocationPreview(false);
     setShowFinalRevocationSuccessModal(true);
@@ -851,22 +879,20 @@ export default function AssessmentPage({
           <div className="lg:col-span-1 lg:-ml-16">
             <div className="bg-white rounded-lg shadow p-6 mb-8">
               <h2 className="text-xl font-bold mb-6">Assessment Progress</h2>
-                      <div className="space-y-4">
+              <div className="space-y-4">
                 {progressSteps.map((step, idx) => (
                   <div
                     key={step}
-                    className={`flex items-center px-3 py-2 rounded border transition-colors ${
-                      currentStep - 1 === idx
-                        ? "border-red-500 bg-red-50"
-                        : "border-gray-200 bg-white"
-                    }`}
+                    className={`flex items-center px-3 py-2 rounded border transition-colors ${currentStep - 1 === idx
+                      ? "border-red-500 bg-red-50"
+                      : "border-gray-200 bg-white"
+                      }`}
                   >
                     <span
-                      className={`mr-2 h-4 w-4 flex items-center justify-center rounded-full border-2 ${
-                        currentStep - 1 === idx
-                          ? "border-red-500 bg-red-500 text-white"
-                          : "border-gray-300 bg-white text-gray-400"
-                      }`}
+                      className={`mr-2 h-4 w-4 flex items-center justify-center rounded-full border-2 ${currentStep - 1 === idx
+                        ? "border-red-500 bg-red-500 text-white"
+                        : "border-gray-300 bg-white text-gray-400"
+                        }`}
                     >
                       {currentStep - 1 > idx ? (
                         <svg className="h-2 w-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
@@ -879,16 +905,16 @@ export default function AssessmentPage({
                 ))}
               </div>
             </div>
-            
+
             {/* San Diego Fair Chance Ordinance Legal Overview Card */}
             <div className="bg-white rounded-lg shadow p-4 mb-8">
               <div className="flex flex-col items-center text-center space-y-3">
                 <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center">
                   <span className="text-2xl text-red-500">📄</span>
-        </div>
-                    <div>
+                </div>
+                <div>
                   <h3 className="text-sm font-bold text-gray-900 mb-2">San Diego Fair Chance Ordinance Legal Overview</h3>
-                  <button 
+                  <button
                     className="px-3 py-2 border border-red-400 text-red-500 text-xs rounded hover:bg-red-50"
                     onClick={() => router.push(`/hr-admin/dashboard/${params.userId}/assessment/ordinance-summary`)}
                   >
@@ -897,7 +923,7 @@ export default function AssessmentPage({
                 </div>
               </div>
             </div>
-            
+
             {/* View Candidate Response Button */}
             <div className="bg-white rounded-lg shadow p-4 mb-8">
               <div className="flex flex-col items-center text-center space-y-3">
@@ -906,7 +932,7 @@ export default function AssessmentPage({
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-gray-900 mb-2">Candidate Information</h3>
-                  <button 
+                  <button
                     className="px-3 py-2 border border-blue-400 text-blue-500 text-xs rounded hover:bg-blue-50"
                     onClick={handleViewCandidateResponse}
                   >
@@ -924,8 +950,8 @@ export default function AssessmentPage({
                 <h2 className="text-3xl font-bold mb-8">Confirm Conditional Offer</h2>
                 <div className="space-y-6 mb-10">
                   <label className="flex items-center space-x-4 cursor-pointer">
-                            <input
-                              type="radio"
+                    <input
+                      type="radio"
                       name="conditional_offer"
                       value="Yes"
                       checked={answers.conditional_offer === "Yes"}
@@ -945,7 +971,7 @@ export default function AssessmentPage({
                     />
                     <span className="text-xl text-gray-900">No, a conditional offer has not been extended</span>
                   </label>
-                          </div>
+                </div>
                 <div className="flex justify-between items-center mt-8">
                   <button className="px-8 py-3 bg-gray-100 text-gray-400 rounded text-lg font-semibold cursor-not-allowed" disabled>Previous</button>
                   <button
@@ -955,7 +981,7 @@ export default function AssessmentPage({
                   >
                     Next <span className="ml-2">→</span>
                   </button>
-                      </div>
+                </div>
                 {/* Modal for Conditional Job Offer Letter */}
                 {showOfferModal && (
                   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -977,7 +1003,7 @@ export default function AssessmentPage({
                           ) : (
                             <span className="font-semibold cursor-pointer" onClick={() => handleFieldEdit("date")}>{offerForm.date || "[DATE]"}</span>
                           )}
-                    </div>
+                        </div>
                         <div className="mb-2">RE: Conditional Offer of Employment & Notice of Conviction Background Check</div>
                         <div className="mb-2">
                           Dear {editingField === "applicant" ? (
@@ -1021,16 +1047,16 @@ export default function AssessmentPage({
                           • Arrest not followed by conviction;<br />
                           • Referral to or participation in a pretrial or posttrial diversion program; or<br />
                           • Convictions that have been sealed, dismissed, expunged, or pardoned.
-                          </div>
+                        </div>
                         <div className="mb-2">
                           As required by the California Fair Chance Act and the San Diego County Fair Chance Ordinance, we will consider whether your conviction history is directly related to the duties of the job we have offered you. We will consider all of the following:<br />
                           • The nature and seriousness of the offense<br />
                           • The amount of time since the offense<br />
                           • The nature of the job
-                      </div>
+                        </div>
                         <div className="mb-2">
                           We will notify you in writing if we plan to revoke (take back) this job offer after reviewing your conviction history. That decision will be preliminary, and you will have an opportunity to respond before it becomes final. We will identify conviction(s) that concern us, give you a copy of the background check report, as well as a copy of the written individualized assessment of the report and the relevance of your history to the position. We will then hold the position open, except in emergent circumstances to allow you at least 5 business days to provide information about your rehabilitation or mitigating circumstances and/or provide notice that you will provide information showing the conviction history report is inaccurate. Should you provide notice that you will provide information showing the conviction history report is inaccurate, you will have an additional 5 business days to provide that evidence. Should you provide additional information, we will then conduct a written individualized reassessment and decide whether to finalize or take back this conditional job offer. We will notify you of that decision in writing.
-                    </div>
+                        </div>
                         <div className="mb-2">
                           Sincerely,<br />
                           {editingField === "employer" ? (
@@ -1046,8 +1072,8 @@ export default function AssessmentPage({
                             />
                           ) : (
                             <span className="font-semibold cursor-pointer" onClick={() => handleFieldEdit("employer")}>{offerForm.employer || "[EMPLOYER]"}</span>
-                      )}
-                    </div>
+                          )}
+                        </div>
                         <div className="mb-2">
                           Enclosure: Authorization for Background Check (as required by the U.S. Fair Credit Reporting Act and California Investigative Consumer Reporting Agencies Act)
                         </div>
@@ -1198,9 +1224,9 @@ export default function AssessmentPage({
                         </div>
                       )}
                     </div>
-                      </div>
-                    )}
-                  </>
+                  </div>
+                )}
+              </>
             )}
             {currentStep === 3 && (
               <>
@@ -1209,9 +1235,9 @@ export default function AssessmentPage({
                     The following may be used to inform a job applicant in writing of the intent to revoke a conditional job offer due to relevant criminal history
                   </p>
                   <div className="flex gap-4">
-                  <button className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={() => setShowRevocationModal(true)}>
-                    Issue Preliminary Job Offer Revocation
-                  </button>
+                    <button className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={() => setShowRevocationModal(true)}>
+                      Issue Preliminary Job Offer Revocation
+                    </button>
                     <button className="px-8 py-3 rounded text-lg font-semibold bg-green-500 text-white hover:bg-green-600" onClick={handleProceedWithHire}>
                       Proceed with hire
                     </button>
@@ -1235,22 +1261,22 @@ export default function AssessmentPage({
                         >
                           Cancel
                         </button>
-                  </div>
+                      </div>
                       {!revocationPreview ? (
                         <form className="space-y-6">
                           <div className="grid grid-cols-2 gap-6">
                             <div>
                               <label className="block text-sm font-semibold mb-1">Date</label>
                               <input type="date" name="date" value={revocationForm.date} onChange={handleRevocationFormChange} className="w-full border rounded px-3 py-2" />
-              </div>
+                            </div>
                             <div>
                               <label className="block text-sm font-semibold mb-1">Applicant Name</label>
                               <input type="text" name="applicant" value={revocationForm.applicant} onChange={handleRevocationFormChange} className="w-full border rounded px-3 py-2" />
-            </div>
+                            </div>
                             <div>
                               <label className="block text-sm font-semibold mb-1">Position</label>
                               <input type="text" name="position" value={revocationForm.position} onChange={handleRevocationFormChange} className="w-full border rounded px-3 py-2" />
-                </div>
+                            </div>
                           </div>
                           <div>
                             <label className="block text-sm font-semibold mb-1">Convictions that led to decision to revoke offer</label>
@@ -1301,7 +1327,7 @@ export default function AssessmentPage({
                             <label className="block text-sm font-semibold mb-1">Job Duties</label>
                             <textarea name="jobDuties" value={revocationForm.jobDuties} onChange={handleRevocationFormChange} className="w-full border rounded px-3 py-2 min-h-[60px]" />
                           </div>
-                        <div>
+                          <div>
                             <label className="block text-sm font-semibold mb-1">Reason for revoking job offer based on relevance of conviction history to job duties</label>
                             <textarea name="fitnessReason" value={revocationForm.fitnessReason} onChange={handleRevocationFormChange} className="w-full border rounded px-3 py-2 min-h-[60px]" />
                           </div>
@@ -1378,7 +1404,7 @@ export default function AssessmentPage({
                                   <li>Call San Diego County OLSE at 619-531-5129</li>
                                 </ul>
                               </li>
-                          </ul>
+                            </ul>
                           </div>
                           <div className="mb-2">Sincerely,<br />{revocationForm.contactName}<br />{revocationForm.companyName}<br />{revocationForm.address}<br />{revocationForm.phone}</div>
                           <div className="mb-2">Enclosure: Copy of conviction history report</div>
@@ -1391,7 +1417,7 @@ export default function AssessmentPage({
                         </div>
                       )}
                     </div>
-                              </div>
+                  </div>
                 )}
               </>
             )}
@@ -1401,7 +1427,7 @@ export default function AssessmentPage({
                   <div className="flex flex-col items-center mb-6">
                     <div className="rounded-full bg-green-100 p-4 mb-4">
                       <svg className="h-10 w-10 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                            </div>
+                    </div>
                     <h2 className="text-2xl font-bold text-center mb-2">Preliminary Decision Notice Sent Successfully</h2>
                     <div className="text-gray-600 text-center mb-4">Time Remaining for Response:</div>
                     <div className="w-full flex flex-col items-center">
@@ -1438,9 +1464,9 @@ export default function AssessmentPage({
                           Continue
                         </button>
                       </div>
-                          </div>
-                        </div>
-                      )}
+                    </div>
+                  </div>
+                )}
               </>
             )}
             {currentStep === 4 && showReassessmentSplit && (
@@ -1465,17 +1491,17 @@ export default function AssessmentPage({
                         <div><b>How long ago:</b> {initialAssessmentResults.howLongAgo}</div>
                         <div><b>Activities since criminal activity:</b> {initialAssessmentResults.activities && Array.isArray(initialAssessmentResults.activities) ? initialAssessmentResults.activities.filter(Boolean).join(', ') : ''}</div>
                         <div><b>Reason for Rescinding Offer:</b> {initialAssessmentResults.rescindReason}</div>
-                          </div>
-                        </div>
-                      )}
+                      </div>
+                    </div>
+                  )}
                   {/* End Reference Section */}
                   {!reassessmentPreview ? (
                     <form className="space-y-6">
                       <div className="grid grid-cols-2 gap-6">
-                      <div>
+                        <div>
                           <label className="block text-sm font-semibold mb-1">Employer Name</label>
                           <input type="text" name="employer" value={reassessmentForm.employer} onChange={handleReassessmentFormChange} className="w-full border rounded px-3 py-2" />
-                      </div>
+                        </div>
                         <div>
                           <label className="block text-sm font-semibold mb-1">Applicant Name</label>
                           <input type="text" name="applicant" value={reassessmentForm.applicant} onChange={handleReassessmentFormChange} className="w-full border rounded px-3 py-2" />
@@ -1501,50 +1527,50 @@ export default function AssessmentPage({
                           <input type="text" name="performedBy" value={reassessmentForm.performedBy} onChange={handleReassessmentFormChange} className="w-full border rounded px-3 py-2" />
                         </div>
                       </div>
-                      
+
                       {/* Additional Assessment Questions */}
                       <div className="border-t pt-6 mt-6">
                         <h3 className="text-lg font-semibold mb-4">Assessment Questions</h3>
-                        
+
                         {/* Question 1: Error in Criminal History Report */}
                         <div className="mb-6">
                           <label className="block text-sm font-semibold mb-3">1. Was there an error in the Criminal History Report?</label>
                           <div className="flex items-center gap-6 mb-3">
                             <label className="flex items-center gap-2">
-                              <input 
-                                type="radio" 
-                                name="errorYesNo" 
-                                value="Yes" 
-                                checked={reassessmentForm.errorYesNo === 'Yes'} 
-                                onChange={handleReassessmentFormChange} 
-                              /> 
-                               Yes
+                              <input
+                                type="radio"
+                                name="errorYesNo"
+                                value="Yes"
+                                checked={reassessmentForm.errorYesNo === 'Yes'}
+                                onChange={handleReassessmentFormChange}
+                              />
+                              Yes
                             </label>
                             <label className="flex items-center gap-2">
-                              <input 
-                                type="radio" 
-                                name="errorYesNo" 
-                                value="No" 
-                                checked={reassessmentForm.errorYesNo === 'No'} 
-                                onChange={handleReassessmentFormChange} 
-                              /> 
-                               No
+                              <input
+                                type="radio"
+                                name="errorYesNo"
+                                value="No"
+                                checked={reassessmentForm.errorYesNo === 'No'}
+                                onChange={handleReassessmentFormChange}
+                              />
+                              No
                             </label>
                           </div>
                           {reassessmentForm.errorYesNo === 'Yes' && (
                             <div>
                               <label className="block text-sm font-semibold mb-1">If yes, describe the error:</label>
-                              <textarea 
-                                name="error" 
-                                value={reassessmentForm.error} 
-                                onChange={handleReassessmentFormChange} 
-                                className="w-full border rounded px-3 py-2 min-h-[80px]" 
+                              <textarea
+                                name="error"
+                                value={reassessmentForm.error}
+                                onChange={handleReassessmentFormChange}
+                                className="w-full border rounded px-3 py-2 min-h-[80px]"
                                 placeholder="Describe the error in detail"
                               />
                             </div>
                           )}
                         </div>
-                        
+
                         {/* Question 2: Evidence of Rehabilitation */}
                         <div className="mb-6">
                           <label className="block text-sm font-semibold mb-3">
@@ -1553,48 +1579,48 @@ export default function AssessmentPage({
                           <div className="space-y-3">
                             <div>
                               <label className="block text-sm font-medium mb-1">a.</label>
-                              <textarea 
-                                name="evidenceA" 
-                                value={reassessmentForm.evidenceA} 
-                                onChange={handleReassessmentFormChange} 
-                                className="w-full border rounded px-3 py-2 min-h-[60px]" 
+                              <textarea
+                                name="evidenceA"
+                                value={reassessmentForm.evidenceA}
+                                onChange={handleReassessmentFormChange}
+                                className="w-full border rounded px-3 py-2 min-h-[60px]"
                                 placeholder="Evidence item A"
                               />
                             </div>
                             <div>
                               <label className="block text-sm font-medium mb-1">b.</label>
-                              <textarea 
-                                name="evidenceB" 
-                                value={reassessmentForm.evidenceB} 
-                                onChange={handleReassessmentFormChange} 
-                                className="w-full border rounded px-3 py-2 min-h-[60px]" 
+                              <textarea
+                                name="evidenceB"
+                                value={reassessmentForm.evidenceB}
+                                onChange={handleReassessmentFormChange}
+                                className="w-full border rounded px-3 py-2 min-h-[60px]"
                                 placeholder="Evidence item B"
                               />
                             </div>
                             <div>
                               <label className="block text-sm font-medium mb-1">c.</label>
-                              <textarea 
-                                name="evidenceC" 
-                                value={reassessmentForm.evidenceC} 
-                                onChange={handleReassessmentFormChange} 
-                                className="w-full border rounded px-3 py-2 min-h-[60px]" 
+                              <textarea
+                                name="evidenceC"
+                                value={reassessmentForm.evidenceC}
+                                onChange={handleReassessmentFormChange}
+                                className="w-full border rounded px-3 py-2 min-h-[60px]"
                                 placeholder="Evidence item C"
                               />
                             </div>
                             <div>
                               <label className="block text-sm font-medium mb-1">d.</label>
-                              <textarea 
-                                name="evidenceD" 
-                                value={reassessmentForm.evidenceD} 
-                                onChange={handleReassessmentFormChange} 
-                                className="w-full border rounded px-3 py-2 min-h-[60px]" 
+                              <textarea
+                                name="evidenceD"
+                                value={reassessmentForm.evidenceD}
+                                onChange={handleReassessmentFormChange}
+                                className="w-full border rounded px-3 py-2 min-h-[60px]"
                                 placeholder="Evidence item D"
                               />
                             </div>
                           </div>
                         </div>
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-semibold mb-1">Decision</label>
                         <div className="flex items-center gap-6 mb-2">
@@ -1615,14 +1641,14 @@ export default function AssessmentPage({
                           <div>
                             <label className="block text-sm font-semibold mb-1">Based on the factors above, we are extending our offer of employment.</label>
                             <textarea name="extendReason" value={extendReason} onChange={e => setExtendReason(e.target.value)} className="w-full border rounded px-3 py-2 min-h-[60px]" />
-                        </div>
-                      )}
-                    </div>
+                          </div>
+                        )}
+                      </div>
                       <div className="flex justify-end mt-8 gap-4">
                         <button type="button" className="px-8 py-3 rounded text-lg font-semibold bg-blue-600 text-white hover:bg-blue-700" onClick={() => setReassessmentPreview(true)}>
                           Preview
                         </button>
-                              </div>
+                      </div>
                     </form>
                   ) : (
                     <div className="prose max-w-none text-gray-900 text-base bg-gray-50 p-8 rounded">
@@ -1660,7 +1686,7 @@ export default function AssessmentPage({
                         ) : (
                           <><b>Based on the factors above, we are extending our offer of employment.</b><br />{extendReason}</>
                         )}
-                            </div>
+                      </div>
                       <div className="flex justify-end mt-8 gap-4">
                         <button type="button" className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={handleSendReassessment}>
                           Send
@@ -1681,7 +1707,7 @@ export default function AssessmentPage({
                       <p className="text-gray-600">Loading candidate's restorative record...</p>
                     </div>
                   ) : candidateShareToken ? (
-                  <iframe
+                    <iframe
                       src={`${window.location.origin}/restorative-record/share/${candidateShareToken}`}
                       title="Candidate Restorative Record"
                       className="w-full h-[500px] rounded border border-gray-200"
@@ -1859,7 +1885,7 @@ export default function AssessmentPage({
                                   <li>Call San Diego County OLSE at 619-531-5129</li>
                                 </ul>
                               </li>
-                          </ul>
+                            </ul>
                           </div>
                           <div className="grid grid-cols-2 gap-10 mb-8">
                             <div>
@@ -1923,70 +1949,57 @@ export default function AssessmentPage({
                             {finalRevocationForm.reconsideration === 'procedure' && <li>If you would like to challenge this decision or request reconsideration, you may: {finalRevocationForm.reconsiderationProcedure}</li>}
                           </ul>
                           <div className="mb-6 font-semibold">Your Right to File a Complaint:</div>
-                          <div className="text-sm text-gray-700 mb-8">
-                            If you believe your rights under the California Fair Chance Act or the San Diego County Fair Chance Ordinance have been violated during this job application process, you have the right to file a complaint with the California Civil Rights Department (CRD) and/or the San Diego County Office of Labor Standards and Enforcement (OLSE). There are several ways to file a complaint:
-                            <ul className="list-disc ml-6">
-                              <li>California CRD:
-                                <ul className="list-disc ml-6">
-                                  <li>File a complaint online at the following link: ccrs.calcivilrights.ca.gov/s/</li>
-                                  <li>Download an intake form at the following link: calcivilrights.ca.gov/complaintprocess/filebymail/ and email it to contact.center@calcivilrights.gov or mail it to 2218 Kausen Drive, Suite 100, Elk Grove, CA 95758</li>
-                                  <li>Visit a CRD office. Click the following link for office locations: calcivilrights.ca.gov/locations/</li>
-                                  <li>Call California CRD at (800) 884-1684</li>
-                                </ul>
-                              </li>
-                              <li>San Diego County OLSE:
-                                <ul className="list-disc ml-6">
-                                  <li>File a complaint online at the following link: www.sandiegocounty.gov/content/sdc/OLSE/file-a-complaint.html</li>
-                                  <li>Visit San Diego County's Office of Labor Standards and Enforcement's office at 1600 Pacific Highway, Room 452, San Diego, CA 92101</li>
-                                  <li>Call San Diego County OLSE at 619-531-5129</li>
-                                </ul>
-                              </li>
-                            </ul>
-                            For more information, visit www.sandiegocounty.gov/content/sdc/OLSE
-                          </div>
-                          <div className="grid grid-cols-2 gap-10 mb-8">
-                            <div><b>Employer contact person name:</b> {finalRevocationForm.contactName}</div>
-                            <div><b>Employer company name:</b> {finalRevocationForm.companyName}</div>
-                            <div><b>Employer address:</b> {finalRevocationForm.address}</div>
-                            <div><b>Employer contact phone number:</b> {finalRevocationForm.phone}</div>
-                          </div>
-                          <div className="flex justify-end mt-12 gap-6">
-                            <button type="button" className="px-8 py-3 rounded text-lg font-semibold bg-gray-300 text-gray-700 hover:bg-gray-400" onClick={() => setFinalRevocationPreview(false)}>
-                              Edit
-                            </button>
-                            <button type="button" className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={handleSendFinalRevocation}>Send</button>
+                          <div className="mb-6">You also have the right to file a complaint with the Enforcement Unit of the San Diego County Office of Labor Standards and Enforcement within 180 days after the alleged violation of the San Diego County Fair Chance Ordinance. To file a complaint online or request information, visit the Office of Labor Standards and Enforcement online. You may also file a complaint by calling 858-694-2440.</div>
+                          <div className="mb-6">Sincerely,<br />{savedFinalRevocationNotice.contactName}<br />{savedFinalRevocationNotice.companyName}<br />{savedFinalRevocationNotice.address}<br />{savedFinalRevocationNotice.phone}</div>
+
+                          {/* Document Metadata */}
+                          <div className="mt-8 pt-6 border-t border-gray-200 bg-white rounded-lg p-4">
+                            <h3 className="text-lg font-semibold mb-3">Document Information</h3>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="font-medium">Sent Date:</span> {new Date(savedFinalRevocationNotice.sentAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </div>
+                              <div>
+                                <span className="font-medium">Sent By:</span> {savedFinalRevocationNotice.hrAdminName}
+                              </div>
+                              <div>
+                                <span className="font-medium">Company:</span> {savedFinalRevocationNotice.companyName}
+                              </div>
+                              <div>
+                                <span className="font-medium">Candidate ID:</span> {savedFinalRevocationNotice.candidateId}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       )}
                     </div>
                   </div>
                 )}
-                  </>
-                )}
+              </>
+            )}
             {/* Critical Information Section Placeholder */}
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center mb-4">
                 <span className="mr-2 text-xl text-gray-700">ℹ️</span>
                 <h3 className="text-lg font-bold">Critical Information</h3>
               </div>
-              
+
               {/* Tab Navigation */}
               <div className="flex space-x-1 mb-6 border-b border-gray-200">
                 {['Legal', 'Company Policy', 'Candidate Context'].map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`px-4 py-2 font-semibold text-sm transition-colors relative ${
-                      activeTab === tab
-                        ? 'text-red-600 border-b-2 border-red-600'
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
+                    className={`px-4 py-2 font-semibold text-sm transition-colors relative ${activeTab === tab
+                      ? 'text-red-600 border-b-2 border-red-600'
+                      : 'text-gray-600 hover:text-gray-800'
+                      }`}
                   >
                     {tab}
                   </button>
                 ))}
-            </div>
-              
+              </div>
+
               {/* Tab Content */}
               <div className="min-h-[200px]">
                 {activeTab === 'Legal' && (
@@ -1995,25 +2008,25 @@ export default function AssessmentPage({
                       <div className="text-gray-700">
                         <h4 className="font-semibold mb-2">San Diego Fair Chance Ordinance Requirements</h4>
                         <p>Internal policy requires documented confirmation of conditional offer before accessing any conviction history information. This ensures compliance with local fair chance hiring legislation.</p>
-        </div>
+                      </div>
                     )}
                     {currentStep === 2 && (
                       <div className="text-gray-700">
                         <h4 className="font-semibold mb-2">Individualized Assessment Guidelines</h4>
                         <p>Legal requirements for conducting fair and compliant individualized assessments under San Diego Fair Chance Ordinance will be displayed here.</p>
-      </div>
+                      </div>
                     )}
                     {currentStep === 3 && (
                       <div className="text-gray-700">
                         <h4 className="font-semibold mb-2">Preliminary Decision Legal Framework</h4>
                         <p>Legal guidelines for preliminary job offer decisions and revocation procedures will be displayed here.</p>
-        </div>
+                      </div>
                     )}
                     {currentStep === 4 && (
                       <div className="text-gray-700">
                         <h4 className="font-semibold mb-2">Reassessment Legal Requirements</h4>
                         <p>Legal framework for conducting reassessments and handling candidate responses will be displayed here.</p>
-      </div>
+                      </div>
                     )}
                     {currentStep === 5 && (
                       <div className="text-gray-700">
@@ -2023,7 +2036,7 @@ export default function AssessmentPage({
                     )}
                   </div>
                 )}
-                
+
                 {activeTab === 'Company Policy' && (
                   <div className="space-y-4">
                     {currentStep === 1 && (
@@ -2058,7 +2071,7 @@ export default function AssessmentPage({
                     )}
                   </div>
                 )}
-                
+
                 {activeTab === 'Candidate Context' && (
                   <div className="space-y-4">
                     {currentStep === 1 && (
@@ -2098,7 +2111,7 @@ export default function AssessmentPage({
           </div>
         </div>
       </div>
-      
+
       {/* Footer with Disclaimer */}
       <footer className="bg-white border-t border-gray-200 py-12 mt-16">
         <div className="max-w-7xl mx-auto px-4">
@@ -2113,7 +2126,7 @@ export default function AssessmentPage({
                 compliance for modern HR teams.
               </p>
             </div>
-            
+
             {/* Right: Legal Disclaimer */}
             <div className="lg:col-span-2">
               <p className="text-gray-600 text-sm leading-relaxed">
@@ -2121,7 +2134,7 @@ export default function AssessmentPage({
               </p>
             </div>
           </div>
-          
+
           {/* Copyright */}
           <div className="mt-12 pt-8 border-t border-gray-200 text-center">
             <p className="text-gray-500 text-sm">
@@ -2130,12 +2143,12 @@ export default function AssessmentPage({
           </div>
         </div>
       </footer>
-      
+
       {showExtendSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-10 flex flex-col items-center relative">
             {/* X Close Button */}
-            <button 
+            <button
               className="absolute top-4 left-4 text-gray-400 hover:text-gray-600"
               onClick={() => setShowExtendSuccessModal(false)}
             >
@@ -2143,7 +2156,7 @@ export default function AssessmentPage({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            
+
             <div className="rounded-full bg-green-100 p-4 mb-4">
               <svg className="h-10 w-10 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
             </div>
@@ -2159,7 +2172,7 @@ export default function AssessmentPage({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="bg-white rounded-2xl shadow-lg p-12 max-w-6xl w-full flex flex-col items-center relative">
             {/* X button in top right corner */}
-            <button 
+            <button
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
               onClick={() => setShowFinalRevocationSuccessModal(false)}
             >
@@ -2167,7 +2180,7 @@ export default function AssessmentPage({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            
+
             <div className="rounded-full bg-green-100 p-6 mb-6">
               <svg className="h-16 w-16 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
             </div>
@@ -2197,7 +2210,7 @@ export default function AssessmentPage({
           </div>
         </div>
       )}
-      
+
       {/* Candidate Response Modal */}
       {showCandidateResponseModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -2208,7 +2221,7 @@ export default function AssessmentPage({
                 Candidate Response - Restorative Record
                 {candidateProfile && ` - ${candidateProfile.first_name} ${candidateProfile.last_name}`}
               </h2>
-              <button 
+              <button
                 className="text-gray-400 hover:text-gray-600"
                 onClick={() => setShowCandidateResponseModal(false)}
               >
@@ -2217,7 +2230,7 @@ export default function AssessmentPage({
                 </svg>
               </button>
             </div>
-            
+
             {/* Loading State */}
             {loadingCandidateData ? (
               <div className="text-center py-12">
@@ -2268,11 +2281,11 @@ export default function AssessmentPage({
                 </p>
               </div>
             )}
-            
+
             {/* Footer */}
             <div className="flex justify-end mt-6">
-              <button 
-                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200" 
+              <button
+                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200"
                 onClick={() => setShowCandidateResponseModal(false)}
               >
                 Close
@@ -2281,7 +2294,7 @@ export default function AssessmentPage({
           </div>
         </div>
       )}
-      
+
       {/* View Offer Letter Modal */}
       {showOfferLetterModal && savedOfferLetter && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -2289,7 +2302,7 @@ export default function AssessmentPage({
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">Conditional Job Offer Letter</h2>
-              <button 
+              <button
                 className="text-gray-400 hover:text-gray-600"
                 onClick={() => setShowOfferLetterModal(false)}
               >
@@ -2298,7 +2311,7 @@ export default function AssessmentPage({
                 </svg>
               </button>
             </div>
-            
+
             {/* Saved Offer Letter Content */}
             <div className="prose max-w-none text-gray-900 text-base">
               <div className="mb-2">
@@ -2338,7 +2351,7 @@ export default function AssessmentPage({
               <div className="mb-2">
                 Enclosure: Authorization for Background Check (as required by the U.S. Fair Credit Reporting Act and California Investigative Consumer Reporting Agencies Act)
               </div>
-              
+
               {/* Document Metadata */}
               <div className="mt-8 pt-6 border-t border-gray-200 bg-gray-50 rounded-lg p-4">
                 <h3 className="text-lg font-semibold mb-3">Document Information</h3>
@@ -2358,18 +2371,18 @@ export default function AssessmentPage({
                 </div>
               </div>
             </div>
-            
+
             {/* Footer */}
             <div className="flex justify-end space-x-4 mt-6">
-              <button 
-                type="button" 
-                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200" 
+              <button
+                type="button"
+                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200"
                 onClick={() => setShowOfferLetterModal(false)}
               >
                 Close
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="px-6 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
                 onClick={() => {
                   const printContent = document.createElement('div');
@@ -2400,7 +2413,7 @@ export default function AssessmentPage({
           </div>
         </div>
       )}
-      
+
       {/* View Assessment Modal */}
       {showAssessmentViewModal && savedAssessment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -2408,7 +2421,7 @@ export default function AssessmentPage({
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">Criminal History Individual Assessment Form</h2>
-              <button 
+              <button
                 className="text-gray-400 hover:text-gray-600"
                 onClick={() => setShowAssessmentViewModal(false)}
               >
@@ -2417,7 +2430,7 @@ export default function AssessmentPage({
                 </svg>
               </button>
             </div>
-            
+
             {/* Saved Assessment Content */}
             <div className="prose max-w-none text-gray-900 text-base bg-gray-50 p-8 rounded">
               <h3 className="font-bold mb-2">INFORMATION</h3>
@@ -2428,7 +2441,7 @@ export default function AssessmentPage({
               <div><b>Date of Assessment:</b> {savedAssessment.assessmentDate}</div>
               <div><b>Date of Criminal History Report:</b> {savedAssessment.reportDate}</div>
               <div><b>Assessment Performed by:</b> {savedAssessment.performedBy}</div>
-              
+
               <h3 className="font-bold mt-6 mb-2">ASSESSMENT</h3>
               <div><b>1. The specific duties and responsibilities of the job are:</b>
                 <ul className="list-disc ml-6">
@@ -2443,7 +2456,7 @@ export default function AssessmentPage({
                 </ul>
               </div>
               <div className="mt-2"><b>Based on the factors above, we are considering rescinding our offer of employment because:</b><br />{savedAssessment.rescindReason}</div>
-              
+
               {/* Document Metadata */}
               <div className="mt-8 pt-6 border-t border-gray-200 bg-white rounded-lg p-4">
                 <h3 className="text-lg font-semibold mb-3">Document Information</h3>
@@ -2463,18 +2476,18 @@ export default function AssessmentPage({
                 </div>
               </div>
             </div>
-            
+
             {/* Footer */}
             <div className="flex justify-end space-x-4 mt-6">
-              <button 
-                type="button" 
-                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200" 
+              <button
+                type="button"
+                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200"
                 onClick={() => setShowAssessmentViewModal(false)}
               >
                 Close
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="px-6 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
                 onClick={() => {
                   const printContent = document.querySelector('.prose:last-of-type');
@@ -2510,7 +2523,7 @@ export default function AssessmentPage({
           </div>
         </div>
       )}
-      
+
       {/* View Revocation Notice Modal */}
       {showRevocationViewModal && savedRevocationNotice && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -2518,7 +2531,7 @@ export default function AssessmentPage({
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">Notice of Preliminary Decision to Revoke Job Offer Because of Conviction History</h2>
-              <button 
+              <button
                 className="text-gray-400 hover:text-gray-600"
                 onClick={() => setShowRevocationViewModal(false)}
               >
@@ -2527,7 +2540,7 @@ export default function AssessmentPage({
                 </svg>
               </button>
             </div>
-            
+
             {/* Saved Revocation Notice Content */}
             <div className="prose max-w-none text-gray-900 text-base bg-gray-50 p-8 rounded">
               <div className="mb-2">{savedRevocationNotice.date}</div>
@@ -2567,7 +2580,7 @@ export default function AssessmentPage({
               <div className="mb-2">Sincerely,<br />{savedRevocationNotice.contactName}<br />{savedRevocationNotice.companyName}<br />{savedRevocationNotice.address}<br />{savedRevocationNotice.phone}</div>
               <div className="mb-2">Enclosure: Copy of conviction history report</div>
               <div className="mb-2 text-xs">* The applicant must be allowed at least 5 business days to respond. If the applicant indicates their intent to provide such evidence, they must be given an additional 5 business days to gather and deliver the information</div>
-              
+
               {/* Document Metadata */}
               <div className="mt-8 pt-6 border-t border-gray-200 bg-white rounded-lg p-4">
                 <h3 className="text-lg font-semibold mb-3">Document Information</h3>
@@ -2587,18 +2600,18 @@ export default function AssessmentPage({
                 </div>
               </div>
             </div>
-            
+
             {/* Footer */}
             <div className="flex justify-end space-x-4 mt-6">
-              <button 
-                type="button" 
-                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200" 
+              <button
+                type="button"
+                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200"
                 onClick={() => setShowRevocationViewModal(false)}
               >
                 Close
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="px-6 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
                 onClick={() => {
                   const printContent = document.querySelector('.prose:last-of-type');
@@ -2635,7 +2648,7 @@ export default function AssessmentPage({
           </div>
         </div>
       )}
-      
+
       {/* View Reassessment Modal */}
       {showReassessmentViewModal && savedReassessment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -2643,7 +2656,7 @@ export default function AssessmentPage({
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">Individualized Reassessment Form</h2>
-              <button 
+              <button
                 className="text-gray-400 hover:text-gray-600"
                 onClick={() => setShowReassessmentViewModal(false)}
               >
@@ -2652,7 +2665,7 @@ export default function AssessmentPage({
                 </svg>
               </button>
             </div>
-            
+
             {/* Saved Reassessment Content */}
             <div className="prose max-w-none text-gray-900 text-base bg-gray-50 p-8 rounded">
               <h3 className="font-bold mb-2">INFORMATION</h3>
@@ -2663,13 +2676,13 @@ export default function AssessmentPage({
               <div><b>Date of Reassessment:</b> {savedReassessment.reassessmentDate}</div>
               <div><b>Date of Criminal History Report:</b> {savedReassessment.reportDate}</div>
               <div><b>Assessment Performed by:</b> {savedReassessment.performedBy}</div>
-              
+
               <h3 className="font-bold mt-6 mb-2">REASSESSMENT</h3>
               <div><b>1. Was there an error in the Criminal History Report?</b> {savedReassessment.errorYesNo}</div>
               {savedReassessment.errorYesNo === 'Yes' && (
                 <div className="mb-2"><b>If yes, describe the error:</b> {savedReassessment.error}</div>
               )}
-              
+
               <div className="mt-4">
                 <b>2. Evidence of rehabilitation and good conduct:</b>
                 {savedReassessment.evidenceA && (
@@ -2685,11 +2698,11 @@ export default function AssessmentPage({
                   <div className="mt-2"><b>d.</b> {savedReassessment.evidenceD}</div>
                 )}
               </div>
-              
+
               <div className="mt-4">
                 <b>Decision:</b> {savedReassessment.decision === 'rescind' ? 'Rescind Offer' : 'Extend Offer'}
               </div>
-              
+
               <div className="mt-2">
                 {savedReassessment.decision === 'rescind' ? (
                   <><b>Based on the factors above, we are rescinding our offer of employment because:</b><br />{savedReassessment.rescindReason}</>
@@ -2697,7 +2710,7 @@ export default function AssessmentPage({
                   <><b>Based on the factors above, we are extending our offer of employment.</b><br />{savedReassessment.extendReason}</>
                 )}
               </div>
-              
+
               {/* Document Metadata */}
               <div className="mt-8 pt-6 border-t border-gray-200 bg-white rounded-lg p-4">
                 <h3 className="text-lg font-semibold mb-3">Document Information</h3>
@@ -2717,18 +2730,18 @@ export default function AssessmentPage({
                 </div>
               </div>
             </div>
-            
+
             {/* Footer */}
             <div className="flex justify-end space-x-4 mt-6">
-              <button 
-                type="button" 
-                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200" 
+              <button
+                type="button"
+                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200"
                 onClick={() => setShowReassessmentViewModal(false)}
               >
                 Close
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="px-6 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
                 onClick={() => {
                   const printContent = document.querySelector('.prose:last-of-type');
@@ -2765,7 +2778,7 @@ export default function AssessmentPage({
           </div>
         </div>
       )}
-      
+
       {/* View Final Revocation Notice Modal */}
       {showFinalRevocationViewModal && savedFinalRevocationNotice && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -2773,7 +2786,7 @@ export default function AssessmentPage({
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">Notice of Final Decision to Revoke Job Offer Because of Conviction History</h2>
-              <button 
+              <button
                 className="text-gray-400 hover:text-gray-600"
                 onClick={() => setShowFinalRevocationViewModal(false)}
               >
@@ -2782,7 +2795,7 @@ export default function AssessmentPage({
                 </svg>
               </button>
             </div>
-            
+
             {/* Saved Final Revocation Notice Content */}
             <div className="prose max-w-none text-gray-900 text-base bg-gray-50 p-8 rounded">
               <div className="mb-6">{savedFinalRevocationNotice.date}</div>
@@ -2819,7 +2832,7 @@ export default function AssessmentPage({
               <div className="mb-6 font-semibold">Your Right to File a Complaint:</div>
               <div className="mb-6">You also have the right to file a complaint with the Enforcement Unit of the San Diego County Office of Labor Standards and Enforcement within 180 days after the alleged violation of the San Diego County Fair Chance Ordinance. To file a complaint online or request information, visit the Office of Labor Standards and Enforcement online. You may also file a complaint by calling 858-694-2440.</div>
               <div className="mb-6">Sincerely,<br />{savedFinalRevocationNotice.contactName}<br />{savedFinalRevocationNotice.companyName}<br />{savedFinalRevocationNotice.address}<br />{savedFinalRevocationNotice.phone}</div>
-              
+
               {/* Document Metadata */}
               <div className="mt-8 pt-6 border-t border-gray-200 bg-white rounded-lg p-4">
                 <h3 className="text-lg font-semibold mb-3">Document Information</h3>
@@ -2839,18 +2852,18 @@ export default function AssessmentPage({
                 </div>
               </div>
             </div>
-            
+
             {/* Footer */}
             <div className="flex justify-end space-x-4 mt-6">
-              <button 
-                type="button" 
-                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200" 
+              <button
+                type="button"
+                className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200"
                 onClick={() => setShowFinalRevocationViewModal(false)}
               >
                 Close
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="px-6 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
                 onClick={() => {
                   const printContent = document.querySelector('.prose:last-of-type');
