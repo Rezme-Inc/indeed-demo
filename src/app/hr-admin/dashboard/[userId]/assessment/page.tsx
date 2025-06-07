@@ -15,7 +15,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { supabase } from "@/lib/supabase";
 import { sendOfferLetterEmail } from '@/app/restorative-record/utils/sendEmail';
-import AssessmentProgressBar from "@/app/hr-admin/dashboard/[userId]/assessment/componenets/AssessmentProgressBar";
+import AssessmentProgressBar from "@/app/hr-admin/dashboard/[userId]/assessment/components/AssessmentProgressBar";
+import ConditionalJobOfferLetter from "./components/ConditionalJobOfferLetter";
+import IndividualizedAssessmentModal from "./components/IndividualizedAssessmentModal";
+import PreliminaryRevocationModal from './components/PreliminaryRevocationModal';
 
 /**
  * HR Admin Assessment Page with Form Persistence
@@ -193,6 +196,26 @@ export default function AssessmentPage({
   // HR Admin profile state
   const [hrAdminProfile, setHrAdminProfile] = useState<any>(null);
   const [headerLoading, setHeaderLoading] = useState(true);
+
+  const [businessDaysRemaining, setBusinessDaysRemaining] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('businessDaysRemaining');
+      return stored ? parseInt(stored, 10) : 0;
+    }
+    return 0;
+  });
+
+  const handleBusinessDaysSet = (days: number) => {
+    setBusinessDaysRemaining(days);
+    localStorage.setItem('businessDaysRemaining', days.toString());
+  };
+
+  // Add useEffect to clear localStorage when component unmounts
+  useEffect(() => {
+    return () => {
+      localStorage.removeItem('businessDaysRemaining');
+    };
+  }, []);
 
   const questions: AssessmentQuestion[] = [
     {
@@ -531,7 +554,7 @@ export default function AssessmentPage({
     if (e.key === "Enter") setEditingField(null);
   };
 
-  const allFieldsFilled = offerForm.date && offerForm.applicant && offerForm.position && offerForm.employer;
+  const allFieldsFilled = !!(offerForm.date && offerForm.applicant && offerForm.position && offerForm.employer);
 
   const currentQuestion = questions[currentStep - 1];
   // console.log("Current question:", currentQuestion);
@@ -660,7 +683,7 @@ export default function AssessmentPage({
     return Math.max(5 - days, 0);
   }
 
-  const businessDaysRemaining = revocationSentDate ? getBusinessDaysRemaining(revocationSentDate) : 5;
+  // const businessDaysRemaining = revocationSentDate ? getBusinessDaysRemaining(revocationSentDate) : 5;
 
   const handleSendRevocation = () => {
     // Save the revocation notice with metadata
@@ -800,6 +823,26 @@ export default function AssessmentPage({
     setShowOfferLetterModal(true);
   };
 
+  const handleAddDuty = () => {
+    setAssessmentForm((prev: any) => ({
+      ...prev,
+      duties: [...prev.duties, ""]
+    }));
+  };
+  const handleAddActivity = () => {
+    setAssessmentForm((prev: any) => ({
+      ...prev,
+      activities: [...prev.activities, ""]
+    }));
+  };
+
+  const handleAddConviction = () => {
+    setRevocationForm(prev => ({
+      ...prev,
+      convictions: [...prev.convictions, ""]
+    }));
+  };
+
   // Modify your render logic to handle loading state
   if (isLoading) {
     return (
@@ -817,9 +860,6 @@ export default function AssessmentPage({
           <span className="text-black font-bold text-xl tracking-tight flex items-center">
             <span className="mr-2">
               réz<span className="text-red-500">me</span>.
-            </span>
-            <span className="font-semibold text-gray-800 text-lg">
-              {headerLoading ? <span className="animate-pulse text-gray-400">Loading...</span> : hrAdminProfile?.company || ""}
             </span>
           </span>
         </div>
@@ -878,7 +918,10 @@ export default function AssessmentPage({
               <div className="w-9 h-9 rounded-full bg-yellow-400 flex items-center justify-center text-white font-bold text-lg mr-2">
                 {hrAdminProfile.first_name?.[0]}{hrAdminProfile.last_name?.[0]}
               </div>
-              <span className="text-gray-800 font-medium text-base">{hrAdminProfile.first_name} {hrAdminProfile.last_name}</span>
+              <div className="flex flex-col">
+                <span className="text-gray-800 font-medium text-base">{hrAdminProfile.first_name} {hrAdminProfile.last_name}</span>
+                <span className="text-gray-600 text-sm">{hrAdminProfile.company || ""}</span>
+              </div>
             </>
           ) : null}
         </div>
@@ -970,108 +1013,18 @@ export default function AssessmentPage({
                   </button>
                 </div>
                 {/* Modal for Conditional Job Offer Letter */}
-                {showOfferModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-                    <div className="bg-white rounded-lg shadow-lg max-w-7xl w-full p-16 relative max-h-screen overflow-y-auto">
-                      <h2 className="text-2xl font-bold mb-6">Sample Conditional Job Offer Letter</h2>
-                      <div className="prose max-w-none text-gray-900 text-base">
-                        <div className="mb-2">
-                          {editingField === "date" ? (
-                            <input
-                              type="date"
-                              name="date"
-                              value={offerForm.date}
-                              onChange={handleFieldChange}
-                              onBlur={handleFieldBlur}
-                              onKeyDown={handleFieldKeyDown}
-                              autoFocus
-                              className="border rounded px-2 py-1"
-                            />
-                          ) : (
-                            <span className="font-semibold cursor-pointer" onClick={() => handleFieldEdit("date")}>{offerForm.date || "[DATE]"}</span>
-                          )}
-                        </div>
-                        <div className="mb-2">RE: Conditional Offer of Employment & Notice of Conviction Background Check</div>
-                        <div className="mb-2">
-                          Dear {editingField === "applicant" ? (
-                            <input
-                              type="text"
-                              name="applicant"
-                              value={offerForm.applicant}
-                              onChange={handleFieldChange}
-                              onBlur={handleFieldBlur}
-                              onKeyDown={handleFieldKeyDown}
-                              autoFocus
-                              className="border rounded px-2 py-1"
-                            />
-                          ) : (
-                            <span className="font-semibold cursor-pointer" onClick={() => handleFieldEdit("applicant")}>{offerForm.applicant || "[APPLICANT NAME]"}</span>
-                          )}:
-                        </div>
-                        <div className="mb-2">
-                          We are writing to make you a conditional offer of employment for the position of {editingField === "position" ? (
-                            <input
-                              type="text"
-                              name="position"
-                              value={offerForm.position}
-                              onChange={handleFieldChange}
-                              onBlur={handleFieldBlur}
-                              onKeyDown={handleFieldKeyDown}
-                              autoFocus
-                              className="border rounded px-2 py-1"
-                            />
-                          ) : (
-                            <span className="font-semibold cursor-pointer" onClick={() => handleFieldEdit("position")}>{offerForm.position || "[INSERT POSITION]"}</span>
-                          )}. Before this job offer becomes final, we will check your conviction history. The form attached to this letter asks for your permission to check your conviction history and provides more information about that background check.
-                        </div>
-                        <div className="mb-2">
-                          After reviewing your conviction history report, we will either:<br />
-                          a. Notify you that this conditional job offer has become final; or<br />
-                          b. Notify you in writing that we intend to revoke (take back) this job offer because of your conviction history.
-                        </div>
-                        <div className="mb-2">
-                          As required by California state and San Diego County law, we will NOT consider any of the following information:<br />
-                          • Arrest not followed by conviction;<br />
-                          • Referral to or participation in a pretrial or posttrial diversion program; or<br />
-                          • Convictions that have been sealed, dismissed, expunged, or pardoned.
-                        </div>
-                        <div className="mb-2">
-                          As required by the California Fair Chance Act and the San Diego County Fair Chance Ordinance, we will consider whether your conviction history is directly related to the duties of the job we have offered you. We will consider all of the following:<br />
-                          • The nature and seriousness of the offense<br />
-                          • The amount of time since the offense<br />
-                          • The nature of the job
-                        </div>
-                        <div className="mb-2">
-                          We will notify you in writing if we plan to revoke (take back) this job offer after reviewing your conviction history. That decision will be preliminary, and you will have an opportunity to respond before it becomes final. We will identify conviction(s) that concern us, give you a copy of the background check report, as well as a copy of the written individualized assessment of the report and the relevance of your history to the position. We will then hold the position open, except in emergent circumstances to allow you at least 5 business days to provide information about your rehabilitation or mitigating circumstances and/or provide notice that you will provide information showing the conviction history report is inaccurate. Should you provide notice that you will provide information showing the conviction history report is inaccurate, you will have an additional 5 business days to provide that evidence. Should you provide additional information, we will then conduct a written individualized reassessment and decide whether to finalize or take back this conditional job offer. We will notify you of that decision in writing.
-                        </div>
-                        <div className="mb-2">
-                          Sincerely,<br />
-                          {editingField === "employer" ? (
-                            <input
-                              type="text"
-                              name="employer"
-                              value={offerForm.employer}
-                              onChange={handleFieldChange}
-                              onBlur={handleFieldBlur}
-                              onKeyDown={handleFieldKeyDown}
-                              autoFocus
-                              className="border rounded px-2 py-1"
-                            />
-                          ) : (
-                            <span className="font-semibold cursor-pointer" onClick={() => handleFieldEdit("employer")}>{offerForm.employer || "[EMPLOYER]"}</span>
-                          )}
-                        </div>
-                        <div className="mb-2">
-                          Enclosure: Authorization for Background Check (as required by the U.S. Fair Credit Reporting Act and California Investigative Consumer Reporting Agencies Act)
-                        </div>
-                      </div>
-                      <div className="flex justify-end space-x-4 mt-6">
-                        <button type="button" className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold" onClick={() => setShowOfferModal(false)}>Cancel</button>
-                        <button type="button" className={`px-6 py-2 rounded bg-red-500 text-white font-semibold ${!allFieldsFilled ? "opacity-50 cursor-not-allowed" : ""}`} onClick={handleSendOffer} disabled={!allFieldsFilled}>Send</button>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <ConditionalJobOfferLetter
+                  showOfferModal={showOfferModal}
+                  setShowOfferModal={setShowOfferModal}
+                  offerForm={offerForm}
+                  editingField={editingField}
+                  handleFieldEdit={handleFieldEdit}
+                  handleFieldChange={handleFieldChange}
+                  handleFieldBlur={handleFieldBlur}
+                  handleFieldKeyDown={handleFieldKeyDown}
+                  allFieldsFilled={allFieldsFilled}
+                  handleSendOffer={handleSendOffer}
+                />
               </div>
             )}
             {currentStep === 2 && (
@@ -1085,134 +1038,18 @@ export default function AssessmentPage({
                   </button>
                 </div>
                 {/* Modal for Individualized Assessment */}
-                {showAssessmentModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-                    <div className="bg-white rounded-lg shadow-lg max-w-7xl w-full p-16 relative max-h-screen overflow-y-auto">
-                      <h2 className="text-2xl font-bold mb-6">Criminal History Individual Assessment Form</h2>
-                      <div className="flex justify-end mb-4">
-                        <button
-                          className="px-4 py-2 rounded bg-gray-100 text-gray-700 font-semibold mr-2"
-                          onClick={() => setAssessmentPreview(!assessmentPreview)}
-                        >
-                          {assessmentPreview ? 'Edit' : 'Preview'}
-                        </button>
-                        <button
-                          className="px-4 py-2 rounded bg-gray-100 text-gray-700 font-semibold"
-                          onClick={() => setShowAssessmentModal(false)}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                      {!assessmentPreview ? (
-                        <form className="space-y-6">
-                          <div className="grid grid-cols-2 gap-6">
-                            <div>
-                              <label className="block text-sm font-semibold mb-1">Employer Name</label>
-                              <input type="text" name="employer" value={assessmentForm.employer} onChange={handleAssessmentFormChange} className="w-full border rounded px-3 py-2" />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-semibold mb-1">Applicant Name</label>
-                              <input type="text" name="applicant" value={assessmentForm.applicant} onChange={handleAssessmentFormChange} className="w-full border rounded px-3 py-2" />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-semibold mb-1">Position Applied For</label>
-                              <input type="text" name="position" value={assessmentForm.position} onChange={handleAssessmentFormChange} className="w-full border rounded px-3 py-2" />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-semibold mb-1">Date of Conditional Offer</label>
-                              <input type="date" name="offerDate" value={assessmentForm.offerDate} onChange={handleAssessmentFormChange} className="w-full border rounded px-3 py-2" />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-semibold mb-1">Date of Assessment</label>
-                              <input type="date" name="assessmentDate" value={assessmentForm.assessmentDate} onChange={handleAssessmentFormChange} className="w-full border rounded px-3 py-2" />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-semibold mb-1">Date of Criminal History Report</label>
-                              <input type="date" name="reportDate" value={assessmentForm.reportDate} onChange={handleAssessmentFormChange} className="w-full border rounded px-3 py-2" />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-semibold mb-1">Assessment Performed by</label>
-                              <input type="text" name="performedBy" value={assessmentForm.performedBy} onChange={handleAssessmentFormChange} className="w-full border rounded px-3 py-2" />
-                            </div>
-                          </div>
-                          <div>
-                            <label className="block text-sm font-semibold mb-1">1. The specific duties and responsibilities of the job are:</label>
-                            {[0, 1, 2, 3].map((idx) => (
-                              <input
-                                key={idx}
-                                type="text"
-                                value={assessmentForm.duties[idx]}
-                                onChange={e => handleAssessmentArrayChange('duties', idx, e.target.value)}
-                                className="w-full border rounded px-3 py-2 mb-2"
-                                placeholder={`Duty ${String.fromCharCode(97 + idx)}`}
-                              />
-                            ))}
-                          </div>
-                          <div>
-                            <label className="block text-sm font-semibold mb-1">2. Description of the criminal conduct and why the conduct is of concern with respect to the position in question</label>
-                            <textarea name="conduct" value={assessmentForm.conduct} onChange={handleAssessmentFormChange} className="w-full border rounded px-3 py-2 min-h-[60px]" />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-semibold mb-1">3. How long ago did the criminal activity occur:</label>
-                            <input type="text" name="howLongAgo" value={assessmentForm.howLongAgo} onChange={handleAssessmentFormChange} className="w-full border rounded px-3 py-2" />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-semibold mb-1">4. Activities since criminal activity, such as work experience, job training, rehabilitation, community service, etc.:</label>
-                            {[0, 1, 2].map((idx) => (
-                              <input
-                                key={idx}
-                                type="text"
-                                value={assessmentForm.activities[idx]}
-                                onChange={e => handleAssessmentArrayChange('activities', idx, e.target.value)}
-                                className="w-full border rounded px-3 py-2 mb-2"
-                                placeholder={`Activity ${String.fromCharCode(97 + idx)}`}
-                              />
-                            ))}
-                          </div>
-                          <div>
-                            <label className="block text-sm font-semibold mb-1">Based on the factors above, we are considering rescinding our offer of employment because (describe the link between the specific aspects of the applicant's criminal history with risks inherent in the duties of the employment position):</label>
-                            <textarea name="rescindReason" value={assessmentForm.rescindReason} onChange={handleAssessmentFormChange} className="w-full border rounded px-3 py-2 min-h-[60px]" />
-                          </div>
-                          <div className="flex justify-end mt-8">
-                            <button type="button" className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={() => setAssessmentPreview(true)}>
-                              Preview
-                            </button>
-                          </div>
-                        </form>
-                      ) : (
-                        <div className="prose max-w-none text-gray-900 text-base bg-gray-50 p-8 rounded">
-                          <h3 className="font-bold mb-2">INFORMATION</h3>
-                          <div><b>Employer Name:</b> {assessmentForm.employer}</div>
-                          <div><b>Applicant Name:</b> {assessmentForm.applicant}</div>
-                          <div><b>Position Applied For:</b> {assessmentForm.position}</div>
-                          <div><b>Date of Conditional Offer:</b> {assessmentForm.offerDate}</div>
-                          <div><b>Date of Assessment:</b> {assessmentForm.assessmentDate}</div>
-                          <div><b>Date of Criminal History Report:</b> {assessmentForm.reportDate}</div>
-                          <div><b>Assessment Performed by:</b> {assessmentForm.performedBy}</div>
-                          <h3 className="font-bold mt-6 mb-2">ASSESSMENT</h3>
-                          <div><b>1. The specific duties and responsibilities of the job are:</b>
-                            <ul className="list-disc ml-6">
-                              {assessmentForm.duties.map((duty, idx) => duty && <li key={idx}>{duty}</li>)}
-                            </ul>
-                          </div>
-                          <div className="mt-2"><b>2. Description of the criminal conduct and why the conduct is of concern with respect to the position in question:</b><br />{assessmentForm.conduct}</div>
-                          <div className="mt-2"><b>3. How long ago did the criminal activity occur:</b> {assessmentForm.howLongAgo}</div>
-                          <div className="mt-2"><b>4. Activities since criminal activity, such as work experience, job training, rehabilitation, community service, etc.:</b>
-                            <ul className="list-disc ml-6">
-                              {assessmentForm.activities.map((act, idx) => act && <li key={idx}>{act}</li>)}
-                            </ul>
-                          </div>
-                          <div className="mt-2"><b>Based on the factors above, we are considering rescinding our offer of employment because:</b><br />{assessmentForm.rescindReason}</div>
-                          <div className="flex justify-end mt-8">
-                            <button type="button" className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={handleSendAssessment}>
-                              Send
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                <IndividualizedAssessmentModal
+                  showAssessmentModal={showAssessmentModal}
+                  setShowAssessmentModal={setShowAssessmentModal}
+                  assessmentForm={assessmentForm}
+                  handleAssessmentFormChange={handleAssessmentFormChange}
+                  handleAssessmentArrayChange={handleAssessmentArrayChange}
+                  assessmentPreview={assessmentPreview}
+                  setAssessmentPreview={setAssessmentPreview}
+                  handleSendAssessment={handleSendAssessment}
+                  onAddDuty={handleAddDuty}
+                  onAddActivity={handleAddActivity}
+                />
               </>
             )}
             {currentStep === 3 && (
@@ -1230,182 +1067,19 @@ export default function AssessmentPage({
                     </button>
                   </div>
                 </div>
-                {/* Modal for Preliminary Job Offer Revocation */}
-                {showRevocationModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-                    <div className="bg-white rounded-lg shadow-lg max-w-7xl w-full p-16 relative max-h-screen overflow-y-auto">
-                      <h2 className="text-2xl font-bold mb-6">Notice of Preliminary Decision to Revoke Job Offer Because of Conviction History</h2>
-                      <div className="flex justify-end mb-4">
-                        <button
-                          className="px-4 py-2 rounded bg-gray-100 text-gray-700 font-semibold mr-2"
-                          onClick={() => setRevocationPreview(!revocationPreview)}
-                        >
-                          {revocationPreview ? 'Edit' : 'Preview'}
-                        </button>
-                        <button
-                          className="px-4 py-2 rounded bg-gray-100 text-gray-700 font-semibold"
-                          onClick={() => setShowRevocationModal(false)}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                      {!revocationPreview ? (
-                        <form className="space-y-6">
-                          <div className="grid grid-cols-2 gap-6">
-                            <div>
-                              <label className="block text-sm font-semibold mb-1">Date</label>
-                              <input type="date" name="date" value={revocationForm.date} onChange={handleRevocationFormChange} className="w-full border rounded px-3 py-2" />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-semibold mb-1">Applicant Name</label>
-                              <input type="text" name="applicant" value={revocationForm.applicant} onChange={handleRevocationFormChange} className="w-full border rounded px-3 py-2" />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-semibold mb-1">Position</label>
-                              <input type="text" name="position" value={revocationForm.position} onChange={handleRevocationFormChange} className="w-full border rounded px-3 py-2" />
-                            </div>
-                          </div>
-                          <div>
-                            <label className="block text-sm font-semibold mb-1">Convictions that led to decision to revoke offer</label>
-                            {[0, 1, 2].map((idx) => (
-                              <input
-                                key={idx}
-                                type="text"
-                                value={revocationForm.convictions[idx]}
-                                onChange={e => handleRevocationArrayChange(idx, e.target.value)}
-                                className="w-full border rounded px-3 py-2 mb-2"
-                                placeholder={`Conviction ${idx + 1}`}
-                              />
-                            ))}
-                          </div>
-                          <div>
-                            <label className="block text-sm font-semibold mb-1">Number of business days to respond</label>
-                            <input type="number" name="numBusinessDays" value={revocationForm.numBusinessDays} onChange={handleRevocationFormChange} className="w-full border rounded px-3 py-2" />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-semibold mb-1">Contact Name</label>
-                            <input type="text" name="contactName" value={revocationForm.contactName} onChange={handleRevocationFormChange} className="w-full border rounded px-3 py-2" />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-semibold mb-1">Company Name</label>
-                            <input type="text" name="companyName" value={revocationForm.companyName} onChange={handleRevocationFormChange} className="w-full border rounded px-3 py-2" />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-semibold mb-1">Address</label>
-                            <input type="text" name="address" value={revocationForm.address} onChange={handleRevocationFormChange} className="w-full border rounded px-3 py-2" />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-semibold mb-1">Phone</label>
-                            <input type="text" name="phone" value={revocationForm.phone} onChange={handleRevocationFormChange} className="w-full border rounded px-3 py-2" />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-semibold mb-1">Describe why the conduct was considered serious</label>
-                            <textarea name="seriousReason" value={revocationForm.seriousReason} onChange={handleRevocationFormChange} className="w-full border rounded px-3 py-2 min-h-[60px]" />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-semibold mb-1">How long ago the conduct occurred</label>
-                            <input type="text" name="timeSinceConduct" value={revocationForm.timeSinceConduct} onChange={handleRevocationFormChange} className="w-full border rounded px-3 py-2" />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-semibold mb-1">How long ago sentence was completed</label>
-                            <input type="text" name="timeSinceSentence" value={revocationForm.timeSinceSentence} onChange={handleRevocationFormChange} className="w-full border rounded px-3 py-2" />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-semibold mb-1">Job Duties</label>
-                            <textarea name="jobDuties" value={revocationForm.jobDuties} onChange={handleRevocationFormChange} className="w-full border rounded px-3 py-2 min-h-[60px]" />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-semibold mb-1">Reason for revoking job offer based on relevance of conviction history to job duties</label>
-                            <textarea name="fitnessReason" value={revocationForm.fitnessReason} onChange={handleRevocationFormChange} className="w-full border rounded px-3 py-2 min-h-[60px]" />
-                          </div>
-                          <div className="flex justify-end mt-8">
-                            <button type="button" className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={() => setRevocationPreview(true)}>
-                              Preview
-                            </button>
-                          </div>
-                        </form>
-                      ) : (
-                        <div className="prose max-w-none text-gray-900 text-base bg-gray-50 p-8 rounded">
-                          <div className="mb-2">{revocationForm.date}</div>
-                          <div className="mb-2">Re: Preliminary Decision to Revoke Job Offer Because of Conviction History</div>
-                          <div className="mb-2">Dear {revocationForm.applicant}:</div>
-                          <div className="mb-2">After reviewing the results of your conviction history background check, we have made a preliminary (non-final) decision to revoke (take back) our previous job offer for the position of {revocationForm.position} because of the following conviction(s):
-                            <ul className="list-disc ml-6">
-                              {revocationForm.convictions.map((conv, idx) => conv && <li key={idx}>{conv}</li>)}
-                            </ul>
-                            A copy of your conviction history report is attached to this letter. More information about our concerns is included in the "Individualized Assessment" below.
-                          </div>
-                          <div className="mb-2">As prohibited by Local and California law, we have NOT considered any of the following:
-                            <ul className="list-disc ml-6">
-                              <li>Arrest(s) not followed by conviction;</li>
-                              <li>Participation in a pretrial or posttrial diversion program; or</li>
-                              <li>Convictions that have been sealed, dismissed, expunged, or pardoned.</li>
-                            </ul>
-                          </div>
-                          <div className="mb-2"><b>Your Right to Respond:</b><br />
-                            The conditional job you were offered will remain available for five business days so that you may respond to this letter before our decision to revoke the job offer becomes final. Within {revocationForm.numBusinessDays} business days* from when you first receive this notice, you may send us:
-                            <ul className="list-disc ml-6">
-                              <li>Evidence of rehabilitation or mitigating circumstances</li>
-                              <li>Information challenging the accuracy of the conviction history listed above. If, within 5 business days, you notify us that you are challenging the accuracy of the attached conviction history report, you shall have another 5 business days to respond to this notice with evidence of inaccuracy.</li>
-                            </ul>
-                            Please send any additional information you would like us to consider to: {revocationForm.contactName}, {revocationForm.companyName}, {revocationForm.address}, {revocationForm.phone}
-                          </div>
-                          <div className="mb-2"><b>Here are some examples of information you may send us:</b>
-                            <ul className="list-disc ml-6">
-                              <li>Evidence that you were not convicted of one or more of the offenses we listed above or that the conviction record is inaccurate (such as the number of convictions listed);</li>
-                              <li>Facts or circumstances surrounding the offense or conduct, showing that the conduct was less serious than the conviction seems;</li>
-                              <li>The time that has passed since the conduct that led to your conviction(s) or since your release from incarceration;</li>
-                              <li>The length and consistency of employment history or community involvement (such as volunteer activities) before and after the offense(s);</li>
-                              <li>Employment or character references from people who know you, such as letters from teachers, counselors, supervisors, clergy, and probation or parole officers;</li>
-                              <li>Evidence that you attended school, job training, or counseling;</li>
-                              <li>Evidence that you have performed the same type of work since your conviction;</li>
-                              <li>Whether you are bonded under a federal, state, or local bonding program; and</li>
-                              <li>Any other evidence of your rehabilitation efforts, such as (i) evidence showing how much time has passed since release from incarceration without subsequent conviction, (ii) evidence showing your compliance with the terms and conditions of probation or parole, or (iii) evidence showing your present fitness for the job.</li>
-                            </ul>
-                          </div>
-                          <div className="mb-2">We are required to review the information you submit and make another individualized assessment of whether to hire you or revoke the job offer. We will notify you in writing if we make a final decision to revoke the job offer.</div>
-                          <div className="mb-2"><b>Our Individualized Assessment:</b><br />
-                            We have individually assessed whether your conviction history is directly related to the duties of the job we offered you. We considered the following:
-                            <ol className="list-decimal ml-6">
-                              <li>The nature and seriousness of the conduct that led to your conviction(s), which we assessed as follows: {revocationForm.seriousReason}</li>
-                              <li>How long ago the conduct occurred that led to your conviction, which was: {revocationForm.timeSinceConduct} and how long ago you completed your sentence, which was: {revocationForm.timeSinceSentence}.</li>
-                              <li>The specific duties and responsibilities of the position of {revocationForm.position}, which are: {revocationForm.jobDuties}</li>
-                            </ol>
-                            We believe your conviction record lessens your fitness/ability to perform the job duties because: {revocationForm.fitnessReason}
-                          </div>
-                          <div className="mb-2"><b>Your Right to File a Complaint:</b><br />
-                            If you believe your rights under the California Fair Chance Act or the San Diego County Fair Chance Ordinance have been violated during this job application process, you have the right to file a complaint with the California Civil Rights Department (CRD) and/or the San Diego County Office of Labor Standards and Enforcement (OLSE). There are several ways to file a complaint:
-                            <ul className="list-disc ml-6">
-                              <li>California CRD:
-                                <ul className="list-disc ml-6">
-                                  <li>File a complaint online at the following link: ccrs.calcivilrights.ca.gov/s/</li>
-                                  <li>Download an intake form at the following link: calcivilrights.ca.gov/complaintprocess/filebymail/ and email it to contact.center@calcivilrights.gov or mail it to 2218 Kausen Drive, Suite 100, Elk Grove, CA 95758</li>
-                                  <li>Visit a CRD office. Click the following link for office locations: calcivilrights.ca.gov/locations/</li>
-                                  <li>Call California CRD at (800) 884-1684</li>
-                                </ul>
-                              </li>
-                              <li>San Diego County OLSE:
-                                <ul className="list-disc ml-6">
-                                  <li>File a complaint online at the following link: www.sandiegocounty.gov/content/sdc/OLSE/file-a-complaint.html</li>
-                                  <li>Visit San Diego County's Office of Labor Standards and Enforcement's office at 1600 Pacific Highway, Room 452, San Diego, CA 92101</li>
-                                  <li>Call San Diego County OLSE at 619-531-5129</li>
-                                </ul>
-                              </li>
-                            </ul>
-                          </div>
-                          <div className="mb-2">Sincerely,<br />{revocationForm.contactName}<br />{revocationForm.companyName}<br />{revocationForm.address}<br />{revocationForm.phone}</div>
-                          <div className="mb-2">Enclosure: Copy of conviction history report</div>
-                          <div className="mb-2 text-xs">* The applicant must be allowed at least 5 business days to respond. If the applicant indicates their intent to provide such evidence, they must be given an additional 5 business days to gather and deliver the information</div>
-                          <div className="flex justify-end mt-8">
-                            <button type="button" className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={handleSendRevocation}>
-                              Send
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                {/* Preliminary Revocation Modal */}
+                <PreliminaryRevocationModal
+                  showRevocationModal={showRevocationModal}
+                  setShowRevocationModal={setShowRevocationModal}
+                  revocationForm={revocationForm}
+                  handleRevocationFormChange={handleRevocationFormChange}
+                  handleRevocationArrayChange={handleRevocationArrayChange}
+                  revocationPreview={revocationPreview}
+                  setRevocationPreview={setRevocationPreview}
+                  handleSendRevocation={handleSendRevocation}
+                  onBusinessDaysSet={handleBusinessDaysSet}
+                  onAddConviction={handleAddConviction}
+                />
               </>
             )}
             {currentStep === 4 && !showReassessmentSplit && (
@@ -1418,7 +1092,7 @@ export default function AssessmentPage({
                     <h2 className="text-2xl font-bold text-center mb-2">Preliminary Decision Notice Sent Successfully</h2>
                     <div className="text-gray-600 text-center mb-4">Time Remaining for Response:</div>
                     <div className="w-full flex flex-col items-center">
-                      <div className="bg-blue-50 rounded-lg px-12 py-4 mb-4">
+                      <div className="flex flex-col items-center bg-blue-50 rounded-lg px-12 py-4 mb-4">
                         <span className="text-4xl font-bold text-blue-600">{businessDaysRemaining}</span>
                         <div className="text-blue-600 text-lg">Business Days Remaining</div>
                       </div>
@@ -1433,8 +1107,8 @@ export default function AssessmentPage({
                       <li>After reviewing their response, you must make a final decision</li>
                     </ul>
                   </div>
-                  <div className="flex flex-row gap-4 mt-2">
-                    <button className="px-8 py-3 rounded text-lg font-semibold bg-blue-600 text-white hover:bg-blue-700" onClick={handleProceedWithHire}>Proceed with hire</button>
+                  <div className="flex flex-row  gap-4 mt-2">
+                    <button className="px-8 py-3 rounded text-lg font-semibold bg-green-600 text-white hover:bg-green-700" onClick={handleProceedWithHire}>Proceed with hire</button>
                     <button className="px-8 py-3 rounded text-lg font-semibold bg-red-500 text-white hover:bg-red-600" onClick={() => setShowReassessmentInfoModal(true)}>Begin Individualized Reassessment</button>
                   </div>
                 </div>
