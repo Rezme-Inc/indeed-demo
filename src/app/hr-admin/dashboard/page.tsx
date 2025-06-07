@@ -21,6 +21,7 @@ interface User {
     final_revocation_notice: boolean;
     decision: boolean;
   };
+  final_decision?: string;
 }
 
 interface HRAdmin {
@@ -48,6 +49,64 @@ function generateSecureCode(): string {
   const code = (randomHex + timestamp).slice(0, 8);
   console.log("Generated invitation code:", code);
   return code;
+}
+
+// Hardcoded ordered steps
+const ASSESSMENT_STEPS = [
+  { key: 'conditional_job_offer', label: 'Conditional Job Offers' },
+  { key: 'individualized_assessment', label: 'Written Individualized Assessment' },
+  { key: 'preliminary_job_offer_revocation', label: 'Preliminary Job Offer Revocation' },
+  { key: 'individualized_reassessment', label: 'Individual Reassessment' },
+  { key: 'final_revocation_notice', label: 'Final Revocation Notice' },
+];
+
+// Helper to get current assessment step index (0-based)
+function getCurrentAssessmentStep(user: any): number {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem(`assessmentCurrentStep_${user.id}`);
+    if (saved && !isNaN(Number(saved))) {
+      return Number(saved) - 1; // localStorage is 1-based
+    }
+  }
+  return 0;
+}
+
+function ComplianceStepDisplay({ user }: { user: any }) {
+  const [expanded, setExpanded] = useState(false);
+  const currentStepIdx = getCurrentAssessmentStep(user);
+  const completedSteps = ASSESSMENT_STEPS.slice(0, currentStepIdx);
+  const currentStep = ASSESSMENT_STEPS[currentStepIdx];
+
+  return (
+    <div>
+      <div className="flex items-center gap-2">
+        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+          {currentStep ? currentStep.label : "-"}
+        </span>
+        <button
+          type="button"
+          className="text-xs text-blue-600 underline focus:outline-none"
+          onClick={() => setExpanded(e => !e)}
+        >
+          {expanded ? "Hide" : "Show Previous"}
+        </button>
+      </div>
+      {expanded && (
+        <div className="mt-2 flex flex-col gap-1">
+          {completedSteps.length === 0 ? (
+            <span className="text-xs text-gray-400">No previous steps</span>
+          ) : (
+            completedSteps.map(s => (
+              <span key={s.key} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                {s.label}
+              </span>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function HRAdminDashboard() {
@@ -239,7 +298,7 @@ ${hrAdmin?.company}`;
   const handleSendInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     setSendingInvite(true);
-    
+
     try {
       // For now, we'll just show a success message
       // In the future, this could integrate with an email service
@@ -259,38 +318,6 @@ ${hrAdmin?.company}`;
     } finally {
       setSendingInvite(false);
     }
-  };
-
-  const renderComplianceSteps = (user: User) => {
-    const steps = [
-      { key: 'conditional_job_offer', label: 'Conditional Job Offer' },
-      { key: 'individualized_assessment', label: 'Individualized Assessment' },
-      { key: 'preliminary_job_offer_revocation', label: 'Preliminary Job Offer Revocation' },
-      { key: 'individualized_reassessment', label: 'Individualized Reassessment' },
-      { key: 'final_revocation_notice', label: 'Final Revocation Notice' },
-      { key: 'decision', label: 'Decision' }
-    ];
-
-    return (
-      <div className="flex flex-wrap gap-1">
-        {steps.map((step) => {
-          const isCompleted = user.compliance_steps?.[step.key as keyof typeof user.compliance_steps] || false;
-          return (
-            <span
-              key={step.key}
-              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                isCompleted
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-gray-100 text-gray-500'
-              }`}
-              title={step.label}
-            >
-              {step.label}
-            </span>
-          );
-        })}
-      </div>
-    );
   };
 
   return (
@@ -393,6 +420,9 @@ ${hrAdmin?.company}`;
                   RR Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
+                  FINAL DECISION
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
                   Access Granted
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
@@ -414,14 +444,16 @@ ${hrAdmin?.company}`;
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        user.rr_completed
-                          ? "bg-green-100 text-green-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
+                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.rr_completed
+                        ? "bg-green-100 text-green-800"
+                        : "bg-yellow-100 text-yellow-800"
+                        }`}
                     >
                       {user.rr_completed ? "Completed" : "In Progress"}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-900">
+                    {user.final_decision || "-"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-900">
                     {user.granted_at
@@ -435,15 +467,41 @@ ${hrAdmin?.company}`;
                     >
                       View Profile
                     </button>
-                    <button
-                      onClick={() => startAssessment(user.id)}
-                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-                    >
-                      Begin Assessment
-                    </button>
+                    {/* Determine current step index for action button */}
+                    {(() => {
+                      const currentStepIdx = getCurrentAssessmentStep(user);
+                      if (user.final_decision === 'Hired') {
+                        return (
+                          <button
+                            onClick={() => startAssessment(user.id)}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                          >
+                            View Assessment
+                          </button>
+                        );
+                      } else if (currentStepIdx > 0) {
+                        return (
+                          <button
+                            onClick={() => startAssessment(user.id)}
+                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                          >
+                            Continue Assessment
+                          </button>
+                        );
+                      } else {
+                        return (
+                          <button
+                            onClick={() => startAssessment(user.id)}
+                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                          >
+                            Begin Assessment
+                          </button>
+                        );
+                      }
+                    })()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {renderComplianceSteps(user)}
+                    <ComplianceStepDisplay user={user} />
                   </td>
                 </tr>
               ))}
