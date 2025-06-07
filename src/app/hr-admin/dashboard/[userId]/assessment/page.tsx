@@ -15,6 +15,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { supabase } from "@/lib/supabase";
 import { sendOfferLetterEmail } from '@/app/restorative-record/utils/sendEmail';
+import AssessmentProgressBar from "@/app/hr-admin/dashboard/[userId]/assessment/componenets/AssessmentProgressBar";
 
 /**
  * HR Admin Assessment Page with Form Persistence
@@ -56,6 +57,7 @@ export default function AssessmentPage({
 }: {
   params: { userId: string };
 }) {
+  const [isLoading, setIsLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState("");
@@ -192,123 +194,6 @@ export default function AssessmentPage({
   const [hrAdminProfile, setHrAdminProfile] = useState<any>(null);
   const [headerLoading, setHeaderLoading] = useState(true);
 
-  // Load saved forms from localStorage on mount
-  useEffect(() => {
-    const candidateId = params.userId;
-
-    // Load saved forms from localStorage
-    const savedOfferLetterData = localStorage.getItem(`offerLetter_${candidateId}`);
-    if (savedOfferLetterData) {
-      setSavedOfferLetter(JSON.parse(savedOfferLetterData));
-    }
-
-    const savedAssessmentData = localStorage.getItem(`assessment_${candidateId}`);
-    if (savedAssessmentData) {
-      setSavedAssessment(JSON.parse(savedAssessmentData));
-    }
-
-    const savedRevocationNoticeData = localStorage.getItem(`revocationNotice_${candidateId}`);
-    if (savedRevocationNoticeData) {
-      setSavedRevocationNotice(JSON.parse(savedRevocationNoticeData));
-    }
-
-    const savedReassessmentData = localStorage.getItem(`reassessment_${candidateId}`);
-    if (savedReassessmentData) {
-      setSavedReassessment(JSON.parse(savedReassessmentData));
-    }
-
-    const savedFinalRevocationNoticeData = localStorage.getItem(`finalRevocationNotice_${candidateId}`);
-    if (savedFinalRevocationNoticeData) {
-      setSavedFinalRevocationNotice(JSON.parse(savedFinalRevocationNoticeData));
-    }
-
-    // Load assessment progress from localStorage
-    const savedAnswers = localStorage.getItem(`assessmentAnswers_${candidateId}`);
-    if (savedAnswers) {
-      setAnswers(JSON.parse(savedAnswers));
-    }
-
-    const savedCurrentStep = localStorage.getItem(`assessmentCurrentStep_${candidateId}`);
-    if (savedCurrentStep) {
-      setCurrentStep(parseInt(savedCurrentStep, 10));
-    }
-
-    const savedNotes = localStorage.getItem(`assessmentNotes_${candidateId}`);
-    if (savedNotes) {
-      setNotes(savedNotes);
-    }
-  }, [params.userId]);
-
-  // Save forms to localStorage whenever they change
-  useEffect(() => {
-    if (savedOfferLetter) {
-      localStorage.setItem(`offerLetter_${params.userId}`, JSON.stringify(savedOfferLetter));
-    }
-  }, [savedOfferLetter, params.userId]);
-
-  useEffect(() => {
-    if (savedAssessment) {
-      localStorage.setItem(`assessment_${params.userId}`, JSON.stringify(savedAssessment));
-    }
-  }, [savedAssessment, params.userId]);
-
-  useEffect(() => {
-    if (savedRevocationNotice) {
-      localStorage.setItem(`revocationNotice_${params.userId}`, JSON.stringify(savedRevocationNotice));
-    }
-  }, [savedRevocationNotice, params.userId]);
-
-  useEffect(() => {
-    if (savedReassessment) {
-      localStorage.setItem(`reassessment_${params.userId}`, JSON.stringify(savedReassessment));
-    }
-  }, [savedReassessment, params.userId]);
-
-  useEffect(() => {
-    if (savedFinalRevocationNotice) {
-      localStorage.setItem(`finalRevocationNotice_${params.userId}`, JSON.stringify(savedFinalRevocationNotice));
-    }
-  }, [savedFinalRevocationNotice, params.userId]);
-
-  // Save assessment progress to localStorage whenever it changes
-  useEffect(() => {
-    if (Object.keys(answers).length > 0) {
-      localStorage.setItem(`assessmentAnswers_${params.userId}`, JSON.stringify(answers));
-    }
-  }, [answers, params.userId]);
-
-  useEffect(() => {
-    localStorage.setItem(`assessmentCurrentStep_${params.userId}`, currentStep.toString());
-  }, [currentStep, params.userId]);
-
-  useEffect(() => {
-    if (notes) {
-      localStorage.setItem(`assessmentNotes_${params.userId}`, notes);
-    }
-  }, [notes, params.userId]);
-
-  useEffect(() => {
-    async function fetchHRAdminProfile() {
-      setHeaderLoading(true);
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
-        const { data, error } = await supabase
-          .from("hr_admin_profiles")
-          .select("first_name, last_name, company")
-          .eq("id", session.user.id)
-          .single();
-        if (error) throw error;
-        setHrAdminProfile(data);
-      } catch (err) {
-        setHrAdminProfile(null);
-      } finally {
-        setHeaderLoading(false);
-      }
-    }
-    fetchHRAdminProfile();
-  }, []);
-
   const questions: AssessmentQuestion[] = [
     {
       id: "conditional_offer",
@@ -430,26 +315,143 @@ export default function AssessmentPage({
   ];
 
   const handleAnswer = (questionId: string, answer: string) => {
-    console.log("Setting answer:", questionId, answer);
-    setAnswers((prev) => {
-      const newAnswers = { ...prev, [questionId]: answer };
-      console.log("New answers state:", newAnswers);
-      return newAnswers;
-    });
+    setAnswers(prev => ({
+      ...prev,
+      [questionId]: answer
+    }));
   };
 
   const handleNext = () => {
-    console.log("Moving to next step from:", currentStep);
-    if (currentStep < questions.length) {
-      setCurrentStep(currentStep + 1);
-    }
+    setCurrentStep(prev => prev + 1);
   };
 
   const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
+    setCurrentStep(prev => prev - 1);
   };
+
+  // Single effect to handle all localStorage saves
+  useEffect(() => {
+    if (!isLoading) {  // Only save after initial load
+      const candidateId = params.userId;
+
+      // Save current step
+      if (currentStep > 0) {
+        localStorage.setItem(`assessmentCurrentStep_${candidateId}`, currentStep.toString());
+      }
+
+      // Save answers if there are any
+      if (Object.keys(answers).length > 0) {
+        localStorage.setItem(`assessmentAnswers_${candidateId}`, JSON.stringify(answers));
+      }
+
+      // Save notes if there are any
+      if (notes) {
+        localStorage.setItem(`assessmentNotes_${candidateId}`, notes);
+      }
+    }
+  }, [currentStep, answers, notes, params.userId, isLoading]);
+
+  // Save forms to localStorage whenever they change
+  useEffect(() => {
+    if (!isLoading && savedOfferLetter) {
+      localStorage.setItem(`offerLetter_${params.userId}`, JSON.stringify(savedOfferLetter));
+    }
+  }, [savedOfferLetter, params.userId, isLoading]);
+
+  useEffect(() => {
+    if (!isLoading && savedAssessment) {
+      localStorage.setItem(`assessment_${params.userId}`, JSON.stringify(savedAssessment));
+    }
+  }, [savedAssessment, params.userId, isLoading]);
+
+  useEffect(() => {
+    if (!isLoading && savedRevocationNotice) {
+      localStorage.setItem(`revocationNotice_${params.userId}`, JSON.stringify(savedRevocationNotice));
+    }
+  }, [savedRevocationNotice, params.userId, isLoading]);
+
+  useEffect(() => {
+    if (!isLoading && savedReassessment) {
+      localStorage.setItem(`reassessment_${params.userId}`, JSON.stringify(savedReassessment));
+    }
+  }, [savedReassessment, params.userId, isLoading]);
+
+  useEffect(() => {
+    if (!isLoading && savedFinalRevocationNotice) {
+      localStorage.setItem(`finalRevocationNotice_${params.userId}`, JSON.stringify(savedFinalRevocationNotice));
+    }
+  }, [savedFinalRevocationNotice, params.userId, isLoading]);
+
+  // Fetch HR Admin Profile
+  useEffect(() => {
+    async function fetchHRAdminProfile() {
+      setHeaderLoading(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const { data, error } = await supabase
+          .from("hr_admin_profiles")
+          .select("first_name, last_name, company")
+          .eq("id", session.user.id)
+          .single();
+        if (error) throw error;
+        setHrAdminProfile(data);
+      } catch (err) {
+        setHrAdminProfile(null);
+      } finally {
+        setHeaderLoading(false);
+      }
+    }
+    fetchHRAdminProfile();
+  }, []);
+
+  // Load saved forms and progress from localStorage on mount
+  useEffect(() => {
+    const candidateId = params.userId;
+
+    // Load progress tracking from localStorage first
+    const savedStep = localStorage.getItem(`assessmentCurrentStep_${candidateId}`);
+    const savedAnswersData = localStorage.getItem(`assessmentAnswers_${candidateId}`);
+    const savedNotesData = localStorage.getItem(`assessmentNotes_${candidateId}`);
+
+    if (savedStep) {
+      setCurrentStep(parseInt(savedStep, 10));
+    }
+    if (savedAnswersData) {
+      setAnswers(JSON.parse(savedAnswersData));
+    }
+    if (savedNotesData) {
+      setNotes(savedNotesData);
+    }
+
+    // Load other saved forms
+    const savedOfferLetterData = localStorage.getItem(`offerLetter_${candidateId}`);
+    if (savedOfferLetterData) {
+      setSavedOfferLetter(JSON.parse(savedOfferLetterData));
+    }
+
+    const savedAssessmentData = localStorage.getItem(`assessment_${candidateId}`);
+    if (savedAssessmentData) {
+      setSavedAssessment(JSON.parse(savedAssessmentData));
+    }
+
+    const savedRevocationNoticeData = localStorage.getItem(`revocationNotice_${candidateId}`);
+    if (savedRevocationNoticeData) {
+      setSavedRevocationNotice(JSON.parse(savedRevocationNoticeData));
+    }
+
+    const savedReassessmentData = localStorage.getItem(`reassessment_${candidateId}`);
+    if (savedReassessmentData) {
+      setSavedReassessment(JSON.parse(savedReassessmentData));
+    }
+
+    const savedFinalRevocationNoticeData = localStorage.getItem(`finalRevocationNotice_${candidateId}`);
+    if (savedFinalRevocationNoticeData) {
+      setSavedFinalRevocationNotice(JSON.parse(savedFinalRevocationNoticeData));
+    }
+
+    setIsLoading(false);
+  }, [params.userId]);
 
   const clearAssessmentProgress = () => {
     // Clear assessment progress from localStorage
@@ -532,9 +534,9 @@ export default function AssessmentPage({
   const allFieldsFilled = offerForm.date && offerForm.applicant && offerForm.position && offerForm.employer;
 
   const currentQuestion = questions[currentStep - 1];
-  console.log("Current question:", currentQuestion);
-  console.log("Current step:", currentStep);
-  console.log("Current answers:", answers);
+  // console.log("Current question:", currentQuestion);
+  // console.log("Current step:", currentStep);
+  // console.log("Current answers:", answers);
 
   const showQuestion =
     !currentQuestion.dependsOn ||
@@ -798,6 +800,15 @@ export default function AssessmentPage({
     setShowOfferLetterModal(true);
   };
 
+  // Modify your render logic to handle loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       {/* Sleek Sticky Header */}
@@ -879,31 +890,7 @@ export default function AssessmentPage({
           <div className="lg:col-span-1 lg:-ml-16">
             <div className="bg-white rounded-lg shadow p-6 mb-8">
               <h2 className="text-xl font-bold mb-6">Assessment Progress</h2>
-              <div className="space-y-4">
-                {progressSteps.map((step, idx) => (
-                  <div
-                    key={step}
-                    className={`flex items-center px-3 py-2 rounded border transition-colors ${currentStep - 1 === idx
-                      ? "border-red-500 bg-red-50"
-                      : "border-gray-200 bg-white"
-                      }`}
-                  >
-                    <span
-                      className={`mr-2 h-4 w-4 flex items-center justify-center rounded-full border-2 ${currentStep - 1 === idx
-                        ? "border-red-500 bg-red-500 text-white"
-                        : "border-gray-300 bg-white text-gray-400"
-                        }`}
-                    >
-                      {currentStep - 1 > idx ? (
-                        <svg className="h-2 w-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                      ) : (
-                        <span className="block h-1 w-1 rounded-full bg-current"></span>
-                      )}
-                    </span>
-                    <span className={`font-medium text-sm ${currentStep - 1 === idx ? "text-red-600" : "text-gray-800"}`}>{step}</span>
-                  </div>
-                ))}
-              </div>
+              <AssessmentProgressBar progressSteps={progressSteps} currentStep={currentStep} />
             </div>
 
             {/* San Diego Fair Chance Ordinance Legal Overview Card */}

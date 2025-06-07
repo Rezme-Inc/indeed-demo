@@ -88,7 +88,7 @@ export const sendOfferLetterEmail = async (offerData: any) => {
   `;
 
   return sendEmail({
-    to: 'jodi@rezme.app', // TODO: change to candidate email
+    to: 'jennycjx@stanford.edu', // TODO: change to candidate email
     subject: `Conditional Job Offer Letter - ${position || 'Position'}`,
     html: emailHtml,
   });
