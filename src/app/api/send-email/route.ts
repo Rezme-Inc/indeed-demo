@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
     const msg = {
       to,
-      from: from || 'jenny@rezme.app', //todo: change the default to jodi's email?
+      from: from || 'noreply@sandiegocounty.rezme.app',
       subject,
       html,
     };

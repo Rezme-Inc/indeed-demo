@@ -15,7 +15,7 @@ interface PreliminaryRevocationModalProps {
 
 function isRevocationFormComplete(revocationForm: any) {
   const requiredFields = [
-    'date', 'applicant', 'position', 'numBusinessDays', 'contactName', 'companyName', 'address', 'phone', 'seriousReason', 'timeSinceConduct', 'timeSinceSentence', 'jobDuties', 'fitnessReason'
+    'date', 'applicant', 'position', 'numBusinessDays', 'contactName', 'company', 'address', 'phone', 'seriousReason', 'timeSinceConduct', 'timeSinceSentence', 'jobDuties', 'fitnessReason'
   ];
   for (const field of requiredFields) {
     if (!revocationForm[field] || revocationForm[field].toString().trim() === "") return false;
@@ -134,7 +134,7 @@ const PreliminaryRevocationModal: React.FC<PreliminaryRevocationModalProps> = ({
             </div>
             <div>
               <label className="block text-sm font-semibold mb-1">Company Name</label>
-              <input type="text" name="companyName" value={revocationForm.companyName} onChange={handleRevocationFormChange} className="w-full border rounded px-3 py-2" />
+              <input type="text" name="company" value={revocationForm.company} onChange={handleRevocationFormChange} className="w-full border rounded px-3 py-2" />
             </div>
             <div>
               <label className="block text-sm font-semibold mb-1">Address</label>
@@ -201,7 +201,7 @@ const PreliminaryRevocationModal: React.FC<PreliminaryRevocationModalProps> = ({
                 <li>Evidence of rehabilitation or mitigating circumstances</li>
                 <li>Information challenging the accuracy of the conviction history listed above. If, within 5 business days, you notify us that you are challenging the accuracy of the attached conviction history report, you shall have another 5 business days to respond to this notice with evidence of inaccuracy.</li>
               </ul>
-              Please send any additional information you would like us to consider to: {revocationForm.contactName}, {revocationForm.companyName}, {revocationForm.address}, {revocationForm.phone}
+              Please send any additional information you would like us to consider to: {revocationForm.contactName}, {revocationForm.company}, {revocationForm.address}, {revocationForm.phone}
             </div>
             <div className="mb-2"><b>Here are some examples of information you may send us:</b>
               <ul className="list-disc ml-6">
@@ -246,7 +246,7 @@ const PreliminaryRevocationModal: React.FC<PreliminaryRevocationModalProps> = ({
                 </li>
               </ul>
             </div>
-            <div className="mb-2">Sincerely,<br />{revocationForm.contactName}<br />{revocationForm.companyName}<br />{revocationForm.address}<br />{revocationForm.phone}</div>
+            <div className="mb-2">Sincerely,<br />{revocationForm.contactName}<br />{revocationForm.company}<br />{revocationForm.address}<br />{revocationForm.phone}</div>
             <div className="mb-2">Enclosure: Copy of conviction history report</div>
             <div className="mb-2 text-xs">* The applicant must be allowed at least 5 business days to respond. If the applicant indicates their intent to provide such evidence, they must be given an additional 5 business days to gather and deliver the information</div>
             <div className="flex justify-end mt-8 items-center gap-4">

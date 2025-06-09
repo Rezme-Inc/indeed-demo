@@ -33,6 +33,9 @@ import ConditionalJobOfferLetter from "./components/ConditionalJobOfferLetter";
 import IndividualizedAssessmentModal from "./components/IndividualizedAssessmentModal";
 import PreliminaryRevocationModal from './components/PreliminaryRevocationModal';
 import PrintPreviewButton from './components/PrintButton';
+import { sendAssessmentEmail, getCandidateEmail, sendRevocationEmail, sendReassessmentEmail, sendFinalRevocationEmail } from '@/app/restorative-record/utils/sendEmail';
+import FinalRevocationModal from './components/FinalRevocationModal';
+import CriticalInfoTabs from './components/CriticalInfoTabs';
 
 /**
  * HR Admin Assessment Page with Form Persistence
@@ -75,7 +78,7 @@ export default function AssessmentPage({
   params: { userId: string };
 }) {
   const [isLoading, setIsLoading] = useState(true);
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState<number>(1);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState("");
   const [showOfferModal, setShowOfferModal] = useState(false);
@@ -642,20 +645,15 @@ export default function AssessmentPage({
     };
 
     try {
-      const { data: candidateEmail, error: candidateEmailError } = await supabase
-        .from("user_profiles")
-        .select("email")
-        .eq("id", params.userId)
-        .single();
-
-      if (candidateEmailError) {
-        console.error("Error fetching candidate email:", candidateEmailError);
+      const candidateEmail = await getCandidateEmail(params.userId);
+      if (!candidateEmail) {
+        console.error("Error fetching candidate email");
         return;
       }
 
       const offerLetterDataWithEmail = {
         ...offerLetterData,
-        candidateEmail: candidateEmail.email
+        candidateEmail
       };
 
       // Send the offer letter email
@@ -683,7 +681,7 @@ export default function AssessmentPage({
       [field]: assessmentForm[field].map((item: string, i: number) => (i === idx ? value : item)),
     });
   };
-  const handleSendAssessment = () => {
+  const handleSendAssessment = async () => {
     // Save the assessment with metadata
     const assessmentData = {
       ...assessmentForm,
@@ -692,12 +690,25 @@ export default function AssessmentPage({
       hrAdminName: hrAdminProfile ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}` : '',
       companyName: hrAdminProfile?.company || '',
     };
-    setSavedAssessment(assessmentData);
-    setShowAssessmentModal(false);
-    setAssessmentPreview(false);
-    setInitialAssessmentResults({ ...assessmentForm });
-    setCurrentStep((prev) => prev + 1);
-    // You can add logic to send/store the assessment here
+
+    try {
+      const candidateEmail = await getCandidateEmail(params.userId);
+      if (!candidateEmail) {
+        console.error("Error fetching candidate email");
+        return;
+      }
+
+      // Use the helper to send the assessment email
+      await sendAssessmentEmail(assessmentData, candidateEmail);
+
+      setSavedAssessment(assessmentData);
+      setShowAssessmentModal(false);
+      setAssessmentPreview(false);
+      setInitialAssessmentResults({ ...assessmentForm });
+      setCurrentStep((prev) => prev + 1);
+    } catch (error) {
+      console.error("Error in handleSendAssessment:", error);
+    }
   };
 
   const handleRevocationFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -738,8 +749,8 @@ export default function AssessmentPage({
 
   // const businessDaysRemaining = revocationSentDate ? getBusinessDaysRemaining(revocationSentDate) : 5;
 
-  const handleSendRevocation = () => {
-    // Save the revocation notice with metadata
+  const handleSendRevocation = async () => {
+    // Save the revocation with metadata
     const revocationData = {
       ...revocationForm,
       sentAt: new Date().toISOString(),
@@ -747,13 +758,24 @@ export default function AssessmentPage({
       hrAdminName: hrAdminProfile ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}` : '',
       companyName: hrAdminProfile?.company || '',
     };
-    setSavedRevocationNotice(revocationData);
 
-    setShowRevocationModal(false);
-    setRevocationPreview(false);
-    setRevocationSentDate(new Date());
-    setCurrentStep((prev) => prev + 1);
-    // You can add logic to send/store the revocation here
+    try {
+      const candidateEmail = await getCandidateEmail(params.userId);
+      if (!candidateEmail) {
+        console.error("Error fetching candidate email");
+        return;
+      }
+
+      await sendRevocationEmail(revocationData, candidateEmail);
+
+      setSavedRevocationNotice(revocationData);
+      setShowRevocationModal(false);
+      setRevocationPreview(false);
+      setRevocationSentDate(new Date());
+      setCurrentStep((prev) => prev + 1);
+    } catch (error) {
+      console.error("Error in handleSendRevocation:", error);
+    }
   };
 
   const handleProceedWithHire = () => {
@@ -764,27 +786,34 @@ export default function AssessmentPage({
   const handleReassessmentFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setReassessmentForm({ ...reassessmentForm, [e.target.name]: e.target.value });
   };
-  const handleSendReassessment = () => {
+  const handleSendReassessment = async () => {
     // Save the reassessment with metadata
     const reassessmentData = {
       ...reassessmentForm,
-      decision: reassessmentDecision,
-      extendReason: reassessmentDecision === 'extend' ? extendReason : '',
       sentAt: new Date().toISOString(),
       candidateId: params.userId,
       hrAdminName: hrAdminProfile ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}` : '',
       companyName: hrAdminProfile?.company || '',
     };
-    setSavedReassessment(reassessmentData);
 
-    if (reassessmentDecision === 'extend') {
-      setShowExtendSuccessModal(true);
-    } else {
-      setShowReassessmentSplit(false);
+    try {
+      const candidateEmail = await getCandidateEmail(params.userId);
+      if (!candidateEmail) {
+        console.error("Error fetching candidate email");
+        return;
+      }
+
+      await sendReassessmentEmail(reassessmentData, candidateEmail);
+
+      setSavedReassessment(reassessmentData);
+      setShowReassessmentInfoModal(false);
       setReassessmentPreview(false);
+      setShowReassessmentSplit(false);
+      setInitialAssessmentResults({ ...reassessmentForm });
       setCurrentStep((prev) => prev + 1);
+    } catch (error) {
+      console.error("Error in handleSendReassessment:", error);
     }
-    // You can add logic to send/store the reassessment here
   };
 
   // Fetch candidate data when reassessment split is shown
@@ -814,8 +843,8 @@ export default function AssessmentPage({
 
   const router = useRouter();
 
-  const handleSendFinalRevocation = () => {
-    // Save the final revocation notice with metadata
+  const handleSendFinalRevocation = async () => {
+    // Save the final revocation with metadata
     const finalRevocationData = {
       ...finalRevocationForm,
       sentAt: new Date().toISOString(),
@@ -823,11 +852,24 @@ export default function AssessmentPage({
       hrAdminName: hrAdminProfile ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}` : '',
       companyName: hrAdminProfile?.company || '',
     };
-    setSavedFinalRevocationNotice(finalRevocationData);
 
-    setShowFinalRevocationModal(false);
-    setFinalRevocationPreview(false);
-    setShowFinalRevocationSuccessModal(true);
+    try {
+      const candidateEmail = await getCandidateEmail(params.userId);
+      if (!candidateEmail) {
+        console.error("Error fetching candidate email");
+        return;
+      }
+
+      await sendFinalRevocationEmail(finalRevocationData, candidateEmail);
+
+      setSavedFinalRevocationNotice(finalRevocationData);
+      setShowFinalRevocationModal(false);
+      setFinalRevocationPreview(false);
+      setShowFinalRevocationSuccessModal(true);
+      setCurrentStep((prev) => prev + 1);
+    } catch (error) {
+      console.error("Error in handleSendFinalRevocation:", error);
+    }
   };
 
   // Function to fetch candidate's share token for iframe
@@ -1849,375 +1891,52 @@ export default function AssessmentPage({
                   </div>
                 </div>
                 {/* Final Revocation Notice Modal */}
-                {showFinalRevocationModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-                    <div className="bg-white rounded-xl shadow-lg max-w-6xl w-full p-16 relative max-h-screen overflow-y-auto border border-gray-200">
-                      <h2 className="text-2xl font-bold mb-6 text-center text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Notice of Final Decision to Revoke Job Offer Because of Conviction History</h2>
-                      {!finalRevocationPreview ? (
-                        <form className="space-y-10" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                          <div className="grid grid-cols-2 gap-6">
-                            <div>
-                              <label className="block text-sm font-semibold mb-1 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Date</label>
-                              <input type="date" name="date" value={finalRevocationForm.date} onChange={handleFinalRevocationFormChange} className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500" style={{ fontFamily: 'Poppins, sans-serif' }} />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-semibold mb-1 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Applicant Name</label>
-                              <input type="text" name="applicant" value={finalRevocationForm.applicant} onChange={handleFinalRevocationFormChange} className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500" style={{ fontFamily: 'Poppins, sans-serif' }} />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-semibold mb-1 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Date of Notice</label>
-                              <input type="date" name="dateOfNotice" value={finalRevocationForm.dateOfNotice} onChange={handleFinalRevocationFormChange} className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500" style={{ fontFamily: 'Poppins, sans-serif' }} />
-                            </div>
-                          </div>
-                          <div className="mb-6 font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Re: Final Decision to Revoke Job Offer Because of Conviction History</div>
-                          <div className="mb-6 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Dear {finalRevocationForm.applicant || '[APPLICANT NAME]'}:</div>
-                          <div className="mb-6 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>We are following up about our letter dated {finalRevocationForm.dateOfNotice || '[DATE OF NOTICE]'} which notified you of our initial decision to revoke (take back) the conditional job offer:</div>
-                          <div className="mb-6 font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>(Please check one:)</div>
-                          <div className="flex flex-col gap-4 mb-8">
-                            <label className="flex items-center gap-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                              <input type="checkbox" name="noResponse" checked={finalRevocationForm.noResponse} onChange={handleFinalRevocationFormChange} className="h-4 w-4 focus:ring-2 focus:ring-red-500" style={{ accentColor: '#E54747' }} />
-                              We did not receive a timely response from you after sending you that letter, and our decision to revoke the job offer is now final.
-                            </label>
-                            <label className="flex items-center gap-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                              <input type="checkbox" name="infoSubmitted" checked={finalRevocationForm.infoSubmitted} onChange={handleFinalRevocationFormChange} className="h-4 w-4 focus:ring-2 focus:ring-red-500" style={{ accentColor: '#E54747' }} />
-                              We made a final decision to revoke the job offer after considering the information you submitted, which included:
-                            </label>
-                            {finalRevocationForm.infoSubmitted && (
-                              <textarea name="infoSubmittedList" value={finalRevocationForm.infoSubmittedList} onChange={handleFinalRevocationFormChange} className="w-full border border-gray-300 rounded-xl px-3 py-2 min-h-[40px] focus:ring-2 focus:ring-red-500 focus:border-red-500" placeholder="List information submitted" style={{ fontFamily: 'Poppins, sans-serif' }} />
-                            )}
-                          </div>
-                          <div className="mb-6 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>After reviewing the information you submitted, we have determined that there
-                            <label className="ml-4 font-normal inline-flex items-center gap-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                              <input type="radio" name="errorOnReport" value="was" checked={finalRevocationForm.errorOnReport === 'was'} onChange={handleFinalRevocationFormChange} className="h-4 w-4 focus:ring-2 focus:ring-red-500" style={{ accentColor: '#E54747' }} /> was
-                            </label>
-                            <label className="ml-4 font-normal inline-flex items-center gap-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                              <input type="radio" name="errorOnReport" value="was not" checked={finalRevocationForm.errorOnReport === 'was not'} onChange={handleFinalRevocationFormChange} className="h-4 w-4 focus:ring-2 focus:ring-red-500" style={{ accentColor: '#E54747' }} /> was not
-                            </label>
-                            (check one) an error on your conviction history report. We have decided to revoke our job offer because of the following conviction(s):</div>
-                          <div className="flex flex-col gap-2 mb-8">
-                            {[0, 1, 2].map((idx) => (
-                              <input
-                                key={idx}
-                                type="text"
-                                value={finalRevocationForm.convictions[idx]}
-                                onChange={e => handleFinalRevocationArrayChange('convictions', idx, e.target.value)}
-                                className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                                placeholder={`Conviction ${idx + 1}`}
-                                style={{ fontFamily: 'Poppins, sans-serif' }}
-                              />
-                            ))}
-                          </div>
-                          <div className="mb-6 font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Our Individualized Assessment:</div>
-                          <div className="mb-6 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>We have individually assessed whether your conviction history is directly related to the duties of the job we offered you. We considered the following:</div>
-                          <ol className="list-decimal ml-8 mb-8 space-y-4 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                            <li>The nature and seriousness of the conduct that led to your conviction(s), which we assessed as follows: <input type="text" name="seriousReason" value={finalRevocationForm.seriousReason} onChange={handleFinalRevocationFormChange} className="border border-gray-300 rounded-xl px-2 py-1 w-2/3 inline-block focus:ring-2 focus:ring-red-500 focus:border-red-500" style={{ fontFamily: 'Poppins, sans-serif' }} /></li>
-                            <li>How long ago the conduct occurred that led to your conviction, which was: <input type="text" name="timeSinceConduct" value={finalRevocationForm.timeSinceConduct} onChange={handleFinalRevocationFormChange} className="border border-gray-300 rounded-xl px-2 py-1 w-1/3 inline-block focus:ring-2 focus:ring-red-500 focus:border-red-500" style={{ fontFamily: 'Poppins, sans-serif' }} /> and how long ago you completed your sentence, which was: <input type="text" name="timeSinceSentence" value={finalRevocationForm.timeSinceSentence} onChange={handleFinalRevocationFormChange} className="border border-gray-300 rounded-xl px-2 py-1 w-1/3 inline-block focus:ring-2 focus:ring-red-500 focus:border-red-500" style={{ fontFamily: 'Poppins, sans-serif' }} />.</li>
-                            <li>The specific duties and responsibilities of the position of <input type="text" name="position" value={finalRevocationForm.position} onChange={handleFinalRevocationFormChange} className="border border-gray-300 rounded-xl px-2 py-1 w-1/2 inline-block mx-2 focus:ring-2 focus:ring-red-500 focus:border-red-500" placeholder="[INSERT POSITION]" style={{ fontFamily: 'Poppins, sans-serif' }} />, which are:
-                              <div className="flex flex-col gap-2 mt-2">
-                                {[0, 1, 2, 3].map((idx) => (
-                                  <input
-                                    key={idx}
-                                    type="text"
-                                    value={finalRevocationForm.jobDuties[idx]}
-                                    onChange={e => handleFinalRevocationArrayChange('jobDuties', idx, e.target.value)}
-                                    className="w-full border border-gray-300 rounded-xl px-2 py-1 focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                                    placeholder={`Job Duty ${String.fromCharCode(97 + idx)}`}
-                                    style={{ fontFamily: 'Poppins, sans-serif' }}
-                                  />
-                                ))}
-                              </div>
-                            </li>
-                          </ol>
-                          <div className="mb-6 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>We believe your conviction record lessens your fitness/ability to perform the job duties and have made a final decision to revoke the job offer because:</div>
-                          <textarea name="fitnessReason" value={finalRevocationForm.fitnessReason} onChange={handleFinalRevocationFormChange} className="w-full border border-gray-300 rounded-xl px-3 py-2 min-h-[60px] mb-8 focus:ring-2 focus:ring-red-500 focus:border-red-500" placeholder="Outline reasoning for decision to revoke job offer based on relevance of conviction history to position" style={{ fontFamily: 'Poppins, sans-serif' }} />
-                          <div className="mb-6 font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Request for Reconsideration:</div>
-                          <div className="flex flex-col gap-4 mb-8">
-                            <label className="flex items-center gap-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                              <input type="checkbox" name="reconsideration" value="none" checked={finalRevocationForm.reconsideration === 'none'} onChange={() => setFinalRevocationForm((prev: any) => ({ ...prev, reconsideration: prev.reconsideration === 'none' ? '' : 'none' }))} className="h-4 w-4 focus:ring-2 focus:ring-red-500" style={{ accentColor: '#E54747' }} />
-                              We do not offer any way to challenge this decision or request reconsideration.
-                            </label>
-                            <label className="flex items-center gap-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                              <input type="checkbox" name="reconsideration" value="procedure" checked={finalRevocationForm.reconsideration === 'procedure'} onChange={() => setFinalRevocationForm((prev: any) => ({ ...prev, reconsideration: prev.reconsideration === 'procedure' ? '' : 'procedure' }))} className="h-4 w-4 focus:ring-2 focus:ring-red-500" style={{ accentColor: '#E54747' }} />
-                              If you would like to challenge this decision or request reconsideration, you may:
-                            </label>
-                            {finalRevocationForm.reconsideration === 'procedure' && (
-                              <textarea name="reconsiderationProcedure" value={finalRevocationForm.reconsiderationProcedure} onChange={handleFinalRevocationFormChange} className="w-full border border-gray-300 rounded-xl px-3 py-2 min-h-[40px] focus:ring-2 focus:ring-red-500 focus:border-red-500" placeholder="Describe internal procedure" style={{ fontFamily: 'Poppins, sans-serif' }} />
-                            )}
-                          </div>
-                          <div className="mb-6 font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Your Right to File a Complaint:</div>
-                          <div className="text-sm mb-8" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
-                            If you believe your rights under the California Fair Chance Act or the San Diego County Fair Chance Ordinance have been violated during this job application process, you have the right to file a complaint with the California Civil Rights Department (CRD) and/or the San Diego County Office of Labor Standards and Enforcement (OLSE). There are several ways to file a complaint:
-                            <ul className="list-disc ml-6">
-                              <li>California CRD:
-                                <ul className="list-disc ml-6">
-                                  <li>File a complaint online at the following link: ccrs.calcivilrights.ca.gov/s/</li>
-                                  <li>Download an intake form at the following link: calcivilrights.ca.gov/complaintprocess/filebymail/ and email it to contact.center@calcivilrights.gov or mail it to 2218 Kausen Drive, Suite 100, Elk Grove, CA 95758</li>
-                                  <li>Visit a CRD office. Click the following link for office locations: calcivilrights.ca.gov/locations/</li>
-                                  <li>Call California CRD at (800) 884-1684</li>
-                                </ul>
-                              </li>
-                              <li>San Diego County OLSE:
-                                <ul className="list-disc ml-6">
-                                  <li>File a complaint online at the following link: www.sandiegocounty.gov/content/sdc/OLSE/file-a-complaint.html</li>
-                                  <li>Visit San Diego County's Office of Labor Standards and Enforcement's office at 1600 Pacific Highway, Room 452, San Diego, CA 92101</li>
-                                  <li>Call San Diego County OLSE at 619-531-5129</li>
-                                </ul>
-                              </li>
-                            </ul>
-                          </div>
-                          <div className="grid grid-cols-2 gap-10 mb-8">
-                            <div>
-                              <label className="block text-sm font-semibold mb-1 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Employer contact person name</label>
-                              <input type="text" name="contactName" value={finalRevocationForm.contactName} onChange={handleFinalRevocationFormChange} className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500" style={{ fontFamily: 'Poppins, sans-serif' }} />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-semibold mb-1 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Employer company name</label>
-                              <input type="text" name="companyName" value={finalRevocationForm.companyName} onChange={handleFinalRevocationFormChange} className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500" style={{ fontFamily: 'Poppins, sans-serif' }} />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-semibold mb-1 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Employer address</label>
-                              <input type="text" name="address" value={finalRevocationForm.address} onChange={handleFinalRevocationFormChange} className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500" style={{ fontFamily: 'Poppins, sans-serif' }} />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-semibold mb-1 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Employer contact phone number</label>
-                              <input type="text" name="phone" value={finalRevocationForm.phone} onChange={handleFinalRevocationFormChange} className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500" style={{ fontFamily: 'Poppins, sans-serif' }} />
-                            </div>
-                          </div>
-                          <div className="flex justify-end mt-12 gap-6">
-                            <button type="button" className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200" onClick={() => setFinalRevocationPreview(true)} style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}>
-                              Preview
-                            </button>
-                            <button type="button" className="px-8 py-3 rounded-xl text-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200" onClick={() => setShowFinalRevocationModal(false)} style={{ fontFamily: 'Poppins, sans-serif' }}>
-                              Cancel
-                            </button>
-                            <button type="button" className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200" onClick={handleSendFinalRevocation} style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}>Send</button>
-                          </div>
-                        </form>
-                      ) : (
-                        <div className="prose max-w-none text-black text-base bg-white rounded-xl p-16 border border-gray-100" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                          <div className="mb-6">{finalRevocationForm.date}</div>
-                          <div className="mb-6 font-bold">Re: Final Decision to Revoke Job Offer Because of Conviction History</div>
-                          <div className="mb-6">Dear {finalRevocationForm.applicant || '[APPLICANT NAME]'}:</div>
-                          <div className="mb-6">We are following up about our letter dated {finalRevocationForm.dateOfNotice || '[DATE OF NOTICE]'} which notified you of our initial decision to revoke (take back) the conditional job offer:</div>
-                          <div className="mb-6 font-semibold">(Please check one:)</div>
-                          <ul className="list-disc ml-6" style={{ color: '#595959' }}>
-                            {finalRevocationForm.noResponse && <li>We did not receive a timely response from you after sending you that letter, and our decision to revoke the job offer is now final.</li>}
-                            {finalRevocationForm.infoSubmitted && <li>We made a final decision to revoke the job offer after considering the information you submitted, which included: {finalRevocationForm.infoSubmittedList}</li>}
-                          </ul>
-                          <div className="mb-6">After reviewing the information you submitted, we have determined that there
-                            <span className="font-semibold">{finalRevocationForm.errorOnReport === 'was' ? 'was' : finalRevocationForm.errorOnReport === 'was not' ? 'was not' : '[check one]'}</span> (check one) an error on your conviction history report. We have decided to revoke our job offer because of the following conviction(s):</div>
-                          <ul className="list-disc ml-6" style={{ color: '#595959' }}>
-                            {finalRevocationForm.convictions.map((conv, idx) => conv && <li key={idx}>{conv}</li>)}
-                          </ul>
-                          <div className="mb-6 font-semibold">Our Individualized Assessment:</div>
-                          <ol className="list-decimal ml-8 mb-8 space-y-4" style={{ color: '#595959' }}>
-                            <li>The nature and seriousness of the conduct that led to your conviction(s), which we assessed as follows: {finalRevocationForm.seriousReason}</li>
-                            <li>How long ago the conduct occurred that led to your conviction, which was: {finalRevocationForm.timeSinceConduct} and how long ago you completed your sentence, which was: {finalRevocationForm.timeSinceSentence}.</li>
-                            <li>The specific duties and responsibilities of the position of {finalRevocationForm.position}, which are:
-                              <ul className="list-disc ml-6">
-                                {finalRevocationForm.jobDuties.map((duty: string, idx: number) => duty && <li key={idx}>{duty}</li>)}
-                              </ul>
-                            </li>
-                          </ol>
-                          <div className="mb-6">We believe your conviction record lessens your fitness/ability to perform the job duties and have made a final decision to revoke the job offer because:</div>
-                          <div className="mb-6">{finalRevocationForm.fitnessReason}</div>
-                          <div className="mb-6 font-semibold">Request for Reconsideration:</div>
-                          <ul className="list-disc ml-6" style={{ color: '#595959' }}>
-                            {finalRevocationForm.reconsideration === 'none' && <li>We do not offer any way to challenge this decision or request reconsideration.</li>}
-                            {finalRevocationForm.reconsideration === 'procedure' && <li>If you would like to challenge this decision or request reconsideration, you may: {finalRevocationForm.reconsiderationProcedure}</li>}
-                          </ul>
-                          <div className="mb-6 font-semibold">Your Right to File a Complaint:</div>
-                          <div className="mb-6" style={{ color: '#595959' }}>You also have the right to file a complaint with the Enforcement Unit of the San Diego County Office of Labor Standards and Enforcement within 180 days after the alleged violation of the San Diego County Fair Chance Ordinance. To file a complaint online or request information, visit the Office of Labor Standards and Enforcement online. You may also file a complaint by calling 858-694-2440.</div>
-                          <div className="mb-6 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Sincerely,<br />{finalRevocationForm.contactName}<br />{finalRevocationForm.companyName}<br />{finalRevocationForm.address}<br />{finalRevocationForm.phone}</div>
-
-                          {/* Document Metadata */}
-                          <div className="mt-8 pt-6 border-t border-gray-200 bg-gray-50 rounded-xl p-4">
-                            <h3 className="text-lg font-semibold mb-3 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Document Information</h3>
-                            <div className="grid grid-cols-2 gap-4 text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                              <div>
-                                <span className="font-medium text-black">Status:</span> <span style={{ color: '#595959' }}>Preview - Not Sent</span>
-                              </div>
-                              <div>
-                                <span className="font-medium text-black">Prepared By:</span> <span style={{ color: '#595959' }}>{hrAdminProfile ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}` : 'HR Admin'}</span>
-                              </div>
-                              <div>
-                                <span className="font-medium text-black">Company:</span> <span style={{ color: '#595959' }}>{hrAdminProfile?.company || finalRevocationForm.companyName || 'Company Name'}</span>
-                              </div>
-                              <div>
-                                <span className="font-medium text-black">Candidate ID:</span> <span style={{ color: '#595959' }}>{params.userId}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Navigation Buttons */}
-                          <div className="flex justify-end mt-8 gap-4">
-                            <button
-                              type="button"
-                              className="px-8 py-3 rounded-xl text-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200"
-                              onClick={() => setFinalRevocationPreview(false)}
-                              style={{ fontFamily: 'Poppins, sans-serif' }}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              className="px-8 py-3 rounded-xl text-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200"
-                              onClick={() => setShowFinalRevocationModal(false)}
-                              style={{ fontFamily: 'Poppins, sans-serif' }}
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              type="button"
-                              className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200"
-                              onClick={handleSendFinalRevocation}
-                              style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
-                            >
-                              Send
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                <FinalRevocationModal
+                  show={showFinalRevocationModal}
+                  onClose={() => setShowFinalRevocationModal(false)}
+                  onPreview={() => setFinalRevocationPreview(true)}
+                  onSend={handleSendFinalRevocation}
+                  preview={finalRevocationPreview}
+                  form={finalRevocationForm}
+                  handleFormChange={handleFinalRevocationFormChange}
+                  handleArrayChange={handleFinalRevocationArrayChange}
+                  setPreview={setFinalRevocationPreview}
+                  setForm={setFinalRevocationForm}
+                />
+                {/* Critical Information Section Placeholder */}
+                <div className="bg-white rounded-xl border border-gray-200 p-6">
+                  <div className="flex items-center mb-4">
+                    <Info className="h-5 w-5 mr-2" style={{ color: '#595959' }} />
+                    <h3 className="text-lg font-bold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Critical Information</h3>
                   </div>
-                )}
+
+                  {/* Tab Navigation */}
+                  <div className="flex space-x-1 mb-6 border-b border-gray-200">
+                    {['Legal', 'Company Policy', 'Candidate Context'].map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`px-4 py-2 font-semibold text-sm transition-colors relative ${activeTab === tab
+                          ? 'border-b-2 border-red-600'
+                          : 'hover:text-gray-800'
+                          }`}
+                        style={{
+                          fontFamily: 'Poppins, sans-serif',
+                          color: activeTab === tab ? '#E54747' : '#595959'
+                        }}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Tab Content */}
+                  <div className="min-h-[200px]">
+                    <CriticalInfoTabs activeTab={activeTab} currentStep={currentStep} />
+                  </div>
+                </div>
               </>
             )}
-            {/* Critical Information Section Placeholder */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <div className="flex items-center mb-4">
-                <Info className="h-5 w-5 mr-2" style={{ color: '#595959' }} />
-                <h3 className="text-lg font-bold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Critical Information</h3>
-              </div>
-
-              {/* Tab Navigation */}
-              <div className="flex space-x-1 mb-6 border-b border-gray-200">
-                {['Legal', 'Company Policy', 'Candidate Context'].map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`px-4 py-2 font-semibold text-sm transition-colors relative ${activeTab === tab
-                      ? 'border-b-2 border-red-600'
-                      : 'hover:text-gray-800'
-                      }`}
-                    style={{
-                      fontFamily: 'Poppins, sans-serif',
-                      color: activeTab === tab ? '#E54747' : '#595959'
-                    }}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
-
-              {/* Tab Content */}
-              <div className="min-h-[200px]">
-                {activeTab === 'Legal' && (
-                  <div className="space-y-4">
-                    {currentStep === 1 && (
-                      <div>
-                        <h4 className="font-semibold mb-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>San Diego Fair Chance Ordinance Requirements</h4>
-                        <p className="text-gray-700" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>Internal policy requires documented confirmation of conditional offer before accessing any conviction history information. This ensures compliance with local fair chance hiring legislation.</p>
-                      </div>
-                    )}
-                    {currentStep === 2 && (
-                      <div>
-                        <h4 className="font-semibold mb-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Individualized Assessment Guidelines</h4>
-                        <p className="text-gray-700" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>Legal requirements for conducting fair and compliant individualized assessments under San Diego Fair Chance Ordinance will be displayed here.</p>
-                      </div>
-                    )}
-                    {currentStep === 3 && (
-                      <div>
-                        <h4 className="font-semibold mb-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Preliminary Decision Legal Framework</h4>
-                        <p className="text-gray-700" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>Legal guidelines for preliminary job offer decisions and revocation procedures will be displayed here.</p>
-                      </div>
-                    )}
-                    {currentStep === 4 && (
-                      <div>
-                        <h4 className="font-semibold mb-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Reassessment Legal Requirements</h4>
-                        <p className="text-gray-700" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>Legal framework for conducting reassessments and handling candidate responses will be displayed here.</p>
-                      </div>
-                    )}
-                    {currentStep === 5 && (
-                      <div>
-                        <h4 className="font-semibold mb-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Final Decision Legal Compliance</h4>
-                        <p className="text-gray-700" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>Legal requirements for final hiring decisions and documentation will be displayed here.</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {activeTab === 'Company Policy' && (
-                  <div className="space-y-4">
-                    {currentStep === 1 && (
-                      <div>
-                        <h4 className="font-semibold mb-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Conditional Offer Policy</h4>
-                        <p className="text-gray-700" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>Company-specific policies regarding conditional job offers and documentation requirements will be displayed here.</p>
-                      </div>
-                    )}
-                    {currentStep === 2 && (
-                      <div>
-                        <h4 className="font-semibold mb-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Assessment Procedures</h4>
-                        <p className="text-gray-700" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>Internal company policies for conducting individualized assessments will be displayed here.</p>
-                      </div>
-                    )}
-                    {currentStep === 3 && (
-                      <div>
-                        <h4 className="font-semibold mb-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Decision Making Policy</h4>
-                        <p className="text-gray-700" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>Company policies for preliminary hiring decisions and notification procedures will be displayed here.</p>
-                      </div>
-                    )}
-                    {currentStep === 4 && (
-                      <div>
-                        <h4 className="font-semibold mb-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Reassessment Guidelines</h4>
-                        <p className="text-gray-700" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>Company policies for handling candidate responses and conducting reassessments will be displayed here.</p>
-                      </div>
-                    )}
-                    {currentStep === 5 && (
-                      <div>
-                        <h4 className="font-semibold mb-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Final Decision Policy</h4>
-                        <p className="text-gray-700" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>Company policies for final hiring decisions and record keeping will be displayed here.</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {activeTab === 'Candidate Context' && (
-                  <div className="space-y-4">
-                    {currentStep === 1 && (
-                      <div>
-                        <h4 className="font-semibold mb-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Candidate Background</h4>
-                        <p className="text-gray-700" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>Relevant candidate information and context for the conditional offer stage will be displayed here.</p>
-                      </div>
-                    )}
-                    {currentStep === 2 && (
-                      <div>
-                        <h4 className="font-semibold mb-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Assessment Context</h4>
-                        <p className="text-gray-700" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>Candidate-specific context and considerations for the individualized assessment will be displayed here.</p>
-                      </div>
-                    )}
-                    {currentStep === 3 && (
-                      <div>
-                        <h4 className="font-semibold mb-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Decision Context</h4>
-                        <p className="text-gray-700" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>Relevant candidate context for preliminary decision making will be displayed here.</p>
-                      </div>
-                    )}
-                    {currentStep === 4 && (
-                      <div>
-                        <h4 className="font-semibold mb-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Response Context</h4>
-                        <p className="text-gray-700" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>Candidate response and relevant context for reassessment will be displayed here.</p>
-                      </div>
-                    )}
-                    {currentStep === 5 && (
-                      <div>
-                        <h4 className="font-semibold mb-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Final Decision Context</h4>
-                        <p className="text-gray-700" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>Complete candidate context for final hiring decision will be displayed here.</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
         </div>
       </div>
