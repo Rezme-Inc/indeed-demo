@@ -77,10 +77,62 @@ function ComplianceStepDisplay({ user }: { user: any }) {
   const completedSteps = ASSESSMENT_STEPS.slice(0, currentStepIdx);
   const currentStep = ASSESSMENT_STEPS[currentStepIdx];
 
+  // Special case: if step = 6 (currentStepIdx === 5)
+  if (currentStepIdx === 5) {
+    return (
+      <div>
+        <div className="flex items-center gap-2">
+          <span
+            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+            style={{
+              backgroundColor: '#F0FDF4',
+              color: '#166534',
+              border: '1px solid #BBF7D0',
+              fontWeight: 'bold'
+            }}
+          >
+            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            All steps completed
+          </span>
+          <button
+            type="button"
+            className="text-xs font-medium underline focus:outline-none transition-all duration-200 hover:opacity-90"
+            style={{ color: '#595959' }}
+            onClick={() => setExpanded(e => !e)}
+          >
+            {expanded ? "Hide" : "Show Previous"}
+          </button>
+        </div>
+        {expanded && (
+          <div className="mt-3 flex flex-col gap-2">
+            {ASSESSMENT_STEPS.map(s => (
+              <span
+                key={s.key}
+                className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                style={{
+                  backgroundColor: '#F0FDF4',
+                  color: '#166534',
+                  border: '1px solid #BBF7D0'
+                }}
+              >
+                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                {s.label}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="flex items-center gap-2">
-        <span 
+        <span
           className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
           style={{
             backgroundColor: '#F0F9FF',
@@ -93,7 +145,7 @@ function ComplianceStepDisplay({ user }: { user: any }) {
         <button
           type="button"
           className="text-xs font-medium underline focus:outline-none transition-all duration-200 hover:opacity-90"
-          style={{color: '#595959'}}
+          style={{ color: '#595959' }}
           onClick={() => setExpanded(e => !e)}
         >
           {expanded ? "Hide" : "Show Previous"}
@@ -102,11 +154,11 @@ function ComplianceStepDisplay({ user }: { user: any }) {
       {expanded && (
         <div className="mt-3 flex flex-col gap-2">
           {completedSteps.length === 0 ? (
-            <span className="text-xs" style={{color: '#9CA3AF'}}>No previous steps</span>
+            <span className="text-xs" style={{ color: '#9CA3AF' }}>No previous steps</span>
           ) : (
             completedSteps.map(s => (
-              <span 
-                key={s.key} 
+              <span
+                key={s.key}
                 className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
                 style={{
                   backgroundColor: '#F0FDF4',
@@ -298,10 +350,10 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
       // Here you would integrate with your email service
       // For now, we'll just show a success message
       console.log('Sending invite to:', inviteForm);
-      
+
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       setSuccess(`Invitation sent successfully to ${inviteForm.candidateEmail}`);
       setShowInviteModal(false);
       setInviteForm({
@@ -321,9 +373,9 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
   };
 
   return (
-    <div 
-      className="min-h-screen bg-white p-6 space-y-8" 
-      style={{fontFamily: 'Poppins, sans-serif'}}
+    <div
+      className="min-h-screen bg-white p-6 space-y-8"
+      style={{ fontFamily: 'Poppins, sans-serif' }}
     >
       {error && (
         <div
@@ -373,7 +425,7 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
           {hrAdmin && (
             <div className="text-right">
               <p className="font-semibold text-black">{hrAdmin.company}</p>
-              <p className="text-sm" style={{color: '#595959'}}>
+              <p className="text-sm" style={{ color: '#595959' }}>
                 {hrAdmin.first_name} {hrAdmin.last_name}
               </p>
             </div>
@@ -382,7 +434,7 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
       </div>
 
       {/* Invitation Code Section */}
-      <div className="bg-white border rounded-xl p-6" style={{borderColor: '#E5E5E5'}}>
+      <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-black">
             Invitation Code
@@ -413,8 +465,8 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
           </div>
         </div>
         {hrAdmin?.invitation_code ? (
-          <div className="p-4 rounded-xl" style={{backgroundColor: '#F8F9FA'}}>
-            <p className="text-sm mb-2" style={{color: '#595959'}}>
+          <div className="p-4 rounded-xl" style={{ backgroundColor: '#F8F9FA' }}>
+            <p className="text-sm mb-2" style={{ color: '#595959' }}>
               Share this code with users to connect with them:
             </p>
             <p className="text-2xl font-mono text-black font-semibold">
@@ -422,21 +474,21 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
             </p>
           </div>
         ) : (
-          <p style={{color: '#595959'}}>
+          <p style={{ color: '#595959' }}>
             No invitation code generated yet. Click the button above to generate one.
           </p>
         )}
       </div>
 
       {/* Users Table */}
-      <div className="bg-white border rounded-xl p-6" style={{borderColor: '#E5E5E5'}}>
+      <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
         <h2 className="text-xl font-semibold text-black mb-6">
           Users Who Granted You Access
         </h2>
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
-              <tr className="border-b" style={{borderColor: '#E5E5E5'}}>
+              <tr className="border-b" style={{ borderColor: '#E5E5E5' }}>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-black uppercase tracking-wider">
                   Name
                 </th>
@@ -462,11 +514,11 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
             </thead>
             <tbody>
               {permittedUsers.map((user) => (
-                <tr key={user.id} className="border-b" style={{borderColor: '#F3F4F6'}}>
+                <tr key={user.id} className="border-b" style={{ borderColor: '#F3F4F6' }}>
                   <td className="px-6 py-4 whitespace-nowrap text-black font-medium">
                     {user.first_name} {user.last_name}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap" style={{color: '#595959'}}>
+                  <td className="px-6 py-4 whitespace-nowrap" style={{ color: '#595959' }}>
                     {user.email}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -486,7 +538,7 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
                   <td className="px-6 py-4 whitespace-nowrap text-black">
                     {user.final_decision || "-"}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap" style={{color: '#595959'}}>
+                  <td className="px-6 py-4 whitespace-nowrap" style={{ color: '#595959' }}>
                     {user.granted_at
                       ? new Date(user.granted_at).toLocaleDateString()
                       : "N/A"}
@@ -495,13 +547,13 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
                     <button
                       onClick={() => viewUserProfile(user.id)}
                       className="text-sm font-medium underline transition-all duration-200 hover:opacity-90"
-                      style={{color: '#595959'}}
+                      style={{ color: '#595959' }}
                     >
                       View Profile
                     </button>
                     {(() => {
                       const currentStepIdx = getCurrentAssessmentStep(user);
-                      if (user.final_decision === 'Hired') {
+                      if (user.final_decision) {
                         return (
                           <button
                             onClick={() => startAssessment(user.id)}
@@ -554,7 +606,7 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
                   <td
                     colSpan={7}
                     className="px-6 py-8 text-center"
-                    style={{color: '#595959'}}
+                    style={{ color: '#595959' }}
                   >
                     No users have granted you access yet. Share your invitation
                     code with users to get started.
@@ -570,7 +622,7 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
       {showInviteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b" style={{borderColor: '#E5E5E5'}}>
+            <div className="px-6 py-4 border-b" style={{ borderColor: '#E5E5E5' }}>
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-black">
                   Invite Candidate to Create Restorative Record
@@ -578,7 +630,7 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
                 <button
                   onClick={() => setShowInviteModal(false)}
                   className="transition-all duration-200 hover:opacity-90"
-                  style={{color: '#595959'}}
+                  style={{ color: '#595959' }}
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -650,7 +702,7 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
                 {/* Candidate Phone */}
                 <div>
                   <label htmlFor="candidatePhone" className="block text-sm font-medium text-black mb-2">
-                    Phone Number <span style={{color: '#595959'}}>(Optional)</span>
+                    Phone Number <span style={{ color: '#595959' }}>(Optional)</span>
                   </label>
                   <input
                     type="tel"
@@ -701,14 +753,14 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
                       e.target.style.boxShadow = 'none';
                     }}
                   />
-                  <p className="mt-2 text-sm" style={{color: '#595959'}}>
+                  <p className="mt-2 text-sm" style={{ color: '#595959' }}>
                     This message will be sent to the candidate along with instructions for creating their Restorative Record.
                   </p>
                 </div>
               </div>
 
               {/* Modal Actions */}
-              <div className="flex justify-end space-x-3 mt-8 pt-6 border-t" style={{borderColor: '#E5E5E5'}}>
+              <div className="flex justify-end space-x-3 mt-8 pt-6 border-t" style={{ borderColor: '#E5E5E5' }}>
                 <button
                   type="button"
                   onClick={() => setShowInviteModal(false)}

@@ -9,6 +9,26 @@ const AssessmentProgressBar: React.FC<AssessmentProgressBarProps> = ({
   progressSteps,
   currentStep,
 }) => {
+  // Special case: if currentStep === 6, show all steps as completed
+  if (currentStep === 6) {
+    return (
+      <div className="space-y-3">
+        {progressSteps.map((step, idx) => (
+          <div
+            key={step}
+            className={`flex items-center px-3 py-2 rounded border border-green-500 bg-green-50`}
+          >
+            <div className={`w-3 h-3 rounded-full flex items-center justify-center text-xs font-bold aspect-square mr-2 bg-green-500 text-white`}>
+              ✓
+            </div>
+            <span className={`text-sm font-medium text-green-600`}>{step}</span>
+          </div>
+        ))}
+        <div className="mt-4 text-center text-green-700 font-bold text-base">All steps completed</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       {progressSteps.map((step, idx) => {
