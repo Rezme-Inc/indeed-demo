@@ -778,7 +778,16 @@ export default function AssessmentPage({
     }
   };
 
-  const handleProceedWithHire = () => {
+  const handleProceedWithHire = async () => {
+    // Update Supabase user_profiles.final_decision to 'Hired'
+    try {
+      await supabase
+        .from('user_profiles')
+        .update({ final_decision: 'Hired' })
+        .eq('id', params.userId);
+    } catch (error) {
+      console.error('Error updating final_decision in Supabase:', error);
+    }
     setShowExtendSuccessModal(true);
     // You can add logic to finalize the hire here
   };
@@ -867,6 +876,15 @@ export default function AssessmentPage({
       setFinalRevocationPreview(false);
       setShowFinalRevocationSuccessModal(true);
       setCurrentStep((prev) => prev + 1);
+
+      try {
+        await supabase
+          .from('user_profiles')
+          .update({ final_decision: 'Revoked' })
+          .eq('id', params.userId);
+      } catch (error) {
+        console.error('Error updating final_decision in Supabase:', error);
+      }
     } catch (error) {
       console.error("Error in handleSendFinalRevocation:", error);
     }
@@ -1521,7 +1539,7 @@ export default function AssessmentPage({
                   <div className="w-full bg-gray-50 rounded-xl p-6 mb-6 border border-gray-200">
                     <div className="font-semibold mb-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Next Steps:</div>
                     <ul className="list-disc list-inside space-y-1" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
-                      <li>The candidate has 5 business days to respond with mitigating evidence</li>
+                      <li>The candidate has {businessDaysRemaining} business days to respond with mitigating evidence</li>
                       <li>If they challenge the accuracy of the criminal history report, they will receive an additional 5 business days</li>
                       <li>You will be notified when the candidate submits their response</li>
                       <li>After reviewing their response, you must make a final decision</li>
