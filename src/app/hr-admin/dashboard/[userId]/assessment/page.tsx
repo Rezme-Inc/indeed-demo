@@ -1128,6 +1128,18 @@ export default function AssessmentPage({
     return URL.createObjectURL(file);
   };
 
+  // Prevent background scroll when Conditional Job Offer Letter modal is open
+  useEffect(() => {
+    if (showOfferModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showOfferModal]);
+
   // Modify your render logic to handle loading state
   if (isLoading) {
     return (
@@ -1884,22 +1896,22 @@ export default function AssessmentPage({
             {currentStep === 5 && (
               <>
                 <div className="bg-white rounded-xl border border-gray-200 p-8 mb-8">
-                  <div className="w-full max-w-2xl">
+                  <div className="w-full">
                     <h2 className="text-3xl font-bold mb-8 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Final Compliance Step</h2>
                     <div className="text-lg mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-xl" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
                       <span className="font-semibold text-black">Once you have considered any mitigating information provided by the applicant, you may still decide to revoke the conditional job offer due to relevant criminal history.</span> <br />
                       The following notice meets your responsibility to notify the applicant in writing.
                     </div>
-                    <div className="flex gap-4">
+                    <div className="flex gap-8">
                       <button
-                        className="px-8 py-3 rounded-xl text-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200 w-full"
+                        className="px-12 py-3 rounded-xl text-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200 w-full"
                         onClick={handleProceedWithHire}
                         style={{ fontFamily: 'Poppins, sans-serif' }}
                       >
                         Extend Offer of Employment
                       </button>
                       <button
-                        className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200 w-full"
+                        className="px-12 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200 w-full"
                         onClick={() => setShowFinalRevocationModal(true)}
                         style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
                       >
