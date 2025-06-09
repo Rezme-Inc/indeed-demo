@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Info,
   FileText,
   ClipboardCheck,
@@ -19,6 +20,9 @@ import {
   Building,
   UserCheck,
   Printer,
+  Mail,
+  StickyNote,
+  Briefcase,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
@@ -205,6 +209,45 @@ export default function AssessmentPage({
   // HR Admin profile state
   const [hrAdminProfile, setHrAdminProfile] = useState<any>(null);
   const [headerLoading, setHeaderLoading] = useState(true);
+
+  // Document Upload Panel State
+  const [showDocumentPanel, setShowDocumentPanel] = useState(false);
+  const [backgroundCheckFile, setBackgroundCheckFile] = useState<File | null>(null);
+  const [jobDescriptionFile, setJobDescriptionFile] = useState<File | null>(null);
+  const [jobPostingFile, setJobPostingFile] = useState<File | null>(null);
+  const [emailsFile, setEmailsFile] = useState<File | null>(null);
+  const [notesFile, setNotesFile] = useState<File | null>(null);
+  const [uploadingBackground, setUploadingBackground] = useState(false);
+  const [uploadingJobDesc, setUploadingJobDesc] = useState(false);
+  const [uploadingJobPosting, setUploadingJobPosting] = useState(false);
+  const [uploadingEmails, setUploadingEmails] = useState(false);
+  const [uploadingNotes, setUploadingNotes] = useState(false);
+
+  // Document Viewer State
+  const [showDocumentViewer, setShowDocumentViewer] = useState(false);
+  const [viewingDocument, setViewingDocument] = useState<{
+    file: File;
+    type: 'background' | 'jobdesc' | 'jobposting' | 'emails' | 'notes';
+    title: string;
+  } | null>(null);
+
+  // Documents Dropdown State
+  const [showDocumentsDropdown, setShowDocumentsDropdown] = useState(false);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (showDocumentsDropdown && !target.closest('.documents-dropdown')) {
+        setShowDocumentsDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDocumentsDropdown]);
 
   const [businessDaysRemaining, setBusinessDaysRemaining] = useState<number>(() => {
     if (typeof window !== 'undefined') {
@@ -852,6 +895,178 @@ export default function AssessmentPage({
     }));
   };
 
+  // Document Upload Handlers
+  const handleBackgroundCheckUpload = async (file: File) => {
+    setUploadingBackground(true);
+    try {
+      // Validate file type
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'];
+      if (!allowedTypes.includes(file.type)) {
+        alert('Please upload a valid file format (PDF, JPEG, PNG, DOCX, DOC)');
+        return;
+      }
+      
+      // Validate file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10MB');
+        return;
+      }
+
+      setBackgroundCheckFile(file);
+      // Here you would typically upload to your file storage service
+      console.log('Background check file uploaded:', file.name);
+    } catch (error) {
+      console.error('Error uploading background check:', error);
+      alert('Failed to upload background check report');
+    } finally {
+      setUploadingBackground(false);
+    }
+  };
+
+  const handleJobDescriptionUpload = async (file: File) => {
+    setUploadingJobDesc(true);
+    try {
+      // Validate file type
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'];
+      if (!allowedTypes.includes(file.type)) {
+        alert('Please upload a valid file format (PDF, JPEG, PNG, DOCX, DOC)');
+        return;
+      }
+      
+      // Validate file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10MB');
+        return;
+      }
+
+      setJobDescriptionFile(file);
+      // Here you would typically upload to your file storage service
+      console.log('Job description file uploaded:', file.name);
+    } catch (error) {
+      console.error('Error uploading job description:', error);
+      alert('Failed to upload job description');
+    } finally {
+      setUploadingJobDesc(false);
+    }
+  };
+
+  const handleJobPostingUpload = async (file: File) => {
+    setUploadingJobPosting(true);
+    try {
+      // Validate file type
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'];
+      if (!allowedTypes.includes(file.type)) {
+        alert('Please upload a valid file format (PDF, JPEG, PNG, DOCX, DOC)');
+        return;
+      }
+      
+      // Validate file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10MB');
+        return;
+      }
+
+      setJobPostingFile(file);
+      // Here you would typically upload to your file storage service
+      console.log('Job posting file uploaded:', file.name);
+    } catch (error) {
+      console.error('Error uploading job posting:', error);
+      alert('Failed to upload job posting');
+    } finally {
+      setUploadingJobPosting(false);
+    }
+  };
+
+  const handleEmailsUpload = async (file: File) => {
+    setUploadingEmails(true);
+    try {
+      // Validate file type
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'];
+      if (!allowedTypes.includes(file.type)) {
+        alert('Please upload a valid file format (PDF, JPEG, PNG, DOCX, DOC)');
+        return;
+      }
+      
+      // Validate file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10MB');
+        return;
+      }
+
+      setEmailsFile(file);
+      // Here you would typically upload to your file storage service
+      console.log('Emails file uploaded:', file.name);
+    } catch (error) {
+      console.error('Error uploading emails:', error);
+      alert('Failed to upload emails');
+    } finally {
+      setUploadingEmails(false);
+    }
+  };
+
+  const handleNotesUpload = async (file: File) => {
+    setUploadingNotes(true);
+    try {
+      // Validate file type
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'];
+      if (!allowedTypes.includes(file.type)) {
+        alert('Please upload a valid file format (PDF, JPEG, PNG, DOCX, DOC)');
+        return;
+      }
+      
+      // Validate file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10MB');
+        return;
+      }
+
+      setNotesFile(file);
+      // Here you would typically upload to your file storage service
+      console.log('Notes file uploaded:', file.name);
+    } catch (error) {
+      console.error('Error uploading notes:', error);
+      alert('Failed to upload notes');
+    } finally {
+      setUploadingNotes(false);
+    }
+  };
+
+  const handleRemoveFile = (type: 'background' | 'jobdesc' | 'jobposting' | 'emails' | 'notes') => {
+    if (type === 'background') {
+      setBackgroundCheckFile(null);
+    } else if (type === 'jobdesc') {
+      setJobDescriptionFile(null);
+    } else if (type === 'jobposting') {
+      setJobPostingFile(null);
+    } else if (type === 'emails') {
+      setEmailsFile(null);
+    } else if (type === 'notes') {
+      setNotesFile(null);
+    }
+  };
+
+  // Document Viewing Handlers
+  const handleViewDocument = (file: File, type: 'background' | 'jobdesc' | 'jobposting' | 'emails' | 'notes') => {
+    const title = type === 'background' ? 'Background Check Report' : type === 'jobdesc' ? 'Job Description' : type === 'jobposting' ? 'Job Posting' : type === 'emails' ? 'Emails' : 'Notes';
+    setViewingDocument({ file, type, title });
+    setShowDocumentViewer(true);
+  };
+
+  const handleDownloadDocument = (file: File, filename: string) => {
+    const url = URL.createObjectURL(file);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const getFilePreviewUrl = (file: File) => {
+    return URL.createObjectURL(file);
+  };
+
   // Modify your render logic to handle loading state
   if (isLoading) {
     return (
@@ -873,56 +1088,168 @@ export default function AssessmentPage({
           </span>
         </div>
         <div className="flex items-center gap-3">
-          {savedOfferLetter && (
+          {/* Documents Dropdown Menu */}
+          <div className="relative documents-dropdown">
             <button
-              onClick={handleViewOfferLetter}
+              onClick={() => setShowDocumentsDropdown(!showDocumentsDropdown)}
               className="px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 text-sm font-medium flex items-center gap-2 transition-all duration-200"
               style={{ fontFamily: 'Poppins, sans-serif' }}
             >
               <FileText className="h-4 w-4" />
-              View Offer Letter
+              View Documents
+              <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showDocumentsDropdown ? 'rotate-180' : ''}`} />
             </button>
-          )}
-          {savedAssessment && (
-            <button
-              onClick={() => setShowAssessmentViewModal(true)}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 text-sm font-medium flex items-center gap-2 transition-all duration-200"
-              style={{ fontFamily: 'Poppins, sans-serif' }}
-            >
-              <ClipboardCheck className="h-4 w-4" />
-              View Assessment
-            </button>
-          )}
-          {savedRevocationNotice && (
-            <button
-              onClick={() => setShowRevocationViewModal(true)}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 text-sm font-medium flex items-center gap-2 transition-all duration-200"
-              style={{ fontFamily: 'Poppins, sans-serif' }}
-            >
-              <AlertTriangle className="h-4 w-4" />
-              View Revocation Notice
-            </button>
-          )}
-          {savedReassessment && (
-            <button
-              onClick={() => setShowReassessmentViewModal(true)}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 text-sm font-medium flex items-center gap-2 transition-all duration-200"
-              style={{ fontFamily: 'Poppins, sans-serif' }}
-            >
-              <RotateCcw className="h-4 w-4" />
-              View Reassessment
-            </button>
-          )}
-          {savedFinalRevocationNotice && (
-            <button
-              onClick={() => setShowFinalRevocationViewModal(true)}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 text-sm font-medium flex items-center gap-2 transition-all duration-200"
-              style={{ fontFamily: 'Poppins, sans-serif' }}
-            >
-              <AlertCircle className="h-4 w-4" />
-              View Final Revocation
-            </button>
-          )}
+            
+            {showDocumentsDropdown && (
+              <div className="absolute top-full mt-2 right-0 bg-white border border-gray-200 rounded-xl shadow-lg py-2 min-w-64 z-50">
+                {savedOfferLetter && (
+                  <button
+                    onClick={() => {
+                      handleViewOfferLetter();
+                      setShowDocumentsDropdown(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-all duration-200"
+                    style={{ fontFamily: 'Poppins, sans-serif' }}
+                  >
+                    <FileText className="h-4 w-4" />
+                    View Conditional Job Offer
+                  </button>
+                )}
+                {savedAssessment && (
+                  <button
+                    onClick={() => {
+                      setShowAssessmentViewModal(true);
+                      setShowDocumentsDropdown(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-all duration-200"
+                    style={{ fontFamily: 'Poppins, sans-serif' }}
+                  >
+                    <ClipboardCheck className="h-4 w-4" />
+                    View Assessment
+                  </button>
+                )}
+                {savedRevocationNotice && (
+                  <button
+                    onClick={() => {
+                      setShowRevocationViewModal(true);
+                      setShowDocumentsDropdown(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-all duration-200"
+                    style={{ fontFamily: 'Poppins, sans-serif' }}
+                  >
+                    <AlertTriangle className="h-4 w-4" />
+                    View Revocation Notice
+                  </button>
+                )}
+                {savedReassessment && (
+                  <button
+                    onClick={() => {
+                      setShowReassessmentViewModal(true);
+                      setShowDocumentsDropdown(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-all duration-200"
+                    style={{ fontFamily: 'Poppins, sans-serif' }}
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    View Reassessment
+                  </button>
+                )}
+                {savedFinalRevocationNotice && (
+                  <button
+                    onClick={() => {
+                      setShowFinalRevocationViewModal(true);
+                      setShowDocumentsDropdown(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-all duration-200"
+                    style={{ fontFamily: 'Poppins, sans-serif' }}
+                  >
+                    <AlertCircle className="h-4 w-4" />
+                    View Final Revocation
+                  </button>
+                )}
+                {backgroundCheckFile && (
+                  <button
+                    onClick={() => {
+                      handleViewDocument(backgroundCheckFile, 'background');
+                      setShowDocumentsDropdown(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-all duration-200"
+                    style={{ fontFamily: 'Poppins, sans-serif' }}
+                  >
+                    <FileText className="h-4 w-4" />
+                    View Background Check
+                  </button>
+                )}
+                {jobDescriptionFile && (
+                  <button
+                    onClick={() => {
+                      handleViewDocument(jobDescriptionFile, 'jobdesc');
+                      setShowDocumentsDropdown(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-all duration-200"
+                    style={{ fontFamily: 'Poppins, sans-serif' }}
+                  >
+                    <Building className="h-4 w-4" />
+                    View Job Description
+                  </button>
+                )}
+                {jobPostingFile && (
+                  <button
+                    onClick={() => {
+                      handleViewDocument(jobPostingFile, 'jobposting');
+                      setShowDocumentsDropdown(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-all duration-200"
+                    style={{ fontFamily: 'Poppins, sans-serif' }}
+                  >
+                    <Briefcase className="h-4 w-4" />
+                    View Job Posting
+                  </button>
+                )}
+                {emailsFile && (
+                  <button
+                    onClick={() => {
+                      handleViewDocument(emailsFile, 'emails');
+                      setShowDocumentsDropdown(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-all duration-200"
+                    style={{ fontFamily: 'Poppins, sans-serif' }}
+                  >
+                    <Mail className="h-4 w-4" />
+                    View Emails
+                  </button>
+                )}
+                {notesFile && (
+                  <button
+                    onClick={() => {
+                      handleViewDocument(notesFile, 'notes');
+                      setShowDocumentsDropdown(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-all duration-200"
+                    style={{ fontFamily: 'Poppins, sans-serif' }}
+                  >
+                    <StickyNote className="h-4 w-4" />
+                    View Notes
+                  </button>
+                )}
+                {!savedOfferLetter && !savedAssessment && !savedRevocationNotice && !savedReassessment && !savedFinalRevocationNotice && !backgroundCheckFile && !jobDescriptionFile && !jobPostingFile && !emailsFile && !notesFile && (
+                  <div className="px-4 py-2 text-gray-500 text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    No documents available
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          
+          {/* Document Upload Panel Trigger */}
+          <button
+            onClick={() => setShowDocumentPanel(true)}
+            className="px-4 py-2 text-white rounded-xl hover:opacity-90 text-sm font-medium flex items-center gap-2 transition-all duration-200"
+            style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
+          >
+            <FileText className="h-4 w-4" />
+            Upload Documents
+          </button>
           {/* Return to Dashboard Button */}
           <button
             onClick={() => router.push('/hr-admin/dashboard')}
@@ -952,6 +1279,25 @@ export default function AssessmentPage({
         <div className="grid grid-cols-1 lg:grid-cols-6 gap-8">
           {/* Left Column: Assessment Progress */}
           <div className="lg:col-span-1 lg:-ml-16">
+            {/* View Candidate Response Button */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4 mb-8">
+              <div className="flex flex-col items-center text-center space-y-3">
+                <div className="h-12 w-12 bg-gray-50 rounded-xl flex items-center justify-center">
+                  <User className="h-6 w-6" style={{ color: '#595959' }} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-black mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>Candidate Information</h3>
+                  <button
+                    className="px-3 py-2 border border-gray-300 rounded-xl text-xs transition-all duration-200 hover:bg-gray-50"
+                    style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}
+                    onClick={handleViewCandidateResponse}
+                  >
+                    View Candidate Response
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
               <h2 className="text-xl font-bold mb-6 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Assessment Progress</h2>
               <AssessmentProgressBar progressSteps={progressSteps} currentStep={currentStep} />
@@ -971,25 +1317,6 @@ export default function AssessmentPage({
                     onClick={() => router.push(`/hr-admin/dashboard/${params.userId}/assessment/ordinance-summary`)}
                   >
                     View Ordinance Summary
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* View Candidate Response Button */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4 mb-8">
-              <div className="flex flex-col items-center text-center space-y-3">
-                <div className="h-12 w-12 bg-gray-50 rounded-xl flex items-center justify-center">
-                  <User className="h-6 w-6" style={{ color: '#595959' }} />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-black mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>Candidate Information</h3>
-                  <button
-                    className="px-3 py-2 border border-gray-300 rounded-xl text-xs transition-all duration-200 hover:bg-gray-50"
-                    style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}
-                    onClick={handleViewCandidateResponse}
-                  >
-                    View Candidate Response
                   </button>
                 </div>
               </div>
@@ -1028,7 +1355,7 @@ export default function AssessmentPage({
                   </label>
                 </div>
                 <div className="flex justify-between items-center mt-8">
-                  <button 
+                  <button
                     className="px-8 py-3 border border-gray-300 text-gray-400 rounded-xl text-lg font-semibold cursor-not-allowed" 
                     disabled
                     style={{ fontFamily: 'Poppins, sans-serif' }}
@@ -1485,7 +1812,7 @@ export default function AssessmentPage({
                       <div className="h-16 w-16 bg-gray-50 rounded-xl flex items-center justify-center mx-auto mb-4">
                         <FileText className="h-8 w-8 text-gray-400" />
                       </div>
-                      <h3 className="text-lg font-semibold mb-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>No Restorative Record Available</h3>
+                      <h3 className="text-lg font-semibold text-black mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>No Restorative Record Available</h3>
                       <p style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
                         This candidate has not yet created a restorative record or it may not be available for sharing.
                       </p>
@@ -1701,7 +2028,7 @@ export default function AssessmentPage({
                           </ul>
                           <div className="mb-6 font-semibold">Your Right to File a Complaint:</div>
                           <div className="mb-6" style={{ color: '#595959' }}>You also have the right to file a complaint with the Enforcement Unit of the San Diego County Office of Labor Standards and Enforcement within 180 days after the alleged violation of the San Diego County Fair Chance Ordinance. To file a complaint online or request information, visit the Office of Labor Standards and Enforcement online. You may also file a complaint by calling 858-694-2440.</div>
-                          <div className="mb-6">Sincerely,<br />{finalRevocationForm.contactName}<br />{finalRevocationForm.companyName}<br />{finalRevocationForm.address}<br />{finalRevocationForm.phone}</div>
+                          <div className="mb-6 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Sincerely,<br />{finalRevocationForm.contactName}<br />{finalRevocationForm.companyName}<br />{finalRevocationForm.address}<br />{finalRevocationForm.phone}</div>
 
                           {/* Document Metadata */}
                           <div className="mt-8 pt-6 border-t border-gray-200 bg-gray-50 rounded-xl p-4">
@@ -2184,26 +2511,26 @@ export default function AssessmentPage({
                 onClick={() => {
                   const printContent = document.querySelector('.prose:last-of-type');
                   if (printContent) {
-                    const printWindow = window.open('', '_blank');
-                    if (printWindow) {
-                      printWindow.document.write(`
-                        <html>
-                          <head>
-                            <title>Conditional Job Offer Letter</title>
-                            <style>
+                  const printWindow = window.open('', '_blank');
+                  if (printWindow) {
+                    printWindow.document.write(`
+                      <html>
+                        <head>
+                          <title>Conditional Job Offer Letter</title>
+                          <style>
                               body { font-family: 'Poppins', Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; color: #000000; }
                               .font-bold, b { font-weight: bold; }
                               .mb-6 { margin-bottom: 1.5rem; }
                               .mb-8 { margin-bottom: 2rem; }
-                              .font-semibold { font-weight: 600; }
-                              .mb-2 { margin-bottom: 0.5rem; }
-                            </style>
-                          </head>
-                          <body>${printContent.innerHTML}</body>
-                        </html>
-                      `);
-                      printWindow.document.close();
-                      printWindow.print();
+                            .font-semibold { font-weight: 600; }
+                            .mb-2 { margin-bottom: 0.5rem; }
+                          </style>
+                        </head>
+                        <body>${printContent.innerHTML}</body>
+                      </html>
+                    `);
+                    printWindow.document.close();
+                    printWindow.print();
                     }
                   }
                 }}
@@ -2251,9 +2578,9 @@ export default function AssessmentPage({
                 <div>
                   <span className="font-semibold text-black">1. The specific duties and responsibilities of the job are:</span>
                   <ul className="list-disc ml-6 mt-2" style={{ color: '#595959' }}>
-                    {savedAssessment.duties.map((duty: string, idx: number) => duty && <li key={idx}>{duty}</li>)}
-                  </ul>
-                </div>
+                  {savedAssessment.duties.map((duty: string, idx: number) => duty && <li key={idx}>{duty}</li>)}
+                </ul>
+              </div>
                 
                 <div>
                   <span className="font-semibold text-black">2. Description of the criminal conduct and why the conduct is of concern with respect to the position in question:</span>
@@ -2268,9 +2595,9 @@ export default function AssessmentPage({
                 <div>
                   <span className="font-semibold text-black">4. Activities since criminal activity, such as work experience, job training, rehabilitation, community service, etc.:</span>
                   <ul className="list-disc ml-6 mt-2" style={{ color: '#595959' }}>
-                    {savedAssessment.activities.map((act: string, idx: number) => act && <li key={idx}>{act}</li>)}
-                  </ul>
-                </div>
+                  {savedAssessment.activities.map((act: string, idx: number) => act && <li key={idx}>{act}</li>)}
+                </ul>
+              </div>
                 
                 <div>
                   <span className="font-semibold text-black">Based on the factors above, we are considering rescinding our offer of employment because:</span>
@@ -2515,38 +2842,38 @@ export default function AssessmentPage({
               <h3 className="font-bold mt-6 mb-4 text-black text-lg" style={{ fontFamily: 'Poppins, sans-serif' }}>REASSESSMENT</h3>
               <div className="space-y-4">
                 <div><span className="font-semibold text-black">1. Was there an error in the Criminal History Report?</span> <span style={{ color: '#595959' }}>{savedReassessment.errorYesNo}</span></div>
-                {savedReassessment.errorYesNo === 'Yes' && (
+              {savedReassessment.errorYesNo === 'Yes' && (
                   <div><span className="font-semibold text-black">If yes, describe the error:</span> <span style={{ color: '#595959' }}>{savedReassessment.error}</span></div>
-                )}
+              )}
 
                 <div>
                   <span className="font-semibold text-black">2. Evidence of rehabilitation and good conduct:</span>
                   <div className="mt-2 space-y-2">
-                    {savedReassessment.evidenceA && (
+                {savedReassessment.evidenceA && (
                       <div><span className="font-semibold text-black">a.</span> <span style={{ color: '#595959' }}>{savedReassessment.evidenceA}</span></div>
-                    )}
-                    {savedReassessment.evidenceB && (
+                )}
+                {savedReassessment.evidenceB && (
                       <div><span className="font-semibold text-black">b.</span> <span style={{ color: '#595959' }}>{savedReassessment.evidenceB}</span></div>
-                    )}
-                    {savedReassessment.evidenceC && (
+                )}
+                {savedReassessment.evidenceC && (
                       <div><span className="font-semibold text-black">c.</span> <span style={{ color: '#595959' }}>{savedReassessment.evidenceC}</span></div>
-                    )}
-                    {savedReassessment.evidenceD && (
+                )}
+                {savedReassessment.evidenceD && (
                       <div><span className="font-semibold text-black">d.</span> <span style={{ color: '#595959' }}>{savedReassessment.evidenceD}</span></div>
-                    )}
+                )}
                   </div>
-                </div>
+              </div>
 
                 <div>
                   <span className="font-semibold text-black">Decision:</span> <span style={{ color: '#595959' }}>{savedReassessment.decision === 'rescind' ? 'Rescind Offer' : 'Extend Offer'}</span>
-                </div>
+              </div>
 
                 <div>
-                  {savedReassessment.decision === 'rescind' ? (
+                {savedReassessment.decision === 'rescind' ? (
                     <><span className="font-semibold text-black">Based on the factors above, we are rescinding our offer of employment because:</span><br /><span style={{ color: '#595959' }}>{savedReassessment.rescindReason}</span></>
-                  ) : (
+                ) : (
                     <><span className="font-semibold text-black">Based on the factors above, we are extending our offer of employment.</span><br /><span style={{ color: '#595959' }}>{savedReassessment.extendReason}</span></>
-                  )}
+                )}
                 </div>
               </div>
 
@@ -2749,6 +3076,723 @@ export default function AssessmentPage({
                 <Printer className="h-4 w-4" />
                 Print/Save
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Document Upload Slide-out Panel */}
+      {showDocumentPanel && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-40">
+          <div 
+            className={`fixed right-0 top-0 h-full w-96 shadow-2xl transform transition-transform duration-300 ease-in-out border-l border-gray-200 ${showDocumentPanel ? 'translate-x-0' : 'translate-x-full'}`}
+            style={{ backgroundColor: '#FFFFFF' }}
+          >
+            {/* Header */}
+            <div className="flex justify-between items-center p-6 border-b border-gray-200" style={{ backgroundColor: '#FFFFFF' }}>
+              <h2 className="text-xl font-bold" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                Document Upload
+              </h2>
+              <button
+                className="p-2 rounded-xl transition-all duration-200 hover:bg-gray-100"
+                style={{ color: '#595959' }}
+                onClick={() => setShowDocumentPanel(false)}
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-8 h-full overflow-y-auto" style={{ backgroundColor: '#FFFFFF' }}>
+              
+              {/* Background Check Report Upload */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FEF2F2' }}>
+                    <FileText className="h-5 w-5" style={{ color: '#E54747' }} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                      Background Check Report
+                    </h3>
+                    <p className="text-sm" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                      Upload the candidate's background check report
+                    </p>
+                  </div>
+                </div>
+
+                {!backgroundCheckFile ? (
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center transition-all duration-200 hover:border-gray-400 hover:bg-gray-50">
+                    <input
+                      type="file"
+                      id="background-upload"
+                      className="hidden"
+                      accept=".pdf,.jpg,.jpeg,.png,.docx,.doc"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleBackgroundCheckUpload(file);
+                      }}
+                      disabled={uploadingBackground}
+                    />
+                    <label htmlFor="background-upload" className="cursor-pointer">
+                      <div className="flex flex-col items-center">
+                        <div className="h-12 w-12 bg-gray-100 rounded-xl flex items-center justify-center mb-3">
+                          <FileText className="h-6 w-6 text-gray-400" />
+                        </div>
+                        <p className="text-sm font-medium mb-1" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                          {uploadingBackground ? 'Uploading...' : 'Click to upload'}
+                        </p>
+                        <p className="text-xs" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                          PDF, JPEG, PNG, DOCX (max 10MB)
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="border border-gray-200 rounded-xl p-4" style={{ backgroundColor: '#F9FAFB' }}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FEF2F2' }}>
+                          <FileText className="h-5 w-5" style={{ color: '#E54747' }} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                            {backgroundCheckFile.name}
+                          </p>
+                          <p className="text-xs" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                            {(backgroundCheckFile.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => handleViewDocument(backgroundCheckFile, 'background')}
+                          className="p-2 rounded-xl transition-all duration-200 hover:bg-blue-50"
+                          style={{ color: '#3B82F6' }}
+                          title="View Document"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDownloadDocument(backgroundCheckFile, backgroundCheckFile.name)}
+                          className="p-2 rounded-xl transition-all duration-200 hover:bg-green-50"
+                          style={{ color: '#10B981' }}
+                          title="Download Document"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleRemoveFile('background')}
+                          className="p-2 rounded-xl transition-all duration-200"
+                          style={{ color: '#E54747' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FEF2F2'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                          title="Remove Document"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Job Description Upload */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#EFF6FF' }}>
+                    <Building className="h-5 w-5" style={{ color: '#3B82F6' }} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                      Job Description
+                    </h3>
+                    <p className="text-sm" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                      Upload the official job description document
+                    </p>
+                  </div>
+                </div>
+
+                {!jobDescriptionFile ? (
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center transition-all duration-200 hover:border-gray-400 hover:bg-gray-50">
+                    <input
+                      type="file"
+                      id="jobdesc-upload"
+                      className="hidden"
+                      accept=".pdf,.jpg,.jpeg,.png,.docx,.doc"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleJobDescriptionUpload(file);
+                      }}
+                      disabled={uploadingJobDesc}
+                    />
+                    <label htmlFor="jobdesc-upload" className="cursor-pointer">
+                      <div className="flex flex-col items-center">
+                        <div className="h-12 w-12 bg-gray-100 rounded-xl flex items-center justify-center mb-3">
+                          <Building className="h-6 w-6 text-gray-400" />
+                        </div>
+                        <p className="text-sm font-medium mb-1" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                          {uploadingJobDesc ? 'Uploading...' : 'Click to upload'}
+                        </p>
+                        <p className="text-xs" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                          PDF, JPEG, PNG, DOCX (max 10MB)
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="border border-gray-200 rounded-xl p-4" style={{ backgroundColor: '#F9FAFB' }}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#EFF6FF' }}>
+                          <Building className="h-5 w-5" style={{ color: '#3B82F6' }} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                            {jobDescriptionFile.name}
+                          </p>
+                          <p className="text-xs" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                            {(jobDescriptionFile.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => handleViewDocument(jobDescriptionFile, 'jobdesc')}
+                          className="p-2 rounded-xl transition-all duration-200 hover:bg-blue-50"
+                          style={{ color: '#3B82F6' }}
+                          title="View Document"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDownloadDocument(jobDescriptionFile, jobDescriptionFile.name)}
+                          className="p-2 rounded-xl transition-all duration-200 hover:bg-green-50"
+                          style={{ color: '#10B981' }}
+                          title="Download Document"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleRemoveFile('jobdesc')}
+                          className="p-2 rounded-xl transition-all duration-200"
+                          style={{ color: '#E54747' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FEF2F2'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                          title="Remove Document"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Job Posting Upload */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#F0FDF4' }}>
+                    <Briefcase className="h-5 w-5" style={{ color: '#10B981' }} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                      Job Posting
+                    </h3>
+                    <p className="text-sm" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                      Upload the official job posting document
+                    </p>
+                  </div>
+                </div>
+
+                {!jobPostingFile ? (
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center transition-all duration-200 hover:border-gray-400 hover:bg-gray-50">
+                    <input
+                      type="file"
+                      id="jobposting-upload"
+                      className="hidden"
+                      accept=".pdf,.jpg,.jpeg,.png,.docx,.doc"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleJobPostingUpload(file);
+                      }}
+                      disabled={uploadingJobPosting}
+                    />
+                    <label htmlFor="jobposting-upload" className="cursor-pointer">
+                      <div className="flex flex-col items-center">
+                        <div className="h-12 w-12 bg-gray-100 rounded-xl flex items-center justify-center mb-3">
+                          <Briefcase className="h-6 w-6 text-gray-400" />
+                        </div>
+                        <p className="text-sm font-medium mb-1" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                          {uploadingJobPosting ? 'Uploading...' : 'Click to upload'}
+                        </p>
+                        <p className="text-xs" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                          PDF, JPEG, PNG, DOCX (max 10MB)
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="border border-gray-200 rounded-xl p-4" style={{ backgroundColor: '#F9FAFB' }}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#F0FDF4' }}>
+                          <Briefcase className="h-5 w-5" style={{ color: '#10B981' }} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                            {jobPostingFile.name}
+                          </p>
+                          <p className="text-xs" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                            {(jobPostingFile.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => handleViewDocument(jobPostingFile, 'jobposting')}
+                          className="p-2 rounded-xl transition-all duration-200 hover:bg-blue-50"
+                          style={{ color: '#3B82F6' }}
+                          title="View Document"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDownloadDocument(jobPostingFile, jobPostingFile.name)}
+                          className="p-2 rounded-xl transition-all duration-200 hover:bg-green-50"
+                          style={{ color: '#10B981' }}
+                          title="Download Document"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleRemoveFile('jobposting')}
+                          className="p-2 rounded-xl transition-all duration-200"
+                          style={{ color: '#E54747' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FEF2F2'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                          title="Remove Document"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Emails Upload */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#F3E8FF' }}>
+                    <Mail className="h-5 w-5" style={{ color: '#8B5CF6' }} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                      Emails
+                    </h3>
+                    <p className="text-sm" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                      Upload any relevant emails related to the job application process
+                    </p>
+                  </div>
+                </div>
+
+                {!emailsFile ? (
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center transition-all duration-200 hover:border-gray-400 hover:bg-gray-50">
+                    <input
+                      type="file"
+                      id="emails-upload"
+                      className="hidden"
+                      accept=".pdf,.jpg,.jpeg,.png,.docx,.doc"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleEmailsUpload(file);
+                      }}
+                      disabled={uploadingEmails}
+                    />
+                    <label htmlFor="emails-upload" className="cursor-pointer">
+                      <div className="flex flex-col items-center">
+                        <div className="h-12 w-12 bg-gray-100 rounded-xl flex items-center justify-center mb-3">
+                          <Mail className="h-6 w-6 text-gray-400" />
+                        </div>
+                        <p className="text-sm font-medium mb-1" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                          {uploadingEmails ? 'Uploading...' : 'Click to upload'}
+                        </p>
+                        <p className="text-xs" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                          PDF, JPEG, PNG, DOCX (max 10MB)
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="border border-gray-200 rounded-xl p-4" style={{ backgroundColor: '#F9FAFB' }}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#F3E8FF' }}>
+                          <Mail className="h-5 w-5" style={{ color: '#8B5CF6' }} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                            {emailsFile.name}
+                          </p>
+                          <p className="text-xs" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                            {(emailsFile.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => handleViewDocument(emailsFile, 'emails')}
+                          className="p-2 rounded-xl transition-all duration-200 hover:bg-blue-50"
+                          style={{ color: '#3B82F6' }}
+                          title="View Document"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDownloadDocument(emailsFile, emailsFile.name)}
+                          className="p-2 rounded-xl transition-all duration-200 hover:bg-green-50"
+                          style={{ color: '#10B981' }}
+                          title="Download Document"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleRemoveFile('emails')}
+                          className="p-2 rounded-xl transition-all duration-200"
+                          style={{ color: '#E54747' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FEF2F2'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                          title="Remove Document"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Notes Upload */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FFFBEB' }}>
+                    <StickyNote className="h-5 w-5" style={{ color: '#F59E0B' }} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                      Notes
+                    </h3>
+                    <p className="text-sm" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                      Upload any additional notes or comments you want to include
+                    </p>
+                  </div>
+                </div>
+
+                {!notesFile ? (
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center transition-all duration-200 hover:border-gray-400 hover:bg-gray-50">
+                    <input
+                      type="file"
+                      id="notes-upload"
+                      className="hidden"
+                      accept=".pdf,.jpg,.jpeg,.png,.docx,.doc"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleNotesUpload(file);
+                      }}
+                      disabled={uploadingNotes}
+                    />
+                    <label htmlFor="notes-upload" className="cursor-pointer">
+                      <div className="flex flex-col items-center">
+                        <div className="h-12 w-12 bg-gray-100 rounded-xl flex items-center justify-center mb-3">
+                          <StickyNote className="h-6 w-6 text-gray-400" />
+                        </div>
+                        <p className="text-sm font-medium mb-1" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                          {uploadingNotes ? 'Uploading...' : 'Click to upload'}
+                        </p>
+                        <p className="text-xs" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                          PDF, JPEG, PNG, DOCX (max 10MB)
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="border border-gray-200 rounded-xl p-4" style={{ backgroundColor: '#F9FAFB' }}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FFFBEB' }}>
+                          <StickyNote className="h-5 w-5" style={{ color: '#F59E0B' }} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                            {notesFile.name}
+                          </p>
+                          <p className="text-xs" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                            {(notesFile.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => handleViewDocument(notesFile, 'notes')}
+                          className="p-2 rounded-xl transition-all duration-200 hover:bg-blue-50"
+                          style={{ color: '#3B82F6' }}
+                          title="View Document"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDownloadDocument(notesFile, notesFile.name)}
+                          className="p-2 rounded-xl transition-all duration-200 hover:bg-green-50"
+                          style={{ color: '#10B981' }}
+                          title="Download Document"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleRemoveFile('notes')}
+                          className="p-2 rounded-xl transition-all duration-200"
+                          style={{ color: '#E54747' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FEF2F2'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                          title="Remove Document"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Upload Status */}
+              {(backgroundCheckFile || jobDescriptionFile || jobPostingFile || emailsFile || notesFile) && (
+                <div className="border border-gray-200 rounded-xl p-4" style={{ backgroundColor: '#F9FAFB' }}>
+                  <h4 className="text-sm font-semibold mb-3" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                    Upload Status
+                  </h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                        Background Check Report
+                      </span>
+                      <span className={`text-sm font-medium`} style={{ fontFamily: 'Poppins, sans-serif', color: backgroundCheckFile ? '#10B981' : '#9CA3AF' }}>
+                        {backgroundCheckFile ? '✓ Uploaded' : 'Pending'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                        Job Description
+                      </span>
+                      <span className={`text-sm font-medium`} style={{ fontFamily: 'Poppins, sans-serif', color: jobDescriptionFile ? '#10B981' : '#9CA3AF' }}>
+                        {jobDescriptionFile ? '✓ Uploaded' : 'Pending'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                        Job Posting
+                      </span>
+                      <span className={`text-sm font-medium`} style={{ fontFamily: 'Poppins, sans-serif', color: jobPostingFile ? '#10B981' : '#9CA3AF' }}>
+                        {jobPostingFile ? '✓ Uploaded' : 'Pending'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                        Emails
+                      </span>
+                      <span className={`text-sm font-medium`} style={{ fontFamily: 'Poppins, sans-serif', color: emailsFile ? '#10B981' : '#9CA3AF' }}>
+                        {emailsFile ? '✓ Uploaded' : 'Pending'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                        Notes
+                      </span>
+                      <span className={`text-sm font-medium`} style={{ fontFamily: 'Poppins, sans-serif', color: notesFile ? '#10B981' : '#9CA3AF' }}>
+                        {notesFile ? '✓ Uploaded' : 'Pending'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Instructions */}
+              <div className="border border-gray-200 rounded-xl p-4" style={{ backgroundColor: '#F9FAFB' }}>
+                <h4 className="text-sm font-semibold mb-2" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                  Upload Guidelines
+                </h4>
+                <ul className="text-xs space-y-1" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                  <li>• Supported formats: PDF, JPEG, PNG, DOCX, DOC</li>
+                  <li>• Maximum file size: 10MB per document</li>
+                  <li>• Documents will be securely stored and accessible during the assessment</li>
+                  <li>• Both documents are recommended for a complete assessment</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-gray-200" style={{ backgroundColor: '#FFFFFF' }}>
+              <button
+                onClick={() => setShowDocumentPanel(false)}
+                className="w-full px-4 py-3 rounded-xl font-semibold transition-all duration-200 hover:opacity-90"
+                style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747', color: '#FFFFFF' }}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Document Viewer Modal */}
+      {showDocumentViewer && viewingDocument && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-7xl w-full max-h-[90vh] relative border border-gray-200">
+            {/* Header */}
+            <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-gray-50">
+              <div className="flex items-center gap-3">
+                <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${
+                  viewingDocument.type === 'background' ? 'bg-red-50' : viewingDocument.type === 'jobdesc' ? 'bg-blue-50' : viewingDocument.type === 'jobposting' ? 'bg-green-50' : viewingDocument.type === 'emails' ? 'bg-purple-50' : 'bg-yellow-50'
+                }`}>
+                  {viewingDocument.type === 'background' ? (
+                    <FileText className="h-5 w-5" style={{ color: '#E54747' }} />
+                  ) : viewingDocument.type === 'jobdesc' ? (
+                    <Building className="h-5 w-5 text-blue-600" />
+                  ) : viewingDocument.type === 'jobposting' ? (
+                    <Briefcase className="h-5 w-5 text-green-600" />
+                  ) : viewingDocument.type === 'emails' ? (
+                    <Mail className="h-5 w-5 text-purple-600" />
+                  ) : (
+                    <StickyNote className="h-5 w-5 text-yellow-600" />
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    {viewingDocument.title}
+                  </h2>
+                  <p className="text-sm" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                    {viewingDocument.file.name} • {(viewingDocument.file.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleDownloadDocument(viewingDocument.file, viewingDocument.file.name)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 text-sm font-medium flex items-center gap-2 transition-all duration-200"
+                  style={{ fontFamily: 'Poppins, sans-serif' }}
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                  </svg>
+                  Download
+                </button>
+                <button
+                  className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                  onClick={() => {
+                    setShowDocumentViewer(false);
+                    setViewingDocument(null);
+                  }}
+                >
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Document Content */}
+            <div className="flex-1 overflow-hidden">
+              {viewingDocument.file.type === 'application/pdf' ? (
+                /* PDF Viewer */
+                <iframe
+                  src={getFilePreviewUrl(viewingDocument.file)}
+                  className="w-full h-[70vh] border-0"
+                  title={`${viewingDocument.title} Preview`}
+                />
+              ) : viewingDocument.file.type.startsWith('image/') ? (
+                /* Image Viewer */
+                <div className="flex items-center justify-center p-8 h-[70vh] bg-gray-50">
+                  <img
+                    src={getFilePreviewUrl(viewingDocument.file)}
+                    alt={viewingDocument.title}
+                    className="max-w-full max-h-full object-contain rounded-xl shadow-lg"
+                  />
+                </div>
+              ) : (
+                /* Unsupported File Type */
+                <div className="flex flex-col items-center justify-center p-12 h-[70vh] bg-gray-50">
+                  <div className="h-16 w-16 bg-gray-200 rounded-xl flex items-center justify-center mb-4">
+                    <FileText className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-black mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    Preview Not Available
+                  </h3>
+                  <p className="text-center mb-6 max-w-md" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                    This file type cannot be previewed in the browser. You can download the file to view it in an appropriate application.
+                  </p>
+                  <button
+                    onClick={() => handleDownloadDocument(viewingDocument.file, viewingDocument.file.name)}
+                    className="px-6 py-3 rounded-xl text-white font-semibold hover:opacity-90 transition-all duration-200 flex items-center gap-2"
+                    style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                    </svg>
+                    Download File
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Footer Info */}
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+              <div className="flex justify-between items-center text-sm" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                <div>
+                  File Type: {viewingDocument.file.type || 'Unknown'} • 
+                  Size: {(viewingDocument.file.size / 1024 / 1024).toFixed(2)} MB
+                </div>
+                <div className="flex items-center gap-4">
+                  <span>Uploaded: {new Date().toLocaleDateString()}</span>
+                  <span className="text-green-600 font-medium">✓ Secure</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
