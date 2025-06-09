@@ -32,6 +32,7 @@ import AssessmentProgressBar from "@/app/hr-admin/dashboard/[userId]/assessment/
 import ConditionalJobOfferLetter from "./components/ConditionalJobOfferLetter";
 import IndividualizedAssessmentModal from "./components/IndividualizedAssessmentModal";
 import PreliminaryRevocationModal from './components/PreliminaryRevocationModal';
+import PrintPreviewButton from './components/PrintButton';
 
 /**
  * HR Admin Assessment Page with Form Persistence
@@ -905,7 +906,7 @@ export default function AssessmentPage({
         alert('Please upload a valid file format (PDF, JPEG, PNG, DOCX, DOC)');
         return;
       }
-      
+
       // Validate file size (10MB limit)
       if (file.size > 10 * 1024 * 1024) {
         alert('File size must be less than 10MB');
@@ -932,7 +933,7 @@ export default function AssessmentPage({
         alert('Please upload a valid file format (PDF, JPEG, PNG, DOCX, DOC)');
         return;
       }
-      
+
       // Validate file size (10MB limit)
       if (file.size > 10 * 1024 * 1024) {
         alert('File size must be less than 10MB');
@@ -959,7 +960,7 @@ export default function AssessmentPage({
         alert('Please upload a valid file format (PDF, JPEG, PNG, DOCX, DOC)');
         return;
       }
-      
+
       // Validate file size (10MB limit)
       if (file.size > 10 * 1024 * 1024) {
         alert('File size must be less than 10MB');
@@ -986,7 +987,7 @@ export default function AssessmentPage({
         alert('Please upload a valid file format (PDF, JPEG, PNG, DOCX, DOC)');
         return;
       }
-      
+
       // Validate file size (10MB limit)
       if (file.size > 10 * 1024 * 1024) {
         alert('File size must be less than 10MB');
@@ -1013,7 +1014,7 @@ export default function AssessmentPage({
         alert('Please upload a valid file format (PDF, JPEG, PNG, DOCX, DOC)');
         return;
       }
-      
+
       // Validate file size (10MB limit)
       if (file.size > 10 * 1024 * 1024) {
         alert('File size must be less than 10MB');
@@ -1099,7 +1100,7 @@ export default function AssessmentPage({
               View Documents
               <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showDocumentsDropdown ? 'rotate-180' : ''}`} />
             </button>
-            
+
             {showDocumentsDropdown && (
               <div className="absolute top-full mt-2 right-0 bg-white border border-gray-200 rounded-xl shadow-lg py-2 min-w-64 z-50">
                 {savedOfferLetter && (
@@ -1240,7 +1241,7 @@ export default function AssessmentPage({
               </div>
             )}
           </div>
-          
+
           {/* Document Upload Panel Trigger */}
           <button
             onClick={() => setShowDocumentPanel(true)}
@@ -1356,19 +1357,18 @@ export default function AssessmentPage({
                 </div>
                 <div className="flex justify-between items-center mt-8">
                   <button
-                    className="px-8 py-3 border border-gray-300 text-gray-400 rounded-xl text-lg font-semibold cursor-not-allowed" 
+                    className="px-8 py-3 border border-gray-300 text-gray-400 rounded-xl text-lg font-semibold cursor-not-allowed"
                     disabled
                     style={{ fontFamily: 'Poppins, sans-serif' }}
                   >
                     Previous
                   </button>
                   <button
-                    className={`px-8 py-3 rounded-xl text-lg font-semibold flex items-center space-x-2 transition-all duration-200 ${
-                      answers.conditional_offer 
-                        ? "text-white hover:opacity-90" 
-                        : "border border-gray-300 text-gray-400 cursor-not-allowed"
-                    }`}
-                    style={{ 
+                    className={`px-8 py-3 rounded-xl text-lg font-semibold flex items-center space-x-2 transition-all duration-200 ${answers.conditional_offer
+                      ? "text-white hover:opacity-90"
+                      : "border border-gray-300 text-gray-400 cursor-not-allowed"
+                      }`}
+                    style={{
                       fontFamily: 'Poppins, sans-serif',
                       backgroundColor: answers.conditional_offer ? '#E54747' : 'transparent'
                     }}
@@ -1399,8 +1399,8 @@ export default function AssessmentPage({
                   <p className="text-lg mb-6 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
                     The following can be used by employers who would like to conduct an individualized assessment in writing to consider the relevance of past convictions to the job being offered. These assessments need to be done in writing, and held on file for at least one year.
                   </p>
-                  <button 
-                    className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200" 
+                  <button
+                    className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200"
                     onClick={() => setShowAssessmentModal(true)}
                     style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
                   >
@@ -1429,15 +1429,15 @@ export default function AssessmentPage({
                     The following may be used to inform a job applicant in writing of the intent to revoke a conditional job offer due to relevant criminal history
                   </p>
                   <div className="flex gap-4">
-                    <button 
-                      className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200" 
+                    <button
+                      className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200"
                       onClick={() => setShowRevocationModal(true)}
                       style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
                     >
                       Issue Preliminary Job Offer Revocation
                     </button>
-                    <button 
-                      className="px-8 py-3 rounded-xl text-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200" 
+                    <button
+                      className="px-8 py-3 rounded-xl text-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200"
                       onClick={handleProceedWithHire}
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                     >
@@ -1486,15 +1486,15 @@ export default function AssessmentPage({
                     </ul>
                   </div>
                   <div className="flex flex-row gap-4 mt-2">
-                    <button 
-                      className="px-8 py-3 rounded-xl text-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200" 
+                    <button
+                      className="px-8 py-3 rounded-xl text-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200"
                       onClick={handleProceedWithHire}
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                     >
                       Proceed with hire
                     </button>
-                    <button 
-                      className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200" 
+                    <button
+                      className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200"
                       onClick={() => setShowReassessmentInfoModal(true)}
                       style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
                     >
@@ -1511,8 +1511,8 @@ export default function AssessmentPage({
                         After informing an applicant that you intend to revoke a job offer due to the applicant's criminal history, the applicant must be given at least 5 business days to provide mitigating evidence that speaks to their character and fitness to perform the job being offered. An additional 5 business days are required if the applicant intends to gather and deliver information disputing the accuracy of the criminal history report. During this reassessment process, the position must remain open, except in emergent circumstances. This following form can be used to conduct an individualized reassessment based on information provided by the applicant.
                       </div>
                       <div className="flex justify-end">
-                        <button 
-                          className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200" 
+                        <button
+                          className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200"
                           onClick={() => { setShowReassessmentInfoModal(false); setShowReassessmentSplit(true); }}
                           style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
                         >
@@ -1700,9 +1700,9 @@ export default function AssessmentPage({
                         )}
                       </div>
                       <div className="flex justify-end mt-8 gap-4">
-                        <button 
-                          type="button" 
-                          className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200" 
+                        <button
+                          type="button"
+                          className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200"
                           onClick={() => setReassessmentPreview(true)}
                           style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
                         >
@@ -1748,17 +1748,17 @@ export default function AssessmentPage({
                         )}
                       </div>
                       <div className="flex justify-end mt-8 gap-4">
-                        <button 
-                          type="button" 
-                          className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200" 
+                        <button
+                          type="button"
+                          className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200"
                           onClick={handleSendReassessment}
                           style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
                         >
                           Send
                         </button>
-                        <button 
-                          type="button" 
-                          className="px-8 py-3 rounded-xl text-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200" 
+                        <button
+                          type="button"
+                          className="px-8 py-3 rounded-xl text-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200"
                           onClick={() => setReassessmentPreview(false)}
                           style={{ fontFamily: 'Poppins, sans-serif' }}
                         >
@@ -1794,7 +1794,7 @@ export default function AssessmentPage({
                       <p className="mb-6 max-w-md mx-auto" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
                         {candidateProfile.first_name} {candidateProfile.last_name} has chosen to keep their restorative record private. The candidate would need to enable sharing to make their record accessible.
                       </p>
-                      <button 
+                      <button
                         className="px-6 py-3 rounded-xl text-white font-semibold hover:opacity-90 transition-all duration-200 mb-6"
                         style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
                       >
@@ -2100,7 +2100,7 @@ export default function AssessmentPage({
                       ? 'border-b-2 border-red-600'
                       : 'hover:text-gray-800'
                       }`}
-                    style={{ 
+                    style={{
                       fontFamily: 'Poppins, sans-serif',
                       color: activeTab === tab ? '#E54747' : '#595959'
                     }}
@@ -2272,8 +2272,8 @@ export default function AssessmentPage({
             </div>
             <h2 className="text-2xl font-bold text-center mb-4 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Applicant Hired!</h2>
             <div className="text-lg text-center mb-8" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>You have indicated that you intend to extend an offer of employment to the candidate. Please update your records accordingly. We will store the assessments you conducted on Rézme.</div>
-            <button 
-              className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200" 
+            <button
+              className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200"
               onClick={() => { setShowExtendSuccessModal(false); setShowReassessmentSplit(false); setReassessmentPreview(false); router.push('/hr-admin/dashboard'); }}
               style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
             >
@@ -2302,8 +2302,8 @@ export default function AssessmentPage({
             <p className="text-lg text-center mb-8 max-w-4xl" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
               You have indicated that you will not be proceeding with an offer of employment to the candidate. Please update your records accordingly. We will store the assessments and actions you conducted on Rézme including the steps you took to ensure compliance with San Diego County Fair Chance Ordinance and The Office of Labor Standards and Enforcement (OLSE).
             </p>
-            <button 
-              className="px-8 py-4 rounded-xl text-lg font-semibold text-white hover:opacity-90 mb-8 transition-all duration-200" 
+            <button
+              className="px-8 py-4 rounded-xl text-lg font-semibold text-white hover:opacity-90 mb-8 transition-all duration-200"
               onClick={() => { setShowFinalRevocationSuccessModal(false); router.push('/hr-admin/dashboard'); }}
               style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
             >
@@ -2377,7 +2377,7 @@ export default function AssessmentPage({
                 <p className="mb-6 max-w-md mx-auto" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
                   {candidateProfile.first_name} {candidateProfile.last_name} has chosen to keep their restorative record private. The candidate would need to enable sharing to make their record accessible.
                 </p>
-                <button 
+                <button
                   className="px-6 py-3 rounded-xl text-white font-semibold hover:opacity-90 transition-all duration-200 mb-6"
                   style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
                 >
@@ -2496,6 +2496,7 @@ export default function AssessmentPage({
 
             {/* Footer */}
             <div className="flex justify-end space-x-4 mt-6">
+              <PrintPreviewButton documentSelector=".prose" documentTitle="Conditional Job Offer" />
               <button
                 type="button"
                 className="px-6 py-2 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-200"
@@ -2503,40 +2504,6 @@ export default function AssessmentPage({
                 style={{ fontFamily: 'Poppins, sans-serif' }}
               >
                 Close
-              </button>
-              <button
-                type="button"
-                className="px-6 py-2 rounded-xl text-white font-semibold hover:opacity-90 transition-all duration-200 flex items-center gap-2"
-                style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
-                onClick={() => {
-                  const printContent = document.querySelector('.prose:last-of-type');
-                  if (printContent) {
-                  const printWindow = window.open('', '_blank');
-                  if (printWindow) {
-                    printWindow.document.write(`
-                      <html>
-                        <head>
-                          <title>Conditional Job Offer Letter</title>
-                          <style>
-                              body { font-family: 'Poppins', Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; color: #000000; }
-                              .font-bold, b { font-weight: bold; }
-                              .mb-6 { margin-bottom: 1.5rem; }
-                              .mb-8 { margin-bottom: 2rem; }
-                            .font-semibold { font-weight: 600; }
-                            .mb-2 { margin-bottom: 0.5rem; }
-                          </style>
-                        </head>
-                        <body>${printContent.innerHTML}</body>
-                      </html>
-                    `);
-                    printWindow.document.close();
-                    printWindow.print();
-                    }
-                  }
-                }}
-              >
-                <Printer className="h-4 w-4" />
-                Print/Save
               </button>
             </div>
           </div>
@@ -2578,27 +2545,27 @@ export default function AssessmentPage({
                 <div>
                   <span className="font-semibold text-black">1. The specific duties and responsibilities of the job are:</span>
                   <ul className="list-disc ml-6 mt-2" style={{ color: '#595959' }}>
-                  {savedAssessment.duties.map((duty: string, idx: number) => duty && <li key={idx}>{duty}</li>)}
-                </ul>
-              </div>
-                
+                    {savedAssessment.duties.map((duty: string, idx: number) => duty && <li key={idx}>{duty}</li>)}
+                  </ul>
+                </div>
+
                 <div>
                   <span className="font-semibold text-black">2. Description of the criminal conduct and why the conduct is of concern with respect to the position in question:</span>
                   <div className="mt-2" style={{ color: '#595959' }}>{savedAssessment.conduct}</div>
                 </div>
-                
+
                 <div>
                   <span className="font-semibold text-black">3. How long ago did the criminal activity occur:</span>
                   <div className="mt-2" style={{ color: '#595959' }}>{savedAssessment.howLongAgo}</div>
                 </div>
-                
+
                 <div>
                   <span className="font-semibold text-black">4. Activities since criminal activity, such as work experience, job training, rehabilitation, community service, etc.:</span>
                   <ul className="list-disc ml-6 mt-2" style={{ color: '#595959' }}>
-                  {savedAssessment.activities.map((act: string, idx: number) => act && <li key={idx}>{act}</li>)}
-                </ul>
-              </div>
-                
+                    {savedAssessment.activities.map((act: string, idx: number) => act && <li key={idx}>{act}</li>)}
+                  </ul>
+                </div>
+
                 <div>
                   <span className="font-semibold text-black">Based on the factors above, we are considering rescinding our offer of employment because:</span>
                   <div className="mt-2" style={{ color: '#595959' }}>{savedAssessment.rescindReason}</div>
@@ -2627,6 +2594,10 @@ export default function AssessmentPage({
 
             {/* Footer */}
             <div className="flex justify-end space-x-4 mt-6">
+              <PrintPreviewButton
+                documentSelector=".prose"
+                documentTitle="=Individualized Assessment Form"
+              />
               <button
                 type="button"
                 className="px-6 py-2 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-200"
@@ -2634,46 +2605,6 @@ export default function AssessmentPage({
                 style={{ fontFamily: 'Poppins, sans-serif' }}
               >
                 Close
-              </button>
-              <button
-                type="button"
-                className="px-6 py-2 rounded-xl text-white font-semibold hover:opacity-90 transition-all duration-200 flex items-center gap-2"
-                style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
-                onClick={() => {
-                  const printContent = document.querySelector('.prose:last-of-type');
-                  if (printContent) {
-                    const printWindow = window.open('', '_blank');
-                    if (printWindow) {
-                      printWindow.document.write(`
-                        <html>
-                          <head>
-                            <title>Criminal History Individual Assessment Form</title>
-                            <style>
-                              body { font-family: 'Poppins', Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; color: #000000; }
-                              .font-bold { font-weight: bold; }
-                              .font-semibold { font-weight: 600; }
-                              .mt-2 { margin-top: 0.5rem; }
-                              .mt-6 { margin-top: 1.5rem; }
-                              .mb-2 { margin-bottom: 0.5rem; }
-                              .mb-4 { margin-bottom: 1rem; }
-                              .mb-6 { margin-bottom: 1.5rem; }
-                              .list-disc { list-style-type: disc; }
-                              .ml-6 { margin-left: 1.5rem; }
-                              .space-y-2 > * + * { margin-top: 0.5rem; }
-                              .space-y-4 > * + * { margin-top: 1rem; }
-                            </style>
-                          </head>
-                          <body>${printContent.innerHTML}</body>
-                        </html>
-                      `);
-                      printWindow.document.close();
-                      printWindow.print();
-                    }
-                  }
-                }}
-              >
-                <Printer className="h-4 w-4" />
-                Print/Save
               </button>
             </div>
           </div>
@@ -2759,6 +2690,10 @@ export default function AssessmentPage({
 
             {/* Footer */}
             <div className="flex justify-end space-x-4 mt-6">
+              <PrintPreviewButton
+                documentSelector=".prose"
+                documentTitle="Job Revocation Notice"
+              />
               <button
                 type="button"
                 className="px-6 py-2 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-200"
@@ -2766,43 +2701,6 @@ export default function AssessmentPage({
                 style={{ fontFamily: 'Poppins, sans-serif' }}
               >
                 Close
-              </button>
-              <button
-                type="button"
-                className="px-6 py-2 rounded-xl text-white font-semibold hover:opacity-90 transition-all duration-200 flex items-center gap-2"
-                style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
-                onClick={() => {
-                  const printContent = document.querySelector('.prose:last-of-type');
-                  if (printContent) {
-                    const printWindow = window.open('', '_blank');
-                    if (printWindow) {
-                      printWindow.document.write(`
-                        <html>
-                          <head>
-                            <title>Notice of Preliminary Decision to Revoke Job Offer</title>
-                            <style>
-                              body { font-family: 'Poppins', Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; color: #000000; }
-                              .font-bold, b { font-weight: bold; }
-                              .font-semibold { font-weight: 600; }
-                              .mb-2 { margin-bottom: 0.5rem; }
-                              .mt-8 { margin-top: 2rem; }
-                              .list-disc { list-style-type: disc; }
-                              .list-decimal { list-style-type: decimal; }
-                              .ml-6 { margin-left: 1.5rem; }
-                              .text-xs { font-size: 0.75rem; }
-                            </style>
-                          </head>
-                          <body>${printContent.innerHTML}</body>
-                        </html>
-                      `);
-                      printWindow.document.close();
-                      printWindow.print();
-                    }
-                  }
-                }}
-              >
-                <Printer className="h-4 w-4" />
-                Print/Save
               </button>
             </div>
           </div>
@@ -2842,38 +2740,38 @@ export default function AssessmentPage({
               <h3 className="font-bold mt-6 mb-4 text-black text-lg" style={{ fontFamily: 'Poppins, sans-serif' }}>REASSESSMENT</h3>
               <div className="space-y-4">
                 <div><span className="font-semibold text-black">1. Was there an error in the Criminal History Report?</span> <span style={{ color: '#595959' }}>{savedReassessment.errorYesNo}</span></div>
-              {savedReassessment.errorYesNo === 'Yes' && (
+                {savedReassessment.errorYesNo === 'Yes' && (
                   <div><span className="font-semibold text-black">If yes, describe the error:</span> <span style={{ color: '#595959' }}>{savedReassessment.error}</span></div>
-              )}
+                )}
 
                 <div>
                   <span className="font-semibold text-black">2. Evidence of rehabilitation and good conduct:</span>
                   <div className="mt-2 space-y-2">
-                {savedReassessment.evidenceA && (
+                    {savedReassessment.evidenceA && (
                       <div><span className="font-semibold text-black">a.</span> <span style={{ color: '#595959' }}>{savedReassessment.evidenceA}</span></div>
-                )}
-                {savedReassessment.evidenceB && (
+                    )}
+                    {savedReassessment.evidenceB && (
                       <div><span className="font-semibold text-black">b.</span> <span style={{ color: '#595959' }}>{savedReassessment.evidenceB}</span></div>
-                )}
-                {savedReassessment.evidenceC && (
+                    )}
+                    {savedReassessment.evidenceC && (
                       <div><span className="font-semibold text-black">c.</span> <span style={{ color: '#595959' }}>{savedReassessment.evidenceC}</span></div>
-                )}
-                {savedReassessment.evidenceD && (
+                    )}
+                    {savedReassessment.evidenceD && (
                       <div><span className="font-semibold text-black">d.</span> <span style={{ color: '#595959' }}>{savedReassessment.evidenceD}</span></div>
-                )}
+                    )}
                   </div>
-              </div>
+                </div>
 
                 <div>
                   <span className="font-semibold text-black">Decision:</span> <span style={{ color: '#595959' }}>{savedReassessment.decision === 'rescind' ? 'Rescind Offer' : 'Extend Offer'}</span>
-              </div>
+                </div>
 
                 <div>
-                {savedReassessment.decision === 'rescind' ? (
+                  {savedReassessment.decision === 'rescind' ? (
                     <><span className="font-semibold text-black">Based on the factors above, we are rescinding our offer of employment because:</span><br /><span style={{ color: '#595959' }}>{savedReassessment.rescindReason}</span></>
-                ) : (
+                  ) : (
                     <><span className="font-semibold text-black">Based on the factors above, we are extending our offer of employment.</span><br /><span style={{ color: '#595959' }}>{savedReassessment.extendReason}</span></>
-                )}
+                  )}
                 </div>
               </div>
 
@@ -2899,6 +2797,10 @@ export default function AssessmentPage({
 
             {/* Footer */}
             <div className="flex justify-end space-x-4 mt-6">
+              <PrintPreviewButton
+                documentSelector=".prose"
+                documentTitle="Individualized Reassessment Form"
+              />
               <button
                 type="button"
                 className="px-6 py-2 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-200"
@@ -2906,47 +2808,6 @@ export default function AssessmentPage({
                 style={{ fontFamily: 'Poppins, sans-serif' }}
               >
                 Close
-              </button>
-              <button
-                type="button"
-                className="px-6 py-2 rounded-xl text-white font-semibold hover:opacity-90 transition-all duration-200 flex items-center gap-2"
-                style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
-                onClick={() => {
-                  const printContent = document.querySelector('.prose:last-of-type');
-                  if (printContent) {
-                    const printWindow = window.open('', '_blank');
-                    if (printWindow) {
-                      printWindow.document.write(`
-                        <html>
-                          <head>
-                            <title>Individualized Reassessment Form</title>
-                            <style>
-                              body { font-family: 'Poppins', Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; color: #000000; }
-                              .font-bold { font-weight: bold; }
-                              .font-semibold { font-weight: 600; }
-                              .mt-2 { margin-top: 0.5rem; }
-                              .mt-4 { margin-top: 1rem; }
-                              .mt-6 { margin-top: 1.5rem; }
-                              .mt-8 { margin-top: 2rem; }
-                              .mb-2 { margin-bottom: 0.5rem; }
-                              .mb-3 { margin-bottom: 0.75rem; }
-                              .mb-4 { margin-bottom: 1rem; }
-                              .mb-6 { margin-bottom: 1.5rem; }
-                              .space-y-2 > * + * { margin-top: 0.5rem; }
-                              .space-y-4 > * + * { margin-top: 1rem; }
-                            </style>
-                          </head>
-                          <body>${printContent.innerHTML}</body>
-                        </html>
-                      `);
-                      printWindow.document.close();
-                      printWindow.print();
-                    }
-                  }
-                }}
-              >
-                <Printer className="h-4 w-4" />
-                Print/Save
               </button>
             </div>
           </div>
@@ -3029,6 +2890,10 @@ export default function AssessmentPage({
 
             {/* Footer */}
             <div className="flex justify-end space-x-4 mt-6">
+              <PrintPreviewButton
+                documentSelector=".prose"
+                documentTitle="Final Job Revocation Notice"
+              />
               <button
                 type="button"
                 className="px-6 py-2 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-200"
@@ -3036,45 +2901,6 @@ export default function AssessmentPage({
                 style={{ fontFamily: 'Poppins, sans-serif' }}
               >
                 Close
-              </button>
-              <button
-                type="button"
-                className="px-6 py-2 rounded-xl text-white font-semibold hover:opacity-90 transition-all duration-200 flex items-center gap-2"
-                style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
-                onClick={() => {
-                  const printContent = document.querySelector('.prose:last-of-type');
-                  if (printContent) {
-                    const printWindow = window.open('', '_blank');
-                    if (printWindow) {
-                      printWindow.document.write(`
-                        <html>
-                          <head>
-                            <title>Notice of Final Decision to Revoke Job Offer</title>
-                            <style>
-                              body { font-family: 'Poppins', Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; color: #000000; }
-                              .font-bold, b { font-weight: bold; }
-                              .font-semibold { font-weight: 600; }
-                              .mb-2 { margin-bottom: 0.5rem; }
-                              .mb-6 { margin-bottom: 1.5rem; }
-                              .mt-8 { margin-top: 2rem; }
-                              .list-disc { list-style-type: disc; }
-                              .list-decimal { list-style-type: decimal; }
-                              .ml-6 { margin-left: 1.5rem; }
-                              .ml-8 { margin-left: 2rem; }
-                              .space-y-4 > * + * { margin-top: 1rem; }
-                            </style>
-                          </head>
-                          <body>${printContent.innerHTML}</body>
-                        </html>
-                      `);
-                      printWindow.document.close();
-                      printWindow.print();
-                    }
-                  }
-                }}
-              >
-                <Printer className="h-4 w-4" />
-                Print/Save
               </button>
             </div>
           </div>
@@ -3084,7 +2910,7 @@ export default function AssessmentPage({
       {/* Document Upload Slide-out Panel */}
       {showDocumentPanel && (
         <div className="fixed inset-0 z-50 bg-black bg-opacity-40">
-          <div 
+          <div
             className={`fixed right-0 top-0 h-full w-96 shadow-2xl transform transition-transform duration-300 ease-in-out border-l border-gray-200 ${showDocumentPanel ? 'translate-x-0' : 'translate-x-full'}`}
             style={{ backgroundColor: '#FFFFFF' }}
           >
@@ -3106,7 +2932,7 @@ export default function AssessmentPage({
 
             {/* Content */}
             <div className="p-6 space-y-8 h-full overflow-y-auto" style={{ backgroundColor: '#FFFFFF' }}>
-              
+
               {/* Background Check Report Upload */}
               <div className="space-y-4">
                 <div className="flex items-center gap-3 mb-4">
@@ -3688,9 +3514,8 @@ export default function AssessmentPage({
             {/* Header */}
             <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-gray-50">
               <div className="flex items-center gap-3">
-                <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${
-                  viewingDocument.type === 'background' ? 'bg-red-50' : viewingDocument.type === 'jobdesc' ? 'bg-blue-50' : viewingDocument.type === 'jobposting' ? 'bg-green-50' : viewingDocument.type === 'emails' ? 'bg-purple-50' : 'bg-yellow-50'
-                }`}>
+                <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${viewingDocument.type === 'background' ? 'bg-red-50' : viewingDocument.type === 'jobdesc' ? 'bg-blue-50' : viewingDocument.type === 'jobposting' ? 'bg-green-50' : viewingDocument.type === 'emails' ? 'bg-purple-50' : 'bg-yellow-50'
+                  }`}>
                   {viewingDocument.type === 'background' ? (
                     <FileText className="h-5 w-5" style={{ color: '#E54747' }} />
                   ) : viewingDocument.type === 'jobdesc' ? (
@@ -3785,7 +3610,7 @@ export default function AssessmentPage({
             <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
               <div className="flex justify-between items-center text-sm" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
                 <div>
-                  File Type: {viewingDocument.file.type || 'Unknown'} • 
+                  File Type: {viewingDocument.file.type || 'Unknown'} •
                   Size: {(viewingDocument.file.size / 1024 / 1024).toFixed(2)} MB
                 </div>
                 <div className="flex items-center gap-4">
