@@ -1,7 +1,4 @@
-// Initialize SendGrid client
-const sendgridClient = require('@sendgrid/mail');
-sendgridClient.setApiKey(process.env.SENDGRID_API_KEY || '');
-
+// Email utility functions using SendGrid
 interface EmailData {
   to: string;
   subject: string;
