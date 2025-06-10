@@ -21,6 +21,7 @@ interface User {
     final_revocation_notice: boolean;
     decision: boolean;
   };
+  final_decision?: string;
 }
 
 interface HRAdmin {
@@ -48,6 +49,134 @@ function generateSecureCode(): string {
   const code = (randomHex + timestamp).slice(0, 8);
   console.log("Generated invitation code:", code);
   return code;
+}
+
+// Hardcoded ordered steps
+const ASSESSMENT_STEPS = [
+  { key: 'conditional_job_offer', label: 'Conditional Job Offers' },
+  { key: 'individualized_assessment', label: 'Written Individualized Assessment' },
+  { key: 'preliminary_job_offer_revocation', label: 'Preliminary Job Offer Revocation' },
+  { key: 'individualized_reassessment', label: 'Individual Reassessment' },
+  { key: 'final_revocation_notice', label: 'Final Revocation Notice' },
+];
+
+// Helper to get current assessment step index (0-based)
+function getCurrentAssessmentStep(user: any): number {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem(`assessmentCurrentStep_${user.id}`);
+    if (saved && !isNaN(Number(saved))) {
+      return Number(saved) - 1; // localStorage is 1-based
+    }
+  }
+  return 0;
+}
+
+function ComplianceStepDisplay({ user }: { user: any }) {
+  const [expanded, setExpanded] = useState(false);
+  const currentStepIdx = getCurrentAssessmentStep(user);
+  const completedSteps = ASSESSMENT_STEPS.slice(0, currentStepIdx);
+  const currentStep = ASSESSMENT_STEPS[currentStepIdx];
+
+  // Special case: if step = 6 (currentStepIdx === 5)
+  if (currentStepIdx === 5) {
+    return (
+      <div>
+        <div className="flex items-center gap-2">
+          <span
+            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+            style={{
+              backgroundColor: '#F0FDF4',
+              color: '#166534',
+              border: '1px solid #BBF7D0',
+              fontWeight: 'bold'
+            }}
+          >
+            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            All steps completed
+          </span>
+          <button
+            type="button"
+            className="text-xs font-medium underline focus:outline-none transition-all duration-200 hover:opacity-90"
+            style={{ color: '#595959' }}
+            onClick={() => setExpanded(e => !e)}
+          >
+            {expanded ? "Hide" : "Show Previous"}
+          </button>
+        </div>
+        {expanded && (
+          <div className="mt-3 flex flex-col gap-2">
+            {ASSESSMENT_STEPS.map(s => (
+              <span
+                key={s.key}
+                className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                style={{
+                  backgroundColor: '#F0FDF4',
+                  color: '#166534',
+                  border: '1px solid #BBF7D0'
+                }}
+              >
+                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                {s.label}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-2">
+        <span
+          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+          style={{
+            backgroundColor: '#F0F9FF',
+            color: '#1E40AF',
+            border: '1px solid #DBEAFE'
+          }}
+        >
+          {currentStep ? currentStep.label : "-"}
+        </span>
+        <button
+          type="button"
+          className="text-xs font-medium underline focus:outline-none transition-all duration-200 hover:opacity-90"
+          style={{ color: '#595959' }}
+          onClick={() => setExpanded(e => !e)}
+        >
+          {expanded ? "Hide" : "Show Previous"}
+        </button>
+      </div>
+      {expanded && (
+        <div className="mt-3 flex flex-col gap-2">
+          {completedSteps.length === 0 ? (
+            <span className="text-xs" style={{ color: '#9CA3AF' }}>No previous steps</span>
+          ) : (
+            completedSteps.map(s => (
+              <span
+                key={s.key}
+                className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                style={{
+                  backgroundColor: '#F0FDF4',
+                  color: '#166534',
+                  border: '1px solid #BBF7D0'
+                }}
+              >
+                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                {s.label}
+              </span>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function HRAdminDashboard() {
@@ -141,45 +270,29 @@ export default function HRAdminDashboard() {
           };
         }) || [];
 
-      console.log("Fetched permitted users:", users);
       setPermittedUsers(users);
     } catch (err) {
       console.error("Error fetching permitted users:", err);
-      setError("Failed to load permitted users");
+      setError("Failed to load users who granted you access");
     }
   };
 
   const generateInvitationCode = async () => {
     try {
-      const code = generateSecureCode();
-      console.log("Attempting to update HR admin profile with code:", code);
+      if (!hrAdmin) return;
 
-      // First update the invitation code
-      const { error: updateError } = await supabase
+      const newCode = generateSecureCode();
+      console.log("Updating invitation code to:", newCode);
+
+      const { error } = await supabase
         .from("hr_admin_profiles")
-        .update({ invitation_code: code })
-        .eq("id", hrAdmin?.id);
+        .update({ invitation_code: newCode })
+        .eq("id", hrAdmin.id);
 
-      if (updateError) {
-        console.error("Error updating invitation code:", updateError);
-        throw updateError;
-      }
+      if (error) throw error;
 
-      // Then fetch the updated profile
-      const { data, error: fetchError } = await supabase
-        .from("hr_admin_profiles")
-        .select("*")
-        .eq("id", hrAdmin?.id)
-        .single();
-
-      if (fetchError) {
-        console.error("Error fetching updated profile:", fetchError);
-        throw fetchError;
-      }
-
-      console.log("Successfully updated HR admin profile:", data);
-      setHRAdmin((prev) => (prev ? { ...prev, invitation_code: code } : null));
-      setSuccess("Invitation code generated successfully");
+      setHRAdmin({ ...hrAdmin, invitation_code: newCode });
+      setSuccess("New invitation code generated successfully!");
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error("Error generating invitation code:", err);
@@ -193,57 +306,55 @@ export default function HRAdminDashboard() {
   };
 
   const startAssessment = async (userId: string) => {
-    try {
-      // Directly navigate to the assessment page
-      window.location.href = `/hr-admin/dashboard/${userId}/assessment`;
-    } catch (err) {
-      console.error("Error starting assessment:", err);
-      setError("Failed to start assessment");
-      setTimeout(() => setError(null), 3000);
-    }
+    router.push(`/hr-admin/dashboard/${userId}/assessment`);
   };
 
   const refreshData = async () => {
-    await fetchHRAdminProfile();
     await fetchPermittedUsers();
+    setSuccess("Data refreshed successfully!");
+    setTimeout(() => setSuccess(null), 3000);
   };
 
-  // Handle opening invite modal with default message
   const openInviteModal = () => {
-    const defaultMessage = `Dear [Candidate Name],
-
-I hope this message finds you well. As part of our Fair Chance Hiring procedure for the County of San Diego, we are inviting you to create a Restorative Record on our platform.
-
-The Restorative Record allows you to share your personal story, rehabilitation efforts, and positive contributions to your community, providing a more complete picture beyond traditional background checks.
-
-Creating your Restorative Record is voluntary and will help us make a more informed and fair employment decision. The process is confidential and you have full control over what information you choose to share.
-
-If you're interested in participating, please visit our platform and use the invitation code: ${hrAdmin?.invitation_code || '[CODE]'}
-
-Thank you for your time and consideration.
-
-Best regards,
-${hrAdmin?.first_name} ${hrAdmin?.last_name}
-${hrAdmin?.company}`;
-
     setInviteForm({
       candidateName: '',
       candidateEmail: '',
       candidatePhone: '',
-      customMessage: defaultMessage
+      customMessage: `Dear [Candidate Name],
+
+I hope this message finds you well. As part of our hiring process, we would like to invite you to create a Restorative Record to help us better understand your background and qualifications.
+
+Your Restorative Record is an opportunity to share your story, highlight your growth, and demonstrate the positive changes you've made. This process is designed to ensure fair consideration of all candidates while meeting our compliance requirements.
+
+To get started, please:
+1. Visit our platform using your invitation code: ${hrAdmin?.invitation_code || '[CODE]'}
+2. Create your account and complete your Restorative Record
+3. Share your record with us when you're ready
+
+If you have any questions about this process, please don't hesitate to reach out to me directly.
+
+Best regards,
+${hrAdmin?.first_name || ''} ${hrAdmin?.last_name || ''}
+${hrAdmin?.company || ''}
+
+This invitation code will allow you to connect with our HR team: ${hrAdmin?.invitation_code || '[CODE]'}`
     });
     setShowInviteModal(true);
   };
 
-  // Handle sending invite to candidate
   const handleSendInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     setSendingInvite(true);
-    
+
     try {
+      // Here you would integrate with your email service
       // For now, we'll just show a success message
-      // In the future, this could integrate with an email service
-      setSuccess(`Invitation sent to ${inviteForm.candidateEmail || 'candidate'}!`);
+      console.log('Sending invite to:', inviteForm);
+
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      setSuccess(`Invitation sent successfully to ${inviteForm.candidateEmail}`);
       setShowInviteModal(false);
       setInviteForm({
         candidateName: '',
@@ -261,73 +372,60 @@ ${hrAdmin?.company}`;
     }
   };
 
-  const renderComplianceSteps = (user: User) => {
-    const steps = [
-      { key: 'conditional_job_offer', label: 'Conditional Job Offer' },
-      { key: 'individualized_assessment', label: 'Individualized Assessment' },
-      { key: 'preliminary_job_offer_revocation', label: 'Preliminary Job Offer Revocation' },
-      { key: 'individualized_reassessment', label: 'Individualized Reassessment' },
-      { key: 'final_revocation_notice', label: 'Final Revocation Notice' },
-      { key: 'decision', label: 'Decision' }
-    ];
-
-    return (
-      <div className="flex flex-wrap gap-1">
-        {steps.map((step) => {
-          const isCompleted = user.compliance_steps?.[step.key as keyof typeof user.compliance_steps] || false;
-          return (
-            <span
-              key={step.key}
-              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                isCompleted
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-gray-100 text-gray-500'
-              }`}
-              title={step.label}
-            >
-              {step.label}
-            </span>
-          );
-        })}
-      </div>
-    );
-  };
-
   return (
-    <div className="space-y-6">
+    <div
+      className="min-h-screen bg-white p-6 space-y-8"
+      style={{ fontFamily: 'Poppins, sans-serif' }}
+    >
       {error && (
         <div
-          className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative"
+          className="px-4 py-3 rounded-xl border"
+          style={{
+            backgroundColor: '#FEF2F2',
+            borderColor: '#FECACA',
+            color: '#E54747'
+          }}
           role="alert"
         >
-          <span className="block sm:inline">{error}</span>
+          <span className="block sm:inline font-medium">{error}</span>
         </div>
       )}
 
       {success && (
         <div
-          className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded relative"
+          className="px-4 py-3 rounded-xl border"
+          style={{
+            backgroundColor: '#F0FDF4',
+            borderColor: '#BBF7D0',
+            color: '#166534'
+          }}
           role="alert"
         >
-          <span className="block sm:inline">{success}</span>
+          <span className="block sm:inline font-medium">{success}</span>
         </div>
       )}
 
+      {/* Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-gray-900">
+        <h1 className="text-3xl font-semibold text-black">
           HR Admin Dashboard
         </h1>
         <div className="flex items-center space-x-4">
           <button
             onClick={refreshData}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+            className="px-4 py-2 border text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90"
+            style={{
+              color: '#595959',
+              borderColor: '#E5E5E5',
+              backgroundColor: 'transparent'
+            }}
           >
             Refresh Data
           </button>
           {hrAdmin && (
-            <div className="text-gray-900">
-              <p className="font-medium">{hrAdmin.company}</p>
-              <p className="text-sm">
+            <div className="text-right">
+              <p className="font-semibold text-black">{hrAdmin.company}</p>
+              <p className="text-sm" style={{ color: '#595959' }}>
                 {hrAdmin.first_name} {hrAdmin.last_name}
               </p>
             </div>
@@ -336,122 +434,179 @@ ${hrAdmin?.company}`;
       </div>
 
       {/* Invitation Code Section */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">
+      <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold text-black">
             Invitation Code
           </h2>
           <div className="flex space-x-3">
             <button
               onClick={generateInvitationCode}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+              className="px-4 py-2 border text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90"
+              style={{
+                color: '#595959',
+                borderColor: '#E5E5E5',
+                backgroundColor: 'transparent'
+              }}
             >
               Generate New Code
             </button>
             <button
               onClick={openInviteModal}
               disabled={!hrAdmin?.invitation_code}
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              className="px-4 py-2 border-2 text-base font-medium rounded-xl text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                backgroundColor: !hrAdmin?.invitation_code ? '#d1d5db' : '#E54747',
+                borderColor: !hrAdmin?.invitation_code ? '#d1d5db' : '#E54747'
+              }}
             >
               Invite Candidate
             </button>
           </div>
         </div>
         {hrAdmin?.invitation_code ? (
-          <div className="bg-gray-50 p-4 rounded-md">
-            <p className="text-sm text-gray-500 mb-2">
+          <div className="p-4 rounded-xl" style={{ backgroundColor: '#F8F9FA' }}>
+            <p className="text-sm mb-2" style={{ color: '#595959' }}>
               Share this code with users to connect with them:
             </p>
-            <p className="text-2xl font-mono text-gray-900">
+            <p className="text-2xl font-mono text-black font-semibold">
               {hrAdmin.invitation_code}
             </p>
           </div>
         ) : (
-          <p className="text-gray-500">
-            No invitation code generated yet. Click the button above to generate
-            one.
+          <p style={{ color: '#595959' }}>
+            No invitation code generated yet. Click the button above to generate one.
           </p>
         )}
       </div>
 
-      {/* Users with Granted Access */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+      {/* Users Table */}
+      <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
+        <h2 className="text-xl font-semibold text-black mb-6">
           Users Who Granted You Access
         </h2>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
+          <table className="min-w-full">
+            <thead>
+              <tr className="border-b" style={{ borderColor: '#E5E5E5' }}>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-black uppercase tracking-wider">
                   Name
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-black uppercase tracking-wider">
                   Email
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-black uppercase tracking-wider">
                   RR Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-black uppercase tracking-wider">
+                  Final Decision
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-black uppercase tracking-wider">
                   Access Granted
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-black uppercase tracking-wider">
                   Actions
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-black uppercase tracking-wider">
                   Compliance Steps
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody>
               {permittedUsers.map((user) => (
-                <tr key={user.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900">
+                <tr key={user.id} className="border-b" style={{ borderColor: '#F3F4F6' }}>
+                  <td className="px-6 py-4 whitespace-nowrap text-black font-medium">
                     {user.first_name} {user.last_name}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap" style={{ color: '#595959' }}>
                     {user.email}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        user.rr_completed
-                          ? "bg-green-100 text-green-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${user.rr_completed
+                        ? "text-green-800"
+                        : "text-yellow-800"
+                        }`}
+                      style={{
+                        backgroundColor: user.rr_completed ? '#F0FDF4' : '#FFFBEB',
+                        border: user.rr_completed ? '1px solid #BBF7D0' : '1px solid #FDE68A'
+                      }}
                     >
                       {user.rr_completed ? "Completed" : "In Progress"}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-black">
+                    {user.final_decision || "-"}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap" style={{ color: '#595959' }}>
                     {user.granted_at
                       ? new Date(user.granted_at).toLocaleDateString()
                       : "N/A"}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900 space-x-4">
+                  <td className="px-6 py-4 whitespace-nowrap space-x-3">
                     <button
                       onClick={() => viewUserProfile(user.id)}
-                      className="text-indigo-600 hover:text-indigo-900"
+                      className="text-sm font-medium underline transition-all duration-200 hover:opacity-90"
+                      style={{ color: '#595959' }}
                     >
                       View Profile
                     </button>
-                    <button
-                      onClick={() => startAssessment(user.id)}
-                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-                    >
-                      Begin Assessment
-                    </button>
+                    {(() => {
+                      const currentStepIdx = getCurrentAssessmentStep(user);
+                      if (user.final_decision) {
+                        return (
+                          <button
+                            onClick={() => startAssessment(user.id)}
+                            className="px-3 py-2 border text-sm font-medium rounded-lg transition-all duration-200 hover:opacity-90"
+                            style={{
+                              color: '#1E40AF',
+                              borderColor: '#DBEAFE',
+                              backgroundColor: '#F0F9FF'
+                            }}
+                          >
+                            View Assessment
+                          </button>
+                        );
+                      } else if (currentStepIdx > 0) {
+                        return (
+                          <button
+                            onClick={() => startAssessment(user.id)}
+                            className="px-3 py-2 border-2 text-sm font-medium rounded-lg text-white transition-all duration-200 hover:opacity-90"
+                            style={{
+                              backgroundColor: '#E54747',
+                              borderColor: '#E54747'
+                            }}
+                          >
+                            Continue Assessment
+                          </button>
+                        );
+                      } else {
+                        return (
+                          <button
+                            onClick={() => startAssessment(user.id)}
+                            className="px-3 py-2 border-2 text-sm font-medium rounded-lg text-white transition-all duration-200 hover:opacity-90"
+                            style={{
+                              backgroundColor: '#E54747',
+                              borderColor: '#E54747'
+                            }}
+                          >
+                            Begin Assessment
+                          </button>
+                        );
+                      }
+                    })()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {renderComplianceSteps(user)}
+                    <ComplianceStepDisplay user={user} />
                   </td>
                 </tr>
               ))}
               {permittedUsers.length === 0 && (
                 <tr>
                   <td
-                    colSpan={6}
-                    className="px-6 py-4 text-center text-gray-900"
+                    colSpan={7}
+                    className="px-6 py-8 text-center"
+                    style={{ color: '#595959' }}
                   >
                     No users have granted you access yet. Share your invitation
                     code with users to get started.
@@ -465,16 +620,17 @@ ${hrAdmin?.company}`;
 
       {/* Invite Candidate Modal */}
       {showInviteModal && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-gray-200">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="px-6 py-4 border-b" style={{ borderColor: '#E5E5E5' }}>
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium text-gray-900">
+                <h3 className="text-lg font-semibold text-black">
                   Invite Candidate to Create Restorative Record
                 </h3>
                 <button
                   onClick={() => setShowInviteModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="transition-all duration-200 hover:opacity-90"
+                  style={{ color: '#595959' }}
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -487,83 +643,144 @@ ${hrAdmin?.company}`;
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 {/* Candidate Name */}
                 <div className="sm:col-span-2">
-                  <label htmlFor="candidateName" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="candidateName" className="block text-sm font-medium text-black mb-2">
                     Candidate Name
                   </label>
                   <input
                     type="text"
                     id="candidateName"
                     required
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-gray-900"
+                    className="w-full px-4 py-3 border text-base rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                    style={{
+                      borderColor: '#E5E5E5',
+                      color: '#000000',
+                      backgroundColor: '#FFFFFF'
+                    }}
                     value={inviteForm.candidateName}
                     onChange={(e) => setInviteForm({ ...inviteForm, candidateName: e.target.value })}
                     placeholder="Enter candidate's full name"
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#E54747';
+                      e.target.style.boxShadow = '0 0 0 2px rgba(229, 71, 71, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#E5E5E5';
+                      e.target.style.boxShadow = 'none';
+                    }}
                   />
                 </div>
 
                 {/* Candidate Email */}
                 <div>
-                  <label htmlFor="candidateEmail" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="candidateEmail" className="block text-sm font-medium text-black mb-2">
                     Email Address
                   </label>
                   <input
                     type="email"
                     id="candidateEmail"
                     required
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-gray-900"
+                    className="w-full px-4 py-3 border text-base rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                    style={{
+                      borderColor: '#E5E5E5',
+                      color: '#000000',
+                      backgroundColor: '#FFFFFF'
+                    }}
                     value={inviteForm.candidateEmail}
                     onChange={(e) => setInviteForm({ ...inviteForm, candidateEmail: e.target.value })}
                     placeholder="candidate@example.com"
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#E54747';
+                      e.target.style.boxShadow = '0 0 0 2px rgba(229, 71, 71, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#E5E5E5';
+                      e.target.style.boxShadow = 'none';
+                    }}
                   />
                 </div>
 
                 {/* Candidate Phone */}
                 <div>
-                  <label htmlFor="candidatePhone" className="block text-sm font-medium text-gray-700">
-                    Phone Number <span className="text-gray-500">(Optional)</span>
+                  <label htmlFor="candidatePhone" className="block text-sm font-medium text-black mb-2">
+                    Phone Number <span style={{ color: '#595959' }}>(Optional)</span>
                   </label>
                   <input
                     type="tel"
                     id="candidatePhone"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-gray-900"
+                    className="w-full px-4 py-3 border text-base rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                    style={{
+                      borderColor: '#E5E5E5',
+                      color: '#000000',
+                      backgroundColor: '#FFFFFF'
+                    }}
                     value={inviteForm.candidatePhone}
                     onChange={(e) => setInviteForm({ ...inviteForm, candidatePhone: e.target.value })}
                     placeholder="(555) 123-4567"
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#E54747';
+                      e.target.style.boxShadow = '0 0 0 2px rgba(229, 71, 71, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#E5E5E5';
+                      e.target.style.boxShadow = 'none';
+                    }}
                   />
                 </div>
 
                 {/* Custom Message */}
                 <div className="sm:col-span-2">
-                  <label htmlFor="customMessage" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="customMessage" className="block text-sm font-medium text-black mb-2">
                     Message
                   </label>
                   <textarea
                     id="customMessage"
                     rows={10}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-gray-900"
+                    className="w-full px-4 py-3 border text-base rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                    style={{
+                      borderColor: '#E5E5E5',
+                      color: '#000000',
+                      backgroundColor: '#FFFFFF'
+                    }}
                     value={inviteForm.customMessage}
                     onChange={(e) => setInviteForm({ ...inviteForm, customMessage: e.target.value })}
                     placeholder="Customize your invitation message..."
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#E54747';
+                      e.target.style.boxShadow = '0 0 0 2px rgba(229, 71, 71, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#E5E5E5';
+                      e.target.style.boxShadow = 'none';
+                    }}
                   />
-                  <p className="mt-2 text-sm text-gray-500">
+                  <p className="mt-2 text-sm" style={{ color: '#595959' }}>
                     This message will be sent to the candidate along with instructions for creating their Restorative Record.
                   </p>
                 </div>
               </div>
 
               {/* Modal Actions */}
-              <div className="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200">
+              <div className="flex justify-end space-x-3 mt-8 pt-6 border-t" style={{ borderColor: '#E5E5E5' }}>
                 <button
                   type="button"
                   onClick={() => setShowInviteModal(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  className="px-4 py-2 border text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90"
+                  style={{
+                    color: '#595959',
+                    borderColor: '#E5E5E5',
+                    backgroundColor: 'transparent'
+                  }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={sendingInvite || !inviteForm.candidateName || !inviteForm.candidateEmail}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  className="px-4 py-2 border-2 text-base font-medium rounded-xl text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    backgroundColor: (sendingInvite || !inviteForm.candidateName || !inviteForm.candidateEmail) ? '#d1d5db' : '#E54747',
+                    borderColor: (sendingInvite || !inviteForm.candidateName || !inviteForm.candidateEmail) ? '#d1d5db' : '#E54747'
+                  }}
                 >
                   {sendingInvite ? 'Sending...' : 'Send Invitation'}
                 </button>
