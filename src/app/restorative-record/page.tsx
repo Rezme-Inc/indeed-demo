@@ -1719,8 +1719,7 @@ export default function RestorativeRecordBuilder() {
   const dashboardSections = [
     { id: 'progress', label: 'Progress Tracking', icon: '📊' },
     { id: 'status', label: 'Status Updates', icon: '📋' },
-    { id: 'notifications', label: 'Notifications', icon: '🔔' },
-    { id: 'assessment', label: 'Assessment Progress', icon: '📝' }
+    { id: 'notifications', label: 'Notifications', icon: '🔔' }
   ];
 
   const handleDashboardNavigation = (section: string) => {
@@ -2364,81 +2363,6 @@ export default function RestorativeRecordBuilder() {
                   )}
                 </div>
               )}
-            </div>
-          </div>
-        );
-
-      case 'assessment':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
-              <h2 className="text-2xl font-semibold text-black mb-4">Assessment Progress</h2>
-              
-              {/* Assessment Timeline */}
-              <div className="space-y-6">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#10B981' }}>
-                    <span className="text-white font-bold text-sm">1</span>
-                  </div>
-                  <div className="ml-4 flex-1">
-                    <h3 className="font-semibold text-black">Record Submitted</h3>
-                    <p className="text-sm" style={{ color: '#595959' }}>Your Restorative Record has been successfully submitted for review.</p>
-                    <span className="text-xs" style={{ color: '#10B981' }}>Completed</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#F59E0B' }}>
-                    <span className="text-white font-bold text-sm">2</span>
-                  </div>
-                  <div className="ml-4 flex-1">
-                    <h3 className="font-semibold text-black">HR Review</h3>
-                    <p className="text-sm" style={{ color: '#595959' }}>HR admin is reviewing your record and preparing assessment materials.</p>
-                    <span className="text-xs" style={{ color: '#F59E0B' }}>In Progress</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#E5E5E5' }}>
-                    <span className="text-gray-500 font-bold text-sm">3</span>
-                  </div>
-                  <div className="ml-4 flex-1">
-                    <h3 className="font-semibold" style={{ color: '#9CA3AF' }}>Assessment Interview</h3>
-                    <p className="text-sm" style={{ color: '#9CA3AF' }}>Scheduled interview to discuss your Restorative Record.</p>
-                    <span className="text-xs" style={{ color: '#9CA3AF' }}>Pending</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#E5E5E5' }}>
-                    <span className="text-gray-500 font-bold text-sm">4</span>
-                  </div>
-                  <div className="ml-4 flex-1">
-                    <h3 className="font-semibold" style={{ color: '#9CA3AF' }}>Final Decision</h3>
-                    <p className="text-sm" style={{ color: '#9CA3AF' }}>HR admin will provide final assessment results.</p>
-                    <span className="text-xs" style={{ color: '#9CA3AF' }}>Pending</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Next Steps */}
-              <div className="mt-8 p-4 rounded-lg" style={{ backgroundColor: '#F8F9FA' }}>
-                <h3 className="font-semibold text-black mb-2">What's Next?</h3>
-                <p className="text-sm" style={{ color: '#595959' }}>
-                  Your HR admin will contact you within 2-3 business days to schedule your assessment interview. 
-                  Please ensure your contact information is up to date in your profile.
-                </p>
-                <button
-                  onClick={() => router.push('/user/dashboard')}
-                  className="mt-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 hover:opacity-90"
-                  style={{
-                    backgroundColor: '#E54747',
-                    color: '#FFFFFF'
-                  }}
-                >
-                  Update Profile
-                </button>
-              </div>
             </div>
           </div>
         );
