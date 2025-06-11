@@ -3,6 +3,7 @@
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import AssessmentMetrics from "./components/AssessmentMetrics";
 
 interface User {
   id: string;
@@ -184,6 +185,15 @@ export default function HRAdminDashboard() {
   const [hrAdmin, setHRAdmin] = useState<HRAdmin | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [sentInvites, setSentInvites] = useState<Array<{
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+    dateSent: string;
+    message: string;
+  }>>([]);
   const router = useRouter();
 
   // Add state for invite candidate modal
@@ -205,6 +215,23 @@ export default function HRAdminDashboard() {
       fetchPermittedUsers();
     }
   }, [hrAdmin]);
+
+  // Load sent invites from localStorage
+  useEffect(() => {
+    const savedInvites = localStorage.getItem('hr_sent_invites');
+    if (savedInvites) {
+      try {
+        setSentInvites(JSON.parse(savedInvites));
+      } catch (error) {
+        console.error('Error loading sent invites:', error);
+      }
+    }
+  }, []);
+
+  // Save sent invites to localStorage
+  useEffect(() => {
+    localStorage.setItem('hr_sent_invites', JSON.stringify(sentInvites));
+  }, [sentInvites]);
 
   const fetchHRAdminProfile = async () => {
     try {
@@ -347,6 +374,19 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
     setSendingInvite(true);
 
     try {
+      // Create invite record
+      const newInvite = {
+        id: Date.now().toString(), // Simple ID generation
+        name: inviteForm.candidateName,
+        email: inviteForm.candidateEmail,
+        phone: inviteForm.candidatePhone,
+        dateSent: new Date().toISOString(),
+        message: inviteForm.customMessage
+      };
+
+      // Add to sent invites
+      setSentInvites(prev => [...prev, newInvite]);
+
       // Here you would integrate with your email service
       // For now, we'll just show a success message
       console.log('Sending invite to:', inviteForm);
@@ -371,6 +411,20 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
       setSendingInvite(false);
     }
   };
+
+  // Filter users based on search query
+  const filteredUsers = permittedUsers.filter(user => {
+    const query = searchQuery.toLowerCase();
+    const fullName = `${user.first_name} ${user.last_name}`.toLowerCase();
+    const email = user.email.toLowerCase();
+    const status = user.rr_completed ? "completed" : "in progress";
+    const finalDecision = (user.final_decision || "").toLowerCase();
+    
+    return fullName.includes(query) || 
+           email.includes(query) || 
+           status.includes(query) ||
+           finalDecision.includes(query);
+  });
 
   return (
     <div
@@ -480,11 +534,44 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
         )}
       </div>
 
+      {/* Assessment Metrics */}
+      <AssessmentMetrics 
+        users={permittedUsers}
+        sentInvites={sentInvites}
+        onViewAssessment={(candidateId) => router.push(`/hr-admin/dashboard/${candidateId}/assessment`)}
+        onReinviteCandidate={(candidateId) => {
+          console.log('Reinviting candidate:', candidateId);
+          // You can add your reinvite logic here
+          setSuccess('Reinvite sent successfully!');
+          setTimeout(() => setSuccess(null), 3000);
+        }}
+      />
+
       {/* Users Table */}
       <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
-        <h2 className="text-xl font-semibold text-black mb-6">
-          Users Who Granted You Access
-        </h2>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold text-black">
+            Users Who Granted You Access
+          </h2>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5" style={{ color: '#9CA3AF' }} fill="none" viewBox="0 0 20 20">
+                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Search by name, email, status..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="block w-80 pl-10 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200"
+              style={{
+                fontFamily: 'Poppins, sans-serif',
+                borderColor: '#E5E5E5'
+              }}
+            />
+          </div>
+        </div>
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
@@ -513,7 +600,7 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
               </tr>
             </thead>
             <tbody>
-              {permittedUsers.map((user) => (
+              {filteredUsers.map((user) => (
                 <tr key={user.id} className="border-b" style={{ borderColor: '#F3F4F6' }}>
                   <td className="px-6 py-4 whitespace-nowrap text-black font-medium">
                     {user.first_name} {user.last_name}
@@ -601,15 +688,17 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
                   </td>
                 </tr>
               ))}
-              {permittedUsers.length === 0 && (
+              {filteredUsers.length === 0 && (
                 <tr>
                   <td
                     colSpan={7}
                     className="px-6 py-8 text-center"
                     style={{ color: '#595959' }}
                   >
-                    No users have granted you access yet. Share your invitation
-                    code with users to get started.
+                    {permittedUsers.length === 0 
+                      ? "No users have granted you access yet. Share your invitation code with users to get started."
+                      : `No users match "${searchQuery}". Try adjusting your search terms.`
+                    }
                   </td>
                 </tr>
               )}
