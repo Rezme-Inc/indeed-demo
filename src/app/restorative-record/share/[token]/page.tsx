@@ -446,12 +446,37 @@ export default function SharedRestorativeRecord() {
             <div className="space-y-4">
               {rehabPrograms.map((program) => (
                 <div key={program.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                  <div className="font-semibold text-black">{program.program_name}</div>
+                  <div className="font-semibold text-black">{program.program}</div>
+                  <div className="text-sm text-gray-600 mt-1">Type: {program.program_type}</div>
+                  {(program.start_date || program.end_date) && (
+                    <div className="text-sm text-gray-600">
+                      {program.start_date && `Started: ${new Date(program.start_date).toLocaleDateString()}`}
+                      {program.start_date && program.end_date && " • "}
+                      {program.end_date && `Ended: ${new Date(program.end_date).toLocaleDateString()}`}
+                    </div>
+                  )}
                   {program.details && (
                     <div className="text-sm text-gray-600 mt-1">{program.details}</div>
                   )}
                   {program.narrative && (
                     <div className="text-sm text-gray-700 mt-2">{program.narrative}</div>
+                  )}
+                  {program.file_url && (
+                    <div className="text-sm mt-4 pt-3 border-t border-gray-100">
+                      <a
+                        href={program.file_url}
+                        className="inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {program.file_name || "View attachment"}
+                        {program.file_size && (
+                          <span className="ml-2 text-gray-500">
+                            ({Math.round(program.file_size / 1024)} KB)
+                          </span>
+                        )}
+                      </a>
+                    </div>
                   )}
                 </div>
               ))}
