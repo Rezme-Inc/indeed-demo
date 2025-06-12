@@ -27,8 +27,8 @@ export const sendEmail = async ({ to, subject, html, from = process.env.SENDGRID
 };
 
 // Helper function specifically for offer letters
-export const sendOfferLetterEmail = async (offerData: any) => {
-  const { candidateEmail, hrAdminName, company, date, applicant, position, employer, ...rest } = offerData;
+export const sendOfferLetterEmail = async (offerData: any, candidateEmail: string) => {
+  const { hrAdminName, company, date, applicant, position, employer, ...rest } = offerData;
 
   const highlightStyle = 'font-weight: bold;';
   const bodyFont = 'font-family: Times New Roman, Times, serif;';
@@ -36,7 +36,7 @@ export const sendOfferLetterEmail = async (offerData: any) => {
   const emailHtml = `
     <div style="${bodyFont} max-width: 800px; margin: 0 auto; padding: 32px 32px 24px 32px; color: #222; background: #fff;">
       <div style="border-top: 3px solid #222; margin-bottom: 24px;"></div>
-      <div style="text-align: center; font-weight: bold; text-decoration: underline; font-size: 18px; margin-bottom: 24px; letter-spacing: 0.5px;">SAMPLE CONDITIONAL JOB OFFER LETTER</div>
+      <div style="text-align: center; font-weight: bold; text-decoration: underline; font-size: 18px; margin-bottom: 24px; letter-spacing: 0.5px;"> CONDITIONAL JOB OFFER LETTER</div>
       <div style="margin-bottom: 16px; font-weight: bold;"><span style="${highlightStyle}">${date || '[DATE]'}</span></div>
       <div style="margin-bottom: 16px; font-weight: bold;">
         RE: <span style="text-decoration: underline;">Conditional Offer of Employment & Notice of Conviction Background Check</span>
@@ -85,7 +85,7 @@ export const sendOfferLetterEmail = async (offerData: any) => {
   `;
 
   return sendEmail({
-    to: 'jennycjx@stanford.edu', // TODO: change to candidate email
+    to: candidateEmail,
     subject: `Conditional Job Offer Letter - ${position || 'Position'}`,
     html: emailHtml,
   });
@@ -130,7 +130,7 @@ export const sendAssessmentEmail = async (assessmentData: any, candidateEmail: s
     </div>
   `;
   return sendEmail({
-    to: 'jennycjx@stanford.edu',
+    to: candidateEmail,
     subject: `Individualized Assessment Form - ${position || ''}`,
     html: emailHtml,
   });
@@ -251,7 +251,7 @@ export const sendRevocationEmail = async (revocationData: any, candidateEmail: s
     </div>
   `;
   return sendEmail({
-    to: 'jennycjx@stanford.edu',
+    to: candidateEmail,
     subject: `Preliminary Decision to Revoke Job Offer - ${position || ''}`,
     html: emailHtml,
   });
@@ -303,7 +303,7 @@ export const sendReassessmentEmail = async (reassessmentData: any, candidateEmai
     </div>
   `;
   return sendEmail({
-    to: 'jennycjx@stanford.edu',
+    to: candidateEmail,
     subject: `Individualized Reassessment Form - ${position}`,
     html: emailHtml,
   });
@@ -397,8 +397,53 @@ export const sendFinalRevocationEmail = async (finalRevocationData: any, candida
     </div>
   `;
   return sendEmail({
-    to: 'jennycjx@stanford.edu',
+    to: candidateEmail,
     subject: `Final Decision to Revoke Job Offer - ${position}`,
+    html: emailHtml,
+  });
+};
+
+export const sendInvitationEmail = async (invitationData: any, candidateEmail: string) => {
+  const { candidateName, customMessage, hrAdminName, company } = invitationData;
+
+  // Replace placeholders in the custom message
+  const processedMessage = customMessage
+    .replace(/\[Candidate Name\]/g, candidateName || '[Candidate Name]')
+    .replace(/\[CODE\]/g, invitationData.invitationCode || '[CODE]');
+
+  // Convert line breaks to HTML and preserve formatting
+  const htmlMessage = processedMessage
+    .split('\n')
+    .map((line: string) => line.trim())
+    .filter((line: string) => line.length > 0)
+    .map((line: string) => `<p style="margin-bottom: 12px; color: #333;">${line}</p>`)
+    .join('');
+
+  const emailHtml = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; color: #333; background: #fff;">
+      <div style="text-align: center; margin-bottom: 32px;">
+        <h1 style="color: #333; font-size: 24px; font-weight: bold; margin-bottom: 8px;">Restorative Record Invitation</h1>
+        <p style="color: #666; font-size: 16px; margin: 0;">You're invited to create your Restorative Record</p>
+      </div>
+      
+      <div style="background: #f8f9fa; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+        ${htmlMessage}
+      </div>
+      
+      <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #eee;">
+        <p style="color: #666; font-size: 14px; margin: 0;">
+          This invitation was sent by ${hrAdminName || 'HR Team'} from ${company || 'the company'}.
+        </p>
+        <p style="color: #666; font-size: 14px; margin: 8px 0 0 0;">
+          Sent on: ${new Date().toLocaleDateString()}
+        </p>
+      </div>
+    </div>
+  `;
+
+  return sendEmail({
+    to: candidateEmail,
+    subject: `Invitation to Create Your Restorative Record - ${company || 'Company'}`,
     html: emailHtml,
   });
 }; 
