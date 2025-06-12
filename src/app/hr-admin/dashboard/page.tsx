@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import AssessmentMetrics from "./components/AssessmentMetrics";
+import { sendInvitationEmail } from '@/app/restorative-record/utils/sendEmail';
 
 interface User {
   id: string;
@@ -198,6 +199,7 @@ export default function HRAdminDashboard() {
 
   // Add state for invite candidate modal
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [originalMessageTemplate, setOriginalMessageTemplate] = useState('');
   const [inviteForm, setInviteForm] = useState({
     candidateName: '',
     candidateEmail: '',
@@ -219,6 +221,7 @@ export default function HRAdminDashboard() {
   // Load sent invites from localStorage
   useEffect(() => {
     const savedInvites = localStorage.getItem('hr_sent_invites');
+    console.log('savedInvites', savedInvites);
     if (savedInvites) {
       try {
         setSentInvites(JSON.parse(savedInvites));
@@ -343,11 +346,7 @@ export default function HRAdminDashboard() {
   };
 
   const openInviteModal = () => {
-    setInviteForm({
-      candidateName: '',
-      candidateEmail: '',
-      candidatePhone: '',
-      customMessage: `Dear [Candidate Name],
+    const template = `Dear [Candidate Name],
 
 I hope this message finds you well. As part of our hiring process, we would like to invite you to create a Restorative Record to help us better understand your background and qualifications.
 
@@ -364,7 +363,14 @@ Best regards,
 ${hrAdmin?.first_name || ''} ${hrAdmin?.last_name || ''}
 ${hrAdmin?.company || ''}
 
-This invitation code will allow you to connect with our HR team: ${hrAdmin?.invitation_code || '[CODE]'}`
+This invitation code will allow you to connect with our HR team: ${hrAdmin?.invitation_code || '[CODE]'}`;
+
+    setOriginalMessageTemplate(template);
+    setInviteForm({
+      candidateName: '',
+      candidateEmail: '',
+      candidatePhone: '',
+      customMessage: template
     });
     setShowInviteModal(true);
   };
@@ -374,9 +380,25 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
     setSendingInvite(true);
 
     try {
-      // Create invite record
+      // Prepare invitation data
+      const invitationData = {
+        candidateName: inviteForm.candidateName,
+        customMessage: inviteForm.customMessage,
+        hrAdminName: hrAdmin ? `${hrAdmin.first_name} ${hrAdmin.last_name}` : '',
+        company: hrAdmin?.company || '',
+        invitationCode: hrAdmin?.invitation_code || ''
+      };
+
+      // Send the invitation email
+      const emailResult = await sendInvitationEmail(invitationData, inviteForm.candidateEmail);
+
+      if (!emailResult.success) {
+        throw new Error(String(emailResult.error) || 'Failed to send email');
+      }
+
+      // Create invite record for tracking
       const newInvite = {
-        id: Date.now().toString(), // Simple ID generation
+        id: Date.now().toString(),
         name: inviteForm.candidateName,
         email: inviteForm.candidateEmail,
         phone: inviteForm.candidatePhone,
@@ -386,13 +408,6 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
 
       // Add to sent invites
       setSentInvites(prev => [...prev, newInvite]);
-
-      // Here you would integrate with your email service
-      // For now, we'll just show a success message
-      console.log('Sending invite to:', inviteForm);
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
 
       setSuccess(`Invitation sent successfully to ${inviteForm.candidateEmail}`);
       setShowInviteModal(false);
@@ -419,11 +434,11 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
     const email = user.email.toLowerCase();
     const status = user.rr_completed ? "completed" : "in progress";
     const finalDecision = (user.final_decision || "").toLowerCase();
-    
-    return fullName.includes(query) || 
-           email.includes(query) || 
-           status.includes(query) ||
-           finalDecision.includes(query);
+
+    return fullName.includes(query) ||
+      email.includes(query) ||
+      status.includes(query) ||
+      finalDecision.includes(query);
   });
 
   return (
@@ -535,7 +550,7 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
       </div>
 
       {/* Assessment Metrics */}
-      <AssessmentMetrics 
+      <AssessmentMetrics
         users={permittedUsers}
         sentInvites={sentInvites}
         onViewAssessment={(candidateId) => router.push(`/hr-admin/dashboard/${candidateId}/assessment`)}
@@ -547,6 +562,7 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
         }}
       />
 
+
       {/* Users Table */}
       <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
         <div className="flex justify-between items-center mb-6">
@@ -556,7 +572,7 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg className="h-5 w-5" style={{ color: '#9CA3AF' }} fill="none" viewBox="0 0 20 20">
-                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
               </svg>
             </div>
             <input
@@ -695,7 +711,7 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
                     className="px-6 py-8 text-center"
                     style={{ color: '#595959' }}
                   >
-                    {permittedUsers.length === 0 
+                    {permittedUsers.length === 0
                       ? "No users have granted you access yet. Share your invitation code with users to get started."
                       : `No users match "${searchQuery}". Try adjusting your search terms.`
                     }
@@ -746,7 +762,14 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
                       backgroundColor: '#FFFFFF'
                     }}
                     value={inviteForm.candidateName}
-                    onChange={(e) => setInviteForm({ ...inviteForm, candidateName: e.target.value })}
+                    onChange={(e) => {
+                      const newName = e.target.value;
+                      setInviteForm(prev => ({
+                        ...prev,
+                        candidateName: newName,
+                        customMessage: originalMessageTemplate.replace(/\[Candidate Name\]/g, newName || '[Candidate Name]')
+                      }));
+                    }}
                     placeholder="Enter candidate's full name"
                     onFocus={(e) => {
                       e.target.style.borderColor = '#E54747';
