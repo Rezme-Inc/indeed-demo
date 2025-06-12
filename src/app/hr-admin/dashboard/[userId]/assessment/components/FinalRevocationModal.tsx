@@ -1,4 +1,5 @@
 import React from 'react';
+import PrintPreviewButton from './PrintButton';
 
 interface FinalRevocationModalProps {
   show: boolean;
@@ -162,17 +163,36 @@ const FinalRevocationModal: React.FC<FinalRevocationModalProps> = ({
               </div>
             </div>
             <div className="flex justify-end mt-12 gap-6">
-              <button type="button" className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200" onClick={() => setPreview(true)} style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}>
-                Preview
-              </button>
-              <button type="button" className="px-8 py-3 rounded-xl text-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200" onClick={onClose} style={{ fontFamily: 'Poppins, sans-serif' }}>
-                Cancel
-              </button>
-              <button type="button" className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200" onClick={onSend} style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}>Send</button>
+              {preview ? (
+                <>
+                  <PrintPreviewButton documentSelector=".prose" documentTitle="Final Revocation Notice" />
+                  <button type="button" className="px-8 py-3 rounded-xl text-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200" onClick={() => setPreview(false)} style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    Edit
+                  </button>
+                  <button type="button" className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200" onClick={onSend} style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}>Send</button>
+                </>
+              ) : (
+                <>
+                  <button type="button" className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200" onClick={() => setPreview(true)} style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}>
+                    Preview
+                  </button>
+                  <button type="button" className="px-8 py-3 rounded-xl text-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200" onClick={onClose} style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    Cancel
+                  </button>
+                  <button type="button" className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200" onClick={onSend} style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}>Send</button>
+                </>
+              )}
             </div>
           </form>
         ) : (
           <div className="prose max-w-none text-black text-base bg-white rounded-xl p-16 border border-gray-100" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <div className="flex justify-end mb-8">
+              <PrintPreviewButton documentSelector=".prose" documentTitle="Final Revocation Notice" />
+              <button type="button" className="ml-4 px-8 py-3 rounded-xl text-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200" onClick={() => setPreview(false)} style={{ fontFamily: 'Poppins, sans-serif' }}>
+                Edit
+              </button>
+              <button type="button" className="ml-4 px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200" onClick={onSend} style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}>Send</button>
+            </div>
             <div className="mb-6">{form.date}</div>
             <div className="mb-6 font-bold">Re: Final Decision to Revoke Job Offer Because of Conviction History</div>
             <div className="mb-6">Dear {form.applicant || '[APPLICANT NAME]'}:</div>
@@ -198,15 +218,55 @@ const FinalRevocationModal: React.FC<FinalRevocationModalProps> = ({
               </li>
             </ol>
             <div className="mb-6">We believe your conviction record lessens your fitness/ability to perform the job duties and have made a final decision to revoke the job offer because:</div>
-            <div className="mb-6">{form.fitnessReason}</div>
+            <div className="mb-8 p-4 bg-gray-50 rounded-lg" style={{ color: '#595959' }}>{form.fitnessReason}</div>
             <div className="mb-6 font-semibold">Request for Reconsideration:</div>
-            <ul className="list-disc ml-6" style={{ color: '#595959' }}>
-              {form.reconsideration === 'none' && <li>We do not offer any way to challenge this decision or request reconsideration.</li>}
-              {form.reconsideration === 'procedure' && <li>If you would like to challenge this decision or request reconsideration, you may: {form.reconsiderationProcedure}</li>}
-            </ul>
+            {form.reconsideration === 'none' ? (
+              <div className="mb-8" style={{ color: '#595959' }}>We do not offer any way to challenge this decision or request reconsideration.</div>
+            ) : form.reconsideration === 'procedure' ? (
+              <div className="mb-8" style={{ color: '#595959' }}>
+                If you would like to challenge this decision or request reconsideration, you may:<br />
+                {form.reconsiderationProcedure}
+              </div>
+            ) : null}
             <div className="mb-6 font-semibold">Your Right to File a Complaint:</div>
-            <div className="mb-6" style={{ color: '#595959' }}>You also have the right to file a complaint with the Enforcement Unit of the San Diego County Office of Labor Standards and Enforcement within 180 days after the alleged violation of the San Diego County Fair Chance Ordinance. To file a complaint online or request information, visit the Office of Labor Standards and Enforcement online. You may also file a complaint by calling 858-694-2440.</div>
-            <div className="mb-6 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Sincerely,<br />{form.contactName}<br />{form.companyName}<br />{form.address}<br />{form.phone}</div>
+            <div className="text-sm mb-8" style={{ color: '#595959' }}>
+              If you believe your rights under the California Fair Chance Act or the San Diego County Fair Chance Ordinance have been violated during this job application process, you have the right to file a complaint with the California Civil Rights Department (CRD) and/or the San Diego County Office of Labor Standards and Enforcement (OLSE). There are several ways to file a complaint:
+              <ul className="list-disc ml-6">
+                <li>California CRD:
+                  <ul className="list-disc ml-6">
+                    <li>File a complaint online at the following link: ccrs.calcivilrights.ca.gov/s/</li>
+                    <li>Download an intake form at the following link: calcivilrights.ca.gov/complaintprocess/filebymail/ and email it to contact.center@calcivilrights.gov or mail it to 2218 Kausen Drive, Suite 100, Elk Grove, CA 95758</li>
+                    <li>Visit a CRD office. Click the following link for office locations: calcivilrights.ca.gov/locations/</li>
+                    <li>Call California CRD at (800) 884-1684</li>
+                  </ul>
+                </li>
+                <li>San Diego County OLSE:
+                  <ul className="list-disc ml-6">
+                    <li>File a complaint online at the following link: www.sandiegocounty.gov/content/sdc/OLSE/file-a-complaint.html</li>
+                    <li>Visit San Diego County's Office of Labor Standards and Enforcement's office at 1600 Pacific Highway, Room 452, San Diego, CA 92101</li>
+                    <li>Call San Diego County OLSE at 619-531-5129</li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+            <div className="grid grid-cols-2 gap-10 mb-8">
+              <div>
+                <div className="text-sm font-semibold mb-1" style={{ color: '#595959' }}>Employer contact person name</div>
+                <div>{form.contactName}</div>
+              </div>
+              <div>
+                <div className="text-sm font-semibold mb-1" style={{ color: '#595959' }}>Employer company name</div>
+                <div>{form.companyName}</div>
+              </div>
+              <div>
+                <div className="text-sm font-semibold mb-1" style={{ color: '#595959' }}>Employer address</div>
+                <div>{form.address}</div>
+              </div>
+              <div>
+                <div className="text-sm font-semibold mb-1" style={{ color: '#595959' }}>Employer contact phone number</div>
+                <div>{form.phone}</div>
+              </div>
+            </div>
           </div>
         )}
       </div>
