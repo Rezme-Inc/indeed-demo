@@ -98,8 +98,8 @@ export default function Home() {
             
             <Link
               href="/auth/hr-admin/signup"
-              className="group relative w-full flex justify-center py-4 px-6 border-2 text-base font-medium rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md hover:opacity-90"
-              style={{backgroundColor: '#E54747', borderColor: '#E54747'}}
+              className="group relative w-full flex justify-center py-4 px-6 border border-gray-200 text-base font-medium rounded-xl text-black bg-white hover:bg-gray-50 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md"
+              style={{borderColor: '#E5E5E5'}}
             >
               I am an HR Admin
             </Link>

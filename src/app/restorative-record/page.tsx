@@ -30,6 +30,17 @@ import { categories } from "./constants";
 import { createFilePreview } from "./utils";
 import { saveToSupabase } from "./utils/saveToSupabase";
 
+// Notification interface
+interface Notification {
+  id: string;
+  type: 'connection' | 'request' | 'update';
+  title: string;
+  message: string;
+  timestamp: string;
+  adminId: string;
+  admin: any;
+}
+
 // Import section components
 import {
   CommunityEngagementSection,
@@ -50,6 +61,14 @@ import { useFormCRUD } from "./hooks/useFormCRUD";
 export default function RestorativeRecordBuilder() {
   const router = useRouter();
   const [currentCategory, setCurrentCategory] = useState(0);
+  const [currentView, setCurrentView] = useState<'dashboard' | 'builder'>('dashboard');
+  const [activeDashboardSection, setActiveDashboardSection] = useState('progress');
+  const [expandedHRAdmins, setExpandedHRAdmins] = useState<{[key: string]: boolean}>({});
+  const [connectedHRAdmins, setConnectedHRAdmins] = useState<any[]>([]);
+  const [allHRAdmins, setAllHRAdmins] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [processingPermission, setProcessingPermission] = useState<string | null>(null);
+  const [expandedSummaryView, setExpandedSummaryView] = useState<'connected' | 'pending' | null>(null);
   const searchParams = useSearchParams();
   const [user, setUser] = useState<any>(null);
   const [formData, setFormData] = useState<Introduction>({
@@ -191,6 +210,225 @@ export default function RestorativeRecordBuilder() {
     }
     getUser();
   }, []);
+
+  // Fetch connected HR admins
+  const fetchConnectedHRAdmins = async () => {
+    if (!user) return;
+
+    try {
+      // Get HR admin permissions
+      const { data: permissions, error: permError } = await supabase
+        .from("user_hr_permissions")
+        .select("hr_admin_id, granted_at")
+        .eq("user_id", user.id)
+        .eq("is_active", true);
+
+      if (permError) throw permError;
+
+      if (!permissions || permissions.length === 0) {
+        setConnectedHRAdmins([]);
+        return;
+      }
+
+      // Get HR admin profiles
+      const hrAdminIds = permissions.map(p => p.hr_admin_id);
+      const { data: hrProfiles, error: profileError } = await supabase
+        .from("hr_admin_profiles")
+        .select("id, first_name, last_name, company, email")
+        .in("id", hrAdminIds);
+
+      if (profileError) throw profileError;
+
+      // Combine permission and profile data
+      const connectedAdmins = hrProfiles?.map(profile => {
+        const permission = permissions.find(p => p.hr_admin_id === profile.id);
+        const currentStep = getCurrentAssessmentStep(user.id);
+        const stepName = getCurrentStepName(user.id);
+        const progress = getProgressPercentage(user.id);
+        const status = getAssessmentStatus(user.id);
+        
+        return {
+          ...profile,
+          granted_at: permission?.granted_at,
+          // Real assessment data from localStorage tracking
+          currentStep: currentStep + 1, // Display as 1-based for UI
+          totalSteps: 5,
+          stepName: stepName,
+          status: status,
+          progress: progress
+        };
+      }) || [];
+
+      setConnectedHRAdmins(connectedAdmins);
+    } catch (error) {
+      console.error("Error fetching connected HR admins:", error);
+    }
+  };
+
+  // Fetch connected HR admins when user is available
+  useEffect(() => {
+    if (user) {
+      fetchConnectedHRAdmins();
+    }
+  }, [user]);
+
+  // Refresh assessment data when viewing status section
+  useEffect(() => {
+    if (user && currentView === 'dashboard' && activeDashboardSection === 'status') {
+      fetchConnectedHRAdmins();
+    }
+  }, [user, currentView, activeDashboardSection]);
+
+  // Fetch all HR admins for notifications
+  const fetchAllHRAdmins = async () => {
+    if (!user) return;
+
+    try {
+      const { data: hrProfiles, error: profileError } = await supabase
+        .from("hr_admin_profiles")
+        .select("id, first_name, last_name, company, email, created_at");
+
+      if (profileError) throw profileError;
+
+      // Get current user permissions
+      const { data: permissions, error: permError } = await supabase
+        .from("user_hr_permissions")
+        .select("hr_admin_id, granted_at, is_active")
+        .eq("user_id", user.id);
+
+      if (permError) throw permError;
+
+      // Combine HR admin data with permission status
+      const allAdmins = hrProfiles?.map(profile => {
+        const permission = permissions?.find(p => p.hr_admin_id === profile.id);
+        return {
+          ...profile,
+          hasAccess: permission?.is_active || false,
+          granted_at: permission?.granted_at
+        };
+      }) || [];
+
+      setAllHRAdmins(allAdmins);
+      generateNotifications(allAdmins);
+    } catch (error) {
+      console.error("Error fetching all HR admins:", error);
+    }
+  };
+
+  // Generate notifications based on HR admin data
+  const generateNotifications = (admins: any[]) => {
+    const notifs: Notification[] = [];
+
+    // Recent new connections
+    const recentConnections = admins.filter(admin => 
+      admin.hasAccess && admin.granted_at &&
+      new Date(admin.granted_at).getTime() > Date.now() - (7 * 24 * 60 * 60 * 1000) // 7 days
+    );
+
+    recentConnections.forEach(admin => {
+      notifs.push({
+        id: `connection-${admin.id}`,
+        type: 'connection',
+        title: 'HR Admin Access Granted',
+        message: `${admin.first_name} ${admin.last_name} (${admin.company}) now has access to your Restorative Record.`,
+        timestamp: admin.granted_at,
+        adminId: admin.id,
+        admin: admin
+      });
+    });
+
+    // Potential requests (HR admins without access - simulate pending requests)
+    const potentialRequests = admins.filter(admin => !admin.hasAccess);
+    
+    // Show a few as "simulated requests" for demo purposes
+    potentialRequests.slice(0, 2).forEach(admin => {
+      notifs.push({
+        id: `request-${admin.id}`,
+        type: 'request',
+        title: 'HR Admin Access Request',
+        message: `${admin.first_name} ${admin.last_name} from ${admin.company} would like access to your Restorative Record.`,
+        timestamp: new Date().toISOString(),
+        adminId: admin.id,
+        admin: admin
+      });
+    });
+
+    // Sort by timestamp (newest first)
+    notifs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+    setNotifications(notifs);
+  };
+
+  // Handle granting/revoking HR admin access
+  const handleHRAdminPermission = async (adminId: string, grant: boolean) => {
+    if (!user) return;
+
+    setProcessingPermission(adminId);
+    
+    try {
+      if (grant) {
+        // Check if permission already exists
+        const { data: existing } = await supabase
+          .from("user_hr_permissions")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("hr_admin_id", adminId)
+          .single();
+
+        if (existing) {
+          // Update existing permission
+          const { error } = await supabase
+            .from("user_hr_permissions")
+            .update({
+              is_active: true,
+              revoked_at: null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("user_id", user.id)
+            .eq("hr_admin_id", adminId);
+
+          if (error) throw error;
+        } else {
+          // Insert new permission
+          const { error } = await supabase.from("user_hr_permissions").insert({
+            user_id: user.id,
+            hr_admin_id: adminId,
+            is_active: true,
+          });
+
+          if (error) throw error;
+        }
+      } else {
+        // Revoke permission
+        const { error } = await supabase
+          .from("user_hr_permissions")
+          .update({
+            is_active: false,
+            revoked_at: new Date().toISOString(),
+          })
+          .eq("user_id", user.id)
+          .eq("hr_admin_id", adminId);
+
+        if (error) throw error;
+      }
+
+      // Refresh data
+      await Promise.all([fetchConnectedHRAdmins(), fetchAllHRAdmins()]);
+      
+    } catch (error) {
+      console.error("Error updating HR admin permission:", error);
+      alert("Failed to update HR admin permission. Please try again.");
+    } finally {
+      setProcessingPermission(null);
+    }
+  };
+
+  // Fetch all HR admins when user is available and viewing notifications
+  useEffect(() => {
+    if (user && currentView === 'dashboard' && activeDashboardSection === 'notifications') {
+      fetchAllHRAdmins();
+    }
+  }, [user, currentView, activeDashboardSection]);
 
   // Function to refresh community engagement data
   const refreshEngagements = async () => {
@@ -1477,70 +1715,838 @@ export default function RestorativeRecordBuilder() {
     toast.success("Introduction deleted.");
   };
 
+  // Dashboard functions
+  const dashboardSections = [
+    { id: 'progress', label: 'Progress Tracking', icon: '📊' },
+    { id: 'status', label: 'Status Updates', icon: '📋' },
+    { id: 'notifications', label: 'Notifications', icon: '🔔' }
+  ];
+
+  const handleDashboardNavigation = (section: string) => {
+    setCurrentView('dashboard');
+    setActiveDashboardSection(section);
+  };
+
+  const handleBuilderNavigation = (categoryIndex: number) => {
+    setCurrentView('builder');
+    setCurrentCategory(categoryIndex);
+  };
+
+  const toggleHRAdminDetails = (adminId: string) => {
+    setExpandedHRAdmins(prev => ({
+      ...prev,
+      [adminId]: !prev[adminId]
+    }));
+  };
+
+  // Assessment tracking functions (copied from HR admin dashboard)
+  const getCurrentAssessmentStep = (userId: string): number => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`assessmentCurrentStep_${userId}`);
+      if (saved && !isNaN(Number(saved))) {
+        return Number(saved) - 1; // localStorage is 1-based, return 0-based
+      }
+    }
+    return 0;
+  };
+
+  const getCurrentStepName = (userId: string): string => {
+    const stepIndex = getCurrentAssessmentStep(userId);
+    const steps = [
+      'Not Started',
+      'Conditional Job Offer',
+      'Individualized Assessment', 
+      'Preliminary Job Offer Revocation',
+      'Individual Reassessment',
+      'Final Revocation Notice'
+    ];
+    return steps[stepIndex] || 'Not Started';
+  };
+
+  const getProgressPercentage = (userId: string): number => {
+    const stepIndex = getCurrentAssessmentStep(userId);
+    return Math.round((stepIndex / 5) * 100);
+  };
+
+  const getAssessmentStatus = (userId: string): string => {
+    const stepIndex = getCurrentAssessmentStep(userId);
+    if (stepIndex === 0) return 'Not Started';
+    if (stepIndex >= 5) return 'Completed';
+    return 'In Progress';
+  };
+
+  const calculateProgress = () => {
+    // Calculate completion percentage based on sections completed
+    const totalSections = categories.length;
+    let completedSections = 0;
+    
+    // This would need to be enhanced with actual data checking
+    // For now, we'll simulate based on current category
+    completedSections = Math.min(currentCategory + 1, totalSections);
+    
+    return Math.round((completedSections / totalSections) * 100);
+  };
+
+  const renderDashboardContent = () => {
+    const progress = calculateProgress();
+    
+    switch (activeDashboardSection) {
+      case 'progress':
   return (
-    <div className="min-h-screen bg-white">
+          <div className="space-y-6">
+            <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
+              <h2 className="text-2xl font-semibold text-black mb-4">Your Restorative Record Progress</h2>
+              
+              {/* Progress Overview */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-black">Overall Completion</span>
+                  <span className="text-sm font-medium" style={{ color: '#E54747' }}>{progress}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div 
+                    className="h-3 rounded-full transition-all duration-300"
+                    style={{ 
+                      backgroundColor: '#E54747',
+                      width: `${progress}%`
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Section Progress */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {categories.map((cat, idx) => (
+                  <div key={cat} className="border rounded-lg p-4" style={{ borderColor: '#E5E5E5' }}>
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium text-black">
+                        {cat.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        {idx <= currentCategory ? (
+                          <span className="text-green-600">✓</span>
+                        ) : (
+                          <span className="text-gray-400">○</span>
+                        )}
+                        <button
+                          onClick={() => handleBuilderNavigation(idx)}
+                          className="text-sm px-3 py-1 rounded-lg transition-all duration-200 hover:opacity-90"
+                          style={{
+                            color: '#E54747',
+                            backgroundColor: '#FEF2F2',
+                            border: '1px solid #FECACA'
+                          }}
+                        >
+                          {idx <= currentCategory ? 'Review' : 'Start'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
+              <h3 className="text-lg font-semibold text-black mb-4">Quick Actions</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button
+                  onClick={() => handleBuilderNavigation(currentCategory)}
+                  className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
+                  style={{ borderColor: '#E5E5E5' }}
+                >
+                  <span className="text-2xl mb-2 block">✏️</span>
+                  <span className="font-medium text-black">Continue Building</span>
+                </button>
+                <button
+                  onClick={handleViewProfile}
+                  className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
+                  style={{ borderColor: '#E5E5E5' }}
+                >
+                  <span className="text-2xl mb-2 block">👀</span>
+                  <span className="font-medium text-black">Preview Record</span>
+                </button>
+                <button
+                  onClick={() => handleDashboardNavigation('status')}
+                  className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
+                  style={{ borderColor: '#E5E5E5' }}
+                >
+                  <span className="text-2xl mb-2 block">📊</span>
+                  <span className="font-medium text-black">Check Status</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'status':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
+              <h2 className="text-2xl font-semibold text-black mb-4">HR Admin Status Updates</h2>
+              
+              {/* Connected HR Admins */}
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-black mb-4">Connected HR Admins</h3>
+                <div className="space-y-3">
+                  {connectedHRAdmins.length > 0 ? (
+                    connectedHRAdmins.map((admin) => (
+                      <div key={admin.id} className="border rounded-lg" style={{ borderColor: '#E5E5E5' }}>
+                        {/* Always Visible Header */}
+                        <div className="flex items-center justify-between p-4">
+                          <div className="flex items-center gap-3">
+                            <div>
+                              <h4 className="font-medium text-black">{admin.company}</h4>
+                              <p className="text-sm" style={{ color: '#595959' }}>
+                                {admin.first_name} {admin.last_name}
+                              </p>
+                              <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>
+                                Connected {admin.granted_at ? new Date(admin.granted_at).toLocaleDateString() : 'recently'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="text-right">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium" style={{
+                                backgroundColor: admin.status === 'In Progress' ? '#FFF3CD' : '#F0FDF4',
+                                color: admin.status === 'In Progress' ? '#856404' : '#166534',
+                                border: admin.status === 'In Progress' ? '1px solid #FFEAA7' : '1px solid #BBF7D0'
+                              }}>
+                                {admin.status}
+                              </span>
+                              <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>
+                                Step {admin.currentStep} of {admin.totalSteps} - {admin.stepName}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => toggleHRAdminDetails(admin.id)}
+                              className="p-2 rounded-lg transition-all duration-200 hover:bg-gray-50"
+                              style={{ border: '1px solid #E5E5E5' }}
+                            >
+                              <span className="text-lg">
+                                {expandedHRAdmins[admin.id] ? '▼' : '▶'}
+                              </span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Collapsible Detailed Status */}
+                        {expandedHRAdmins[admin.id] && (
+                          <div className="border-t p-4 space-y-4" style={{ borderColor: '#E5E5E5', backgroundColor: '#F8F9FA' }}>
+                            {/* Status Overview */}
+                            <div className="space-y-3">
+                              <h5 className="font-semibold text-black">Detailed Status Updates</h5>
+                              
+                              <div className="border-l-4 pl-4 py-3" style={{ borderColor: '#10B981' }}>
+                                <h6 className="font-semibold text-black">Record Submitted Successfully</h6>
+                                <p className="text-sm" style={{ color: '#595959' }}>
+                                  Your Restorative Record has been completed and is available for HR review.
+                                </p>
+                                <span className="text-xs" style={{ color: '#9CA3AF' }}>2 days ago</span>
+                              </div>
+                              
+                              <div className="border-l-4 pl-4 py-3" style={{ borderColor: '#F59E0B' }}>
+                                <h6 className="font-semibold text-black">Assessment in Progress: {admin.stepName}</h6>
+                                <p className="text-sm" style={{ color: '#595959' }}>
+                                  {admin.company} is currently preparing your written individualized assessment based on your Restorative Record.
+                                </p>
+                                <div className="mt-2 text-xs" style={{ color: '#9CA3AF' }}>
+                                  <p>Current Step: Step {admin.currentStep} of {admin.totalSteps} - {admin.stepName}</p>
+                                  <p>Updated: 1 day ago</p>
+                                </div>
+                              </div>
+                              
+                              <div className="border-l-4 pl-4 py-3" style={{ borderColor: '#E5E5E5' }}>
+                                <h6 className="font-semibold" style={{ color: '#9CA3AF' }}>Next: Preliminary Job Offer Revocation</h6>
+                                <p className="text-sm" style={{ color: '#9CA3AF' }}>
+                                  Pending completion of current assessment step.
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Assessment Progress Bar */}
+                            <div className="p-4 rounded-lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E5E5' }}>
+                              <h6 className="font-semibold text-black mb-3">Assessment Progress</h6>
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between text-sm">
+                                  <span className="font-medium text-black">Step {admin.currentStep} of {admin.totalSteps}: {admin.stepName}</span>
+                                  <span className="font-medium" style={{ color: '#F59E0B' }}>{admin.progress}% Complete</span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div 
+                                    className="h-2 rounded-full transition-all duration-300"
+                                    style={{ 
+                                      backgroundColor: '#F59E0B',
+                                      width: `${admin.progress}%`
+                                    }}
+                                  />
+                                </div>
+                                <div className="grid grid-cols-5 gap-1 text-xs">
+                                  <div className="text-center">
+                                    <span className="text-green-600">✓</span>
+                                    <p style={{ color: '#10B981' }}>Conditional Job Offer</p>
+                                  </div>
+                                  <div className="text-center">
+                                    <span style={{ color: '#F59E0B' }}>●</span>
+                                    <p style={{ color: '#F59E0B' }}>Individual Assessment</p>
+                                  </div>
+                                  <div className="text-center">
+                                    <span className="text-gray-400">○</span>
+                                    <p style={{ color: '#9CA3AF' }}>Prelim. Revocation</p>
+                                  </div>
+                                  <div className="text-center">
+                                    <span className="text-gray-400">○</span>
+                                    <p style={{ color: '#9CA3AF' }}>Reassessment</p>
+                                  </div>
+                                  <div className="text-center">
+                                    <span className="text-gray-400">○</span>
+                                    <p style={{ color: '#9CA3AF' }}>Final Decision</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Estimated Timeline */}
+                            <div className="p-4 border rounded-lg" style={{ borderColor: '#E5E5E5', backgroundColor: '#FFFFFF' }}>
+                              <h6 className="font-semibold text-black mb-2">Estimated Timeline & Important Deadlines</h6>
+                              <p className="text-sm mb-3" style={{ color: '#595959' }}>
+                                Your assessment is progressing well. Based on the current step, you can expect to hear back within 3-5 business days for the next update.
+                              </p>
+                              
+                              {/* Important 5-day deadline notice */}
+                              <div className="p-3 rounded-lg mb-3" style={{ backgroundColor: '#FEF3C7', border: '1px solid #F59E0B' }}>
+                                <div className="flex items-start gap-2">
+                                  <span className="text-lg">⚠️</span>
+                                  <div>
+                                    <p className="font-semibold text-black mb-1">Important: 5-Day Response Window</p>
+                                    <p className="text-sm" style={{ color: '#92400E' }}>
+                                      You have <strong>5 business days</strong> from the completion of each assessment step to:
+                                    </p>
+                                    <ul className="text-sm mt-2 ml-4 list-disc" style={{ color: '#92400E' }}>
+                                      <li>Update or add information to your Restorative Record</li>
+                                      <li>Challenge the accuracy of any background check report</li>
+                                      <li>Request additional time if needed</li>
+                                    </ul>
+                                    <p className="text-xs mt-2" style={{ color: '#78350F' }}>
+                                      <strong>Deadline for current step:</strong> 3 days remaining (expires January 15, 2024)
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-wrap gap-2">
+                                <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: '#E3F2FD', color: '#1976D2' }}>
+                                  Next Update Expected: Within 3 days
+                                </span>
+                                <button
+                                  onClick={() => handleBuilderNavigation(0)}
+                                  className="text-xs px-2 py-1 rounded transition-all duration-200 hover:opacity-90"
+                                  style={{ backgroundColor: '#E54747', color: '#FFFFFF' }}
+                                >
+                                  Update Record Now
+                                </button>
+                                <button
+                                  className="text-xs px-2 py-1 rounded border transition-all duration-200 hover:opacity-90"
+                                  style={{ borderColor: '#E54747', color: '#E54747', backgroundColor: 'transparent' }}
+                                >
+                                  Request Extension
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-6 border-2 border-dashed rounded-lg text-center" style={{ borderColor: '#E5E5E5' }}>
+                      <p className="text-sm" style={{ color: '#9CA3AF' }}>
+                        No HR admin connections yet. Visit your user dashboard to grant access to HR administrators.
+                      </p>
+                      <button
+                        onClick={() => router.push('/user/dashboard')}
+                        className="mt-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 hover:opacity-90"
+                        style={{
+                          backgroundColor: '#E54747',
+                          color: '#FFFFFF'
+                        }}
+                      >
+                        Manage HR Access
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'notifications':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-semibold text-black">Notifications</h2>
+                <button
+                  onClick={() => fetchAllHRAdmins()}
+                  className="text-sm px-3 py-1 rounded-lg transition-all duration-200 hover:opacity-90"
+                  style={{
+                    color: '#E54747',
+                    backgroundColor: '#FEF2F2',
+                    border: '1px solid #FECACA'
+                  }}
+                >
+                  Refresh
+                </button>
+              </div>
+              
+              <div className="space-y-3">
+                {notifications.length > 0 ? (
+                  notifications.map((notification) => (
+                    <div 
+                      key={notification.id} 
+                      className={`p-4 border-l-4 ${
+                        notification.type === 'request' ? 'bg-blue-50' : 
+                        notification.type === 'connection' ? 'bg-green-50' : 'bg-yellow-50'
+                      }`} 
+                      style={{ 
+                        borderColor: notification.type === 'request' ? '#3B82F6' : 
+                                   notification.type === 'connection' ? '#10B981' : '#F59E0B' 
+                      }}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-black mb-1">{notification.title}</h3>
+                          <p className="text-sm mb-2" style={{ color: '#595959' }}>
+                            {notification.message}
+                          </p>
+                          <div className="flex items-center gap-4 text-xs" style={{ color: '#9CA3AF' }}>
+                            <span>
+                              {new Date(notification.timestamp).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                            <span>•</span>
+                            <span>
+                              {notification.admin.email}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {notification.type === 'request' && (
+                          <div className="flex items-center gap-2 ml-4">
+                            <button
+                              onClick={() => handleHRAdminPermission(notification.adminId, true)}
+                              disabled={processingPermission === notification.adminId}
+                              className="px-3 py-1 text-xs font-medium rounded-lg transition-all duration-200 hover:opacity-90 disabled:opacity-50"
+                              style={{
+                                backgroundColor: '#10B981',
+                                color: '#FFFFFF'
+                              }}
+                            >
+                              {processingPermission === notification.adminId ? 'Processing...' : 'Grant Access'}
+                            </button>
+                            <button
+                              onClick={() => {
+                                // Remove the notification without granting access
+                                setNotifications(prev => prev.filter(n => n.id !== notification.id));
+                              }}
+                              disabled={processingPermission === notification.adminId}
+                              className="px-3 py-1 text-xs font-medium rounded-lg border transition-all duration-200 hover:opacity-90 disabled:opacity-50"
+                              style={{
+                                borderColor: '#E5E5E5',
+                                color: '#595959',
+                                backgroundColor: '#FFFFFF'
+                              }}
+                            >
+                              Dismiss
+                            </button>
+                          </div>
+                        )}
+                        
+                        {notification.type === 'connection' && (
+                          <div className="flex items-center gap-2 ml-4">
+                            <button
+                              onClick={() => handleHRAdminPermission(notification.adminId, false)}
+                              disabled={processingPermission === notification.adminId}
+                              className="px-3 py-1 text-xs font-medium rounded-lg border transition-all duration-200 hover:opacity-90 disabled:opacity-50"
+                              style={{
+                                borderColor: '#E54747',
+                                color: '#E54747',
+                                backgroundColor: '#FFFFFF'
+                              }}
+                            >
+                              {processingPermission === notification.adminId ? 'Processing...' : 'Revoke Access'}
+                            </button>
+                            <button
+                              onClick={() => handleDashboardNavigation('status')}
+                              className="px-3 py-1 text-xs font-medium rounded-lg transition-all duration-200 hover:opacity-90"
+                              style={{
+                                backgroundColor: '#3B82F6',
+                                color: '#FFFFFF'
+                              }}
+                            >
+                              View Status
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8" style={{ color: '#9CA3AF' }}>
+                    <div className="mb-4">
+                      <svg className="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 17h5l-5 5v-5zM9 17H4l5 5v-5zM21 3H3v14h18V3z" />
+                      </svg>
+                    </div>
+                    <p className="text-lg font-medium mb-2">No notifications</p>
+                    <p className="text-sm">
+                      You'll see notifications here when HR admins request access to your Restorative Record.
+                    </p>
+                    <button
+                      onClick={() => router.push('/user/dashboard')}
+                      className="mt-4 px-4 py-2 text-sm rounded-lg transition-all duration-200 hover:opacity-90"
+                      style={{
+                        backgroundColor: '#E54747',
+                        color: '#FFFFFF'
+                      }}
+                    >
+                      Manage HR Access
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Summary Section */}
+              {allHRAdmins.length > 0 && (
+                <div className="mt-8 p-4 rounded-lg" style={{ backgroundColor: '#F8F9FA', border: '1px solid #E5E5E5' }}>
+                  <h3 className="font-semibold text-black mb-3">HR Admin Access Summary</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <button
+                      onClick={() => setExpandedSummaryView(expandedSummaryView === 'connected' ? null : 'connected')}
+                      className="text-center p-3 rounded-lg transition-all duration-200 hover:shadow-md"
+                      style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E5E5' }}
+                    >
+                      <div className="text-2xl font-bold text-black">
+                        {allHRAdmins.filter(admin => admin.hasAccess).length}
+                      </div>
+                      <div className="text-sm" style={{ color: '#595959' }}>
+                        Currently Connected
+                      </div>
+                      <div className="text-xs mt-1" style={{ color: '#9CA3AF' }}>
+                        Click to {expandedSummaryView === 'connected' ? 'hide' : 'view'} details
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setExpandedSummaryView(expandedSummaryView === 'pending' ? null : 'pending')}
+                      className="text-center p-3 rounded-lg transition-all duration-200 hover:shadow-md"
+                      style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E5E5' }}
+                    >
+                      <div className="text-2xl font-bold text-black">
+                        {notifications.filter(n => n.type === 'request').length}
+                      </div>
+                      <div className="text-sm" style={{ color: '#595959' }}>
+                        Pending Requests
+                      </div>
+                      <div className="text-xs mt-1" style={{ color: '#9CA3AF' }}>
+                        Click to {expandedSummaryView === 'pending' ? 'hide' : 'view'} details
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* Expanded Views */}
+                  {expandedSummaryView === 'connected' && (
+                    <div className="mt-4 p-4 rounded-lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E5E5' }}>
+                      <h4 className="font-semibold text-black mb-3">Currently Connected Companies</h4>
+                      <div className="space-y-3">
+                        {allHRAdmins.filter(admin => admin.hasAccess).map((admin) => (
+                          <div key={admin.id} className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: '#F8F9FA', border: '1px solid #E5E5E5' }}>
+                            <div className="flex-1">
+                              <h5 className="font-medium text-black">{admin.company}</h5>
+                              <p className="text-sm" style={{ color: '#595959' }}>
+                                {admin.first_name} {admin.last_name} • {admin.email}
+                              </p>
+                              <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>
+                                Connected {admin.granted_at ? new Date(admin.granted_at).toLocaleDateString() : 'recently'}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleDashboardNavigation('status')}
+                                className="px-3 py-1 text-xs font-medium rounded-lg transition-all duration-200 hover:opacity-90"
+                                style={{
+                                  backgroundColor: '#3B82F6',
+                                  color: '#FFFFFF'
+                                }}
+                              >
+                                View Status
+                              </button>
+                              <button
+                                onClick={() => handleHRAdminPermission(admin.id, false)}
+                                disabled={processingPermission === admin.id}
+                                className="px-3 py-1 text-xs font-medium rounded-lg border transition-all duration-200 hover:opacity-90 disabled:opacity-50"
+                                style={{
+                                  borderColor: '#E54747',
+                                  color: '#E54747',
+                                  backgroundColor: '#FFFFFF'
+                                }}
+                              >
+                                {processingPermission === admin.id ? 'Processing...' : 'Revoke Access'}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        {allHRAdmins.filter(admin => admin.hasAccess).length === 0 && (
+                          <div className="text-center py-4" style={{ color: '#9CA3AF' }}>
+                            <p>No HR admins currently connected.</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {expandedSummaryView === 'pending' && (
+                    <div className="mt-4 p-4 rounded-lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E5E5' }}>
+                      <h4 className="font-semibold text-black mb-3">Pending Access Requests</h4>
+                      <div className="space-y-3">
+                        {notifications.filter(n => n.type === 'request').map((notification) => (
+                          <div key={notification.id} className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: '#F8F9FA', border: '1px solid #E5E5E5' }}>
+                            <div className="flex-1">
+                              <h5 className="font-medium text-black">{notification.admin.company}</h5>
+                              <p className="text-sm" style={{ color: '#595959' }}>
+                                {notification.admin.first_name} {notification.admin.last_name} • {notification.admin.email}
+                              </p>
+                              <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>
+                                Requested {new Date(notification.timestamp).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleHRAdminPermission(notification.adminId, true)}
+                                disabled={processingPermission === notification.adminId}
+                                className="px-3 py-1 text-xs font-medium rounded-lg transition-all duration-200 hover:opacity-90 disabled:opacity-50"
+                                style={{
+                                  backgroundColor: '#10B981',
+                                  color: '#FFFFFF'
+                                }}
+                              >
+                                {processingPermission === notification.adminId ? 'Processing...' : 'Grant Access'}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setNotifications(prev => prev.filter(n => n.id !== notification.id));
+                                }}
+                                disabled={processingPermission === notification.adminId}
+                                className="px-3 py-1 text-xs font-medium rounded-lg border transition-all duration-200 hover:opacity-90 disabled:opacity-50"
+                                style={{
+                                  borderColor: '#E5E5E5',
+                                  color: '#595959',
+                                  backgroundColor: '#FFFFFF'
+                                }}
+                              >
+                                Dismiss
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        {notifications.filter(n => n.type === 'request').length === 0 && (
+                          <div className="text-center py-4" style={{ color: '#9CA3AF' }}>
+                            <p>No pending access requests.</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
       <div className="flex">
         {/* Sidebar Navigation */}
-        <nav className="w-64 bg-white border-r border-gray-200 min-h-screen p-4">
-          <h2 className="text-lg font-semibold text-black mb-4">Navigation</h2>
+        <nav className="w-80 bg-white border-r min-h-screen p-6" style={{ borderColor: '#E5E5E5' }}>
+          {/* Dashboard Header */}
+          <div className="mb-6">
+            <h1 className="text-xl font-semibold text-black mb-2">My Rézme Dashboard</h1>
+            <p className="text-sm" style={{ color: '#595959' }}>
+              Track your progress and manage your restorative record
+            </p>
+          </div>
+
+          {/* Dashboard Sections */}
+          <div className="mb-8">
+            <h3 className="text-sm font-semibold text-black mb-3 uppercase tracking-wider">Dashboard</h3>
+            <ul className="space-y-1">
+              {dashboardSections.map((section) => (
+                <li key={section.id}>
+                  <button
+                    className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center gap-3 ${
+                      currentView === 'dashboard' && activeDashboardSection === section.id
+                        ? "text-white font-medium"
+                        : "text-black hover:bg-gray-50"
+                    }`}
+                    style={{
+                      backgroundColor: currentView === 'dashboard' && activeDashboardSection === section.id ? '#E54747' : 'transparent'
+                    }}
+                    onClick={() => handleDashboardNavigation(section.id)}
+                  >
+                    <span className="text-lg">{section.icon}</span>
+                    <span className="font-medium">{section.label}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Visual Divider */}
+          <div className="mb-8">
+            <div className="border-t" style={{ borderColor: '#E5E5E5' }}></div>
+          </div>
+
+          {/* Builder Sections */}
+          <div>
+            <h3 className="text-sm font-semibold text-black mb-3 uppercase tracking-wider">Record Builder</h3>
           <ul className="space-y-1">
             {categories.map((cat, idx) => (
               <li key={cat}>
                 <button
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
-                    idx === currentCategory
-                      ? "bg-red-50 text-primary font-medium border border-primary"
-                      : "text-secondary hover:bg-gray-50 hover:text-black"
-                  }`}
-                  onClick={() => setCurrentCategory(idx)}
-                >
+                    className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${
+                      currentView === 'builder' && idx === currentCategory
+                        ? "bg-red-50 font-medium border"
+                        : "hover:bg-gray-50"
+                    }`}
+                    style={{
+                      color: currentView === 'builder' && idx === currentCategory ? '#E54747' : '#000000',
+                      borderColor: currentView === 'builder' && idx === currentCategory ? '#E54747' : 'transparent'
+                    }}
+                    onClick={() => handleBuilderNavigation(idx)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>
                   {cat
                     .replace(/-/g, " ")
                     .replace(/\b\w/g, (l) => l.toUpperCase())}
+                      </span>
+                      {idx <= currentCategory && (
+                        <span className="text-green-600 text-sm">✓</span>
+                      )}
+                    </div>
                 </button>
               </li>
             ))}
           </ul>
+          </div>
         </nav>
+
         {/* Main Content */}
         <main className="flex-1 p-8">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-6xl mx-auto">
+            {currentView === 'dashboard' ? (
+              <>
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <h1 className="text-3xl font-semibold text-black">
+                      {dashboardSections.find(s => s.id === activeDashboardSection)?.label}
+                    </h1>
+                    <p className="text-lg mt-2" style={{ color: '#595959' }}>
+                      Manage your restorative record journey
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => handleBuilderNavigation(currentCategory)}
+                      className="px-4 py-2 border text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90"
+                      style={{
+                        color: '#595959',
+                        borderColor: '#E5E5E5',
+                        backgroundColor: 'transparent'
+                      }}
+                    >
+                      Continue Building
+                    </button>
+                    <button
+                      onClick={handleViewProfile}
+                      className="px-5 py-2 text-base font-medium rounded-xl shadow transition-all duration-200 hover:opacity-90 text-white"
+                      style={{ backgroundColor: '#E54747' }}
+                    >
+                      MY RESTORATIVE RECORD
+                    </button>
+                  </div>
+                </div>
+                {renderDashboardContent()}
+              </>
+            ) : (
+              <>
             <div className="flex items-center justify-between mb-8">
               <h1 className="text-3xl font-semibold text-black">
                 Restorative Record Builder
               </h1>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => handleDashboardNavigation('progress')}
+                      className="px-4 py-2 border text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90"
+                      style={{
+                        color: '#595959',
+                        borderColor: '#E5E5E5',
+                        backgroundColor: 'transparent'
+                      }}
+                    >
+                      Dashboard
+                    </button>
               <button
                 onClick={handleViewProfile}
-                className="px-5 py-2 bg-primary text-white rounded-lg font-medium shadow hover:bg-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ml-4"
+                      className="px-5 py-2 text-base font-medium rounded-xl shadow transition-all duration-200 hover:opacity-90 text-white"
+                      style={{ backgroundColor: '#E54747' }}
               >
                 MY RESTORATIVE RECORD
               </button>
+                  </div>
             </div>
             <div className="mb-8">{renderSection()}</div>
             <div className="flex justify-between">
               <button
                 onClick={handlePrevious}
                 disabled={currentCategory === 0}
-                className="px-6 py-3 bg-gray-200 text-secondary rounded-lg font-medium hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-3 border text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{
+                      color: '#595959',
+                      borderColor: '#E5E5E5',
+                      backgroundColor: 'transparent'
+                    }}
               >
                 Previous
               </button>
               {currentCategory === categories.length - 1 ? (
                 <button
                   onClick={handleSubmit}
-                  className="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
+                      className="px-6 py-3 text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90 text-white"
+                      style={{ backgroundColor: '#E54747' }}
                 >
                   Submit
                 </button>
               ) : (
                 <button
                   onClick={handleNext}
-                  className="px-6 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
+                      className="px-6 py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-800 transition-all duration-200"
                 >
                   Next
                 </button>
               )}
             </div>
+              </>
+            )}
           </div>
         </main>
       </div>
@@ -1548,18 +2554,19 @@ export default function RestorativeRecordBuilder() {
       {/* Incomplete Record Modal */}
       {showIncompleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md mx-4">
-            <h3 className="text-xl font-semibold mb-3">
+          <div className="bg-white rounded-xl p-6 max-w-md mx-4">
+            <h3 className="text-xl font-semibold mb-3 text-black">
               Complete Your Restorative Record
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="mb-6" style={{ color: '#595959' }}>
               Please complete the Restorative Record to use this feature. You
               must go through all sections and submit your record before viewing
               your profile.
             </p>
             <button
               onClick={() => setShowIncompleteModal(false)}
-              className="w-full px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
+              className="w-full px-4 py-2 text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90 text-white"
+              style={{ backgroundColor: '#E54747' }}
             >
               Continue Building Your Restorative Record
             </button>

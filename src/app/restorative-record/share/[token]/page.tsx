@@ -273,18 +273,18 @@ export default function SharedRestorativeRecord() {
   }
 
   return (
-    <div className="min-h-screen bg-white py-10 px-4 md:px-0">
+    <div className="min-h-screen bg-white py-10 px-4 md:px-0" style={{ fontFamily: 'Poppins, sans-serif' }}>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Restorative Record</h1>
-            <p className="text-gray-600">Shared Profile</p>
+            <h1 className="text-2xl font-bold" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>Restorative Record</h1>
+            <p style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>Shared Profile</p>
           </div>
         </div>
 
         {/* Profile Header */}
-        <section className="mb-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <section className="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 p-8" style={{ fontFamily: 'Poppins, sans-serif' }}>
           <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
             {profile?.avatar_url ? (
               <img
@@ -293,24 +293,24 @@ export default function SharedRestorativeRecord() {
                 className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
               />
             ) : (
-              <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center text-3xl font-bold text-gray-600">
+              <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center text-3xl font-bold" style={{ color: '#595959' }}>
                 {profile?.first_name?.[0] || "U"}
               </div>
             )}
             <div className="flex-1">
-              <div className="font-semibold text-lg mb-1">
+              <div className="font-semibold text-lg mb-1" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>
                 {profile?.first_name || ""} {profile?.last_name || ""}
               </div>
               {introduction && (
                 <>
-                  <div className="text-gray-600 mb-2">
+                  <div className="mb-2" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>
                     {introduction.preferred_occupation || "Professional"} |{" "}
                     {introduction.language_proficiency || "English"}
                     {introduction.other_languages &&
                       introduction.other_languages.length > 0 &&
                       ` | ${introduction.other_languages.join(", ")}`}
                   </div>
-                  <div className="mb-2 text-black">
+                  <div className="mb-4" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>
                     {introduction.personal_narrative ||
                       "No narrative provided yet."}
                   </div>
@@ -324,10 +324,15 @@ export default function SharedRestorativeRecord() {
                         <a
                           key={field.name}
                           href={url}
-                          className="text-blue-500 underline text-sm"
+                          className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+                          style={{ 
+                            color: '#E54747', 
+                            backgroundColor: '#fef7f7',
+                            border: '1px solid #E54747',
+                            fontFamily: 'Poppins, sans-serif'
+                          }}
                           target="_blank"
                           rel="noopener noreferrer"
-                          title={field.label}
                         >
                           {field.label}
                         </a>
@@ -342,29 +347,37 @@ export default function SharedRestorativeRecord() {
 
         {/* Personal Achievements & Awards */}
         {achievements.length > 0 && (
-          <section className="mb-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-black mb-4">Personal Achievements & Awards</h2>
+          <section className="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 p-8" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <h2 className="text-lg font-semibold mb-4" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>Personal Achievements & Awards</h2>
             <div className="space-y-4">
               {achievements.map((achievement) => (
-                <div key={achievement.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                  <div className="font-semibold text-black">{achievement.name}</div>
-                  <div className="text-sm text-gray-600 mt-1">Type: {achievement.type}</div>
-                  <div className="text-sm text-gray-600">Organization: {achievement.organization}</div>
+                <div key={achievement.id} className="border border-gray-200 rounded-xl p-6 bg-gray-50">
+                  <div className="font-semibold mb-2" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>{achievement.name}</div>
+                  <div className="text-sm mb-1" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>Type: {achievement.type}</div>
+                  <div className="text-sm mb-1" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>Organization: {achievement.organization}</div>
                   {achievement.date && (
-                    <div className="text-sm text-gray-600">Date: {new Date(achievement.date).toLocaleDateString()}</div>
+                    <div className="text-sm mb-4" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>Date: {new Date(achievement.date).toLocaleDateString()}</div>
                   )}
                   {achievement.narrative && (
-                    <div className="text-sm text-gray-700 mt-2">{achievement.narrative}</div>
+                    <div className="text-sm mb-4" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>{achievement.narrative}</div>
                   )}
                   {achievement.file_url && (
-                    <a 
-                      href={achievement.file_url} 
-                      className="text-blue-500 text-xs mt-2 inline-block" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                    >
-                      View Certificate
-                    </a>
+                    <div className="text-sm mt-4 pt-3 border-t border-gray-100">
+                      <a
+                        href={achievement.file_url}
+                        className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+                        style={{ 
+                          color: '#E54747', 
+                          backgroundColor: '#fef7f7',
+                          border: '1px solid #E54747',
+                          fontFamily: 'Poppins, sans-serif'
+                        }}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        View Certificate
+                      </a>
+                    </div>
                   )}
                 </div>
               ))}
@@ -374,17 +387,17 @@ export default function SharedRestorativeRecord() {
 
         {/* Skills */}
         {skills.length > 0 && (
-          <section className="mb-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-black mb-4">Skills</h2>
+          <section className="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 p-8" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <h2 className="text-lg font-semibold mb-4" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>Skills</h2>
             <div className="space-y-4">
               {skills.map((skill) => (
-                <div key={skill.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                <div key={skill.id} className="border border-gray-200 rounded-xl p-6 bg-gray-50">
                   {skill.soft_skills && skill.soft_skills.length > 0 && (
-                    <div className="mb-2">
-                      <span className="text-gray-600 text-sm font-medium">Soft Skills: </span>
-                      <div className="flex flex-wrap gap-2 mt-1">
+                    <div className="mb-4">
+                      <span className="text-sm font-medium mb-2 block" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>Soft Skills:</span>
+                      <div className="flex flex-wrap gap-2">
                         {skill.soft_skills.map((skillItem: string, index: number) => (
-                          <span key={index} className="inline-block bg-green-100 text-green-700 rounded px-2 py-1 text-xs">
+                          <span key={index} className="inline-block rounded-lg px-3 py-1 text-xs font-medium" style={{ backgroundColor: '#e8f5e8', color: '#2d5a2d', fontFamily: 'Poppins, sans-serif' }}>
                             {skillItem}
                           </span>
                         ))}
@@ -392,11 +405,11 @@ export default function SharedRestorativeRecord() {
                     </div>
                   )}
                   {skill.hard_skills && skill.hard_skills.length > 0 && (
-                    <div className="mb-2">
-                      <span className="text-gray-600 text-sm font-medium">Hard Skills: </span>
-                      <div className="flex flex-wrap gap-2 mt-1">
+                    <div className="mb-4">
+                      <span className="text-sm font-medium mb-2 block" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>Hard Skills:</span>
+                      <div className="flex flex-wrap gap-2">
                         {skill.hard_skills.map((skillItem: string, index: number) => (
-                          <span key={index} className="inline-block bg-blue-100 text-blue-700 rounded px-2 py-1 text-xs">
+                          <span key={index} className="inline-block rounded-lg px-3 py-1 text-xs font-medium" style={{ backgroundColor: '#e8f2ff', color: '#1e3a8a', fontFamily: 'Poppins, sans-serif' }}>
                             {skillItem}
                           </span>
                         ))}
@@ -404,10 +417,10 @@ export default function SharedRestorativeRecord() {
                     </div>
                   )}
                   {skill.other_skills && (
-                    <div className="mb-2 text-sm text-gray-600">Other Skills: {skill.other_skills}</div>
+                    <div className="mb-4 text-sm" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>Other Skills: {skill.other_skills}</div>
                   )}
                   {skill.narrative && (
-                    <div className="text-sm text-gray-700 mt-2">{skill.narrative}</div>
+                    <div className="text-sm" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>{skill.narrative}</div>
                   )}
                 </div>
               ))}
@@ -417,21 +430,34 @@ export default function SharedRestorativeRecord() {
 
         {/* Community Engagement */}
         {communityEngagements.length > 0 && (
-          <section className="mb-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-black mb-4">Community Engagement</h2>
+          <section className="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 p-8" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <h2 className="text-lg font-semibold mb-4" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>Community Engagement</h2>
             <div className="space-y-4">
               {communityEngagements.map((engagement) => (
-                <div key={engagement.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                  <div className="font-semibold text-black">{engagement.organization_name}</div>
-                  <div className="text-sm text-gray-600 mt-1">Type: {engagement.type}</div>
-                  <div className="text-sm text-gray-600">Role: {engagement.role}</div>
-                  {engagement.organization_website && (
-                    <a href={engagement.organization_website} className="text-blue-500 text-xs" target="_blank" rel="noopener noreferrer">
-                      {engagement.organization_website}
-                    </a>
-                  )}
+                <div key={engagement.id} className="border border-gray-200 rounded-xl p-6 bg-gray-50">
+                  <div className="font-semibold mb-2" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>{engagement.organization_name}</div>
+                  <div className="text-sm mb-1" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>Type: {engagement.type}</div>
+                  <div className="text-sm mb-4" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>Role: {engagement.role}</div>
                   {engagement.details && (
-                    <div className="text-sm text-gray-700 mt-2">{engagement.details}</div>
+                    <div className="text-sm mb-4" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>{engagement.details}</div>
+                  )}
+                  {engagement.organization_website && (
+                    <div className="text-sm mt-4 pt-3 border-t border-gray-100">
+                      <a
+                        href={engagement.organization_website}
+                        className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+                        style={{ 
+                          color: '#E54747', 
+                          backgroundColor: '#fef7f7',
+                          border: '1px solid #E54747',
+                          fontFamily: 'Poppins, sans-serif'
+                        }}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Visit Website
+                      </a>
+                    </div>
                   )}
                 </div>
               ))}
@@ -441,17 +467,48 @@ export default function SharedRestorativeRecord() {
 
         {/* Rehabilitative Programs */}
         {rehabPrograms.length > 0 && (
-          <section className="mb-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-black mb-4">Rehabilitative Programs</h2>
+          <section className="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 p-8" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <h2 className="text-lg font-semibold mb-4" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>Rehabilitative Programs</h2>
             <div className="space-y-4">
               {rehabPrograms.map((program) => (
-                <div key={program.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                  <div className="font-semibold text-black">{program.program_name}</div>
+                <div key={program.id} className="border border-gray-200 rounded-xl p-6 bg-gray-50">
+                  <div className="font-semibold mb-2" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>{program.program}</div>
+                  <div className="text-sm mb-1" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>Type: {program.program_type}</div>
+                  {(program.start_date || program.end_date) && (
+                    <div className="text-sm mb-1" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>
+                      {program.start_date && `Started: ${new Date(program.start_date).toLocaleDateString()}`}
+                      {program.start_date && program.end_date && " • "}
+                      {program.end_date && `Ended: ${new Date(program.end_date).toLocaleDateString()}`}
+                    </div>
+                  )}
                   {program.details && (
-                    <div className="text-sm text-gray-600 mt-1">{program.details}</div>
+                    <div className="text-sm mb-4" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>{program.details}</div>
                   )}
                   {program.narrative && (
-                    <div className="text-sm text-gray-700 mt-2">{program.narrative}</div>
+                    <div className="text-sm mb-4" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>{program.narrative}</div>
+                  )}
+                  {program.file_url && (
+                    <div className="text-sm mt-4 pt-3 border-t border-gray-100">
+                      <a
+                        href={program.file_url}
+                        className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+                        style={{ 
+                          color: '#E54747', 
+                          backgroundColor: '#fef7f7',
+                          border: '1px solid #E54747',
+                          fontFamily: 'Poppins, sans-serif'
+                        }}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {program.file_name || "View attachment"}
+                        {program.file_size && (
+                          <span className="ml-2" style={{ color: '#595959' }}>
+                            ({Math.round(program.file_size / 1024)} KB)
+                          </span>
+                        )}
+                      </a>
+                    </div>
                   )}
                 </div>
               ))}
@@ -461,29 +518,42 @@ export default function SharedRestorativeRecord() {
 
         {/* Certifications and Licenses */}
         {certifications.length > 0 && (
-          <section className="mb-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-black mb-4">Certifications and Licenses</h2>
+          <section className="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 p-8" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <h2 className="text-lg font-semibold mb-4" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>Certifications and Licenses</h2>
             <div className="space-y-4">
               {certifications.map((cert) => (
-                <div key={cert.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                  <div className="font-semibold text-black">{cert.credential_name}</div>
-                  <div className="text-sm text-gray-600 mt-1">Organization: {cert.issuing_organization}</div>
+                <div key={cert.id} className="border border-gray-200 rounded-xl p-6 bg-gray-50">
+                  <div className="font-semibold mb-2" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>{cert.credential_name}</div>
+                  <div className="text-sm mb-1" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>Organization: {cert.issuing_organization}</div>
                   {cert.issue_date && (
-                    <div className="text-sm text-gray-600">Issue Date: {new Date(cert.issue_date).toLocaleDateString()}</div>
+                    <div className="text-sm mb-1" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>Issue Date: {new Date(cert.issue_date).toLocaleDateString()}</div>
                   )}
                   {cert.expiry_date && (
-                    <div className="text-sm text-gray-600">Expiry Date: {new Date(cert.expiry_date).toLocaleDateString()}</div>
+                    <div className="text-sm mb-1" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>Expiry Date: {new Date(cert.expiry_date).toLocaleDateString()}</div>
                   )}
                   {cert.credential_id && (
-                    <div className="text-sm text-gray-600">Credential ID: {cert.credential_id}</div>
-                  )}
-                  {cert.credential_url && (
-                    <a href={cert.credential_url} className="text-blue-500 text-xs" target="_blank" rel="noopener noreferrer">
-                      View Credential
-                    </a>
+                    <div className="text-sm mb-4" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>Credential ID: {cert.credential_id}</div>
                   )}
                   {cert.narrative && (
-                    <div className="text-sm text-gray-700 mt-2">{cert.narrative}</div>
+                    <div className="text-sm mb-4" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>{cert.narrative}</div>
+                  )}
+                  {cert.credential_url && (
+                    <div className="text-sm mt-4 pt-3 border-t border-gray-100">
+                      <a
+                        href={cert.credential_url}
+                        className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+                        style={{ 
+                          color: '#E54747', 
+                          backgroundColor: '#fef7f7',
+                          border: '1px solid #E54747',
+                          fontFamily: 'Poppins, sans-serif'
+                        }}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        View Credential
+                      </a>
+                    </div>
                   )}
                 </div>
               ))}
@@ -493,31 +563,57 @@ export default function SharedRestorativeRecord() {
 
         {/* Mentors */}
         {mentors.length > 0 && (
-          <section className="mb-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-black mb-4">Mentors</h2>
+          <section className="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 p-8" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <h2 className="text-lg font-semibold mb-4" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>Mentors</h2>
             <div className="space-y-4">
               {mentors.map((mentor) => (
-                <div key={mentor.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                  <div className="font-semibold text-black">{mentor.name}</div>
-                  <div className="text-sm text-gray-600 mt-1">{mentor.title} • {mentor.company}</div>
-                  {mentor.linkedin_profile && (
-                    <a href={mentor.linkedin_profile} className="text-blue-500 text-xs" target="_blank" rel="noopener noreferrer">
-                      LinkedIn Profile
-                    </a>
-                  )}
+                <div key={mentor.id} className="border border-gray-200 rounded-xl p-6 bg-gray-50">
+                  <div className="font-semibold mb-2" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>{mentor.name}</div>
+                  <div className="text-sm mb-1" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>{mentor.title} • {mentor.company}</div>
                   {mentor.email && (
-                    <div className="text-sm text-gray-600">Email: {mentor.email}</div>
+                    <div className="text-sm mb-1" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>Email: {mentor.email}</div>
                   )}
                   {mentor.phone && (
-                    <div className="text-sm text-gray-600">Phone: {mentor.phone}</div>
-                  )}
-                  {mentor.website && (
-                    <a href={mentor.website} className="text-blue-500 text-xs" target="_blank" rel="noopener noreferrer">
-                      Website
-                    </a>
+                    <div className="text-sm mb-4" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>Phone: {mentor.phone}</div>
                   )}
                   {mentor.narrative && (
-                    <div className="text-sm text-gray-700 mt-2">{mentor.narrative}</div>
+                    <div className="text-sm mb-4" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>{mentor.narrative}</div>
+                  )}
+                  {(mentor.linkedin_profile || mentor.website) && (
+                    <div className="text-sm mt-4 pt-3 border-t border-gray-100 space-y-3">
+                      {mentor.linkedin_profile && (
+                        <a
+                          href={mentor.linkedin_profile}
+                          className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md mr-3"
+                          style={{ 
+                            color: '#E54747', 
+                            backgroundColor: '#fef7f7',
+                            border: '1px solid #E54747',
+                            fontFamily: 'Poppins, sans-serif'
+                          }}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          LinkedIn Profile
+                        </a>
+                      )}
+                      {mentor.website && (
+                        <a
+                          href={mentor.website}
+                          className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+                          style={{ 
+                            color: '#E54747', 
+                            backgroundColor: '#fef7f7',
+                            border: '1px solid #E54747',
+                            fontFamily: 'Poppins, sans-serif'
+                          }}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Website
+                        </a>
+                      )}
+                    </div>
                   )}
                 </div>
               ))}
@@ -527,24 +623,37 @@ export default function SharedRestorativeRecord() {
 
         {/* Employment History */}
         {employments.length > 0 && (
-          <section className="mb-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-black mb-4">Employment History</h2>
+          <section className="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 p-8" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <h2 className="text-lg font-semibold mb-4" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>Employment History</h2>
             <div className="space-y-4">
               {employments.map((employment) => (
-                <div key={employment.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                  <div className="font-semibold text-black">{employment.title}</div>
-                  <div className="text-sm text-gray-600 mt-1">{employment.company}</div>
-                  <div className="text-sm text-gray-600">{employment.employment_type} • {employment.city}, {employment.state}</div>
-                  <div className="text-sm text-gray-600">
+                <div key={employment.id} className="border border-gray-200 rounded-xl p-6 bg-gray-50">
+                  <div className="font-semibold mb-2" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>{employment.title}</div>
+                  <div className="text-sm mb-1" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>{employment.company}</div>
+                  <div className="text-sm mb-1" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>{employment.employment_type} • {employment.city}, {employment.state}</div>
+                  <div className="text-sm mb-4" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>
                     {employment.start_date && new Date(employment.start_date).toLocaleDateString()} - {
                       employment.currently_employed ? "Present" : 
                       employment.end_date ? new Date(employment.end_date).toLocaleDateString() : "N/A"
                     }
                   </div>
                   {employment.company_url && (
-                    <a href={employment.company_url} className="text-blue-500 text-xs" target="_blank" rel="noopener noreferrer">
-                      Company Website
-                    </a>
+                    <div className="text-sm mt-4 pt-3 border-t border-gray-100">
+                      <a
+                        href={employment.company_url}
+                        className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+                        style={{ 
+                          color: '#E54747', 
+                          backgroundColor: '#fef7f7',
+                          border: '1px solid #E54747',
+                          fontFamily: 'Poppins, sans-serif'
+                        }}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Company Website
+                      </a>
+                    </div>
                   )}
                 </div>
               ))}
@@ -554,25 +663,25 @@ export default function SharedRestorativeRecord() {
 
         {/* Education */}
         {education.length > 0 && (
-          <section className="mb-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-black mb-4">Education</h2>
+          <section className="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 p-8" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <h2 className="text-lg font-semibold mb-4" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>Education</h2>
             <div className="space-y-4">
               {education.map((edu) => (
-                <div key={edu.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                  <div className="font-semibold text-black">{edu.school_name}</div>
-                  <div className="text-sm text-gray-600 mt-1">{edu.degree} in {edu.field_of_study}</div>
-                  <div className="text-sm text-gray-600">{edu.school_location}</div>
-                  <div className="text-sm text-gray-600">
+                <div key={edu.id} className="border border-gray-200 rounded-xl p-6 bg-gray-50">
+                  <div className="font-semibold mb-2" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>{edu.school_name}</div>
+                  <div className="text-sm mb-1" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>{edu.degree} in {edu.field_of_study}</div>
+                  <div className="text-sm mb-1" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>{edu.school_location}</div>
+                  <div className="text-sm mb-1" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>
                     {edu.start_date && new Date(edu.start_date).toLocaleDateString()} - {
                       edu.currently_enrolled ? "Present" : 
                       edu.end_date ? new Date(edu.end_date).toLocaleDateString() : "N/A"
                     }
                   </div>
                   {edu.grade && (
-                    <div className="text-sm text-gray-600">Grade: {edu.grade}</div>
+                    <div className="text-sm mb-4" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>Grade: {edu.grade}</div>
                   )}
                   {edu.description && (
-                    <div className="text-sm text-gray-700 mt-2">{edu.description}</div>
+                    <div className="text-sm" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>{edu.description}</div>
                   )}
                 </div>
               ))}
@@ -582,31 +691,31 @@ export default function SharedRestorativeRecord() {
 
         {/* Hobbies & Interests */}
         {hobbies.length > 0 && (
-          <section className="mb-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-black mb-4">Hobbies & Interests</h2>
+          <section className="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 p-8" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <h2 className="text-lg font-semibold mb-4" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>Hobbies & Interests</h2>
             <div className="space-y-4">
               {hobbies.map((hobby) => (
-                <div key={hobby.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                <div key={hobby.id} className="border border-gray-200 rounded-xl p-6 bg-gray-50">
                   {hobby.general_hobby && (
                     <div className="mb-2">
-                      <span className="text-gray-600 text-sm font-medium">General Hobbies: </span>
-                      <span className="text-sm text-gray-700">{hobby.general_hobby}</span>
+                      <span className="text-sm font-medium" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>General Hobbies: </span>
+                      <span className="text-sm" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>{hobby.general_hobby}</span>
                     </div>
                   )}
                   {hobby.sports && (
                     <div className="mb-2">
-                      <span className="text-gray-600 text-sm font-medium">Sports: </span>
-                      <span className="text-sm text-gray-700">{hobby.sports}</span>
+                      <span className="text-sm font-medium" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>Sports: </span>
+                      <span className="text-sm" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>{hobby.sports}</span>
                     </div>
                   )}
                   {hobby.other_interests && (
                     <div className="mb-2">
-                      <span className="text-gray-600 text-sm font-medium">Other Interests: </span>
-                      <span className="text-sm text-gray-700">{hobby.other_interests}</span>
+                      <span className="text-sm font-medium" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>Other Interests: </span>
+                      <span className="text-sm" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>{hobby.other_interests}</span>
                     </div>
                   )}
                   {hobby.narrative && (
-                    <div className="text-sm text-gray-700 mt-2">{hobby.narrative}</div>
+                    <div className="text-sm" style={{ color: '#000000', fontFamily: 'Poppins, sans-serif' }}>{hobby.narrative}</div>
                   )}
                 </div>
               ))}
