@@ -446,4 +446,82 @@ export const sendInvitationEmail = async (invitationData: any, candidateEmail: s
     subject: `Invitation to Create Your Restorative Record - ${company || 'Company'}`,
     html: emailHtml,
   });
+};
+
+export const sendReinvitationEmail = async (reinvitationData: any, candidateEmail: string) => {
+  const { candidateName, originalMessage, hrAdminName, company, invitationCode, originalDateSent } = reinvitationData;
+
+  // Create a reinvitation message that references the original invitation
+  const reinviteMessage = `Dear ${candidateName || '[Candidate Name]'},
+
+We hope this message finds you well. This is a follow-up to our previous invitation sent on ${originalDateSent ? new Date(originalDateSent).toLocaleDateString() : '[Previous Date]'} regarding creating your Restorative Record as part of our hiring process.
+
+We understand that you may have been busy or may not have received our initial invitation. We wanted to reach out again to ensure you have the opportunity to participate in this important step of our hiring process.
+
+As mentioned in our previous communication, your Restorative Record is an opportunity to share your story, highlight your growth, and demonstrate the positive changes you've made. This process is designed to ensure fair consideration of all candidates while meeting our compliance requirements.
+
+To get started, please:
+1. Visit our platform using your invitation code: ${invitationCode || '[CODE]'}
+2. Create your account and complete your Restorative Record
+3. Share your record with us when you're ready
+
+If you have any questions about this process or need assistance, please don't hesitate to reach out to me directly. We're here to support you through this process.
+
+We look forward to hearing from you soon.
+
+Best regards,
+${hrAdminName || 'HR Team'}
+${company || 'Company'}
+
+Your invitation code: ${invitationCode || '[CODE]'}`;
+
+  // Convert line breaks to HTML and preserve formatting
+  const htmlMessage = reinviteMessage
+    .split('\n')
+    .map((line: string) => line.trim())
+    .filter((line: string) => line.length > 0)
+    .map((line: string) => `<p style="margin-bottom: 12px; color: #333;">${line}</p>`)
+    .join('');
+
+  const emailHtml = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; color: #333; background: #fff;">
+      <div style="text-align: center; margin-bottom: 32px;">
+        <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+          <h1 style="color: #856404; font-size: 24px; font-weight: bold; margin-bottom: 8px;">Restorative Record Invitation - Reminder</h1>
+          <p style="color: #856404; font-size: 16px; margin: 0;">Follow-up invitation to create your Restorative Record</p>
+        </div>
+      </div>
+      
+      <div style="background: #f8f9fa; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+        ${htmlMessage}
+      </div>
+      
+      <div style="background: #e7f3ff; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+        <h3 style="color: #0066cc; font-size: 16px; font-weight: bold; margin-bottom: 8px;">Need Help?</h3>
+        <p style="color: #0066cc; font-size: 14px; margin: 0;">
+          If you're experiencing any technical difficulties or have questions about the process, please contact us directly. We're committed to ensuring all candidates have equal opportunity to participate.
+        </p>
+      </div>
+      
+      <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #eee;">
+        <p style="color: #666; font-size: 14px; margin: 0;">
+          This reminder was sent by ${hrAdminName || 'HR Team'} from ${company || 'the company'}.
+        </p>
+        <p style="color: #666; font-size: 14px; margin: 8px 0 0 0;">
+          Reminder sent on: ${new Date().toLocaleDateString()}
+        </p>
+        ${originalDateSent && (
+          `<p style="color: #666; font-size: 12px; margin: 4px 0 0 0;">
+            Original invitation sent: ${new Date(originalDateSent).toLocaleDateString()}
+          </p>`
+        )}
+      </div>
+    </div>
+  `;
+
+  return sendEmail({
+    to: candidateEmail,
+    subject: `Reminder: Invitation to Create Your Restorative Record - ${company || 'Company'}`,
+    html: emailHtml,
+  });
 }; 

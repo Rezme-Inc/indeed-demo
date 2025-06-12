@@ -32,6 +32,8 @@ interface AssessmentMetricsProps {
     phone?: string;
     dateSent: string;
     message: string;
+    lastReinviteDate?: string;
+    reinviteCount?: number;
   }>;
   onViewAssessment?: (candidateId: string) => void;
   onReinviteCandidate?: (candidateId: string) => void;
@@ -54,7 +56,7 @@ export default function AssessmentMetrics({ users, sentInvites, onViewAssessment
 
   // Get emails of users who have already granted access
   const grantedAccessEmails = new Set(users.map(user => user.email));
-  
+
   // Filter sent invites to only show those that haven't granted access yet
   const pendingInvites = sentInvites.filter(invite => !grantedAccessEmails.has(invite.email));
 
@@ -136,7 +138,7 @@ export default function AssessmentMetrics({ users, sentInvites, onViewAssessment
     const steps = [
       'Not Started',
       'Conditional Job Offer',
-      'Individualized Assessment', 
+      'Individualized Assessment',
       'Preliminary Job Offer Revocation',
       'Individual Reassessment',
       'Final Revocation Notice'
@@ -161,7 +163,7 @@ export default function AssessmentMetrics({ users, sentInvites, onViewAssessment
                     <User className="h-5 w-5" style={{ color: '#595959' }} />
                     <h4 className="font-semibold text-black">{invite.name}</h4>
                   </div>
-                  
+
                   <div className="flex items-center gap-3 mb-2">
                     <Mail className="h-4 w-4" style={{ color: '#9CA3AF' }} />
                     <span className="text-sm" style={{ color: '#595959' }}>{invite.email}</span>
@@ -171,6 +173,12 @@ export default function AssessmentMetrics({ users, sentInvites, onViewAssessment
                     <Calendar className="h-4 w-4" style={{ color: '#9CA3AF' }} />
                     <span className="text-sm" style={{ color: '#595959' }}>
                       Invited {formatDate(invite.dateSent)} ({getDaysElapsed(invite.dateSent)} days ago)
+                      {invite.reinviteCount && invite.reinviteCount > 0 && (
+                        <span className="ml-2 text-xs" style={{ color: '#F59E0B' }}>
+                          • Reinvited {invite.reinviteCount} time{invite.reinviteCount > 1 ? 's' : ''}
+                          {invite.lastReinviteDate && ` (last: ${formatDate(invite.lastReinviteDate)})`}
+                        </span>
+                      )}
                     </span>
                   </div>
                 </div>
@@ -186,7 +194,7 @@ export default function AssessmentMetrics({ users, sentInvites, onViewAssessment
                     }}
                   >
                     <Send className="h-4 w-4" />
-                    {loading ? 'Sending...' : 'Reinvite'}
+                    {loading ? 'Sending...' : (invite.reinviteCount && invite.reinviteCount > 0 ? 'Send Again' : 'Reinvite')}
                   </button>
                 </div>
               </div>
@@ -204,7 +212,7 @@ export default function AssessmentMetrics({ users, sentInvites, onViewAssessment
 
     // Handle progress and completed users
     let candidates: User[] = [];
-    
+
     switch (selectedModal) {
       case 'progress':
         candidates = inProgress;
@@ -226,7 +234,7 @@ export default function AssessmentMetrics({ users, sentInvites, onViewAssessment
                   <User className="h-5 w-5" style={{ color: '#595959' }} />
                   <h4 className="font-semibold text-black">{candidate.first_name} {candidate.last_name}</h4>
                 </div>
-                
+
                 <div className="flex items-center gap-3 mb-2">
                   <Mail className="h-4 w-4" style={{ color: '#9CA3AF' }} />
                   <span className="text-sm" style={{ color: '#595959' }}>{candidate.email}</span>
@@ -259,9 +267,9 @@ export default function AssessmentMetrics({ users, sentInvites, onViewAssessment
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
+                      <div
                         className="h-2 rounded-full transition-all duration-300"
-                        style={{ 
+                        style={{
                           backgroundColor: '#F59E0B',
                           width: `${getProgressPercentage(candidate)}%`
                         }}
@@ -272,7 +280,7 @@ export default function AssessmentMetrics({ users, sentInvites, onViewAssessment
 
                 {selectedModal === 'completed' && candidate.final_decision && (
                   <div className="mt-2">
-                    <span 
+                    <span
                       className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
                       style={{
                         backgroundColor: candidate.final_decision === 'Hired' ? '#F0FDF4' : '#FEF2F2',
@@ -334,10 +342,10 @@ export default function AssessmentMetrics({ users, sentInvites, onViewAssessment
       {/* Metrics Cards */}
       <div className="bg-white border rounded-xl p-6 mb-6" style={{ borderColor: '#E5E5E5' }}>
         <h2 className="text-xl font-semibold text-black mb-4">Assessment Overview</h2>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Invites Sent Card */}
-          <div 
+          <div
             onClick={() => handleCardClick('invites')}
             className="border rounded-xl p-6 cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-blue-300 group"
             style={{ borderColor: '#E5E5E5' }}
@@ -353,7 +361,7 @@ export default function AssessmentMetrics({ users, sentInvites, onViewAssessment
                 </p>
               </div>
               <div className="flex-shrink-0">
-                <div 
+                <div
                   className="h-12 w-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200"
                   style={{ backgroundColor: '#EFF6FF' }}
                 >
@@ -364,7 +372,7 @@ export default function AssessmentMetrics({ users, sentInvites, onViewAssessment
           </div>
 
           {/* Assessments in Progress Card */}
-          <div 
+          <div
             onClick={() => handleCardClick('progress')}
             className="border rounded-xl p-6 cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-yellow-300 group"
             style={{ borderColor: '#E5E5E5' }}
@@ -380,7 +388,7 @@ export default function AssessmentMetrics({ users, sentInvites, onViewAssessment
                 </p>
               </div>
               <div className="flex-shrink-0">
-                <div 
+                <div
                   className="h-12 w-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200"
                   style={{ backgroundColor: '#FFFBEB' }}
                 >
@@ -391,7 +399,7 @@ export default function AssessmentMetrics({ users, sentInvites, onViewAssessment
           </div>
 
           {/* Assessments Completed Card */}
-          <div 
+          <div
             onClick={() => handleCardClick('completed')}
             className="border rounded-xl p-6 cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-green-300 group"
             style={{ borderColor: '#E5E5E5' }}
@@ -407,7 +415,7 @@ export default function AssessmentMetrics({ users, sentInvites, onViewAssessment
                 </p>
               </div>
               <div className="flex-shrink-0">
-                <div 
+                <div
                   className="h-12 w-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200"
                   style={{ backgroundColor: '#F0FDF4' }}
                 >

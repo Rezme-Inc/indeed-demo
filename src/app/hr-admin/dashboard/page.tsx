@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import AssessmentMetrics from "./components/AssessmentMetrics";
-import { sendInvitationEmail } from '@/app/restorative-record/utils/sendEmail';
+import { sendInvitationEmail, sendReinvitationEmail } from '@/app/restorative-record/utils/sendEmail';
 
 interface User {
   id: string;
@@ -194,6 +194,8 @@ export default function HRAdminDashboard() {
     phone?: string;
     dateSent: string;
     message: string;
+    lastReinviteDate?: string;
+    reinviteCount?: number;
   }>>([]);
   const router = useRouter();
 
@@ -207,6 +209,7 @@ export default function HRAdminDashboard() {
     customMessage: ''
   });
   const [sendingInvite, setSendingInvite] = useState(false);
+  const [hasLoadedInvites, setHasLoadedInvites] = useState(false);
 
   useEffect(() => {
     fetchHRAdminProfile();
@@ -221,7 +224,7 @@ export default function HRAdminDashboard() {
   // Load sent invites from localStorage
   useEffect(() => {
     const savedInvites = localStorage.getItem('hr_sent_invites');
-    console.log('savedInvites', savedInvites);
+    console.log('-----savedInvites-----', savedInvites);
     if (savedInvites) {
       try {
         setSentInvites(JSON.parse(savedInvites));
@@ -229,12 +232,15 @@ export default function HRAdminDashboard() {
         console.error('Error loading sent invites:', error);
       }
     }
+    setHasLoadedInvites(true);
   }, []);
 
-  // Save sent invites to localStorage
+  // Save sent invites to localStorage (only after initial load)
   useEffect(() => {
-    localStorage.setItem('hr_sent_invites', JSON.stringify(sentInvites));
-  }, [sentInvites]);
+    if (hasLoadedInvites) {
+      localStorage.setItem('hr_sent_invites', JSON.stringify(sentInvites));
+    }
+  }, [sentInvites, hasLoadedInvites]);
 
   const fetchHRAdminProfile = async () => {
     try {
@@ -427,6 +433,60 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
     }
   };
 
+  const handleReinviteCandidate = async (candidateId: string) => {
+    try {
+      // Find the original invite by ID
+      const originalInvite = sentInvites.find(invite => invite.id === candidateId);
+
+      if (!originalInvite) {
+        setError('Original invitation not found. Cannot send reinvite.');
+        setTimeout(() => setError(null), 5000);
+        return;
+      }
+
+      if (!hrAdmin) {
+        setError('HR admin profile not loaded. Please refresh and try again.');
+        setTimeout(() => setError(null), 5000);
+        return;
+      }
+
+      // Prepare reinvitation data
+      const reinvitationData = {
+        candidateName: originalInvite.name,
+        originalMessage: originalInvite.message,
+        hrAdminName: `${hrAdmin.first_name} ${hrAdmin.last_name}`,
+        company: hrAdmin.company,
+        invitationCode: hrAdmin.invitation_code,
+        originalDateSent: originalInvite.dateSent
+      };
+
+      // Send the reinvitation email
+      const emailResult = await sendReinvitationEmail(reinvitationData, originalInvite.email);
+
+      if (!emailResult.success) {
+        throw new Error(String(emailResult.error) || 'Failed to send reinvitation email');
+      }
+
+      // Update the original invite record with reinvite information
+      setSentInvites(prev => prev.map(invite =>
+        invite.id === candidateId
+          ? {
+            ...invite,
+            lastReinviteDate: new Date().toISOString(),
+            reinviteCount: (invite.reinviteCount || 0) + 1
+          }
+          : invite
+      ));
+
+      setSuccess(`Reinvitation sent successfully to ${originalInvite.email}`);
+      setTimeout(() => setSuccess(null), 5000);
+    } catch (err) {
+      console.error('Error sending reinvite:', err);
+      setError('Failed to send reinvitation. Please try again.');
+      setTimeout(() => setError(null), 5000);
+    }
+  };
+
   // Filter users based on search query
   const filteredUsers = permittedUsers.filter(user => {
     const query = searchQuery.toLowerCase();
@@ -554,12 +614,7 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
         users={permittedUsers}
         sentInvites={sentInvites}
         onViewAssessment={(candidateId) => router.push(`/hr-admin/dashboard/${candidateId}/assessment`)}
-        onReinviteCandidate={(candidateId) => {
-          console.log('Reinviting candidate:', candidateId);
-          // You can add your reinvite logic here
-          setSuccess('Reinvite sent successfully!');
-          setTimeout(() => setSuccess(null), 3000);
-        }}
+        onReinviteCandidate={handleReinviteCandidate}
       />
 
 
