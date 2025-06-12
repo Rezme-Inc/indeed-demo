@@ -2410,6 +2410,11 @@ export default function RestorativeRecordBuilder() {
             </ul>
           </div>
 
+          {/* Visual Divider */}
+          <div className="mb-8">
+            <div className="border-t" style={{ borderColor: '#E5E5E5' }}></div>
+          </div>
+
           {/* Builder Sections */}
           <div>
             <h3 className="text-sm font-semibold text-black mb-3 uppercase tracking-wider">Record Builder</h3>
