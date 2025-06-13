@@ -651,20 +651,15 @@ export default function AssessmentPage({
         return;
       }
 
-      const offerLetterDataWithEmail = {
-        ...offerLetterData,
-        candidateEmail
-      };
-
       // Send the offer letter email
-      const emailResult = await sendOfferLetterEmail(offerLetterDataWithEmail);
+      const emailResult = await sendOfferLetterEmail(offerLetterData, candidateEmail);
 
       if (!emailResult.success) {
         console.error("Failed to send offer letter email:", emailResult.error);
         // You might want to show an error message to the user here
       }
 
-      setSavedOfferLetter(offerLetterDataWithEmail);
+      setSavedOfferLetter(offerLetterData);
       setShowOfferModal(false);
       handleNext();
     } catch (error) {
@@ -701,11 +696,11 @@ export default function AssessmentPage({
       // Use the helper to send the assessment email
       await sendAssessmentEmail(assessmentData, candidateEmail);
 
-    setSavedAssessment(assessmentData);
-    setShowAssessmentModal(false);
-    setAssessmentPreview(false);
-    setInitialAssessmentResults({ ...assessmentForm });
-    setCurrentStep((prev) => prev + 1);
+      setSavedAssessment(assessmentData);
+      setShowAssessmentModal(false);
+      setAssessmentPreview(false);
+      setInitialAssessmentResults({ ...assessmentForm });
+      setCurrentStep((prev) => prev + 1);
     } catch (error) {
       console.error("Error in handleSendAssessment:", error);
     }
@@ -769,10 +764,10 @@ export default function AssessmentPage({
       await sendRevocationEmail(revocationData, candidateEmail);
 
       setSavedRevocationNotice(revocationData);
-    setShowRevocationModal(false);
-    setRevocationPreview(false);
-    setRevocationSentDate(new Date());
-    setCurrentStep((prev) => prev + 1);
+      setShowRevocationModal(false);
+      setRevocationPreview(false);
+      setRevocationSentDate(new Date());
+      setCurrentStep((prev) => prev + 1);
     } catch (error) {
       console.error("Error in handleSendRevocation:", error);
     }
@@ -872,9 +867,9 @@ export default function AssessmentPage({
       await sendFinalRevocationEmail(finalRevocationData, candidateEmail);
 
       setSavedFinalRevocationNotice(finalRevocationData);
-    setShowFinalRevocationModal(false);
-    setFinalRevocationPreview(false);
-    setShowFinalRevocationSuccessModal(true);
+      setShowFinalRevocationModal(false);
+      setFinalRevocationPreview(false);
+      setShowFinalRevocationSuccessModal(true);
       setCurrentStep((prev) => prev + 1);
 
       try {
@@ -1175,8 +1170,8 @@ export default function AssessmentPage({
 
             {showDocumentsDropdown && (
               <div className="absolute top-full mt-2 right-0 bg-white border border-gray-200 rounded-xl shadow-lg py-2 min-w-64 z-50">
-          {savedOfferLetter && (
-            <button
+                {savedOfferLetter && (
+                  <button
                     onClick={() => {
                       handleViewOfferLetter();
                       setShowDocumentsDropdown(false);
@@ -1186,10 +1181,10 @@ export default function AssessmentPage({
                   >
                     <FileText className="h-4 w-4" />
                     View Conditional Job Offer
-            </button>
-          )}
-          {savedAssessment && (
-            <button
+                  </button>
+                )}
+                {savedAssessment && (
+                  <button
                     onClick={() => {
                       setShowAssessmentViewModal(true);
                       setShowDocumentsDropdown(false);
@@ -1199,10 +1194,10 @@ export default function AssessmentPage({
                   >
                     <ClipboardCheck className="h-4 w-4" />
                     View Assessment
-            </button>
-          )}
-          {savedRevocationNotice && (
-            <button
+                  </button>
+                )}
+                {savedRevocationNotice && (
+                  <button
                     onClick={() => {
                       setShowRevocationViewModal(true);
                       setShowDocumentsDropdown(false);
@@ -1212,10 +1207,10 @@ export default function AssessmentPage({
                   >
                     <AlertTriangle className="h-4 w-4" />
                     View Revocation Notice
-            </button>
-          )}
-          {savedReassessment && (
-            <button
+                  </button>
+                )}
+                {savedReassessment && (
+                  <button
                     onClick={() => {
                       setShowReassessmentViewModal(true);
                       setShowDocumentsDropdown(false);
@@ -1225,10 +1220,10 @@ export default function AssessmentPage({
                   >
                     <RotateCcw className="h-4 w-4" />
                     View Reassessment
-            </button>
-          )}
-          {savedFinalRevocationNotice && (
-            <button
+                  </button>
+                )}
+                {savedFinalRevocationNotice && (
+                  <button
                     onClick={() => {
                       setShowFinalRevocationViewModal(true);
                       setShowDocumentsDropdown(false);
@@ -1238,8 +1233,8 @@ export default function AssessmentPage({
                   >
                     <AlertCircle className="h-4 w-4" />
                     View Final Revocation
-            </button>
-          )}
+                  </button>
+                )}
                 {backgroundCheckFile && (
                   <button
                     onClick={() => {
@@ -2069,11 +2064,15 @@ export default function AssessmentPage({
                   setPreview={setFinalRevocationPreview}
                   setForm={setFinalRevocationForm}
                 />
-                {/* Critical Information Section */}
-                <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+
+              </>
+            )}
+
+            {/* Critical Information Section - Available for all steps */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 mt-8">
               <div className="flex items-center mb-4">
-                    <Info className="h-5 w-5 mr-2" style={{ color: '#595959' }} />
-                    <h3 className="text-lg font-bold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Critical Information</h3>
+                <Info className="h-5 w-5 mr-2" style={{ color: '#595959' }} />
+                <h3 className="text-lg font-bold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Critical Information</h3>
               </div>
 
               {/* Tab Navigation */}
@@ -2083,13 +2082,13 @@ export default function AssessmentPage({
                     key={tab}
                     onClick={() => setActiveTab(tab)}
                     className={`px-4 py-2 font-semibold text-sm transition-colors relative ${activeTab === tab
-                          ? 'border-b-2 border-red-600'
-                          : 'hover:text-gray-800'
+                      ? 'border-b-2 border-red-600'
+                      : 'hover:text-gray-800'
                       }`}
-                        style={{
-                          fontFamily: 'Poppins, sans-serif',
-                          color: activeTab === tab ? '#E54747' : '#595959'
-                        }}
+                    style={{
+                      fontFamily: 'Poppins, sans-serif',
+                      color: activeTab === tab ? '#E54747' : '#595959'
+                    }}
                   >
                     {tab}
                   </button>
@@ -2098,13 +2097,11 @@ export default function AssessmentPage({
 
               {/* Tab Content */}
               <div className="min-h-[200px]">
-                    <CriticalInfoTabs activeTab={activeTab} currentStep={currentStep} />
-                      </div>
-                      </div>
-              </>
-                    )}
-                      </div>
-                      </div>
+                <CriticalInfoTabs activeTab={activeTab} currentStep={currentStep} />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Footer with Disclaimer */}
@@ -2430,9 +2427,9 @@ export default function AssessmentPage({
                 <div>
                   <span className="font-semibold text-black">1. The specific duties and responsibilities of the job are:</span>
                   <ul className="list-disc ml-6 mt-2" style={{ color: '#595959' }}>
-                  {savedAssessment.duties.map((duty: string, idx: number) => duty && <li key={idx}>{duty}</li>)}
-                </ul>
-              </div>
+                    {savedAssessment.duties.map((duty: string, idx: number) => duty && <li key={idx}>{duty}</li>)}
+                  </ul>
+                </div>
 
                 <div>
                   <span className="font-semibold text-black">2. Description of the criminal conduct and why the conduct is of concern with respect to the position in question:</span>
@@ -2447,9 +2444,9 @@ export default function AssessmentPage({
                 <div>
                   <span className="font-semibold text-black">4. Activities since criminal activity, such as work experience, job training, rehabilitation, community service, etc.:</span>
                   <ul className="list-disc ml-6 mt-2" style={{ color: '#595959' }}>
-                  {savedAssessment.activities.map((act: string, idx: number) => act && <li key={idx}>{act}</li>)}
-                </ul>
-              </div>
+                    {savedAssessment.activities.map((act: string, idx: number) => act && <li key={idx}>{act}</li>)}
+                  </ul>
+                </div>
 
                 <div>
                   <span className="font-semibold text-black">Based on the factors above, we are considering rescinding our offer of employment because:</span>
@@ -2625,38 +2622,38 @@ export default function AssessmentPage({
               <h3 className="font-bold mt-6 mb-4 text-black text-lg" style={{ fontFamily: 'Poppins, sans-serif' }}>REASSESSMENT</h3>
               <div className="space-y-4">
                 <div><span className="font-semibold text-black">1. Was there an error in the Criminal History Report?</span> <span style={{ color: '#595959' }}>{savedReassessment.errorYesNo}</span></div>
-              {savedReassessment.errorYesNo === 'Yes' && (
+                {savedReassessment.errorYesNo === 'Yes' && (
                   <div><span className="font-semibold text-black">If yes, describe the error:</span> <span style={{ color: '#595959' }}>{savedReassessment.error}</span></div>
-              )}
+                )}
 
                 <div>
                   <span className="font-semibold text-black">2. Evidence of rehabilitation and good conduct:</span>
                   <div className="mt-2 space-y-2">
-                {savedReassessment.evidenceA && (
+                    {savedReassessment.evidenceA && (
                       <div><span className="font-semibold text-black">a.</span> <span style={{ color: '#595959' }}>{savedReassessment.evidenceA}</span></div>
-                )}
-                {savedReassessment.evidenceB && (
+                    )}
+                    {savedReassessment.evidenceB && (
                       <div><span className="font-semibold text-black">b.</span> <span style={{ color: '#595959' }}>{savedReassessment.evidenceB}</span></div>
-                )}
-                {savedReassessment.evidenceC && (
+                    )}
+                    {savedReassessment.evidenceC && (
                       <div><span className="font-semibold text-black">c.</span> <span style={{ color: '#595959' }}>{savedReassessment.evidenceC}</span></div>
-                )}
-                {savedReassessment.evidenceD && (
+                    )}
+                    {savedReassessment.evidenceD && (
                       <div><span className="font-semibold text-black">d.</span> <span style={{ color: '#595959' }}>{savedReassessment.evidenceD}</span></div>
-                )}
+                    )}
                   </div>
-              </div>
+                </div>
 
                 <div>
                   <span className="font-semibold text-black">Decision:</span> <span style={{ color: '#595959' }}>{savedReassessment.decision === 'rescind' ? 'Rescind Offer' : 'Extend Offer'}</span>
-              </div>
+                </div>
 
                 <div>
-                {savedReassessment.decision === 'rescind' ? (
+                  {savedReassessment.decision === 'rescind' ? (
                     <><span className="font-semibold text-black">Based on the factors above, we are rescinding our offer of employment because:</span><br /><span style={{ color: '#595959' }}>{savedReassessment.rescindReason}</span></>
-                ) : (
+                  ) : (
                     <><span className="font-semibold text-black">Based on the factors above, we are extending our offer of employment.</span><br /><span style={{ color: '#595959' }}>{savedReassessment.extendReason}</span></>
-                )}
+                  )}
                 </div>
               </div>
 
@@ -3435,7 +3432,7 @@ export default function AssessmentPage({
                 </button>
                 <button
                   className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
-                onClick={() => {
+                  onClick={() => {
                     setShowDocumentViewer(false);
                     setViewingDocument(null);
                   }}
@@ -3443,7 +3440,7 @@ export default function AssessmentPage({
                   <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
-              </button>
+                </button>
               </div>
             </div>
 

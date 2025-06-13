@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
     const msg = {
       to,
-      from: from || 'noreply@sandiegocounty.rezme.app',
+      from: from || 'fairchance@rezme.app',
       subject,
       html,
     };
