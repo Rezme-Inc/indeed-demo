@@ -1394,8 +1394,9 @@ export default function AssessmentPage({
           <div className="lg:col-span-5 space-y-8">
             {/* Main Question Card Placeholder */}
             {currentStep === 1 && (
-              <div className="bg-white rounded-xl border border-gray-200 p-8 mb-8">
-                <h2 className="text-3xl font-bold mb-8 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Confirm Conditional Offer</h2>
+              <>
+                <div className="bg-white rounded-xl border border-gray-200 p-8 mb-8">
+                  <h2 className="text-3xl font-bold mb-8 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Confirm Conditional Offer</h2>
                 <div className="space-y-6 mb-10">
                   <label className="flex items-center space-x-4 cursor-pointer">
                     <input
@@ -1404,10 +1405,10 @@ export default function AssessmentPage({
                       value="Yes"
                       checked={answers.conditional_offer === "Yes"}
                       onChange={() => handleAnswer("conditional_offer", "Yes")}
-                      className="h-6 w-6 border-2 border-gray-300 focus:ring-2 focus:ring-red-500"
-                      style={{ accentColor: '#E54747' }}
+                        className="h-6 w-6 border-2 border-gray-300 focus:ring-2 focus:ring-red-500"
+                        style={{ accentColor: '#E54747' }}
                     />
-                    <span className="text-xl text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Yes, a conditional offer has been extended</span>
+                      <span className="text-xl text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Yes, a conditional offer has been extended</span>
                   </label>
                   <label className="flex items-center space-x-4 cursor-pointer">
                     <input
@@ -1416,33 +1417,33 @@ export default function AssessmentPage({
                       value="No"
                       checked={answers.conditional_offer === "No"}
                       onChange={() => handleAnswer("conditional_offer", "No")}
-                      className="h-6 w-6 border-2 border-gray-300 focus:ring-2 focus:ring-red-500"
-                      style={{ accentColor: '#E54747' }}
+                        className="h-6 w-6 border-2 border-gray-300 focus:ring-2 focus:ring-red-500"
+                        style={{ accentColor: '#E54747' }}
                     />
-                    <span className="text-xl text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>No, a conditional offer has not been extended</span>
+                      <span className="text-xl text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>No, a conditional offer has not been extended</span>
                   </label>
                 </div>
                 <div className="flex justify-between items-center mt-8">
                   <button
-                    className="px-8 py-3 border border-gray-300 text-gray-400 rounded-xl text-lg font-semibold cursor-not-allowed"
-                    disabled
-                    style={{ fontFamily: 'Poppins, sans-serif' }}
-                  >
-                    Previous
-                  </button>
-                  <button
-                    className={`px-8 py-3 rounded-xl text-lg font-semibold flex items-center space-x-2 transition-all duration-200 ${answers.conditional_offer
-                      ? "text-white hover:opacity-90"
-                      : "border border-gray-300 text-gray-400 cursor-not-allowed"
-                      }`}
-                    style={{
-                      fontFamily: 'Poppins, sans-serif',
-                      backgroundColor: answers.conditional_offer ? '#E54747' : 'transparent'
-                    }}
+                      className="px-8 py-3 border border-gray-300 text-gray-400 rounded-xl text-lg font-semibold cursor-not-allowed"
+                      disabled
+                      style={{ fontFamily: 'Poppins, sans-serif' }}
+                    >
+                      Previous
+                    </button>
+                    <button
+                      className={`px-8 py-3 rounded-xl text-lg font-semibold flex items-center space-x-2 transition-all duration-200 ${answers.conditional_offer
+                        ? "text-white hover:opacity-90"
+                        : "border border-gray-300 text-gray-400 cursor-not-allowed"
+                        }`}
+                      style={{
+                        fontFamily: 'Poppins, sans-serif',
+                        backgroundColor: answers.conditional_offer ? '#E54747' : 'transparent'
+                      }}
                     onClick={handleNextConditionalOffer}
                     disabled={!answers.conditional_offer}
                   >
-                    Next <ChevronRight className="h-5 w-5 ml-2" />
+                      Next <ChevronRight className="h-5 w-5 ml-2" />
                   </button>
                 </div>
                 {/* Modal for Conditional Job Offer Letter */}
@@ -1459,6 +1460,40 @@ export default function AssessmentPage({
                   handleSendOffer={handleSendOffer}
                 />
               </div>
+
+                {/* Critical Information Section */}
+                <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+                  <div className="flex items-center mb-4">
+                    <Info className="h-5 w-5 mr-2" style={{ color: '#595959' }} />
+                    <h3 className="text-lg font-bold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Critical Information</h3>
+                  </div>
+
+                  {/* Tab Navigation */}
+                  <div className="flex space-x-1 mb-6 border-b border-gray-200">
+                    {['Legal', 'Company Policy', 'Candidate Context'].map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`px-4 py-2 font-semibold text-sm transition-colors relative ${activeTab === tab
+                          ? 'border-b-2 border-red-600'
+                          : 'hover:text-gray-800'
+                          }`}
+                        style={{
+                          fontFamily: 'Poppins, sans-serif',
+                          color: activeTab === tab ? '#E54747' : '#595959'
+                        }}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Tab Content */}
+                  <div className="min-h-[200px]">
+                    <CriticalInfoTabs activeTab={activeTab} currentStep={currentStep} />
+                  </div>
+                </div>
+              </>
             )}
             {currentStep === 2 && (
               <>
@@ -1474,6 +1509,40 @@ export default function AssessmentPage({
                     Begin Individualized Assessment
                   </button>
                 </div>
+
+                {/* Critical Information Section */}
+                <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+                  <div className="flex items-center mb-4">
+                    <Info className="h-5 w-5 mr-2" style={{ color: '#595959' }} />
+                    <h3 className="text-lg font-bold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Critical Information</h3>
+                  </div>
+
+                  {/* Tab Navigation */}
+                  <div className="flex space-x-1 mb-6 border-b border-gray-200">
+                    {['Legal', 'Company Policy', 'Candidate Context'].map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`px-4 py-2 font-semibold text-sm transition-colors relative ${activeTab === tab
+                          ? 'border-b-2 border-red-600'
+                          : 'hover:text-gray-800'
+                          }`}
+                        style={{
+                          fontFamily: 'Poppins, sans-serif',
+                          color: activeTab === tab ? '#E54747' : '#595959'
+                        }}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Tab Content */}
+                  <div className="min-h-[200px]">
+                    <CriticalInfoTabs activeTab={activeTab} currentStep={currentStep} />
+                  </div>
+                </div>
+
                 {/* Modal for Individualized Assessment */}
                 <IndividualizedAssessmentModal
                   showAssessmentModal={showAssessmentModal}
@@ -1512,6 +1581,40 @@ export default function AssessmentPage({
                     </button>
                   </div>
                 </div>
+
+                {/* Critical Information Section */}
+                <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+                  <div className="flex items-center mb-4">
+                    <Info className="h-5 w-5 mr-2" style={{ color: '#595959' }} />
+                    <h3 className="text-lg font-bold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Critical Information</h3>
+                  </div>
+
+                  {/* Tab Navigation */}
+                  <div className="flex space-x-1 mb-6 border-b border-gray-200">
+                    {['Legal', 'Company Policy', 'Candidate Context'].map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`px-4 py-2 font-semibold text-sm transition-colors relative ${activeTab === tab
+                          ? 'border-b-2 border-red-600'
+                          : 'hover:text-gray-800'
+                          }`}
+                        style={{
+                          fontFamily: 'Poppins, sans-serif',
+                          color: activeTab === tab ? '#E54747' : '#595959'
+                        }}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Tab Content */}
+                  <div className="min-h-[200px]">
+                    <CriticalInfoTabs activeTab={activeTab} currentStep={currentStep} />
+                  </div>
+                </div>
+
                 {/* Preliminary Revocation Modal */}
                 <PreliminaryRevocationModal
                   showRevocationModal={showRevocationModal}
@@ -1569,6 +1672,39 @@ export default function AssessmentPage({
                     </button>
                   </div>
                 </div>
+                {/* Critical Information Section */}
+                <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+                  <div className="flex items-center mb-4">
+                    <Info className="h-5 w-5 mr-2" style={{ color: '#595959' }} />
+                    <h3 className="text-lg font-bold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Critical Information</h3>
+                  </div>
+
+                  {/* Tab Navigation */}
+                  <div className="flex space-x-1 mb-6 border-b border-gray-200">
+                    {['Legal', 'Company Policy', 'Candidate Context'].map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`px-4 py-2 font-semibold text-sm transition-colors relative ${activeTab === tab
+                          ? 'border-b-2 border-red-600'
+                          : 'hover:text-gray-800'
+                          }`}
+                        style={{
+                          fontFamily: 'Poppins, sans-serif',
+                          color: activeTab === tab ? '#E54747' : '#595959'
+                        }}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Tab Content */}
+                  <div className="min-h-[200px]">
+                    <CriticalInfoTabs activeTab={activeTab} currentStep={currentStep} />
+                  </div>
+                </div>
+                
                 {/* Informational Modal for Individualized Reassessment */}
                 {showReassessmentInfoModal && (
                   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
