@@ -178,7 +178,7 @@ export function PersonalAchievementsSection({
           />
         </div>
         <DatePickerField
-          label="Date Awarded *"
+          label="Date Awarded"
           value={awardsHook.form.date}
           onChange={(date) =>
             awardsHook.updateForm({ date: formatDateForInput(date) })
