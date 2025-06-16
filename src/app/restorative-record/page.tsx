@@ -1717,9 +1717,9 @@ export default function RestorativeRecordBuilder() {
 
   // Dashboard functions
   const dashboardSections = [
-    { id: 'progress', label: 'Progress Tracking', icon: '📊' },
-    { id: 'status', label: 'Status Updates', icon: '📋' },
-    { id: 'notifications', label: 'Notifications', icon: '🔔' }
+    { id: 'progress', label: 'Progress Tracking', icon: <img src="progress.svg" alt="Progress" className="w-5 h-5" />  },
+    { id: 'status', label: 'Status Updates', icon: <img src="status-updates.svg" alt="Status Updates" className="w-5 h-5" /> },
+    { id: 'notifications', label: 'Notifications', icon: <img src="notifications.svg" alt="Notifications" className="w-5 h-5" /> }
   ];
 
   const handleDashboardNavigation = (section: string) => {
