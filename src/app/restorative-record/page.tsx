@@ -1855,7 +1855,9 @@ export default function RestorativeRecordBuilder() {
                   className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
                   style={{ borderColor: '#E5E5E5' }}
                 >
-                  <span className="text-2xl mb-2 block">✏️</span>
+                  <span className="flex justify-center items-center mb-2">
+                    <img src="continue-building.svg" alt="Progress" className="w-10 h-10" />
+                  </span>
                   <span className="font-medium text-black">Continue Building</span>
                 </button>
                 <button
@@ -1863,7 +1865,9 @@ export default function RestorativeRecordBuilder() {
                   className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
                   style={{ borderColor: '#E5E5E5' }}
                 >
-                  <span className="text-2xl mb-2 block">👀</span>
+                  <span className="flex justify-center items-center mb-2">
+                    <img src="preview.svg" alt="Preview" className="w-10 h-10" />
+                  </span>
                   <span className="font-medium text-black">Preview Record</span>
                 </button>
                 <button
@@ -1871,7 +1875,9 @@ export default function RestorativeRecordBuilder() {
                   className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
                   style={{ borderColor: '#E5E5E5' }}
                 >
-                  <span className="text-2xl mb-2 block">📊</span>
+                  <span className="flex justify-center items-center mb-2">
+                    <img src="check-status.svg" alt="Check Status" className="w-10 h-10" />
+                  </span>
                   <span className="font-medium text-black">Check Status</span>
                 </button>
               </div>
