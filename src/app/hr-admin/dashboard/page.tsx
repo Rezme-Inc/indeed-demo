@@ -562,16 +562,16 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
         </div>
       </div>
 
-      {/* Invitation Code Section */}
-      <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-black">
-            Invitation Code
-          </h2>
-          <div className="flex space-x-3">
+      {/* Invitation Code Section - Positioned in upper right */}
+      <div className="flex justify-start">
+        <div className="bg-white border rounded-xl p-4 w-80" style={{ borderColor: '#E5E5E5' }}>
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-lg font-semibold text-black">
+              Invitation Code
+            </h3>
             <button
               onClick={generateInvitationCode}
-              className="px-4 py-2 border text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90"
+              className="px-3 py-1 border text-sm font-medium rounded-lg transition-all duration-200 hover:opacity-90"
               style={{
                 color: '#595959',
                 borderColor: '#E5E5E5',
@@ -580,33 +580,33 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
             >
               Generate New Code
             </button>
-            <button
-              onClick={openInviteModal}
-              disabled={!hrAdmin?.invitation_code}
-              className="px-4 py-2 border-2 text-base font-medium rounded-xl text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{
-                backgroundColor: !hrAdmin?.invitation_code ? '#d1d5db' : '#E54747',
-                borderColor: !hrAdmin?.invitation_code ? '#d1d5db' : '#E54747'
-              }}
-            >
-              Invite Candidate
-            </button>
           </div>
+          {hrAdmin?.invitation_code ? (
+            <div className="p-3 rounded-xl mb-3" style={{ backgroundColor: '#F8F9FA' }}>
+              <p className="text-xs mb-1" style={{ color: '#595959' }}>
+                Share this securecode with candidates to connect with them on Rézme:
+              </p>
+              <p className="text-lg font-mono text-black font-semibold">
+                {hrAdmin.invitation_code}
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm mb-3" style={{ color: '#595959' }}>
+              No invitation code generated yet.
+            </p>
+          )}
+          <button
+            onClick={openInviteModal}
+            disabled={!hrAdmin?.invitation_code}
+            className="w-full px-3 py-2 border-2 text-sm font-medium rounded-lg text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{
+              backgroundColor: !hrAdmin?.invitation_code ? '#d1d5db' : '#E54747',
+              borderColor: !hrAdmin?.invitation_code ? '#d1d5db' : '#E54747'
+            }}
+          >
+            Invite Candidate
+          </button>
         </div>
-        {hrAdmin?.invitation_code ? (
-          <div className="p-4 rounded-xl" style={{ backgroundColor: '#F8F9FA' }}>
-            <p className="text-sm mb-2" style={{ color: '#595959' }}>
-              Share this code with users to connect with them:
-            </p>
-            <p className="text-2xl font-mono text-black font-semibold">
-              {hrAdmin.invitation_code}
-            </p>
-          </div>
-        ) : (
-          <p style={{ color: '#595959' }}>
-            No invitation code generated yet. Click the button above to generate one.
-          </p>
-        )}
       </div>
 
       {/* Assessment Metrics */}
@@ -622,7 +622,7 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
       <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-black">
-            Users Who Granted You Access
+            Your Candidates
           </h2>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -654,7 +654,7 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
                   Email
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-black uppercase tracking-wider">
-                  RR Status
+                  Candidate Response Status
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-black uppercase tracking-wider">
                   Final Decision
