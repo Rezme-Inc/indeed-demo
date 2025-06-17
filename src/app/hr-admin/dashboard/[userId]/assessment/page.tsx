@@ -23,6 +23,8 @@ import {
   Mail,
   StickyNote,
   Briefcase,
+  Clock,
+  History,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
@@ -207,6 +209,25 @@ export default function AssessmentPage({
   const [savedFinalRevocationNotice, setSavedFinalRevocationNotice] = useState<any>(null);
   const [showFinalRevocationViewModal, setShowFinalRevocationViewModal] = useState(false);
 
+  // Hire Decision State
+  const [savedHireDecision, setSavedHireDecision] = useState<any>(null);
+
+  // Preliminary Decision State (for timeline tracking of preliminary revocation decisions)
+  const [savedPreliminaryDecision, setSavedPreliminaryDecision] = useState<any>(null);
+
+  // Timeline Data State
+  const [timelineData, setTimelineData] = useState<{
+    inviteSent: string | null;
+    accessGranted: string | null;
+    candidateResponse: string | null;
+    profileCreated: string | null;
+  }>({
+    inviteSent: null,
+    accessGranted: null,
+    candidateResponse: null,
+    profileCreated: null
+  });
+
   // Critical Information Tab State
   const [activeTab, setActiveTab] = useState('Legal');
 
@@ -221,22 +242,23 @@ export default function AssessmentPage({
   const [jobPostingFile, setJobPostingFile] = useState<File | null>(null);
   const [emailsFile, setEmailsFile] = useState<File | null>(null);
   const [notesFile, setNotesFile] = useState<File | null>(null);
+  const [companyPolicyFile, setCompanyPolicyFile] = useState<File | null>(null);
   const [uploadingBackground, setUploadingBackground] = useState(false);
   const [uploadingJobDesc, setUploadingJobDesc] = useState(false);
   const [uploadingJobPosting, setUploadingJobPosting] = useState(false);
   const [uploadingEmails, setUploadingEmails] = useState(false);
   const [uploadingNotes, setUploadingNotes] = useState(false);
-
-  // Document Viewer State
-  const [showDocumentViewer, setShowDocumentViewer] = useState(false);
-  const [viewingDocument, setViewingDocument] = useState<{
-    file: File;
-    type: 'background' | 'jobdesc' | 'jobposting' | 'emails' | 'notes';
-    title: string;
-  } | null>(null);
+  const [uploadingCompanyPolicy, setUploadingCompanyPolicy] = useState(false);
+  const [viewingDocument, setViewingDocument] = useState<{ file: File; type: 'background' | 'jobdesc' | 'jobposting' | 'emails' | 'notes' | 'companypolicy'; title: string } | null>(null);
+  
+  // HR Action Timeline State
+  const [showTimelinePanel, setShowTimelinePanel] = useState(false);
 
   // Documents Dropdown State
   const [showDocumentsDropdown, setShowDocumentsDropdown] = useState(false);
+
+  // Document Viewer State
+  const [showDocumentViewer, setShowDocumentViewer] = useState(false);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -461,6 +483,18 @@ export default function AssessmentPage({
     }
   }, [savedFinalRevocationNotice, params.userId, isLoading]);
 
+  useEffect(() => {
+    if (!isLoading && savedHireDecision) {
+      localStorage.setItem(`hireDecision_${params.userId}`, JSON.stringify(savedHireDecision));
+    }
+  }, [savedHireDecision, params.userId, isLoading]);
+
+  useEffect(() => {
+    if (!isLoading && savedPreliminaryDecision) {
+      localStorage.setItem(`preliminaryDecision_${params.userId}`, JSON.stringify(savedPreliminaryDecision));
+    }
+  }, [savedPreliminaryDecision, params.userId, isLoading]);
+
   // Fetch HR Admin Profile
   useEffect(() => {
     async function fetchHRAdminProfile() {
@@ -529,6 +563,21 @@ export default function AssessmentPage({
       setSavedFinalRevocationNotice(JSON.parse(savedFinalRevocationNoticeData));
     }
 
+    const savedHireDecisionData = localStorage.getItem(`hireDecision_${candidateId}`);
+    if (savedHireDecisionData) {
+      setSavedHireDecision(JSON.parse(savedHireDecisionData));
+    }
+
+    const savedPreliminaryDecisionData = localStorage.getItem(`preliminaryDecision_${candidateId}`);
+    if (savedPreliminaryDecisionData) {
+      setSavedPreliminaryDecision(JSON.parse(savedPreliminaryDecisionData));
+    }
+
+    // Fetch timeline data
+    fetchTimelineData().then(data => {
+      setTimelineData(data);
+    });
+
     setIsLoading(false);
   }, [params.userId]);
 
@@ -548,6 +597,8 @@ export default function AssessmentPage({
     localStorage.removeItem(`revocationNotice_${candidateId}`);
     localStorage.removeItem(`reassessment_${candidateId}`);
     localStorage.removeItem(`finalRevocationNotice_${candidateId}`);
+    localStorage.removeItem(`hireDecision_${candidateId}`);
+    localStorage.removeItem(`preliminaryDecision_${candidateId}`);
     clearAssessmentProgress();
 
     // Reset state
@@ -556,6 +607,8 @@ export default function AssessmentPage({
     setSavedRevocationNotice(null);
     setSavedReassessment(null);
     setSavedFinalRevocationNotice(null);
+    setSavedHireDecision(null);
+    setSavedPreliminaryDecision(null);
   };
 
   const handleComplete = () => {
@@ -597,6 +650,20 @@ export default function AssessmentPage({
     if (answers.conditional_offer === "No") {
       setShowOfferModal(true);
     } else {
+      // "Yes" was selected - acknowledge external conditional job offer was sent
+      const externalOfferData = {
+        sentAt: new Date().toISOString(),
+        candidateId: params.userId,
+        hrAdminName: hrAdminProfile ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}` : '',
+        company: hrAdminProfile?.company || '',
+        sentExternally: true, // Flag to indicate this was sent outside the system
+        timestamp: Date.now()
+      };
+      
+      // Save the external offer record for timeline tracking
+      setSavedOfferLetter(externalOfferData);
+      
+      // Proceed to next step
       handleNext();
     }
   };
@@ -637,7 +704,7 @@ export default function AssessmentPage({
     // Save the offer letter data with timestamp
     const offerLetterData = {
       ...offerForm,
-      sentDate: new Date().toISOString(),
+      sentAt: new Date().toISOString(),
       candidateId: params.userId,
       hrAdminName: hrAdminProfile ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}` : '',
       company: hrAdminProfile?.company || '',
@@ -680,6 +747,7 @@ export default function AssessmentPage({
     // Save the assessment with metadata
     const assessmentData = {
       ...assessmentForm,
+      decision: 'rescind', // Always rescind since we're proceeding to revocation
       sentAt: new Date().toISOString(),
       candidateId: params.userId,
       hrAdminName: hrAdminProfile ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}` : '',
@@ -774,6 +842,22 @@ export default function AssessmentPage({
   };
 
   const handleProceedWithHire = async () => {
+    // Create a decision record for the timeline
+    const hireDecisionData = {
+      decision: 'hire',
+      decisionType: 'hired',
+      sentAt: new Date().toISOString(),
+      candidateId: params.userId,
+      hrAdminName: hrAdminProfile ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}` : '',
+      companyName: hrAdminProfile?.company || '',
+    };
+    
+    // Save to localStorage for timeline tracking
+    localStorage.setItem(`hireDecision_${params.userId}`, JSON.stringify(hireDecisionData));
+    
+    // Update state for immediate timeline display
+    setSavedHireDecision(hireDecisionData);
+    
     // Update Supabase user_profiles.final_decision to 'Hired'
     try {
       await supabase
@@ -787,6 +871,27 @@ export default function AssessmentPage({
     // You can add logic to finalize the hire here
   };
 
+  const handleProceedWithReassessment = async () => {
+    // Create a decision record for the timeline - choosing to proceed with adverse action/reassessment
+    const reassessmentDecisionData = {
+      decision: 'reassessment',
+      decisionType: 'adverse_action',
+      sentAt: new Date().toISOString(),
+      candidateId: params.userId,
+      hrAdminName: hrAdminProfile ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}` : '',
+      companyName: hrAdminProfile?.company || '',
+    };
+    
+    // Save to localStorage for timeline tracking
+    localStorage.setItem(`preliminaryDecision_${params.userId}`, JSON.stringify(reassessmentDecisionData));
+    
+    // Update state for immediate timeline display (we'll create this state variable)
+    setSavedPreliminaryDecision(reassessmentDecisionData);
+    
+    // Continue with the reassessment flow
+    setShowReassessmentInfoModal(true);
+  };
+
   const handleReassessmentFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setReassessmentForm({ ...reassessmentForm, [e.target.name]: e.target.value });
   };
@@ -794,6 +899,8 @@ export default function AssessmentPage({
     // Save the reassessment with metadata
     const reassessmentData = {
       ...reassessmentForm,
+      decision: reassessmentDecision, // Include the decision choice
+      extendReason: extendReason, // Include extend reason if extending
       sentAt: new Date().toISOString(),
       candidateId: params.userId,
       hrAdminName: hrAdminProfile ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}` : '',
@@ -892,7 +999,7 @@ export default function AssessmentPage({
       // Get the candidate's share_token and basic profile info
       const { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
-        .select('share_token, first_name, last_name, email')
+        .select('share_token, first_name, last_name, email, rr_completed, created_at')
         .eq('id', params.userId)
         .single();
 
@@ -919,6 +1026,49 @@ export default function AssessmentPage({
       setCandidateShareToken(null);
     } finally {
       setLoadingCandidateData(false);
+    }
+  };
+
+  // Function to fetch complete timeline data
+  const fetchTimelineData = async () => {
+    try {
+      // Get invite data from localStorage
+      const savedInvites = localStorage.getItem('hr_sent_invites');
+      let inviteData = null;
+      if (savedInvites) {
+        const invites = JSON.parse(savedInvites);
+        inviteData = invites.find((invite: any) => invite.id === params.userId);
+      }
+
+      // Get access granted data from user_hr_permissions
+      const { data: permissionData } = await supabase
+        .from('user_hr_permissions')
+        .select('granted_at')
+        .eq('user_id', params.userId)
+        .eq('is_active', true)
+        .single();
+
+      // Get profile data including restorative record completion
+      const { data: profileData } = await supabase
+        .from('user_profiles')
+        .select('rr_completed, created_at, updated_at')
+        .eq('id', params.userId)
+        .single();
+
+      return {
+        inviteSent: inviteData?.dateSent || null,
+        accessGranted: permissionData?.granted_at || null,
+        candidateResponse: profileData?.rr_completed ? profileData.updated_at : null,
+        profileCreated: profileData?.created_at || null
+      };
+    } catch (error) {
+      console.error('Error fetching timeline data:', error);
+      return {
+        inviteSent: null,
+        accessGranted: null,
+        candidateResponse: null,
+        profileCreated: null
+      };
     }
   };
 
@@ -1087,7 +1237,34 @@ export default function AssessmentPage({
     }
   };
 
-  const handleRemoveFile = (type: 'background' | 'jobdesc' | 'jobposting' | 'emails' | 'notes') => {
+  const handleCompanyPolicyUpload = async (file: File) => {
+    setUploadingCompanyPolicy(true);
+    try {
+      // Validate file type
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'];
+      if (!allowedTypes.includes(file.type)) {
+        alert('Please upload a valid file format (PDF, JPEG, PNG, DOCX, DOC)');
+        return;
+      }
+
+      // Validate file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10MB');
+        return;
+      }
+
+      setCompanyPolicyFile(file);
+      // Here you would typically upload to your file storage service
+      console.log('Company policy file uploaded:', file.name);
+    } catch (error) {
+      console.error('Error uploading company policy:', error);
+      alert('Failed to upload company policy');
+    } finally {
+      setUploadingCompanyPolicy(false);
+    }
+  };
+
+  const handleRemoveFile = (type: 'background' | 'jobdesc' | 'jobposting' | 'emails' | 'notes' | 'companypolicy') => {
     if (type === 'background') {
       setBackgroundCheckFile(null);
     } else if (type === 'jobdesc') {
@@ -1098,12 +1275,18 @@ export default function AssessmentPage({
       setEmailsFile(null);
     } else if (type === 'notes') {
       setNotesFile(null);
+    } else if (type === 'companypolicy') {
+      setCompanyPolicyFile(null);
     }
   };
 
   // Document Viewing Handlers
-  const handleViewDocument = (file: File, type: 'background' | 'jobdesc' | 'jobposting' | 'emails' | 'notes') => {
-    const title = type === 'background' ? 'Background Check Report' : type === 'jobdesc' ? 'Job Description' : type === 'jobposting' ? 'Job Posting' : type === 'emails' ? 'Emails' : 'Notes';
+  const handleViewDocument = (file: File, type: 'background' | 'jobdesc' | 'jobposting' | 'emails' | 'notes' | 'companypolicy') => {
+    const title = type === 'background' ? 'Background Check Report' : 
+                  type === 'jobdesc' ? 'Job Description' : 
+                  type === 'jobposting' ? 'Job Posting' : 
+                  type === 'emails' ? 'Emails' : 
+                  type === 'notes' ? 'Notes' : 'Company Policy';
     setViewingDocument({ file, type, title });
     setShowDocumentViewer(true);
   };
@@ -1300,7 +1483,20 @@ export default function AssessmentPage({
                     View Notes
                   </button>
                 )}
-                {!savedOfferLetter && !savedAssessment && !savedRevocationNotice && !savedReassessment && !savedFinalRevocationNotice && !backgroundCheckFile && !jobDescriptionFile && !jobPostingFile && !emailsFile && !notesFile && (
+                {companyPolicyFile && (
+                  <button
+                    onClick={() => {
+                      handleViewDocument(companyPolicyFile, 'companypolicy');
+                      setShowDocumentsDropdown(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-all duration-200"
+                    style={{ fontFamily: 'Poppins, sans-serif' }}
+                  >
+                    <Building className="h-4 w-4" />
+                    View Company Policy
+                  </button>
+                )}
+                {!savedOfferLetter && !savedAssessment && !savedRevocationNotice && !savedReassessment && !savedFinalRevocationNotice && !backgroundCheckFile && !jobDescriptionFile && !jobPostingFile && !emailsFile && !notesFile && !companyPolicyFile && (
                   <div className="px-4 py-2 text-gray-500 text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
                     No documents available
                   </div>
@@ -1308,6 +1504,16 @@ export default function AssessmentPage({
               </div>
             )}
           </div>
+
+          {/* HR Action Timeline Trigger */}
+          <button
+            onClick={() => setShowTimelinePanel(true)}
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 text-sm font-medium flex items-center gap-2 transition-all duration-200"
+            style={{ fontFamily: 'Poppins, sans-serif' }}
+          >
+            <History className="h-4 w-4" />
+            HR Action Timeline
+          </button>
 
           {/* Document Upload Panel Trigger */}
           <button
@@ -1665,7 +1871,7 @@ export default function AssessmentPage({
                     </button>
                     <button
                       className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200"
-                      onClick={() => setShowReassessmentInfoModal(true)}
+                      onClick={handleProceedWithReassessment}
                       style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
                     >
                       Begin Individualized Reassessment
@@ -2065,41 +2271,42 @@ export default function AssessmentPage({
                   setForm={setFinalRevocationForm}
                 />
 
+                {/* Critical Information Section */}
+                <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+                  <div className="flex items-center mb-4">
+                    <Info className="h-5 w-5 mr-2" style={{ color: '#595959' }} />
+                    <h3 className="text-lg font-bold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Critical Information</h3>
+                  </div>
+
+                  {/* Tab Navigation */}
+                  <div className="flex space-x-1 mb-6 border-b border-gray-200">
+                    {['Legal', 'Company Policy', 'Candidate Context'].map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`px-4 py-2 font-semibold text-sm transition-colors relative ${activeTab === tab
+                          ? 'border-b-2 border-red-600'
+                          : 'hover:text-gray-800'
+                          }`}
+                        style={{
+                          fontFamily: 'Poppins, sans-serif',
+                          color: activeTab === tab ? '#E54747' : '#595959'
+                        }}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Tab Content */}
+                  <div className="min-h-[200px]">
+                    <CriticalInfoTabs activeTab={activeTab} currentStep={currentStep} />
+                  </div>
+                </div>
+
               </>
             )}
 
-            {/* Critical Information Section - Available for all steps */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 mt-8">
-              <div className="flex items-center mb-4">
-                <Info className="h-5 w-5 mr-2" style={{ color: '#595959' }} />
-                <h3 className="text-lg font-bold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Critical Information</h3>
-              </div>
-
-              {/* Tab Navigation */}
-              <div className="flex space-x-1 mb-6 border-b border-gray-200">
-                {['Legal', 'Company Policy', 'Candidate Context'].map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`px-4 py-2 font-semibold text-sm transition-colors relative ${activeTab === tab
-                      ? 'border-b-2 border-red-600'
-                      : 'hover:text-gray-800'
-                      }`}
-                    style={{
-                      fontFamily: 'Poppins, sans-serif',
-                      color: activeTab === tab ? '#E54747' : '#595959'
-                    }}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
-
-              {/* Tab Content */}
-              <div className="min-h-[200px]">
-                <CriticalInfoTabs activeTab={activeTab} currentStep={currentStep} />
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -2882,7 +3089,7 @@ export default function AssessmentPage({
                           title="View Document"
                         >
                           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 616 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
                         </button>
@@ -2898,6 +3105,105 @@ export default function AssessmentPage({
                         </button>
                         <button
                           onClick={() => handleRemoveFile('background')}
+                          className="p-2 rounded-xl transition-all duration-200"
+                          style={{ color: '#E54747' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FEF2F2'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                          title="Remove Document"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Company Policy Upload */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#EFF6FF' }}>
+                    <Building className="h-5 w-5" style={{ color: '#3B82F6' }} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                      Company Policy
+                    </h3>
+                    <p className="text-sm" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                      Upload the company's policy document
+                    </p>
+                  </div>
+                </div>
+
+                {!companyPolicyFile ? (
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center transition-all duration-200 hover:border-gray-400 hover:bg-gray-50">
+                    <input
+                      type="file"
+                      id="companypolicy-upload"
+                      className="hidden"
+                      accept=".pdf,.jpg,.jpeg,.png,.docx,.doc"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleCompanyPolicyUpload(file);
+                      }}
+                      disabled={uploadingCompanyPolicy}
+                    />
+                    <label htmlFor="companypolicy-upload" className="cursor-pointer">
+                      <div className="flex flex-col items-center">
+                        <div className="h-12 w-12 bg-gray-100 rounded-xl flex items-center justify-center mb-3">
+                          <Building className="h-6 w-6 text-gray-400" />
+                        </div>
+                        <p className="text-sm font-medium mb-1" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                          {uploadingCompanyPolicy ? 'Uploading...' : 'Click to upload'}
+                        </p>
+                        <p className="text-xs" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                          PDF, JPEG, PNG, DOCX (max 10MB)
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="border border-gray-200 rounded-xl p-4" style={{ backgroundColor: '#F9FAFB' }}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#EFF6FF' }}>
+                          <Building className="h-5 w-5" style={{ color: '#3B82F6' }} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                            {companyPolicyFile.name}
+                          </p>
+                          <p className="text-xs" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                            {(companyPolicyFile.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => handleViewDocument(companyPolicyFile, 'companypolicy')}
+                          className="p-2 rounded-xl transition-all duration-200 hover:bg-blue-50"
+                          style={{ color: '#3B82F6' }}
+                          title="View Document"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 616 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDownloadDocument(companyPolicyFile, companyPolicyFile.name)}
+                          className="p-2 rounded-xl transition-all duration-200 hover:bg-green-50"
+                          style={{ color: '#10B981' }}
+                          title="Download Document"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleRemoveFile('companypolicy')}
                           className="p-2 rounded-xl transition-all duration-200"
                           style={{ color: '#E54747' }}
                           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FEF2F2'}
@@ -3311,50 +3617,38 @@ export default function AssessmentPage({
               </div>
 
               {/* Upload Status */}
-              {(backgroundCheckFile || jobDescriptionFile || jobPostingFile || emailsFile || notesFile) && (
+              {(backgroundCheckFile || jobDescriptionFile || jobPostingFile || emailsFile || notesFile || companyPolicyFile) && (
                 <div className="border border-gray-200 rounded-xl p-4" style={{ backgroundColor: '#F9FAFB' }}>
                   <h4 className="text-sm font-semibold mb-3" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
                     Upload Status
                   </h4>
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
-                        Background Check Report
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                        Time Remaining
                       </span>
-                      <span className={`text-sm font-medium`} style={{ fontFamily: 'Poppins, sans-serif', color: backgroundCheckFile ? '#10B981' : '#9CA3AF' }}>
-                        {backgroundCheckFile ? '✓ Uploaded' : 'Pending'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
-                        Job Description
-                      </span>
-                      <span className={`text-sm font-medium`} style={{ fontFamily: 'Poppins, sans-serif', color: jobDescriptionFile ? '#10B981' : '#9CA3AF' }}>
-                        {jobDescriptionFile ? '✓ Uploaded' : 'Pending'}
+                      <span className="text-xs font-medium" style={{ fontFamily: 'Poppins, sans-serif', color: '#E54747' }}>
+                        5 days
                       </span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
-                        Job Posting
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                        Current Phase
                       </span>
-                      <span className={`text-sm font-medium`} style={{ fontFamily: 'Poppins, sans-serif', color: jobPostingFile ? '#10B981' : '#9CA3AF' }}>
-                        {jobPostingFile ? '✓ Uploaded' : 'Pending'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
-                        Emails
-                      </span>
-                      <span className={`text-sm font-medium`} style={{ fontFamily: 'Poppins, sans-serif', color: emailsFile ? '#10B981' : '#9CA3AF' }}>
-                        {emailsFile ? '✓ Uploaded' : 'Pending'}
+                      <span className="text-xs font-medium" style={{ fontFamily: 'Poppins, sans-serif', color: '#E54747' }}>
+                        {currentStep === 1 ? 'Conditional Offer' : 
+                         currentStep === 2 ? 'Assessment' : 
+                         currentStep === 3 ? 'Review' : 
+                         currentStep === 4 ? 'Decision' : 
+                         'Final Steps'}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
-                        Notes
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                        Assessment Progress
                       </span>
-                      <span className={`text-sm font-medium`} style={{ fontFamily: 'Poppins, sans-serif', color: notesFile ? '#10B981' : '#9CA3AF' }}>
-                        {notesFile ? '✓ Uploaded' : 'Pending'}
+                      <span className="text-xs font-medium" style={{ fontFamily: 'Poppins, sans-serif', color: '#10B981' }}>
+                        Step {currentStep} of {progressSteps.length}
                       </span>
                     </div>
                   </div>
@@ -3396,7 +3690,7 @@ export default function AssessmentPage({
             {/* Header */}
             <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-gray-50">
               <div className="flex items-center gap-3">
-                <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${viewingDocument.type === 'background' ? 'bg-red-50' : viewingDocument.type === 'jobdesc' ? 'bg-blue-50' : viewingDocument.type === 'jobposting' ? 'bg-green-50' : viewingDocument.type === 'emails' ? 'bg-purple-50' : 'bg-yellow-50'
+                <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${viewingDocument.type === 'background' ? 'bg-red-50' : viewingDocument.type === 'jobdesc' ? 'bg-blue-50' : viewingDocument.type === 'jobposting' ? 'bg-green-50' : viewingDocument.type === 'emails' ? 'bg-purple-50' : viewingDocument.type === 'notes' ? 'bg-yellow-50' : 'bg-gray-50'
                   }`}>
                   {viewingDocument.type === 'background' ? (
                     <FileText className="h-5 w-5" style={{ color: '#E54747' }} />
@@ -3406,8 +3700,10 @@ export default function AssessmentPage({
                     <Briefcase className="h-5 w-5 text-green-600" />
                   ) : viewingDocument.type === 'emails' ? (
                     <Mail className="h-5 w-5 text-purple-600" />
-                  ) : (
+                  ) : viewingDocument.type === 'notes' ? (
                     <StickyNote className="h-5 w-5 text-yellow-600" />
+                  ) : (
+                    <Building className="h-5 w-5 text-gray-600" />
                   )}
                 </div>
                 <div>
@@ -3500,6 +3796,380 @@ export default function AssessmentPage({
                   <span className="text-green-600 font-medium">✓ Secure</span>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* HR Action Timeline Slide-out Panel */}
+      {showTimelinePanel && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-40">
+          <div
+            className={`fixed right-0 top-0 h-full w-96 shadow-2xl transform transition-transform duration-300 ease-in-out border-l border-gray-200 ${showTimelinePanel ? 'translate-x-0' : 'translate-x-full'}`}
+            style={{ backgroundColor: '#FFFFFF' }}
+          >
+            {/* Header */}
+            <div className="flex justify-between items-center p-6 border-b border-gray-200" style={{ backgroundColor: '#FFFFFF' }}>
+              <h2 className="text-xl font-bold" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                HR Action Timeline
+              </h2>
+              <button
+                className="p-2 rounded-xl transition-all duration-200 hover:bg-gray-100"
+                style={{ color: '#595959' }}
+                onClick={() => setShowTimelinePanel(false)}
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-6 h-full overflow-y-auto" style={{ backgroundColor: '#FFFFFF' }}>
+
+              {/* Timeline */}
+              <div className="relative">
+                {/* Timeline line */}
+                <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+                
+                {/* Timeline Items */}
+                <div className="space-y-8">
+                  
+                  {/* 1. Invite Date */}
+                  <div className="relative flex items-start">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center z-10" style={{ backgroundColor: timelineData.inviteSent ? '#E54747' : '#9CA3AF' }}>
+                      <Mail className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="ml-4 min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          Invite Sent
+                        </p>
+                        <p className="text-xs text-gray-500" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          {timelineData.inviteSent ? new Date(timelineData.inviteSent).toLocaleDateString() : 'Not sent'}
+                        </p>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        Initial invitation email sent to candidate
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 2. Access Granted Date */}
+                  <div className="relative flex items-start">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center z-10" style={{ backgroundColor: timelineData.accessGranted ? '#10B981' : '#9CA3AF' }}>
+                      <UserCheck className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="ml-4 min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          Access Granted
+                        </p>
+                        <p className="text-xs text-gray-500" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          {timelineData.accessGranted ? new Date(timelineData.accessGranted).toLocaleDateString() : 'Pending'}
+                        </p>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        Candidate granted access to assessment portal
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 3. Candidate Response Received */}
+                  <div className="relative flex items-start">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center z-10" style={{ backgroundColor: timelineData.candidateResponse ? '#10B981' : '#9CA3AF' }}>
+                      <ClipboardCheck className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="ml-4 min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          Candidate Response
+                        </p>
+                        <p className="text-xs text-gray-500" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          {timelineData.candidateResponse ? new Date(timelineData.candidateResponse).toLocaleDateString() : 'Pending'}
+                        </p>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        Initial candidate assessment response
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 4. Conditional Job Offer */}
+                  <div className="relative flex items-start">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center z-10" style={{ backgroundColor: savedOfferLetter ? '#10B981' : '#9CA3AF' }}>
+                      <FileText className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="ml-4 min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          Conditional Job Offer
+                        </p>
+                        <p className="text-xs text-gray-500" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          {savedOfferLetter ? new Date(savedOfferLetter.sentAt).toLocaleDateString() : 'Not sent'}
+                        </p>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        Conditional job offer sent to candidate
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 5. Written Individualized Assessment */}
+                  <div className="relative flex items-start">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center z-10" style={{ backgroundColor: currentStep >= 3 ? '#10B981' : '#9CA3AF' }}>
+                      <ClipboardCheck className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="ml-4 min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          Written Individualized Assessment
+                        </p>
+                        <p className="text-xs text-gray-500" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          {savedAssessment ? new Date(savedAssessment.sentAt).toLocaleDateString() : currentStep >= 3 ? 'Completed' : 'Pending'}
+                        </p>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        Individual assessment conducted and documented
+                      </p>
+
+                      {/* Sub-items for Assessment */}
+                      {currentStep >= 3 && (
+                        <div className="ml-4 mt-3 space-y-2">
+                          {/* Candidate Response Received */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: candidateProfile ? '#10B981' : '#9CA3AF' }}></div>
+                              <p className="text-xs font-medium text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                                Candidate Response
+                              </p>
+                            </div>
+                            <p className="text-xs text-gray-500" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                              {candidateProfile ? 'Received' : 'Pending'}
+                            </p>
+                          </div>
+
+                          {/* Decision */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: currentStep >= 4 ? '#10B981' : '#9CA3AF' }}></div>
+                              <p className="text-xs font-medium text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                                Decision
+                              </p>
+                            </div>
+                            <p className="text-xs text-gray-500" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                              {savedAssessment && savedAssessment.decision === 'rescind' ? 'Decision: Pre-Adverse Action' : currentStep >= 4 ? 'Completed' : 'Pending'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 6. Preliminary Job Offer Revocation */}
+                  <div className="relative flex items-start">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center z-10" style={{ backgroundColor: currentStep >= 4 ? '#F59E0B' : '#9CA3AF' }}>
+                      <AlertTriangle className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="ml-4 min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          Preliminary Revocation
+                        </p>
+                        <p className="text-xs text-gray-500" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          {savedRevocationNotice ? new Date(savedRevocationNotice.sentAt).toLocaleDateString() : currentStep >= 4 ? 'In Progress' : 'Not reached'}
+                        </p>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        Preliminary job offer revocation notice
+                      </p>
+
+                      {/* Sub-items for Preliminary Revocation */}
+                      {currentStep >= 4 && (
+                        <div className="ml-4 mt-3 space-y-2">
+                          {/* 6a. Candidate Response Received */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: '#9CA3AF' }}></div>
+                              <p className="text-xs font-medium text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                                Candidate Response
+                              </p>
+                            </div>
+                            <p className="text-xs text-gray-500" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                              Pending
+                            </p>
+                          </div>
+
+                          {/* 6b. Decision */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: (savedHireDecision || savedPreliminaryDecision) ? '#10B981' : '#9CA3AF' }}></div>
+                              <p className="text-xs font-medium text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                                Decision
+                              </p>
+                            </div>
+                            <p className="text-xs text-gray-500" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                              {savedHireDecision ? 'Decision: Hired' : 
+                               savedPreliminaryDecision ? 'Decision: Pre-Adverse Action' : 'Pending'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 7. Individual Reassessment */}
+                  <div className="relative flex items-start">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center z-10" style={{ backgroundColor: savedReassessment ? '#8B5CF6' : '#9CA3AF' }}>
+                      <RotateCcw className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="ml-4 min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          Individual Reassessment
+                        </p>
+                        <p className="text-xs text-gray-500" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          {savedReassessment ? new Date(savedReassessment.sentAt).toLocaleDateString() : 'Not sent'}
+                        </p>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        Individual reassessment conducted
+                      </p>
+
+                      {/* Sub-items for Reassessment */}
+                      {savedReassessment && (
+                        <div className="ml-4 mt-3 space-y-2">
+                          {/* 7a. Candidate Response Received */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: '#9CA3AF' }}></div>
+                              <p className="text-xs font-medium text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                                Candidate Response
+                              </p>
+                            </div>
+                            <p className="text-xs text-gray-500" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                              Pending
+                            </p>
+                          </div>
+
+                          {/* 7b. Decision */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: savedReassessment && savedReassessment.decision ? '#10B981' : '#9CA3AF' }}></div>
+                              <p className="text-xs font-medium text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                                Decision
+                              </p>
+                            </div>
+                            <p className="text-xs text-gray-500" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                              {savedReassessment && savedReassessment.decision === 'extend' ? 'Decision: Hired' : 
+                               savedReassessment && savedReassessment.decision === 'rescind' ? 'Decision: Adverse Action' : 'Pending'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 8. Final Revocation Notice */}
+                  <div className="relative flex items-start">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center z-10" style={{ backgroundColor: savedFinalRevocationNotice ? '#DC2626' : '#9CA3AF' }}>
+                      <AlertCircle className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="ml-4 min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          Final Revocation Notice
+                        </p>
+                        <p className="text-xs text-gray-500" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          {savedFinalRevocationNotice ? new Date(savedFinalRevocationNotice.sentAt).toLocaleDateString() : 'Not sent'}
+                        </p>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        Final job offer revocation notice
+                      </p>
+
+                      {/* Sub-items for Final Revocation */}
+                      {savedFinalRevocationNotice && (
+                        <div className="ml-4 mt-3 space-y-2">
+                          {/* 8a. Candidate Response Received */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: '#9CA3AF' }}></div>
+                              <p className="text-xs font-medium text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                                Candidate Response
+                              </p>
+                            </div>
+                            <p className="text-xs text-gray-500" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                              Pending
+                            </p>
+                          </div>
+
+                          {/* 8b. Decision */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: savedFinalRevocationNotice ? '#10B981' : '#9CA3AF' }}></div>
+                              <p className="text-xs font-medium text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                                Decision
+                              </p>
+                            </div>
+                            <p className="text-xs text-gray-500" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                              {savedFinalRevocationNotice ? 'Decision: Adverse Action' : 'Pending'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Summary */}
+              <div className="border border-gray-200 rounded-xl p-4 mt-8" style={{ backgroundColor: '#F9FAFB' }}>
+                <h4 className="text-sm font-semibold mb-3" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
+                  Process Status
+                </h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                      Time Remaining
+                    </span>
+                    <span className="text-xs font-medium" style={{ fontFamily: 'Poppins, sans-serif', color: '#E54747' }}>
+                      5 days
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                      Current Phase
+                    </span>
+                    <span className="text-xs font-medium" style={{ fontFamily: 'Poppins, sans-serif', color: '#E54747' }}>
+                      {currentStep === 1 ? 'Conditional Offer' : 
+                       currentStep === 2 ? 'Assessment' : 
+                       currentStep === 3 ? 'Review' : 
+                       currentStep === 4 ? 'Decision' : 
+                       'Final Steps'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                      Assessment Progress
+                    </span>
+                    <span className="text-xs font-medium" style={{ fontFamily: 'Poppins, sans-serif', color: '#10B981' }}>
+                      Step {currentStep} of {progressSteps.length}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-gray-200" style={{ backgroundColor: '#FFFFFF' }}>
+              <button
+                onClick={() => setShowTimelinePanel(false)}
+                className="w-full px-4 py-3 rounded-xl font-semibold transition-all duration-200 hover:opacity-90"
+                style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747', color: '#FFFFFF' }}
+              >
+                Close Timeline
+              </button>
             </div>
           </div>
         </div>
