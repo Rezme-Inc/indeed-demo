@@ -9,7 +9,7 @@ import {
   sendReassessmentEmail,
   sendRevocationEmail,
 } from "@/app/restorative-record/utils/sendEmail";
-import { assessmentTracking } from "@/lib/services/assessmentTracking";
+import { safeAssessmentTracking } from "@/lib/services/safeAssessmentTracking";
 import { supabase } from "@/lib/supabase";
 import {
   AlertCircle,
@@ -36,6 +36,8 @@ import FinalRevocationModal from "./components/FinalRevocationModal";
 import IndividualizedAssessmentModal from "./components/IndividualizedAssessmentModal";
 import PreliminaryRevocationModal from "./components/PreliminaryRevocationModal";
 import PrintPreviewButton from "./components/PrintButton";
+// TODO: Enable when tracking is implemented properly
+// import { assessmentTracking } from "@/lib/services/assessmentTracking";
 
 /**
  * HR Admin Assessment Page with Form Persistence
@@ -235,6 +237,7 @@ export default function AssessmentPage({
     null
   );
   const [hrAdminId, setHrAdminId] = useState<string | null>(null);
+  const [trackingActive, setTrackingActive] = useState(false);
 
   // Document Upload Panel State
   const [showDocumentPanel, setShowDocumentPanel] = useState(false);
@@ -421,29 +424,35 @@ export default function AssessmentPage({
     },
   ];
 
-  const handleAnswer = async (questionId: string, answer: string) => {
+  const handleAnswer = (questionId: string, answer: string) => {
+    // Update state immediately for UI responsiveness
     setAnswers((prev) => ({
       ...prev,
       [questionId]: answer,
     }));
 
-    // Save to database if session exists
-    if (assessmentSessionId && hrAdminId) {
-      try {
-        await assessmentTracking.saveStep(
-          currentStep,
-          questionId,
-          answer,
-          notes
-        );
-        await assessmentTracking.logAction(hrAdminId, "question_answered", {
-          question_id: questionId,
-          answer,
-          step: currentStep,
+    // Save to database in parallel (non-blocking)
+    if (trackingActive && assessmentSessionId) {
+      console.log("[Assessment Tracking] Saving answer:", {
+        questionId,
+        answer,
+      });
+
+      // Fire and forget - don't await to keep UI responsive
+      safeAssessmentTracking
+        .saveStep(assessmentSessionId, currentStep, questionId, answer, notes)
+        .then((success) => {
+          if (success) {
+            console.log("[Assessment Tracking] Answer saved to database");
+          }
         });
-      } catch (error) {
-        console.error("Error saving answer:", error);
-      }
+
+      // Log the action
+      safeAssessmentTracking.logAction(hrAdminId, "question_answered", {
+        question_id: questionId,
+        answer,
+        step: currentStep,
+      });
     }
   };
 
@@ -481,8 +490,31 @@ export default function AssessmentPage({
       if (notes) {
         localStorage.setItem(`assessmentNotes_${candidateId}`, notes);
       }
+
+      // Also save notes to database if tracking is active
+      if (trackingActive && assessmentSessionId && notes && currentStep > 0) {
+        // Get the current question ID
+        const currentQuestion = questions[currentStep - 1];
+        if (currentQuestion && answers[currentQuestion.id]) {
+          safeAssessmentTracking.saveStep(
+            assessmentSessionId,
+            currentStep,
+            currentQuestion.id,
+            answers[currentQuestion.id],
+            notes
+          );
+        }
+      }
     }
-  }, [currentStep, answers, notes, params.userId, isLoading]);
+  }, [
+    currentStep,
+    answers,
+    notes,
+    params.userId,
+    isLoading,
+    trackingActive,
+    assessmentSessionId,
+  ]);
 
   // Save forms to localStorage whenever they change
   useEffect(() => {
@@ -530,9 +562,9 @@ export default function AssessmentPage({
     }
   }, [savedFinalRevocationNotice, params.userId, isLoading]);
 
-  // Fetch HR Admin Profile and Initialize Assessment Session
+  // Fetch HR Admin Profile
   useEffect(() => {
-    async function fetchHRAdminProfileAndInitSession() {
+    async function fetchHRAdminProfile() {
       setHeaderLoading(true);
       try {
         const {
@@ -550,30 +582,73 @@ export default function AssessmentPage({
         setHrAdminProfile(data);
         setHrAdminId(session.user.id);
 
-        // Initialize or get assessment session
-        const sessionId = await assessmentTracking.getOrCreateSession(
-          session.user.id,
-          params.userId
-        );
-        setAssessmentSessionId(sessionId);
-
-        // Log page view
-        await assessmentTracking.logAction(
-          session.user.id,
-          "assessment_page_viewed",
-          {
-            candidate_id: params.userId,
-          }
-        );
+        // TODO: Initialize assessment tracking session here
+        // Commented out for now to fix login issue
+        /*
+        try {
+          const sessionId = await assessmentTracking.getOrCreateSession(
+            session.user.id,
+            params.userId
+          );
+          setAssessmentSessionId(sessionId);
+        } catch (trackingError) {
+          console.error("Assessment tracking error:", trackingError);
+          // Don't let tracking errors break the page
+        }
+        */
       } catch (err) {
-        console.error("Error initializing assessment:", err);
+        console.error("Error fetching HR admin profile:", err);
         setHrAdminProfile(null);
       } finally {
         setHeaderLoading(false);
       }
     }
-    fetchHRAdminProfileAndInitSession();
-  }, [params.userId]);
+    fetchHRAdminProfile();
+  }, []);
+
+  // Initialize assessment tracking session (non-blocking)
+  useEffect(() => {
+    async function initializeTracking() {
+      // Only initialize if we have both IDs
+      if (!hrAdminId || !params.userId) {
+        console.log("[Assessment Tracking] Waiting for IDs...");
+        return;
+      }
+
+      console.log("[Assessment Tracking] Checking if tracking is available...");
+      const isAvailable = await safeAssessmentTracking.isAvailable();
+
+      if (!isAvailable) {
+        console.log(
+          "[Assessment Tracking] Not available - using localStorage only"
+        );
+        return;
+      }
+
+      console.log("[Assessment Tracking] Available! Initializing session...");
+      const sessionId = await safeAssessmentTracking.initializeSession(
+        hrAdminId,
+        params.userId
+      );
+
+      if (sessionId) {
+        setAssessmentSessionId(sessionId);
+        setTrackingActive(true);
+        console.log("[Assessment Tracking] Session initialized:", sessionId);
+
+        // Log page view
+        await safeAssessmentTracking.logAction(
+          hrAdminId,
+          "assessment_page_viewed",
+          { candidate_id: params.userId }
+        );
+      } else {
+        console.log("[Assessment Tracking] Failed to initialize session");
+      }
+    }
+
+    initializeTracking();
+  }, [hrAdminId, params.userId]);
 
   // Load saved forms and progress from localStorage on mount
   useEffect(() => {
@@ -778,20 +853,29 @@ export default function AssessmentPage({
 
       setSavedOfferLetter(offerLetterData);
 
-      // Save to database
-      if (assessmentSessionId) {
-        await assessmentTracking.saveDocument(
+      // Save to database if tracking is active
+      if (trackingActive && assessmentSessionId) {
+        console.log("[Assessment Tracking] Saving offer letter...");
+
+        const saved = await safeAssessmentTracking.saveDocument(
+          assessmentSessionId,
           "offer_letter",
           offerLetterData,
-          true
+          true // mark as sent
         );
-        await assessmentTracking.logAction(
-          hrAdminId || "",
-          "offer_letter_sent",
-          {
-            recipient_email: candidateEmail,
-          }
-        );
+
+        if (saved) {
+          console.log("[Assessment Tracking] Offer letter saved to database");
+          await safeAssessmentTracking.logAction(
+            hrAdminId || "",
+            "offer_letter_sent",
+            {
+              recipient_email: candidateEmail,
+              position: offerLetterData.position,
+              employer: offerLetterData.employer,
+            }
+          );
+        }
       }
 
       setShowOfferModal(false);
@@ -842,16 +926,31 @@ export default function AssessmentPage({
 
       setSavedAssessment(assessmentData);
 
-      // Save to database
-      if (assessmentSessionId) {
-        await assessmentTracking.saveDocument(
+      // Save to database if tracking is active
+      if (trackingActive && assessmentSessionId) {
+        console.log("[Assessment Tracking] Saving individual assessment...");
+
+        const saved = await safeAssessmentTracking.saveDocument(
+          assessmentSessionId,
           "assessment",
           assessmentData,
           true
         );
-        await assessmentTracking.logAction(hrAdminId || "", "assessment_sent", {
-          recipient_email: candidateEmail,
-        });
+
+        if (saved) {
+          console.log(
+            "[Assessment Tracking] Individual assessment saved to database"
+          );
+          await safeAssessmentTracking.logAction(
+            hrAdminId || "",
+            "assessment_sent",
+            {
+              recipient_email: candidateEmail,
+              position: assessmentData.position,
+              rescind_reason: assessmentData.rescindReason,
+            }
+          );
+        }
       }
 
       setShowAssessmentModal(false);
@@ -928,21 +1027,32 @@ export default function AssessmentPage({
 
       setSavedRevocationNotice(revocationData);
 
-      // Save to database
-      if (assessmentSessionId) {
-        await assessmentTracking.saveDocument(
+      // Save to database if tracking is active
+      if (trackingActive && assessmentSessionId) {
+        console.log("[Assessment Tracking] Saving revocation notice...");
+
+        const saved = await safeAssessmentTracking.saveDocument(
+          assessmentSessionId,
           "revocation_notice",
           revocationData,
           true
         );
-        await assessmentTracking.logAction(
-          hrAdminId || "",
-          "revocation_notice_sent",
-          {
-            recipient_email: candidateEmail,
-            business_days: revocationForm.numBusinessDays,
-          }
-        );
+
+        if (saved) {
+          console.log(
+            "[Assessment Tracking] Revocation notice saved to database"
+          );
+          await safeAssessmentTracking.logAction(
+            hrAdminId || "",
+            "revocation_notice_sent",
+            {
+              recipient_email: candidateEmail,
+              business_days: revocationForm.numBusinessDays,
+              convictions: revocationForm.convictions.filter((c) => c),
+              position: revocationForm.position,
+            }
+          );
+        }
       }
 
       setShowRevocationModal(false);
@@ -962,13 +1072,28 @@ export default function AssessmentPage({
         .update({ final_decision: "Hired" })
         .eq("id", params.userId);
 
-      // Complete assessment session
-      if (assessmentSessionId) {
-        await assessmentTracking.completeSession("hired");
-        await assessmentTracking.logAction(hrAdminId || "", "candidate_hired", {
-          candidate_id: params.userId,
-          step_when_hired: currentStep,
-        });
+      // Complete assessment session if tracking is active
+      if (trackingActive && assessmentSessionId) {
+        console.log("[Assessment Tracking] Marking candidate as hired...");
+
+        await safeAssessmentTracking.completeSession(
+          assessmentSessionId,
+          "hired"
+        );
+
+        await safeAssessmentTracking.logAction(
+          hrAdminId || "",
+          "candidate_hired",
+          {
+            candidate_id: params.userId,
+            step_when_hired: currentStep,
+            timestamp: new Date().toISOString(),
+          }
+        );
+
+        console.log(
+          "[Assessment Tracking] Session completed - candidate hired"
+        );
       }
     } catch (error) {
       console.error("Error updating final_decision in Supabase:", error);
@@ -1008,21 +1133,30 @@ export default function AssessmentPage({
 
       setSavedReassessment(reassessmentData);
 
-      // Save to database
-      if (assessmentSessionId) {
-        await assessmentTracking.saveDocument(
+      // Save to database if tracking is active
+      if (trackingActive && assessmentSessionId) {
+        console.log("[Assessment Tracking] Saving reassessment...");
+
+        const saved = await safeAssessmentTracking.saveDocument(
+          assessmentSessionId,
           "reassessment",
           reassessmentData,
           true
         );
-        await assessmentTracking.logAction(
-          hrAdminId || "",
-          "reassessment_sent",
-          {
-            recipient_email: candidateEmail,
-            decision: reassessmentDecision,
-          }
-        );
+
+        if (saved) {
+          console.log("[Assessment Tracking] Reassessment saved to database");
+          await safeAssessmentTracking.logAction(
+            hrAdminId || "",
+            "reassessment_sent",
+            {
+              recipient_email: candidateEmail,
+              decision: reassessmentDecision,
+              position: reassessmentData.position,
+              error_found: reassessmentData.errorYesNo === "Yes",
+            }
+          );
+        }
       }
 
       setShowReassessmentInfoModal(false);
@@ -1097,21 +1231,39 @@ export default function AssessmentPage({
 
       setSavedFinalRevocationNotice(finalRevocationData);
 
-      // Save to database
-      if (assessmentSessionId) {
-        await assessmentTracking.saveDocument(
+      // Save to database if tracking is active
+      if (trackingActive && assessmentSessionId) {
+        console.log("[Assessment Tracking] Saving final revocation notice...");
+
+        const saved = await safeAssessmentTracking.saveDocument(
+          assessmentSessionId,
           "final_revocation",
           finalRevocationData,
           true
         );
-        await assessmentTracking.completeSession("revoked");
-        await assessmentTracking.logAction(
-          hrAdminId || "",
-          "final_revocation_sent",
-          {
-            recipient_email: candidateEmail,
-          }
-        );
+
+        if (saved) {
+          console.log(
+            "[Assessment Tracking] Final revocation saved to database"
+          );
+
+          // Complete the session as "revoked"
+          await safeAssessmentTracking.completeSession(
+            assessmentSessionId,
+            "revoked"
+          );
+
+          await safeAssessmentTracking.logAction(
+            hrAdminId || "",
+            "final_revocation_sent",
+            {
+              recipient_email: candidateEmail,
+              position: finalRevocationData.position,
+              no_response: finalRevocationData.noResponse,
+              info_submitted: finalRevocationData.infoSubmitted,
+            }
+          );
+        }
       }
 
       setShowFinalRevocationModal(false);
@@ -1655,6 +1807,106 @@ export default function AssessmentPage({
             <ChevronLeft className="h-4 w-4" />
             Return to Dashboard
           </button>
+
+          {/* Tracking Status Indicator */}
+          {trackingActive && (
+            <div className="ml-4 flex items-center gap-2 text-xs text-green-600">
+              <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
+              <span style={{ fontFamily: "Poppins, sans-serif" }}>
+                Compliance Tracking Active
+              </span>
+            </div>
+          )}
+
+          {/* Debug Button - Remove in production */}
+          {process.env.NODE_ENV === "development" && assessmentSessionId && (
+            <button
+              onClick={async () => {
+                console.log("=== ASSESSMENT DEBUG INFO ===");
+                console.log("Session ID:", assessmentSessionId);
+                console.log("HR Admin ID:", hrAdminId);
+                console.log("Candidate ID:", params.userId);
+                console.log("Current Answers:", answers);
+                console.log("Current Step:", currentStep);
+                console.log("Notes:", notes);
+                console.log("Tracking Active:", trackingActive);
+
+                // Query the database to show saved data
+                const { data: sessionData } = await supabase
+                  .from("assessment_sessions")
+                  .select("*")
+                  .eq("id", assessmentSessionId)
+                  .single();
+
+                const { data: stepsData } = await supabase
+                  .from("assessment_steps")
+                  .select("*")
+                  .eq("session_id", assessmentSessionId)
+                  .order("step_number", { ascending: true });
+
+                const { data: documentsData } = await supabase
+                  .from("assessment_documents")
+                  .select("*")
+                  .eq("session_id", assessmentSessionId)
+                  .order("created_at", { ascending: true });
+
+                const { data: auditLogData } = await supabase
+                  .from("assessment_audit_log")
+                  .select("*")
+                  .eq("session_id", assessmentSessionId)
+                  .order("created_at", { ascending: false })
+                  .limit(20);
+
+                console.log("=== DATABASE DATA ===");
+                console.log("Session:", sessionData);
+                console.log(`Steps (${stepsData?.length || 0}):`, stepsData);
+                console.log(
+                  `Documents (${documentsData?.length || 0}):`,
+                  documentsData
+                );
+                console.log(`Audit Log (last 20):`, auditLogData);
+
+                // Show document summary
+                if (documentsData && documentsData.length > 0) {
+                  console.log("=== DOCUMENT SUMMARY ===");
+                  documentsData.forEach((doc) => {
+                    console.log(
+                      `- ${doc.document_type}: ${
+                        doc.sent_at ? "SENT" : "DRAFT"
+                      } (Created: ${new Date(doc.created_at).toLocaleString()})`
+                    );
+                  });
+                }
+
+                // Show current localStorage data for comparison
+                console.log("=== LOCALSTORAGE DATA ===");
+                console.log(
+                  "Saved Offer Letter:",
+                  savedOfferLetter ? "YES" : "NO"
+                );
+                console.log(
+                  "Saved Assessment:",
+                  savedAssessment ? "YES" : "NO"
+                );
+                console.log(
+                  "Saved Revocation:",
+                  savedRevocationNotice ? "YES" : "NO"
+                );
+                console.log(
+                  "Saved Reassessment:",
+                  savedReassessment ? "YES" : "NO"
+                );
+                console.log(
+                  "Saved Final Revocation:",
+                  savedFinalRevocationNotice ? "YES" : "NO"
+                );
+              }}
+              className="ml-2 px-3 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded"
+              style={{ fontFamily: "Poppins, sans-serif" }}
+            >
+              Debug DB
+            </button>
+          )}
           {headerLoading ? (
             <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse" />
           ) : hrAdminProfile ? (
