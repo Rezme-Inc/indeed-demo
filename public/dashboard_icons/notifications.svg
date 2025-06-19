@@ -1,7 +1,6 @@
 <!-- TODO: Figure out which part is the actual bell and make that the outline-->
 
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" fill="#E54747" height="1200px" width="1200px" version="1.1" id="Layer_1" viewBox="0 0 512 512" xml:space="preserve">
-<rect x="36" y="15" width="448" height="480" rx="41" fill="white"/>
 <g transform="translate(0, 32)">
 	<g>
 		<g>
