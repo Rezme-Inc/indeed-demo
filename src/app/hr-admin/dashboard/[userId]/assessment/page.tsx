@@ -1704,16 +1704,57 @@ export default function AssessmentPage({
             {currentStep === 2 && (
               <>
                 <div className="bg-white rounded-xl border border-gray-200 p-8 mb-8">
-                  <p className="text-lg mb-6 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                    The following can be used by employers who would like to conduct an individualized assessment in writing to consider the relevance of past convictions to the job being offered. These assessments need to be done in writing, and held on file for at least one year.
-                  </p>
-                  <button
-                    className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200"
-                    onClick={() => setShowAssessmentModal(true)}
-                    style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
-                  >
-                    Begin Individualized Assessment
-                  </button>
+                  <h2 className="text-3xl font-bold mb-6 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Individualized Assessment</h2>
+                  
+                  {/* Hire Decision Success Message */}
+                  {savedHireDecision && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 mt-0.5">
+                          <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-green-900 mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                            Decision Made: Extend Offer of Employment
+                          </p>
+                          <p className="text-sm text-green-800" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                            Decision made on {new Date(savedHireDecision.sentAt).toLocaleDateString()} to extend the offer of employment to this candidate. The assessment process is complete.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Compliance Notice */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <Info className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <p className="text-sm text-blue-900 leading-relaxed" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        The following compliance step is to conduct an individualized assessment in writing to consider the relevance of past convictions to the job being offered.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-4">
+                    <button
+                      className={`px-8 py-3 rounded-xl text-lg font-semibold transition-all duration-200 ${savedHireDecision ? 'opacity-50 cursor-not-allowed' : 'text-white hover:opacity-90'}`}
+                      onClick={() => savedHireDecision ? undefined : setShowAssessmentModal(true)}
+                      disabled={!!savedHireDecision}
+                      style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
+                    >
+                      Begin Individualized Assessment
+                    </button>
+                    <button
+                      className={`px-8 py-3 rounded-xl text-lg font-semibold border transition-all duration-200 ${savedHireDecision ? 'border-green-500 text-green-700 bg-green-50' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                      onClick={() => savedHireDecision ? undefined : handleProceedWithHire()}
+                      disabled={!!savedHireDecision}
+                      style={{ fontFamily: 'Poppins, sans-serif' }}
+                    >
+                      {savedHireDecision ? '✓ Extend Offer of Employment (Selected)' : 'Extend Offer of Employment'}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Critical Information Section */}
@@ -1767,23 +1808,55 @@ export default function AssessmentPage({
             {currentStep === 3 && (
               <>
                 <div className="bg-white rounded-xl border border-gray-200 p-8 mb-8">
-                  <p className="text-lg mb-6 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                    The following may be used to inform a job applicant in writing of the intent to revoke a conditional job offer due to relevant criminal history
-                  </p>
+                  <h2 className="text-3xl font-bold mb-6 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Preliminary Job Offer Revocation</h2>
+                  
+                  {/* Hire Decision Success Message */}
+                  {savedHireDecision && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 mt-0.5">
+                          <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-green-900 mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                            Decision Made: Proceed with Hire
+                          </p>
+                          <p className="text-sm text-green-800" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                            Decision made on {new Date(savedHireDecision.sentAt).toLocaleDateString()} to proceed with hiring this candidate. The assessment process is complete.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Compliance Notice */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <Info className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <p className="text-sm text-blue-900 leading-relaxed" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        The following may be used to inform a job applicant in writing of the intent to revoke a conditional job offer due to relevant criminal history
+                      </p>
+                    </div>
+                  </div>
+                  
                   <div className="flex gap-4">
                     <button
-                      className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200"
-                      onClick={() => setShowRevocationModal(true)}
+                      className={`px-8 py-3 rounded-xl text-lg font-semibold transition-all duration-200 ${savedHireDecision ? 'opacity-50 cursor-not-allowed' : 'text-white hover:opacity-90'}`}
+                      onClick={() => savedHireDecision ? undefined : setShowRevocationModal(true)}
+                      disabled={!!savedHireDecision}
                       style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
                     >
                       Issue Preliminary Job Offer Revocation
                     </button>
                     <button
-                      className="px-8 py-3 rounded-xl text-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200"
-                      onClick={handleProceedWithHire}
+                      className={`px-8 py-3 rounded-xl text-lg font-semibold border transition-all duration-200 ${savedHireDecision ? 'border-green-500 text-green-700 bg-green-50' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                      onClick={() => savedHireDecision ? undefined : handleProceedWithHire()}
+                      disabled={!!savedHireDecision}
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                     >
-                      Proceed with hire
+                      {savedHireDecision ? '✓ Proceed with hire (Selected)' : 'Proceed with hire'}
                     </button>
                   </div>
                 </div>
@@ -1838,46 +1911,66 @@ export default function AssessmentPage({
             )}
             {currentStep === 4 && !showReassessmentSplit && (
               <>
-                <div className="bg-white rounded-xl border border-gray-200 p-8 mb-8">
-                  <div className="flex flex-col items-center mb-6">
-                    <div className="rounded-full bg-red-50 p-4 mb-4">
-                      <svg className="h-10 w-10" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ color: '#E54747' }}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                    </div>
-                    <h2 className="text-2xl font-bold text-center mb-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Preliminary Decision Notice Sent Successfully</h2>
-                    <div className="text-center mb-4" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>Time Remaining for Response:</div>
-                    <div className="w-full flex flex-col items-center">
-                      <div className="flex flex-col items-center bg-red-50 rounded-xl px-12 py-4 mb-4 border border-red-100">
-                        <span className="text-4xl font-bold" style={{ fontFamily: 'Poppins, sans-serif', color: '#E54747' }}>{businessDaysRemaining}</span>
-                        <div className="text-lg" style={{ fontFamily: 'Poppins, sans-serif', color: '#E54747' }}>Business Days Remaining</div>
+                {/* Hire Decision Success Message */}
+                {savedHireDecision && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-green-900 mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          Decision Made: Proceed with Hire
+                        </p>
+                        <p className="text-sm text-green-800" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          Decision made on {new Date(savedHireDecision.sentAt).toLocaleDateString()} to proceed with hiring this candidate. The assessment process is complete.
+                        </p>
                       </div>
                     </div>
                   </div>
-                  <div className="w-full bg-gray-50 rounded-xl p-6 mb-6 border border-gray-200">
-                    <div className="font-semibold mb-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Next Steps:</div>
-                    <ul className="list-disc list-inside space-y-1" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
-                      <li>The candidate has {businessDaysRemaining} business days to respond with mitigating evidence</li>
-                      <li>If they challenge the accuracy of the criminal history report, they will receive an additional 5 business days</li>
-                      <li>You will be notified when the candidate submits their response</li>
-                      <li>After reviewing their response, you must make a final decision</li>
-                    </ul>
+                )}
+                
+                <div className="flex flex-col items-center mb-6">
+                  <div className="rounded-full bg-red-50 p-4 mb-4">
+                    <svg className="h-10 w-10" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ color: '#E54747' }}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   </div>
-                  <div className="flex flex-row gap-4 mt-2">
-                    <button
-                      className="px-8 py-3 rounded-xl text-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200"
-                      onClick={handleProceedWithHire}
-                      style={{ fontFamily: 'Poppins, sans-serif' }}
-                    >
-                      Proceed with hire
-                    </button>
-                    <button
-                      className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200"
-                      onClick={handleProceedWithReassessment}
-                      style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
-                    >
-                      Begin Individualized Reassessment
-                    </button>
+                  <h2 className="text-2xl font-bold text-center mb-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Preliminary Decision Notice Sent Successfully</h2>
+                  <div className="text-center mb-4" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>Time Remaining for Response:</div>
+                  <div className="w-full flex flex-col items-center">
+                    <div className="flex flex-col items-center bg-red-50 rounded-xl px-12 py-4 mb-4 border border-red-100">
+                      <span className="text-4xl font-bold" style={{ fontFamily: 'Poppins, sans-serif', color: '#E54747' }}>{businessDaysRemaining}</span>
+                      <div className="text-lg" style={{ fontFamily: 'Poppins, sans-serif', color: '#E54747' }}>Business Days Remaining</div>
+                    </div>
                   </div>
                 </div>
+                <div className="w-full bg-gray-50 rounded-xl p-6 mb-6 border border-gray-200">
+                  <div className="font-semibold mb-2 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Next Steps:</div>
+                  <ul className="list-disc list-inside space-y-1" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                    <li>The candidate has {businessDaysRemaining} business days to respond with mitigating evidence</li>
+                    <li>If they challenge the accuracy of the criminal history report, they will receive an additional 5 business days</li>
+                    <li>You will be notified when the candidate submits their response</li>
+                    <li>After reviewing their response, you must make a final decision</li>
+                  </ul>
+                </div>
+                <div className="flex flex-row gap-4 mt-2">
+                  <button
+                    className={`px-8 py-3 rounded-xl text-lg font-semibold border transition-all duration-200 ${savedHireDecision ? 'border-green-500 text-green-700 bg-green-50' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                    onClick={() => savedHireDecision ? undefined : handleProceedWithHire()}
+                    disabled={!!savedHireDecision}
+                    style={{ fontFamily: 'Poppins, sans-serif' }}
+                  >
+                    {savedHireDecision ? '✓ Proceed with hire (Selected)' : 'Proceed with hire'}
+                  </button>
+                  <button
+                    className={`px-8 py-3 rounded-xl text-lg font-semibold transition-all duration-200 ${savedHireDecision ? 'opacity-50 cursor-not-allowed' : 'text-white hover:opacity-90'}`}
+                    onClick={() => savedHireDecision ? undefined : handleProceedWithReassessment()}
+                    disabled={!!savedHireDecision}
+                    style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
+                  >
+                    Begin Individualized Reassessment
+                  </button>
+                </div>
+
                 {/* Critical Information Section */}
                 <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
                   <div className="flex items-center mb-4">
@@ -1916,8 +2009,32 @@ export default function AssessmentPage({
                   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
                     <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full p-10 relative border border-gray-200">
                       <h2 className="text-2xl font-bold mb-6 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Individualized Reassessment Information</h2>
-                      <div className="text-lg mb-8" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
-                        After informing an applicant that you intend to revoke a job offer due to the applicant's criminal history, the applicant must be given at least 5 business days to provide mitigating evidence that speaks to their character and fitness to perform the job being offered. An additional 5 business days are required if the applicant intends to gather and deliver information disputing the accuracy of the criminal history report. During this reassessment process, the position must remain open, except in emergent circumstances. This following form can be used to conduct an individualized reassessment based on information provided by the applicant.
+                      <div className="space-y-4 mb-8" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                        <p className="text-base leading-relaxed">
+                          After informing an applicant that you intend to revoke a job offer due to the applicant's criminal history, <strong>the applicant must be given specific timeframes to respond</strong>:
+                        </p>
+                        
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <h3 className="font-semibold text-blue-900 mb-3">Required Timeframes:</h3>
+                          <ul className="space-y-2 text-sm text-blue-800">
+                            <li className="flex items-start">
+                              <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                              <span><strong>At least 5 business days</strong> to provide mitigating evidence that speaks to their character and fitness to perform the job</span>
+                            </li>
+                            <li className="flex items-start">
+                              <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                              <span><strong>Additional 5 business days</strong> if the applicant intends to gather and deliver information disputing the accuracy of the criminal history report</span>
+                            </li>
+                          </ul>
+                        </div>
+                        
+                        <p className="text-base leading-relaxed">
+                          <strong>Important:</strong> During this reassessment process, the position must remain open, except in emergent circumstances.
+                        </p>
+                        
+                        <p className="text-base leading-relaxed">
+                          The following form can be used to conduct an individualized reassessment based on information provided by the applicant.
+                        </p>
                       </div>
                       <div className="flex justify-end">
                         <button
@@ -2178,7 +2295,7 @@ export default function AssessmentPage({
                   )}
                 </div>
                 {/* Right: Candidate Response Iframe */}
-                <div className="flex-1 bg-white rounded-xl shadow p-8 border border-gray-200">
+                <div className="flex-1 bg-white rounded-xl shadow p-8 border border-gray-200 max-h-[600px] overflow-y-auto">
                   <h2 className="text-2xl font-bold mb-6 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Candidate Response</h2>
                   {loadingCandidateData ? (
                     <div className="text-center py-12">
@@ -2235,21 +2352,52 @@ export default function AssessmentPage({
                 <div className="bg-white rounded-xl border border-gray-200 p-8 mb-8">
                   <div className="w-full">
                     <h2 className="text-3xl font-bold mb-8 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Final Compliance Step</h2>
-                    <div className="text-lg mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-xl" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
-                      <span className="font-semibold text-black">Once you have considered any mitigating information provided by the applicant, you may still decide to revoke the conditional job offer due to relevant criminal history.</span> <br />
-                      The following notice meets your responsibility to notify the applicant in writing.
+                    
+                    {/* Hire Decision Success Message */}
+                    {savedHireDecision && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 mt-0.5">
+                            <CheckCircle2 className="h-5 w-5 text-green-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-green-900 mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                              Decision Made: Extend Offer of Employment
+                            </p>
+                            <p className="text-sm text-green-800" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                              Decision made on {new Date(savedHireDecision.sentAt).toLocaleDateString()} to extend the offer of employment to this candidate. The assessment process is complete.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Compliance Notice */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 mt-0.5">
+                          <Info className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div className="text-sm text-blue-900 leading-relaxed" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          <span className="font-semibold">Once you have considered any mitigating information provided by the applicant, you may still decide to revoke the conditional job offer due to relevant criminal history.</span> <br />
+                          The following notice meets your responsibility to notify the applicant in writing.
+                        </div>
+                      </div>
                     </div>
+                    
                     <div className="flex gap-8">
                       <button
-                        className="px-12 py-3 rounded-xl text-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200 w-full"
-                        onClick={handleProceedWithHire}
+                        className={`px-12 py-3 rounded-xl text-lg font-semibold border transition-all duration-200 w-full ${savedHireDecision ? 'border-green-500 text-green-700 bg-green-50' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                        onClick={() => savedHireDecision ? undefined : handleProceedWithHire()}
+                        disabled={!!savedHireDecision}
                         style={{ fontFamily: 'Poppins, sans-serif' }}
                       >
-                        Extend Offer of Employment
+                        {savedHireDecision ? '✓ Extend Offer of Employment (Selected)' : 'Extend Offer of Employment'}
                       </button>
                       <button
-                        className="px-12 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200 w-full"
-                        onClick={() => setShowFinalRevocationModal(true)}
+                        className={`px-12 py-3 rounded-xl text-lg font-semibold transition-all duration-200 w-full ${savedHireDecision ? 'opacity-50 cursor-not-allowed' : 'text-white hover:opacity-90'}`}
+                        onClick={() => savedHireDecision ? undefined : setShowFinalRevocationModal(true)}
+                        disabled={!!savedHireDecision}
                         style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
                       >
                         Issue Final Revocation Notice
@@ -2270,6 +2418,73 @@ export default function AssessmentPage({
                   setPreview={setFinalRevocationPreview}
                   setForm={setFinalRevocationForm}
                 />
+
+                {/* Critical Information Section */}
+                <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+                  <div className="flex items-center mb-4">
+                    <Info className="h-5 w-5 mr-2" style={{ color: '#595959' }} />
+                    <h3 className="text-lg font-bold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Critical Information</h3>
+                  </div>
+
+                  {/* Tab Navigation */}
+                  <div className="flex space-x-1 mb-6 border-b border-gray-200">
+                    {['Legal', 'Company Policy', 'Candidate Context'].map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`px-4 py-2 font-semibold text-sm transition-colors relative ${activeTab === tab
+                          ? 'border-b-2 border-red-600'
+                          : 'hover:text-gray-800'
+                          }`}
+                        style={{
+                          fontFamily: 'Poppins, sans-serif',
+                          color: activeTab === tab ? '#E54747' : '#595959'
+                        }}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Tab Content */}
+                  <div className="min-h-[200px]">
+                    <CriticalInfoTabs activeTab={activeTab} currentStep={currentStep} />
+                  </div>
+                </div>
+
+              </>
+            )}
+            {currentStep === 6 && (
+              <>
+                <div className="bg-white rounded-xl border border-gray-200 p-8 mb-8">
+                  <div className="w-full text-center">
+                    <div className="rounded-full bg-green-50 p-6 mb-6 mx-auto w-fit border border-green-100">
+                      <svg className="h-16 w-16 mx-auto" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ color: '#10B981' }}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <h2 className="text-3xl font-bold mb-4 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Assessment Complete</h2>
+                    <p className="text-lg mb-8" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
+                      All assessment steps have been completed successfully. The fair chance hiring process is now complete for this candidate.
+                    </p>
+                    <div className="flex gap-4 justify-center">
+                      <button
+                        className="px-8 py-3 rounded-xl text-lg font-semibold border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200"
+                        onClick={() => window.location.href = '/hr-admin/dashboard'}
+                        style={{ fontFamily: 'Poppins, sans-serif' }}
+                      >
+                        Return to Dashboard
+                      </button>
+                      <button
+                        className="px-8 py-3 rounded-xl text-lg font-semibold text-white hover:opacity-90 transition-all duration-200"
+                        onClick={handleViewCandidateResponse}
+                        style={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#E54747' }}
+                      >
+                        View Final Records
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Critical Information Section */}
                 <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
@@ -3968,24 +4183,32 @@ export default function AssessmentPage({
 
                   {/* 6. Preliminary Job Offer Revocation */}
                   <div className="relative flex items-start">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center z-10" style={{ backgroundColor: currentStep >= 4 ? '#F59E0B' : '#9CA3AF' }}>
-                      <AlertTriangle className="h-5 w-5 text-white" />
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center z-10" style={{ backgroundColor: savedHireDecision ? '#10B981' : savedRevocationNotice ? '#F59E0B' : currentStep >= 4 ? '#F59E0B' : '#9CA3AF' }}>
+                      {savedHireDecision ? (
+                        <UserCheck className="h-5 w-5 text-white" />
+                      ) : (
+                        <AlertTriangle className="h-5 w-5 text-white" />
+                      )}
                     </div>
                     <div className="ml-4 min-w-0 flex-1">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                          Preliminary Revocation
+                          {savedHireDecision ? 'Preliminary Decision' : 'Preliminary Revocation'}
                         </p>
                         <p className="text-xs text-gray-500" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                          {savedRevocationNotice ? new Date(savedRevocationNotice.sentAt).toLocaleDateString() : currentStep >= 4 ? 'In Progress' : 'Not reached'}
+                          {savedHireDecision ? new Date(savedHireDecision.sentAt).toLocaleDateString() : 
+                           savedRevocationNotice ? new Date(savedRevocationNotice.sentAt).toLocaleDateString() : 
+                           currentStep >= 4 ? 'In Progress' : 'Not reached'}
                         </p>
                       </div>
                       <p className="text-xs text-gray-600 mt-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                        Preliminary job offer revocation notice
+                        {savedHireDecision ? 'Decision made to proceed with hire' : 
+                         savedRevocationNotice ? 'Preliminary job offer revocation notice sent' : 
+                         'Preliminary job offer revocation notice'}
                       </p>
 
                       {/* Sub-items for Preliminary Revocation */}
-                      {currentStep >= 4 && (
+                      {(currentStep >= 4 || savedRevocationNotice || savedHireDecision || savedPreliminaryDecision) && (
                         <div className="ml-4 mt-3 space-y-2">
                           {/* 6a. Candidate Response Received */}
                           <div className="flex items-center justify-between">
@@ -3996,7 +4219,7 @@ export default function AssessmentPage({
                               </p>
                             </div>
                             <p className="text-xs text-gray-500" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                              Pending
+                              {savedHireDecision ? 'Not Required - Hired' : 'Pending'}
                             </p>
                           </div>
 
@@ -4072,24 +4295,29 @@ export default function AssessmentPage({
 
                   {/* 8. Final Revocation Notice */}
                   <div className="relative flex items-start">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center z-10" style={{ backgroundColor: savedFinalRevocationNotice ? '#DC2626' : '#9CA3AF' }}>
-                      <AlertCircle className="h-5 w-5 text-white" />
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center z-10" style={{ backgroundColor: (savedHireDecision && currentStep === 5) ? '#10B981' : savedFinalRevocationNotice ? '#DC2626' : '#9CA3AF' }}>
+                      {(savedHireDecision && currentStep === 5) ? (
+                        <UserCheck className="h-5 w-5 text-white" />
+                      ) : (
+                        <AlertCircle className="h-5 w-5 text-white" />
+                      )}
                     </div>
                     <div className="ml-4 min-w-0 flex-1">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                          Final Revocation Notice
+                          {(savedHireDecision && currentStep === 5) ? 'Final Decision' : 'Final Revocation Notice'}
                         </p>
                         <p className="text-xs text-gray-500" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                          {savedFinalRevocationNotice ? new Date(savedFinalRevocationNotice.sentAt).toLocaleDateString() : 'Not sent'}
+                          {(savedHireDecision && currentStep === 5) ? new Date(savedHireDecision.sentAt).toLocaleDateString() :
+                           savedFinalRevocationNotice ? new Date(savedFinalRevocationNotice.sentAt).toLocaleDateString() : 'Not sent'}
                         </p>
                       </div>
                       <p className="text-xs text-gray-600 mt-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                        Final job offer revocation notice
+                        {(savedHireDecision && currentStep === 5) ? 'Final decision made to extend offer of employment' : 'Final job offer revocation notice'}
                       </p>
 
                       {/* Sub-items for Final Revocation */}
-                      {savedFinalRevocationNotice && (
+                      {(savedFinalRevocationNotice || (savedHireDecision && currentStep === 5)) && (
                         <div className="ml-4 mt-3 space-y-2">
                           {/* 8a. Candidate Response Received */}
                           <div className="flex items-center justify-between">
@@ -4100,20 +4328,21 @@ export default function AssessmentPage({
                               </p>
                             </div>
                             <p className="text-xs text-gray-500" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                              Pending
+                              {(savedHireDecision && currentStep === 5) ? 'Not Required - Hired' : 'Pending'}
                             </p>
                           </div>
 
                           {/* 8b. Decision */}
                           <div className="flex items-center justify-between">
                             <div className="flex items-center">
-                              <div className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: savedFinalRevocationNotice ? '#10B981' : '#9CA3AF' }}></div>
+                              <div className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: ((savedHireDecision && currentStep === 5) || savedFinalRevocationNotice) ? '#10B981' : '#9CA3AF' }}></div>
                               <p className="text-xs font-medium text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
                                 Decision
                               </p>
                             </div>
                             <p className="text-xs text-gray-500" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                              {savedFinalRevocationNotice ? 'Decision: Adverse Action' : 'Pending'}
+                              {(savedHireDecision && currentStep === 5) ? 'Decision: Hired' :
+                               savedFinalRevocationNotice ? 'Decision: Adverse Action' : 'Pending'}
                             </p>
                           </div>
                         </div>
