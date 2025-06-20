@@ -562,16 +562,17 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
         </div>
       </div>
 
-      {/* Invitation Code Section */}
-      <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-black">
-            Invitation Code
-          </h2>
-          <div className="flex space-x-3">
+      {/* Invitation Code and Toolkit Section - Positioned side by side */}
+      <div className="flex justify-start gap-6">
+        {/* Invitation Code Box */}
+        <div className="bg-white border rounded-xl p-4 w-80" style={{ borderColor: '#E5E5E5' }}>
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-lg font-semibold text-black">
+              Invitation Code
+            </h3>
             <button
               onClick={generateInvitationCode}
-              className="px-4 py-2 border text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90"
+              className="px-3 py-1 border text-sm font-medium rounded-lg transition-all duration-200 hover:opacity-90"
               style={{
                 color: '#595959',
                 borderColor: '#E5E5E5',
@@ -580,33 +581,70 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
             >
               Generate New Code
             </button>
-            <button
-              onClick={openInviteModal}
-              disabled={!hrAdmin?.invitation_code}
-              className="px-4 py-2 border-2 text-base font-medium rounded-xl text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{
-                backgroundColor: !hrAdmin?.invitation_code ? '#d1d5db' : '#E54747',
-                borderColor: !hrAdmin?.invitation_code ? '#d1d5db' : '#E54747'
-              }}
-            >
-              Invite Candidate
-            </button>
           </div>
+          {hrAdmin?.invitation_code ? (
+            <div className="p-3 rounded-xl mb-3" style={{ backgroundColor: '#F8F9FA' }}>
+              <p className="text-xs mb-1" style={{ color: '#595959' }}>
+                Share this securecode with candidates to connect with them on Rézme:
+              </p>
+              <p className="text-lg font-mono text-black font-semibold">
+                {hrAdmin.invitation_code}
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm mb-3" style={{ color: '#595959' }}>
+              No invitation code generated yet.
+            </p>
+          )}
+          <button
+            onClick={openInviteModal}
+            disabled={!hrAdmin?.invitation_code}
+            className="w-full px-3 py-2 border-2 text-sm font-medium rounded-lg text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{
+              backgroundColor: !hrAdmin?.invitation_code ? '#d1d5db' : '#E54747',
+              borderColor: !hrAdmin?.invitation_code ? '#d1d5db' : '#E54747'
+            }}
+          >
+            Invite Candidate
+          </button>
         </div>
-        {hrAdmin?.invitation_code ? (
-          <div className="p-4 rounded-xl" style={{ backgroundColor: '#F8F9FA' }}>
-            <p className="text-sm mb-2" style={{ color: '#595959' }}>
-              Share this code with users to connect with them:
-            </p>
-            <p className="text-2xl font-mono text-black font-semibold">
-              {hrAdmin.invitation_code}
+
+        {/* Fair Chance Ordinance Toolkit Box */}
+        <div className="bg-white border rounded-xl p-4 w-80" style={{ borderColor: '#E5E5E5' }}>
+          <div className="mb-3">
+            <h3 className="text-lg font-semibold text-black mb-2">
+              San Diego County Fair Chance Ordinance Hiring Toolkit
+            </h3>
+          </div>
+          <div className="p-3 rounded-xl mb-3" style={{ backgroundColor: '#F0F9FF' }}>
+            <div className="flex items-center gap-2 mb-2">
+              <svg className="h-4 w-4" style={{ color: '#1E40AF' }} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span className="text-xs font-medium" style={{ color: '#1E40AF' }}>
+                Official OLSE Resources
+              </span>
+            </div>
+            <p className="text-xs" style={{ color: '#1E40AF' }}>
+              Sample forms, compliance checklists, and legal requirements for San Diego County employers.
             </p>
           </div>
-        ) : (
-          <p style={{ color: '#595959' }}>
-            No invitation code generated yet. Click the button above to generate one.
-          </p>
-        )}
+          <a
+            href="https://www.sandiegocounty.gov/content/sdc/OLSE/fair-chance.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full px-3 py-2 border-2 text-sm font-medium rounded-lg text-white transition-all duration-200 hover:opacity-90 flex items-center justify-center gap-2"
+            style={{
+              backgroundColor: '#1E40AF',
+              borderColor: '#1E40AF'
+            }}
+          >
+            View Resources
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
+        </div>
       </div>
 
       {/* Assessment Metrics */}
@@ -622,7 +660,7 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
       <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-black">
-            Users Who Granted You Access
+            Your Candidates
           </h2>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -654,7 +692,7 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
                   Email
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-black uppercase tracking-wider">
-                  RR Status
+                  Candidate Response Status
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-black uppercase tracking-wider">
                   Final Decision
