@@ -1,4 +1,5 @@
 import React from "react";
+import { AlertTriangle, Mail } from "lucide-react";
 
 interface ConditionalJobOfferLetterProps {
   showOfferModal: boolean;
@@ -31,6 +32,37 @@ const ConditionalJobOfferLetter: React.FC<ConditionalJobOfferLetterProps> = ({
   return !showOfferModal ? null : (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
       <div className="bg-white rounded-lg shadow-lg max-w-7xl w-full p-16 relative max-h-screen overflow-y-auto">
+        {/* Warning Header */}
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-8">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0">
+              <AlertTriangle className="h-6 w-6 text-amber-600 mt-1" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-amber-900 mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                Important Legal Compliance Notice
+              </h3>
+              <div className="text-amber-800 leading-relaxed space-y-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                <p>
+                  Here is an example of the Conditional Job Offer Letter created by the San Diego County of Labor Enforcement & Standards that you are legally required to send to the applicant prior to initiating a background check. Please don't proceed until you have acknowledged that this Conditional Job Offer has been sent to the candidate along with required attachments and notices prior to conducting a background check.
+                </p>
+                <p>
+                  We understand that this may or may not have been done by your background check provider, but to remain in compliance this step is mandated. We recommend you consult with your attorney if you have any questions about complying with the County of San Diego Fair Chance Ordinance.
+                </p>
+                <div className="mt-4 p-3 bg-amber-100 rounded-lg border border-amber-300">
+                  <p className="text-sm font-medium text-amber-900">
+                    <Mail className="h-4 w-4 inline mr-2" />
+                    For inquiries, contact San Diego County Office of Labor Standards and Enforcement:
+                    <a href="mailto:OLSE@sdcounty.ca.gov" className="ml-2 underline hover:no-underline font-semibold">
+                      OLSE@sdcounty.ca.gov
+                    </a>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <h2 className="text-2xl font-bold mb-6">Sample Conditional Job Offer Letter</h2>
         <div className="prose max-w-none text-gray-900 text-base">
           <div className="mb-2">
