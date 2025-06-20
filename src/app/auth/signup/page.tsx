@@ -3,9 +3,9 @@
 import { supabase } from "@/lib/supabase";
 import type { UserRole } from "@/types/auth";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 
-export default function SignUp() {
+function SignUpForm() {
   const searchParams = useSearchParams();
   const role = (searchParams.get("role") as UserRole) || "user";
   const [formData, setFormData] = useState({
@@ -44,7 +44,7 @@ export default function SignUp() {
           ...(role === "user" && {
             birthday: formData.birthday,
             interests:
-              "interests" in formData
+              "interests" in formData && formData.interests
                 ? formData.interests.split(",").map((i) => i.trim())
                 : [],
             isVisibleToHR: formData.isVisibleToHR,
@@ -215,5 +215,13 @@ export default function SignUp() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function SignUp() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SignUpForm />
+    </Suspense>
   );
 }

@@ -3,6 +3,8 @@
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useHRAdminProfile } from '@/hooks/useHRAdminProfile';
+import { usePermittedUsers } from '@/hooks/usePermittedUsers';
 import AssessmentMetrics from "./components/AssessmentMetrics";
 import { sendInvitationEmail, sendReinvitationEmail } from '@/app/restorative-record/utils/sendEmail';
 
@@ -182,8 +184,6 @@ function ComplianceStepDisplay({ user }: { user: any }) {
 }
 
 export default function HRAdminDashboard() {
-  const [permittedUsers, setPermittedUsers] = useState<User[]>([]);
-  const [hrAdmin, setHRAdmin] = useState<HRAdmin | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -211,15 +211,19 @@ export default function HRAdminDashboard() {
   const [sendingInvite, setSendingInvite] = useState(false);
   const [hasLoadedInvites, setHasLoadedInvites] = useState(false);
 
-  useEffect(() => {
-    fetchHRAdminProfile();
-  }, []);
+  const {
+    hrAdmin,
+    loading: hrAdminLoading,
+    error: hrAdminError,
+    refresh: refreshHrAdmin,
+  } = useHRAdminProfile();
+  const {
+    users: permittedUsers,
+    loading: usersLoading,
+    error: usersError,
+    refresh: refreshPermittedUsers,
+  } = usePermittedUsers(hrAdmin?.id);
 
-  useEffect(() => {
-    if (hrAdmin) {
-      fetchPermittedUsers();
-    }
-  }, [hrAdmin]);
 
   // Load sent invites from localStorage
   useEffect(() => {
@@ -242,76 +246,7 @@ export default function HRAdminDashboard() {
     }
   }, [sentInvites, hasLoadedInvites]);
 
-  const fetchHRAdminProfile = async () => {
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) return;
 
-      const { data, error } = await supabase
-        .from("hr_admin_profiles")
-        .select("*")
-        .eq("id", session.user.id)
-        .single();
-
-      if (error) throw error;
-      console.log("Fetched HR admin profile:", data);
-      setHRAdmin(data);
-    } catch (err) {
-      console.error("Error fetching HR admin profile:", err);
-      setError("Failed to load HR admin profile");
-    }
-  };
-
-  const fetchPermittedUsers = async () => {
-    try {
-      if (!hrAdmin) return;
-
-      console.log(
-        "Fetching users who granted permission to HR admin:",
-        hrAdmin.id
-      );
-
-      // First fetch the permissions
-      const { data: permissions, error: permError } = await supabase
-        .from("user_hr_permissions")
-        .select("user_id, granted_at")
-        .eq("hr_admin_id", hrAdmin.id)
-        .eq("is_active", true);
-
-      if (permError) throw permError;
-
-      if (!permissions || permissions.length === 0) {
-        setPermittedUsers([]);
-        return;
-      }
-
-      // Then fetch the user profiles
-      const userIds = permissions.map((p) => p.user_id);
-      const { data: userProfiles, error: userError } = await supabase
-        .from("user_profiles")
-        .select("*")
-        .in("id", userIds);
-
-      if (userError) throw userError;
-
-      // Combine the data
-      const users =
-        userProfiles?.map((profile) => {
-          const permission = permissions.find((p) => p.user_id === profile.id);
-          return {
-            ...profile,
-            granted_at: permission?.granted_at,
-          };
-        }) || [];
-
-      setPermittedUsers(users);
-    } catch (err) {
-      console.error("Error fetching permitted users:", err);
-      setError("Failed to load users who granted you access");
-    }
-  };
 
   const generateInvitationCode = async () => {
     try {
@@ -327,7 +262,7 @@ export default function HRAdminDashboard() {
 
       if (error) throw error;
 
-      setHRAdmin({ ...hrAdmin, invitation_code: newCode });
+      await refreshHrAdmin();
       setSuccess("New invitation code generated successfully!");
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
@@ -346,7 +281,7 @@ export default function HRAdminDashboard() {
   };
 
   const refreshData = async () => {
-    await fetchPermittedUsers();
+    await refreshPermittedUsers();
     setSuccess("Data refreshed successfully!");
     setTimeout(() => setSuccess(null), 3000);
   };
