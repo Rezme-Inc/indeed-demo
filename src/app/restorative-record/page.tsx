@@ -2025,9 +2025,12 @@ export default function RestorativeRecordBuilder() {
                                   {/* Step 1: Conditional Job Offer */}
                                   <div className="text-center relative">
                                     <div className="flex flex-col items-center">
-                                      <div className="flex items-center gap-1 mb-1">
+                                      <div className="flex items-center gap-1 mb-1 pr-5">
                                         <span className="text-green-600">✓</span>
-                                        <button
+                                      </div>
+                                      <div className="flex items-center">
+                                      <p style={{ color: '#10B981' }}>Conditional Job Offer</p>
+                                      <button
                                           onClick={() => handleTooltipToggle('step1')}
                                           className="p-1 hover:bg-gray-100 rounded-full transition-colors"
                                           title="Learn more about this step"
@@ -2035,7 +2038,6 @@ export default function RestorativeRecordBuilder() {
                                           <Info className="h-3 w-3 text-gray-500 hover:text-blue-600" />
                                         </button>
                                       </div>
-                                      <p style={{ color: '#10B981' }}>Conditional Job Offer</p>
                                     </div>
                                     
                                     {/* Tooltip for Step 1 */}
@@ -2069,8 +2071,11 @@ export default function RestorativeRecordBuilder() {
                                   {/* Step 2: Individual Assessment */}
                                   <div className="text-center relative">
                                     <div className="flex flex-col items-center">
-                                      <div className="flex items-center gap-1 mb-1">
+                                      <div className="flex items-center gap-1 mb-1 pr-5">
                                         <span style={{ color: '#F59E0B' }}>●</span>
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                        <p style={{ color: '#F59E0B' }}>Individual Assessment</p>
                                         <button
                                           onClick={() => handleTooltipToggle('step2')}
                                           className="p-1 hover:bg-gray-100 rounded-full transition-colors"
@@ -2079,9 +2084,7 @@ export default function RestorativeRecordBuilder() {
                                           <Info className="h-3 w-3 text-gray-500 hover:text-blue-600" />
                                         </button>
                                       </div>
-                                      <p style={{ color: '#F59E0B' }}>Individual Assessment</p>
                                     </div>
-                                    
                                     {/* Tooltip for Step 2 */}
                                     {activeTooltip === 'step2' && (
                                       <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-50 w-80 bg-white border rounded-lg shadow-xl p-4" style={{ borderColor: '#E5E5E5' }}>
@@ -2113,8 +2116,11 @@ export default function RestorativeRecordBuilder() {
                                   {/* Step 3: Preliminary Revocation */}
                                   <div className="text-center relative">
                                     <div className="flex flex-col items-center">
-                                      <div className="flex items-center gap-1 mb-1">
+                                      <div className="flex items-center gap-1 mb-1 pr-5">
                                         <span className="text-gray-400">○</span>
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                        <p style={{ color: '#9CA3AF' }}>Prelim. Revocation</p>
                                         <button
                                           onClick={() => handleTooltipToggle('step3')}
                                           className="p-1 hover:bg-gray-100 rounded-full transition-colors"
@@ -2123,9 +2129,7 @@ export default function RestorativeRecordBuilder() {
                                           <Info className="h-3 w-3 text-gray-500 hover:text-blue-600" />
                                         </button>
                                       </div>
-                                      <p style={{ color: '#9CA3AF' }}>Prelim. Revocation</p>
                                     </div>
-                                    
                                     {/* Tooltip for Step 3 */}
                                     {activeTooltip === 'step3' && (
                                       <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-50 w-80 bg-white border rounded-lg shadow-xl p-4" style={{ borderColor: '#E5E5E5' }}>
@@ -2157,8 +2161,11 @@ export default function RestorativeRecordBuilder() {
                                   {/* Step 4: Reassessment */}
                                   <div className="text-center relative">
                                     <div className="flex flex-col items-center">
-                                      <div className="flex items-center gap-1 mb-1">
+                                      <div className="flex items-center gap-1 mb-1 pr-5">
                                         <span className="text-gray-400">○</span>
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                        <p style={{ color: '#9CA3AF' }}>Reassessment</p>
                                         <button
                                           onClick={() => handleTooltipToggle('step4')}
                                           className="p-1 hover:bg-gray-100 rounded-full transition-colors"
@@ -2167,9 +2174,7 @@ export default function RestorativeRecordBuilder() {
                                           <Info className="h-3 w-3 text-gray-500 hover:text-blue-600" />
                                         </button>
                                       </div>
-                                      <p style={{ color: '#9CA3AF' }}>Reassessment</p>
                                     </div>
-                                    
                                     {/* Tooltip for Step 4 */}
                                     {activeTooltip === 'step4' && (
                                       <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-50 w-80 bg-white border rounded-lg shadow-xl p-4" style={{ borderColor: '#E5E5E5' }}>
@@ -2201,8 +2206,11 @@ export default function RestorativeRecordBuilder() {
                                   {/* Step 5: Final Decision */}
                                   <div className="text-center relative">
                                     <div className="flex flex-col items-center">
-                                      <div className="flex items-center gap-1 mb-1">
+                                      <div className="flex items-center gap-1 mb-1 pr-5">
                                         <span className="text-gray-400">○</span>
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                        <p style={{ color: '#9CA3AF' }}>Final Decision</p>
                                         <button
                                           onClick={() => handleTooltipToggle('step5')}
                                           className="p-1 hover:bg-gray-100 rounded-full transition-colors"
@@ -2211,9 +2219,7 @@ export default function RestorativeRecordBuilder() {
                                           <Info className="h-3 w-3 text-gray-500 hover:text-blue-600" />
                                         </button>
                                       </div>
-                                      <p style={{ color: '#9CA3AF' }}>Final Decision</p>
                                     </div>
-                                    
                                     {/* Tooltip for Step 5 */}
                                     {activeTooltip === 'step5' && (
                                       <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-50 w-80 bg-white border rounded-lg shadow-xl p-4" style={{ borderColor: '#E5E5E5' }}>
