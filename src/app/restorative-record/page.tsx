@@ -1859,9 +1859,44 @@ export default function RestorativeRecordBuilder() {
       case 'progress':
   return (
           <div className="space-y-6">
+            {/* Quick Actions */}
             <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
-              <h2 className="text-2xl font-semibold text-black mb-4">Your Restorative Record Progress</h2>
-              
+              <h3 className="text-lg font-semibold text-black mb-4">Quick Actions</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button
+                  onClick={() => handleBuilderNavigation(currentCategory)}
+                  className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
+                  style={{ borderColor: '#E5E5E5' }}
+                >
+                  <span className="flex justify-center items-center mb-2">
+                    <img src="dashboard_icons/continue-building.svg" alt="Progress" className="w-10 h-10" />
+                  </span>
+                  <span className="font-medium text-black">Continue Building</span>
+                </button>
+                <button
+                  onClick={handleViewProfile}
+                  className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
+                  style={{ borderColor: '#E5E5E5' }}
+                >
+                  <span className="flex justify-center items-center mb-2">
+                    <img src="dashboard_icons/preview.svg" alt="Preview" className="w-10 h-10" />
+                  </span>
+                  <span className="font-medium text-black">Preview Record</span>
+                </button>
+                <button
+                  onClick={() => handleDashboardNavigation('status')}
+                  className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
+                  style={{ borderColor: '#E5E5E5' }}
+                >
+                  <span className="flex justify-center items-center mb-2">
+                    <img src="dashboard_icons/check-status.svg" alt="Check Status" className="w-10 h-10" />
+                  </span>
+                  <span className="font-medium text-black">Check Status</span>
+                </button>
+              </div>
+            </div>
+            <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
+              <h2 className="text-2xl font-semibold text-black mb-4">Your Restorative Record Progress</h2>              
               {/* Progress Overview */}
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
@@ -1908,43 +1943,6 @@ export default function RestorativeRecordBuilder() {
                     </div>
                   </div>
                 ))}
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
-              <h3 className="text-lg font-semibold text-black mb-4">Quick Actions</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <button
-                  onClick={() => handleBuilderNavigation(currentCategory)}
-                  className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
-                  style={{ borderColor: '#E5E5E5' }}
-                >
-                  <span className="flex justify-center items-center mb-2">
-                    <img src="dashboard_icons/continue-building.svg" alt="Progress" className="w-10 h-10" />
-                  </span>
-                  <span className="font-medium text-black">Continue Building</span>
-                </button>
-                <button
-                  onClick={handleViewProfile}
-                  className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
-                  style={{ borderColor: '#E5E5E5' }}
-                >
-                  <span className="flex justify-center items-center mb-2">
-                    <img src="dashboard_icons/preview.svg" alt="Preview" className="w-10 h-10" />
-                  </span>
-                  <span className="font-medium text-black">Preview Record</span>
-                </button>
-                <button
-                  onClick={() => handleDashboardNavigation('status')}
-                  className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
-                  style={{ borderColor: '#E5E5E5' }}
-                >
-                  <span className="flex justify-center items-center mb-2">
-                    <img src="dashboard_icons/check-status.svg" alt="Check Status" className="w-10 h-10" />
-                  </span>
-                  <span className="font-medium text-black">Check Status</span>
-                </button>
               </div>
             </div>
           </div>
