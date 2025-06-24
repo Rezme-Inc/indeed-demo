@@ -2770,7 +2770,7 @@ export default function RestorativeRecordBuilder() {
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <button
+                    {/* <button
                       onClick={() => handleBuilderNavigation(currentCategory)}
                       className="px-4 py-2 border text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90"
                       style={{
@@ -2780,7 +2780,7 @@ export default function RestorativeRecordBuilder() {
                       }}
                     >
                       Continue Building
-                    </button>
+                    </button> */}
                     <button
                       onClick={handleViewProfile}
                       className="px-5 py-2 text-base font-medium rounded-xl shadow transition-all duration-200 hover:opacity-90 text-white"

@@ -15,6 +15,10 @@ export const IntroductionSection: React.FC<IntroductionSectionProps> = ({
 }) => {
   const [occupationInput, setOccupationInput] = useState("");
   const [occupations, setOccupations] = useState<string[]>([]);
+  const [selectedPlatform, setSelectedPlatform] = useState<string>("");
+  const [activePlatforms, setActivePlatforms] = useState<string[]>(() =>
+    socialFields.filter(f => (formData as any)[f.name]).map(f => f.name)
+  );
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -47,6 +51,18 @@ export const IntroductionSection: React.FC<IntroductionSectionProps> = ({
     }
   };
 
+  const handleAddPlatform = () => {
+    if (selectedPlatform && !activePlatforms.includes(selectedPlatform)) {
+      setActivePlatforms([...activePlatforms, selectedPlatform]);
+      setSelectedPlatform("");
+    }
+  };
+
+  const handleRemovePlatform = (platform: string) => {
+    setActivePlatforms(activePlatforms.filter(p => p !== platform));
+    onChange({ [platform]: "" });
+  };
+
   return (
     <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
       <h2 className="text-2xl font-semibold text-black mb-2">Introduction</h2>
@@ -60,7 +76,7 @@ export const IntroductionSection: React.FC<IntroductionSectionProps> = ({
       {onDelete && (
         <button
           type="button"
-          className="mb-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+          className="mb-10 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
           onClick={onDelete}
         >
           Delete Introduction
@@ -70,17 +86,56 @@ export const IntroductionSection: React.FC<IntroductionSectionProps> = ({
       {/* Social Media Profiles */}
       <div className="mb-6">
         <h3 className="font-medium text-black mb-3">Social Media Profiles</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {socialFields.map((field) => (
-            <input
-              key={field.name}
-              name={field.name}
-              value={(formData as any)[field.name] || ""}
-              onChange={handleInputChange}
-              className="border border-gray-200 px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              placeholder={field.label}
-            />
-          ))}
+        <div className="flex gap-2 mb-4">
+          <select
+            value={selectedPlatform}
+            onChange={e => setSelectedPlatform(e.target.value)}
+            className="border border-gray-200 px-4 py-2 rounded-lg text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+          >
+            <option value="" disabled className="text-gray-400">Select a platform...</option>
+            {socialFields
+              .filter(f => !activePlatforms.includes(f.name))
+              .map(field => (
+                <option key={field.name} value={field.name}>
+                  {field.label}
+                </option>
+              ))}
+          </select>
+          <button
+            type="button"
+            onClick={handleAddPlatform}
+            disabled={!selectedPlatform}
+            className="px-4 py-2 bg-primary text-white rounded-lg disabled:opacity-50"
+          >
+            Add
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {activePlatforms.map(platform => {
+            const field = socialFields.find(f => f.name === platform);
+            return (
+              <div key={platform} className="flex flex-col gap-1">
+                <span className="font-medium text-black mb-1">{field?.label}</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    name={platform}
+                    value={(formData as any)[platform] || ""}
+                    onChange={handleInputChange}
+                    className="border border-gray-200 px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    placeholder={field?.text || field?.label}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemovePlatform(platform)}
+                    className="text-gray-400 hover:text-red-500 text-lg font-bold px-2"
+                    title="Remove"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
