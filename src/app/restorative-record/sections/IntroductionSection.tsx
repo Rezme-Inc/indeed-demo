@@ -90,13 +90,13 @@ export const IntroductionSection: React.FC<IntroductionSectionProps> = ({
           <select
             value={selectedPlatform}
             onChange={e => setSelectedPlatform(e.target.value)}
-            className="border border-gray-200 px-4 py-2 rounded-lg text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            className={`border border-gray-200 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all ${selectedPlatform ? 'text-black' : 'text-gray-400'}`}
           >
             <option value="" disabled className="text-gray-400">Select a platform...</option>
             {socialFields
               .filter(f => !activePlatforms.includes(f.name))
               .map(field => (
-                <option key={field.name} value={field.name}>
+                <option key={field.name} value={field.name} className="text-black">
                   {field.label}
                 </option>
               ))}
