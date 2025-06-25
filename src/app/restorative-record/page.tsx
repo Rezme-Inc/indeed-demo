@@ -2801,7 +2801,7 @@ export default function RestorativeRecordBuilder() {
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => handleDashboardNavigation('progress')}
-                      className="px-4 py-2 border text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90"
+                      className="px-4 py-2 border text-base font-medium rounded-xl hover:opacity-90"
                       style={{
                         color: '#595959',
                         borderColor: '#E5E5E5',
