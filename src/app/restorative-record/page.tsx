@@ -96,6 +96,8 @@ export default function RestorativeRecordBuilder() {
   const [tutorialStep, setTutorialStep] = useState<number | null>(null);
   const [tutorialDismissedByOverlay, setTutorialDismissedByOverlay] = useState(false);
   const originalDashboardSection = useRef<string | null>(null);
+  const originalView = useRef<'dashboard' | 'builder' | null>(null);
+  const originalBuilderSection = useRef<number | null>(null);
 
   const tutorialSteps = [
     {
@@ -2755,12 +2757,16 @@ export default function RestorativeRecordBuilder() {
     }
   };
 
-  // When starting the tutorial, save the original dashboard section
+  // When starting the tutorial, save the original dashboard section, view, and builder section
   const startTutorial = () => {
+    originalView.current = currentView;
     if (currentView === 'dashboard') {
       originalDashboardSection.current = activeDashboardSection;
-    } else {
-      originalDashboardSection.current = null;
+      originalBuilderSection.current = null;
+    } else if (currentView === 'builder') {
+      originalDashboardSection.current = activeDashboardSection;
+      originalBuilderSection.current = currentCategory;
+      setCurrentView('dashboard');
     }
     setTutorialStep(1);
   };
@@ -2773,14 +2779,24 @@ export default function RestorativeRecordBuilder() {
         setActiveDashboardSection(step.dashboardSection);
       }
     }
-    // When leaving the tutorial, restore the original section
-    if (!tutorialStep && originalDashboardSection.current && currentView === 'dashboard' && !tutorialDismissedByOverlay) {
-      setActiveDashboardSection(originalDashboardSection.current);
-      originalDashboardSection.current = null;
+    // Only restore if not dismissed by overlay
+    if (!tutorialStep && currentView === 'dashboard' && !tutorialDismissedByOverlay) {
+      if (originalView.current === 'dashboard' && originalDashboardSection.current) {
+        setActiveDashboardSection(originalDashboardSection.current);
+        originalDashboardSection.current = null;
+      } else if (originalView.current === 'builder' && originalBuilderSection.current !== null) {
+        setCurrentView('builder');
+        setCurrentCategory(originalBuilderSection.current);
+        originalBuilderSection.current = null;
+      }
+      originalView.current = null;
     }
     // Always reset the flag when tutorialStep is null
     if (!tutorialStep && tutorialDismissedByOverlay) {
       setTutorialDismissedByOverlay(false);
+      originalView.current = null;
+      originalBuilderSection.current = null;
+      originalDashboardSection.current = null;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     return;
