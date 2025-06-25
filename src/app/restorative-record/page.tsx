@@ -126,7 +126,7 @@ export default function RestorativeRecordBuilder() {
     },
   ];
 
-  function TutorialTooltip({ step, onNext, onBack, onClose, showBack }: { step: any; onNext: () => void; onBack: () => void; onClose: () => void; showBack: boolean }) {
+  function TutorialTooltip({ step, onNext, onBack, onClose, showBack, isLastStep }: { step: any; onNext: () => void; onBack: () => void; onClose: () => void; showBack: boolean; isLastStep: boolean }) {
     const ref = useRef<HTMLDivElement>(null);
 
     // Helper to position the tooltip
@@ -167,7 +167,7 @@ export default function RestorativeRecordBuilder() {
             <button onClick={onBack} className="text-sm px-2 py-1 rounded bg-gray-200">Back</button>
           )}
           <button onClick={onNext} className="text-sm px-2 py-1 rounded bg-red-500 text-white">
-            Next
+            {isLastStep ? 'Done' : 'Next'}
           </button>
         </div>
       </div>
@@ -3010,6 +3010,7 @@ export default function RestorativeRecordBuilder() {
               setTutorialStep(null);
             }}
             showBack={tutorialStep > 1}
+            isLastStep={tutorialStep === tutorialSteps.length}
           />
         </>
       )}
