@@ -2,7 +2,7 @@
 
 import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "react-day-picker/dist/style.css";
 import { toast } from "react-hot-toast";
 import { ChevronDown, ChevronRight, Info } from "lucide-react";
@@ -93,6 +93,84 @@ export default function RestorativeRecordBuilder() {
     otherLanguages: [],
   });
   const [showIncompleteModal, setShowIncompleteModal] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState<number | null>(null);
+  const [tutorialDismissedByOverlay, setTutorialDismissedByOverlay] = useState(false);
+  const originalDashboardSection = useRef<string | null>(null);
+
+  const tutorialSteps = [
+    {
+      targetId: "progress-tracking-section",
+      title: "Progress Tracking",
+      description: "See your overall progress as you build your restorative record.",
+      dashboardSection: 'progress',
+    },
+    {
+      targetId: "status-updates-section",
+      title: "Status Updates",
+      description: "Check the status of your record and HR admin reviews here.",
+      dashboardSection: 'status',
+    },
+    {
+      targetId: "notifications-section",
+      title: "Notifications",
+      description: "View important notifications and HR admin access requests.",
+      dashboardSection: 'notifications',
+    },
+    {
+      targetId: "my-restorative-record-btn",
+      title: "My Restorative Record",
+      description: "Preview your completed restorative record at any time.",
+      dashboardSection: null,
+    },
+  ];
+
+  function TutorialTooltip({ step, onNext, onBack, onClose, showBack }: { step: any; onNext: () => void; onBack: () => void; onClose: () => void; showBack: boolean }) {
+    const ref = useRef<HTMLDivElement>(null);
+
+    // Helper to position the tooltip
+    const positionTooltip = () => {
+      const target = document.getElementById(step.targetId);
+      if (target && ref.current) {
+        const rect = target.getBoundingClientRect();
+        ref.current.style.position = "fixed";
+        // Try to position below, fallback to above if not enough space
+        const tooltipHeight = ref.current.offsetHeight || 180;
+        const top = rect.bottom + 12 + tooltipHeight < window.innerHeight
+          ? rect.bottom + 12
+          : Math.max(rect.top - tooltipHeight - 12, 12);
+        ref.current.style.top = `${top}px`;
+        ref.current.style.left = `${rect.left}px`;
+        ref.current.style.zIndex = "9999";
+        ref.current.style.maxWidth = "320px";
+      }
+    };
+
+    useEffect(() => {
+      positionTooltip();
+      window.addEventListener('scroll', positionTooltip, true);
+      window.addEventListener('resize', positionTooltip);
+      return () => {
+        window.removeEventListener('scroll', positionTooltip, true);
+        window.removeEventListener('resize', positionTooltip);
+      };
+    }, [step.targetId]);
+
+    return (
+      <div ref={ref} className="bg-white border-2 border-red-400 shadow-xl rounded-xl p-4 max-w-xs animate-fade-in">
+        <h4 className="font-bold mb-2 text-black">{step.title}</h4>
+        <p className="mb-4 text-gray-700">{step.description}</p>
+        <div className="flex justify-end gap-2">
+          <button onClick={onClose} className="text-sm px-2 py-1 rounded bg-gray-200">Close</button>
+          {showBack && (
+            <button onClick={onBack} className="text-sm px-2 py-1 rounded bg-gray-200">Back</button>
+          )}
+          <button onClick={onNext} className="text-sm px-2 py-1 rounded bg-red-500 text-white">
+            Next
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Award state with custom hook
   const awardsHook = useFormCRUD<Omit<Award, "id">>({
@@ -1735,9 +1813,9 @@ export default function RestorativeRecordBuilder() {
 
   // Dashboard functions
   const dashboardSections = [
-    { id: 'progress', label: 'Progress Tracking', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'progress' ? "dashboard_icons/progress-white.svg" : "dashboard_icons/progress.svg"} alt="Status Updates" className="w-5 h-5" /> },
-    { id: 'status', label: 'Status Updates', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'status' ? "dashboard_icons/status-updates-white.svg" : "dashboard_icons/status-updates.svg"} alt="Status Updates" className="w-5 h-5" /> },
-    { id: 'notifications', label: 'Notifications', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'notifications' ? "dashboard_icons/notifications-white.svg" : "dashboard_icons/notifications.svg"} alt="Notifications" className="w-5 h-5" /> }
+    { id: 'progress', label: 'Progress Tracking', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'progress' ? "dashboard_icons/progress-white.svg" : "dashboard_icons/progress.svg"} alt="Status Updates" className="w-5 h-5" />, buttonId: "progress-tracking-section" },
+    { id: 'status', label: 'Status Updates', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'status' ? "dashboard_icons/status-updates-white.svg" : "dashboard_icons/status-updates.svg"} alt="Status Updates" className="w-5 h-5" />, buttonId: "status-updates-section" },
+    { id: 'notifications', label: 'Notifications', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'notifications' ? "dashboard_icons/notifications-white.svg" : "dashboard_icons/notifications.svg"} alt="Notifications" className="w-5 h-5" />, buttonId: "notifications-section" }
   ];
 
   const handleDashboardNavigation = (section: string) => {
@@ -2677,6 +2755,59 @@ export default function RestorativeRecordBuilder() {
     }
   };
 
+  // When starting the tutorial, save the original dashboard section
+  const startTutorial = () => {
+    if (currentView === 'dashboard') {
+      originalDashboardSection.current = activeDashboardSection;
+    } else {
+      originalDashboardSection.current = null;
+    }
+    setTutorialStep(1);
+  };
+
+  useEffect(() => {
+    // Only switch if in dashboard view and the step has a dashboardSection
+    if (tutorialStep && currentView === 'dashboard') {
+      const step = tutorialSteps[tutorialStep - 1];
+      if (step.dashboardSection && activeDashboardSection !== step.dashboardSection) {
+        setActiveDashboardSection(step.dashboardSection);
+      }
+    }
+    // When leaving the tutorial, restore the original section
+    if (!tutorialStep && originalDashboardSection.current && currentView === 'dashboard' && !tutorialDismissedByOverlay) {
+      setActiveDashboardSection(originalDashboardSection.current);
+      originalDashboardSection.current = null;
+    }
+    // Always reset the flag when tutorialStep is null
+    if (!tutorialStep && tutorialDismissedByOverlay) {
+      setTutorialDismissedByOverlay(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return;
+  }, [tutorialStep, currentView]);
+
+  // Create a shared button group for MY RESTORATIVE RECORD and Help
+  const ButtonGroup = (
+    <div className="flex items-center gap-3">
+      <button
+        id="my-restorative-record-btn"
+        onClick={handleViewProfile}
+        className="px-5 py-2 text-base font-medium rounded-xl shadow hover:opacity-90 text-white"
+        style={{ backgroundColor: '#E54747' }}
+      >
+        MY RESTORATIVE RECORD
+      </button>
+      <button
+        onClick={startTutorial}
+        className="px-5 py-2 text-base font-medium rounded-xl shadow hover:opacity-90 border ml-2"
+        style={{ color: '#E54747', backgroundColor: '#FFFFFF', borderColor: '#E54747' }}
+        title="Show Tutorial"
+      >
+        Help
+      </button>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
       <div className="flex">
@@ -2697,6 +2828,7 @@ export default function RestorativeRecordBuilder() {
               {dashboardSections.map((section) => (
                 <li key={section.id}>
                   <button
+                    id={section.buttonId}
                     className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center gap-3 ${
                       currentView === 'dashboard' && activeDashboardSection === section.id
                         ? "text-white font-medium"
@@ -2745,7 +2877,7 @@ export default function RestorativeRecordBuilder() {
                     .replace(/\b\w/g, (l) => l.toUpperCase())}
                       </span>
                       {idx <= currentCategory && (
-                        <span className="text-green-600 text-sm">✓</span>
+                        <span className="text-green-600 text-sm" style={{ color: '#16A34A' }}>✓</span>
                       )}
                     </div>
                 </button>
@@ -2765,30 +2897,8 @@ export default function RestorativeRecordBuilder() {
                     <h1 className="text-3xl font-semibold text-black">
                       {dashboardSections.find(s => s.id === activeDashboardSection)?.label}
                     </h1>
-                    <p className="text-lg mt-2" style={{ color: '#595959' }}>
-                      Manage your restorative record journey
-                    </p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    {/* <button
-                      onClick={() => handleBuilderNavigation(currentCategory)}
-                      className="px-4 py-2 border text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90"
-                      style={{
-                        color: '#595959',
-                        borderColor: '#E5E5E5',
-                        backgroundColor: 'transparent'
-                      }}
-                    >
-                      Continue Building
-                    </button> */}
-                    <button
-                      onClick={handleViewProfile}
-                      className="px-5 py-2 text-base font-medium rounded-xl shadow transition-all duration-200 hover:opacity-90 text-white"
-                      style={{ backgroundColor: '#E54747' }}
-                    >
-                      MY RESTORATIVE RECORD
-                    </button>
-                  </div>
+                  {ButtonGroup}
                 </div>
                 {renderDashboardContent()}
               </>
@@ -2798,53 +2908,34 @@ export default function RestorativeRecordBuilder() {
               <h1 className="text-3xl font-semibold text-black">
                 Restorative Record Builder
               </h1>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => handleDashboardNavigation('progress')}
-                      className="px-4 py-2 border text-base font-medium rounded-xl hover:opacity-90"
-                      style={{
-                        color: '#595959',
-                        borderColor: '#E5E5E5',
-                        backgroundColor: 'transparent'
-                      }}
-                    >
-                      Dashboard
-                    </button>
-              <button
-                onClick={handleViewProfile}
-                      className="px-5 py-2 text-base font-medium rounded-xl shadow transition-all duration-200 hover:opacity-90 text-white"
-                      style={{ backgroundColor: '#E54747' }}
-              >
-                MY RESTORATIVE RECORD
-              </button>
-                  </div>
+              {ButtonGroup}
             </div>
             <div className="mb-8">{renderSection()}</div>
             <div className="flex justify-between">
               <button
                 onClick={handlePrevious}
                 disabled={currentCategory === 0}
-                    className="px-6 py-3 border text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{
-                      color: '#595959',
-                      borderColor: '#E5E5E5',
-                      backgroundColor: 'transparent'
-                    }}
+                className="px-6 py-3 border text-base font-medium rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  color: '#595959',
+                  borderColor: '#E5E5E5',
+                  backgroundColor: 'transparent'
+                }}
               >
                 Previous
               </button>
               {currentCategory === categories.length - 1 ? (
                 <button
                   onClick={handleSubmit}
-                      className="px-6 py-3 text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90 text-white"
-                      style={{ backgroundColor: '#E54747' }}
+                  className="px-6 py-3 text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90 text-white"
+                  style={{ backgroundColor: '#E54747' }}
                 >
                   Submit
                 </button>
               ) : (
                 <button
                   onClick={handleNext}
-                      className="px-6 py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-800 transition-all duration-200"
+                  className="px-6 py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-800 transition-all duration-200"
                 >
                   Next
                 </button>
@@ -2877,6 +2968,34 @@ export default function RestorativeRecordBuilder() {
             </button>
           </div>
         </div>
+      )}
+      {tutorialStep && (
+        <>
+          <div
+            className="fixed inset-0 z-[9998] bg-black bg-opacity-0"
+            onClick={() => {
+              setTutorialDismissedByOverlay(true);
+              setTutorialStep(null);
+            }}
+          />
+          <TutorialTooltip
+            step={tutorialSteps[tutorialStep - 1]}
+            onNext={() => {
+              setTutorialDismissedByOverlay(false);
+              if (tutorialStep < tutorialSteps.length) setTutorialStep(tutorialStep + 1);
+              else setTutorialStep(null);
+            }}
+            onBack={() => {
+              setTutorialDismissedByOverlay(false);
+              if (tutorialStep > 1) setTutorialStep(tutorialStep - 1);
+            }}
+            onClose={() => {
+              setTutorialDismissedByOverlay(false);
+              setTutorialStep(null);
+            }}
+            showBack={tutorialStep > 1}
+          />
+        </>
       )}
     </div>
   );
