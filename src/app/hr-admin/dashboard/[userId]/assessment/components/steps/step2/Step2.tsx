@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { CheckCircle2, Info } from "lucide-react";
 import CriticalInfoSection from "../../critical/CriticalInfoSection";
-import IndividualizedAssessmentModal from "./IndividualizedAssessmentModal";
+import { Part1Modal, Part2Modal, Part3Modal, Part4Modal, Part5Modal, PreviewModal } from "./index";
 import ExtendSuccessModal from "../../common/ExtendSuccessModal";
 import { useStep2Storage } from "@/hooks/useStep2Storage";
 import { useAssessmentMutators } from "@/hooks/useAssessmentMutators";
@@ -16,6 +16,9 @@ const Step2: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const [activeTab, setActiveTab] = useState("Legal");
   const { currentStep, setCurrentStep } = useAssessmentSteps();
+
+  // Separate state for modal visibility (independent of step tracking)
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const {
     savedHireDecision,
     setSavedHireDecision,
@@ -25,17 +28,15 @@ const Step2: React.FC = () => {
   const {
     assessmentForm,
     setAssessmentForm,
-    showAssessmentModal,
-    setShowAssessmentModal,
-    assessmentPreview,
-    setAssessmentPreview,
+    currentModalStep,
+    setCurrentModalStep,
     handleAssessmentFormChange,
     handleAssessmentArrayChange,
   } = step2Storage;
   const { hrAdmin } = useHRAdminProfile();
   const { addDuty, addActivity } = useAssessmentMutators(
     setAssessmentForm,
-    (() => {}) as React.Dispatch<React.SetStateAction<any>>
+    (() => { }) as React.Dispatch<React.SetStateAction<any>>
   );
   const [showExtendSuccessModal, setShowExtendSuccessModal] = useState(false);
   const [initialAssessmentResults, setInitialAssessmentResults] =
@@ -62,6 +63,45 @@ const Step2: React.FC = () => {
     setShowExtendSuccessModal,
     currentStep,
   });
+
+  // Modal navigation functions
+  const handleNext = () => {
+    if (currentModalStep === 1) setCurrentModalStep(2);
+    else if (currentModalStep === 2) setCurrentModalStep(3);
+    else if (currentModalStep === 3) setCurrentModalStep(4);
+    else if (currentModalStep === 4) setCurrentModalStep(5);
+    else if (currentModalStep === 5) setCurrentModalStep('preview');
+  };
+
+  const handleBack = () => {
+    if (currentModalStep === 2) setCurrentModalStep(1);
+    else if (currentModalStep === 3) setCurrentModalStep(2);
+    else if (currentModalStep === 4) setCurrentModalStep(3);
+    else if (currentModalStep === 5) setCurrentModalStep(4);
+    else if (currentModalStep === 'preview') setCurrentModalStep(5);
+  };
+
+  const handleSaveForLater = () => {
+    // Just close the modal but keep the step progress saved
+    setIsModalOpen(false);
+    // currentModalStep remains unchanged so user can resume later
+  };
+
+  // Control background scrolling when modal is open
+  useEffect(() => {
+    if (isModalOpen) {
+      // Disable scrolling
+      document.body.style.overflow = 'hidden';
+    } else {
+      // Re-enable scrolling
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup function to ensure scrolling is restored if component unmounts
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isModalOpen]);
   return (
     <>
       <div className="bg-white rounded-xl border border-gray-200 p-8 mb-8">
@@ -115,11 +155,15 @@ const Step2: React.FC = () => {
         <div className="flex gap-4">
           <button
             className={`px-8 py-3 rounded-xl text-lg font-semibold transition-all duration-200 ${savedHireDecision ? "opacity-50 cursor-not-allowed" : "text-white hover:opacity-90"}`}
-            onClick={() => (savedHireDecision ? undefined : setShowAssessmentModal(true))}
+            onClick={() => {
+              if (savedHireDecision) return;
+              setCurrentModalStep(currentModalStep || 1);
+              setIsModalOpen(true);
+            }}
             disabled={!!savedHireDecision}
             style={{ fontFamily: "Poppins, sans-serif", backgroundColor: "#E54747" }}
           >
-            Begin Individualized Assessment
+            {currentModalStep ? "Continue Assessment" : "Begin Individualized Assessment"}
           </button>
           <button
             className={`px-8 py-3 rounded-xl text-lg font-semibold border transition-all duration-200 ${savedHireDecision ? "border-green-500 text-green-700 bg-green-50" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}
@@ -129,24 +173,70 @@ const Step2: React.FC = () => {
           >
             {savedHireDecision ? "✓ Extend Offer of Employment (Selected)" : "Extend Offer of Employment"}
           </button>
-      </div>
+        </div>
       </div>
 
       {/* Critical Information Section */}
       <CriticalInfoSection activeTab={activeTab} setActiveTab={setActiveTab} currentStep={currentStep} />
 
-      {/* Modal for Individualized Assessment */}
-      <IndividualizedAssessmentModal
-        showAssessmentModal={showAssessmentModal}
-        setShowAssessmentModal={setShowAssessmentModal}
+      {/* Multi-step Assessment Modals */}
+      <Part1Modal
+        showModal={isModalOpen && currentModalStep === 1}
+        setShowModal={handleSaveForLater}
         assessmentForm={assessmentForm}
         handleAssessmentFormChange={handleAssessmentFormChange}
         handleAssessmentArrayChange={handleAssessmentArrayChange}
-        assessmentPreview={assessmentPreview}
-        setAssessmentPreview={setAssessmentPreview}
-        handleSendAssessment={sendAssessment}
         onAddDuty={addDuty}
+        onNext={handleNext}
+      />
+
+      <Part2Modal
+        showModal={isModalOpen && currentModalStep === 2}
+        setShowModal={handleSaveForLater}
+        assessmentForm={assessmentForm}
+        handleAssessmentFormChange={handleAssessmentFormChange}
+        onNext={handleNext}
+        onBack={handleBack}
+      />
+
+      <Part3Modal
+        showModal={isModalOpen && currentModalStep === 3}
+        setShowModal={handleSaveForLater}
+        assessmentForm={assessmentForm}
+        handleAssessmentArrayChange={handleAssessmentArrayChange}
         onAddActivity={addActivity}
+        onNext={handleNext}
+        onBack={handleBack}
+      />
+
+      <Part4Modal
+        showModal={isModalOpen && currentModalStep === 4}
+        setShowModal={handleSaveForLater}
+        assessmentForm={assessmentForm}
+        handleAssessmentFormChange={handleAssessmentFormChange}
+        onNext={handleNext}
+        onBack={handleBack}
+      />
+
+      <Part5Modal
+        showModal={isModalOpen && currentModalStep === 5}
+        setShowModal={handleSaveForLater}
+        assessmentForm={assessmentForm}
+        handleAssessmentFormChange={handleAssessmentFormChange}
+        onNext={handleNext}
+        onBack={handleBack}
+      />
+
+      <PreviewModal
+        showModal={isModalOpen && currentModalStep === 'preview'}
+        setShowModal={handleSaveForLater}
+        assessmentForm={assessmentForm}
+        onBack={handleBack}
+        onSend={() => {
+          sendAssessment();
+          setCurrentModalStep(null); // Clear progress only after successful send
+          setIsModalOpen(false);
+        }}
       />
       <ExtendSuccessModal
         open={showExtendSuccessModal}
