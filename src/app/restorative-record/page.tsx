@@ -101,19 +101,37 @@ export default function RestorativeRecordBuilder() {
 
   const tutorialSteps = [
     {
-      targetId: "progress-tracking-section",
+      targetId: "progress",
       title: "Progress Tracking",
       description: "See your overall progress as you build your restorative record.",
       dashboardSection: 'progress',
     },
     {
-      targetId: "status-updates-section",
+      targetId: "continue-building-btn",
+      title: "Continue Building",
+      description: "Continue building your restorative record.",
+      dashboardSection: 'progress',
+    },
+    {
+      targetId: "preview-record-btn",
+      title: "Preview Record",
+      description: "Preview what your restorative record will look like.",
+      dashboardSection: 'progress',
+    },
+    {
+      targetId: "check-status-btn",
       title: "Status Updates",
-      description: "Check the status of your record and HR admin reviews here.",
+      description: "Check who can see your restorative record and where you're at in the hiring process.",
+      dashboardSection: 'progress',
+    },
+    {
+      targetId: "status",
+      title: "Status Updates",
+      description: "Also moves you to the Status Updates page.",
       dashboardSection: 'status',
     },
     {
-      targetId: "notifications-section",
+      targetId: "notifications",
       title: "Notifications",
       description: "View important notifications and HR admin access requests.",
       dashboardSection: 'notifications',
@@ -1815,9 +1833,9 @@ export default function RestorativeRecordBuilder() {
 
   // Dashboard functions
   const dashboardSections = [
-    { id: 'progress', label: 'Progress Tracking', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'progress' ? "dashboard_icons/progress-white.svg" : "dashboard_icons/progress.svg"} alt="Status Updates" className="w-5 h-5" />, buttonId: "progress-tracking-section" },
-    { id: 'status', label: 'Status Updates', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'status' ? "dashboard_icons/status-updates-white.svg" : "dashboard_icons/status-updates.svg"} alt="Status Updates" className="w-5 h-5" />, buttonId: "status-updates-section" },
-    { id: 'notifications', label: 'Notifications', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'notifications' ? "dashboard_icons/notifications-white.svg" : "dashboard_icons/notifications.svg"} alt="Notifications" className="w-5 h-5" />, buttonId: "notifications-section" }
+    { id: 'progress', label: 'Progress Tracking', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'progress' ? "dashboard_icons/progress-white.svg" : "dashboard_icons/progress.svg"} alt="Status Updates" className="w-5 h-5" />},
+    { id: 'status', label: 'Status Updates', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'status' ? "dashboard_icons/status-updates-white.svg" : "dashboard_icons/status-updates.svg"} alt="Status Updates" className="w-5 h-5" />},
+    { id: 'notifications', label: 'Notifications', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'notifications' ? "dashboard_icons/notifications-white.svg" : "dashboard_icons/notifications.svg"} alt="Notifications" className="w-5 h-5" />}
   ];
 
   const handleDashboardNavigation = (section: string) => {
@@ -1944,6 +1962,7 @@ export default function RestorativeRecordBuilder() {
               <h3 className="text-lg font-semibold text-black mb-4">Quick Actions</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <button
+                  id="continue-building-btn" 
                   onClick={() => handleBuilderNavigation(currentCategory)}
                   className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
                   style={{ borderColor: '#E5E5E5' }}
@@ -1954,6 +1973,7 @@ export default function RestorativeRecordBuilder() {
                   <span className="font-medium text-black">Continue Building</span>
                 </button>
                 <button
+                  id="preview-record-btn"
                   onClick={handleViewProfile}
                   className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
                   style={{ borderColor: '#E5E5E5' }}
@@ -1964,6 +1984,7 @@ export default function RestorativeRecordBuilder() {
                   <span className="font-medium text-black">Preview Record</span>
                 </button>
                 <button
+                  id="check-status-btn"
                   onClick={() => handleDashboardNavigation('status')}
                   className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
                   style={{ borderColor: '#E5E5E5' }}
@@ -2844,7 +2865,7 @@ export default function RestorativeRecordBuilder() {
               {dashboardSections.map((section) => (
                 <li key={section.id}>
                   <button
-                    id={section.buttonId}
+                    id={section.id}
                     className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center gap-3 ${
                       currentView === 'dashboard' && activeDashboardSection === section.id
                         ? "text-white font-medium"
