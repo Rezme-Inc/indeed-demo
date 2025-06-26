@@ -2,10 +2,9 @@
 
 import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import "react-day-picker/dist/style.css";
 import { toast } from "react-hot-toast";
-import { ChevronDown, ChevronRight, Info } from "lucide-react";
 
 // Import types
 import {
@@ -59,15 +58,12 @@ import {
 // Import hooks
 import { useFormCRUD } from "./hooks/useFormCRUD";
 
-export default function RestorativeRecordBuilder() {
+function RestorativeRecordBuilderForm() {
   const router = useRouter();
   const [currentCategory, setCurrentCategory] = useState(0);
   const [currentView, setCurrentView] = useState<'dashboard' | 'builder'>('dashboard');
   const [activeDashboardSection, setActiveDashboardSection] = useState('progress');
-  const [expandedHRAdmins, setExpandedHRAdmins] = useState<{[key: string]: boolean}>({});
-  const [expandedStatusUpdates, setExpandedStatusUpdates] = useState<{[key: string]: boolean}>({});
-  const [expandedTimeline, setExpandedTimeline] = useState<{[key: string]: boolean}>({});
-  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
+  const [expandedHRAdmins, setExpandedHRAdmins] = useState<{ [key: string]: boolean }>({});
   const [connectedHRAdmins, setConnectedHRAdmins] = useState<any[]>([]);
   const [allHRAdmins, setAllHRAdmins] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -250,7 +246,7 @@ export default function RestorativeRecordBuilder() {
         const stepName = getCurrentStepName(user.id);
         const progress = getProgressPercentage(user.id);
         const status = getAssessmentStatus(user.id);
-        
+
         return {
           ...profile,
           granted_at: permission?.granted_at,
@@ -264,22 +260,8 @@ export default function RestorativeRecordBuilder() {
       }) || [];
 
       setConnectedHRAdmins(connectedAdmins);
-
-      // Initialize collapsible sections as collapsed by default
-      const initialStatusState: {[key: string]: boolean} = {};
-      const initialTimelineState: {[key: string]: boolean} = {};
-      
-      connectedAdmins.forEach(admin => {
-        initialStatusState[admin.id] = false; // Start collapsed
-        initialTimelineState[admin.id] = false; // Start collapsed
-      });
-      
-      setExpandedStatusUpdates(initialStatusState);
-      setExpandedTimeline(initialTimelineState);
-
     } catch (error) {
       console.error("Error fetching connected HR admins:", error);
-      setConnectedHRAdmins([]);
     }
   };
 
@@ -338,7 +320,7 @@ export default function RestorativeRecordBuilder() {
     const notifs: Notification[] = [];
 
     // Recent new connections
-    const recentConnections = admins.filter(admin => 
+    const recentConnections = admins.filter(admin =>
       admin.hasAccess && admin.granted_at &&
       new Date(admin.granted_at).getTime() > Date.now() - (7 * 24 * 60 * 60 * 1000) // 7 days
     );
@@ -357,7 +339,7 @@ export default function RestorativeRecordBuilder() {
 
     // Potential requests (HR admins without access - simulate pending requests)
     const potentialRequests = admins.filter(admin => !admin.hasAccess);
-    
+
     // Show a few as "simulated requests" for demo purposes
     potentialRequests.slice(0, 2).forEach(admin => {
       notifs.push({
@@ -382,7 +364,7 @@ export default function RestorativeRecordBuilder() {
     if (!user) return;
 
     setProcessingPermission(adminId);
-    
+
     try {
       if (grant) {
         // Check if permission already exists
@@ -432,7 +414,7 @@ export default function RestorativeRecordBuilder() {
 
       // Refresh data
       await Promise.all([fetchConnectedHRAdmins(), fetchAllHRAdmins()]);
-      
+
     } catch (error) {
       console.error("Error updating HR admin permission:", error);
       alert("Failed to update HR admin permission. Please try again.");
@@ -451,7 +433,7 @@ export default function RestorativeRecordBuilder() {
   // Function to refresh community engagement data
   const refreshEngagements = async () => {
     if (!user) return;
-    
+
     const { data: engagementData } = await supabase
       .from("community_engagements")
       .select("*")
@@ -505,7 +487,7 @@ export default function RestorativeRecordBuilder() {
   useEffect(() => {
     async function fetchEngagements() {
       if (!user) return;
-      
+
       const { data: engagementData } = await supabase
         .from("community_engagements")
         .select("*")
@@ -580,7 +562,7 @@ export default function RestorativeRecordBuilder() {
   // Function to refresh microcredentials data
   const refreshMicrocredentials = async () => {
     if (!user) return;
-    
+
     const { data: microData } = await supabase
       .from("micro_credentials")
       .select("*")
@@ -608,7 +590,7 @@ export default function RestorativeRecordBuilder() {
   // Function to refresh mentors data
   const refreshMentors = async () => {
     if (!user) return;
-    
+
     const { data: mentorsData } = await supabase
       .from("mentors")
       .select("*")
@@ -635,7 +617,7 @@ export default function RestorativeRecordBuilder() {
   // Function to refresh employment data
   const refreshEmployment = async () => {
     if (!user) return;
-    
+
     const { data: employmentData } = await supabase
       .from("employment")
       .select("*")
@@ -664,7 +646,7 @@ export default function RestorativeRecordBuilder() {
   // Function to refresh education data
   const refreshEducation = async () => {
     if (!user) return;
-    
+
     const { data: educationData } = await supabase
       .from("education")
       .select("*")
@@ -724,7 +706,7 @@ export default function RestorativeRecordBuilder() {
   useEffect(() => {
     async function fetchMicrocredentials() {
       if (!user) return;
-      
+
       const { data: microData } = await supabase
         .from("micro_credentials")
         .select("*")
@@ -743,14 +725,14 @@ export default function RestorativeRecordBuilder() {
           file: null,
           filePreview: remote.file_url || "",
         }));
-        
+
         // Merge with existing local data if any
         const existingIds = microHook.items.map(item => item.id);
         const newItems = mappedMicrocredentials.filter(item => !existingIds.includes(item.id));
         microHook.setItems([...microHook.items, ...newItems]);
       }
     }
-    
+
     if (currentCategory === categories.findIndex(cat => cat === "microcredentials") && user) {
       fetchMicrocredentials();
     }
@@ -857,7 +839,7 @@ export default function RestorativeRecordBuilder() {
   // Function to refresh hobbies data
   const refreshHobbies = async () => {
     if (!user) return;
-    
+
     const { data: hobbiesData } = await supabase
       .from("hobbies")
       .select("*")
@@ -907,7 +889,7 @@ export default function RestorativeRecordBuilder() {
   useEffect(() => {
     async function fetchHobbies() {
       if (!user) return;
-      
+
       const { data: hobbiesData } = await supabase
         .from("hobbies")
         .select("*")
@@ -923,14 +905,14 @@ export default function RestorativeRecordBuilder() {
           file: null,
           filePreview: remote.file_url || "",
         }));
-        
+
         // Merge with existing local data if any
         const existingIds = hobbiesHook.items.map(item => item.id);
         const newItems = mappedHobbies.filter(item => !existingIds.includes(item.id));
         hobbiesHook.setItems([...hobbiesHook.items, ...newItems]);
       }
     }
-    
+
     if (currentCategory === categories.findIndex(cat => cat === "hobbies") && user) {
       fetchHobbies();
     }
@@ -940,7 +922,7 @@ export default function RestorativeRecordBuilder() {
   useEffect(() => {
     async function fetchMentors() {
       if (!user) return;
-      
+
       const { data: mentorsData } = await supabase
         .from("mentors")
         .select("*")
@@ -958,14 +940,14 @@ export default function RestorativeRecordBuilder() {
           website: remote.website || "",
           narrative: remote.narrative || "",
         }));
-        
+
         // Merge with existing local data if any
         const existingIds = mentorHook.items.map(item => item.id);
         const newItems = mappedMentors.filter(item => !existingIds.includes(item.id));
         mentorHook.setItems([...mentorHook.items, ...newItems]);
       }
     }
-    
+
     if (currentCategory === categories.findIndex(cat => cat === "mentors") && user) {
       fetchMentors();
     }
@@ -975,7 +957,7 @@ export default function RestorativeRecordBuilder() {
   useEffect(() => {
     async function fetchEmployment() {
       if (!user) return;
-      
+
       const { data: employmentData } = await supabase
         .from("employment")
         .select("*")
@@ -995,14 +977,14 @@ export default function RestorativeRecordBuilder() {
           currentlyEmployed: remote.currently_employed || false,
           employedWhileIncarcerated: remote.incarcerated || false,
         }));
-        
+
         // Merge with existing local data if any
         const existingIds = employmentHook.items.map(item => item.id);
         const newItems = mappedEmployment.filter(item => !existingIds.includes(item.id));
         employmentHook.setItems([...employmentHook.items, ...newItems]);
       }
     }
-    
+
     if (currentCategory === categories.findIndex(cat => cat === "employment-history") && user) {
       fetchEmployment();
     }
@@ -1012,7 +994,7 @@ export default function RestorativeRecordBuilder() {
   useEffect(() => {
     async function fetchEducation() {
       if (!user) return;
-      
+
       const { data: educationData } = await supabase
         .from("education")
         .select("*")
@@ -1033,14 +1015,14 @@ export default function RestorativeRecordBuilder() {
           file: null,
           filePreview: remote.file_url || "",
         }));
-        
+
         // Merge with existing local data if any
         const existingIds = educationHook.items.map(item => item.id);
         const newItems = mappedEducation.filter(item => !existingIds.includes(item.id));
         educationHook.setItems([...educationHook.items, ...newItems]);
       }
     }
-    
+
     if (currentCategory === categories.findIndex(cat => cat === "education") && user) {
       fetchEducation();
     }
@@ -1049,20 +1031,20 @@ export default function RestorativeRecordBuilder() {
   // Function to refresh rehab programs data
   const refreshRehabPrograms = async () => {
     console.log("🔄 refreshRehabPrograms called");
-    
+
     if (!user) {
       console.log("❌ No user, skipping refresh");
       return;
     }
-    
+
     console.log("📥 Fetching from Supabase...");
     const { data: rehabData } = await supabase
       .from("rehab_programs")
       .select("*")
       .eq("user_id", user.id);
-      
+
     console.log("📥 Fetched data:", rehabData);
-    
+
     if (rehabData && Array.isArray(rehabData)) {
       // Map Supabase fields to form fields
       const mappedRehabPrograms = rehabData.map((remote) => ({
@@ -1076,7 +1058,7 @@ export default function RestorativeRecordBuilder() {
         file: null,
         filePreview: remote.file_url || "",
       }));
-      
+
       console.log("🗂️ Mapped programs:", mappedRehabPrograms);
       rehabHook.setItems(mappedRehabPrograms);
       console.log("✅ Items set, current count:", mappedRehabPrograms.length);
@@ -1084,7 +1066,7 @@ export default function RestorativeRecordBuilder() {
       console.log("📭 No data found, clearing items");
       rehabHook.setItems([]);
     }
-    
+
     // Signal that data has been updated for cross-page synchronization
     localStorage.setItem('restorative-record-updated', Date.now().toString());
     console.log("🔄 Refresh complete");
@@ -1122,7 +1104,7 @@ export default function RestorativeRecordBuilder() {
   useEffect(() => {
     async function fetchRehabProgramsOnMount() {
       if (!user) return;
-      
+
       const { data: rehabData } = await supabase
         .from("rehab_programs")
         .select("*")
@@ -1140,24 +1122,24 @@ export default function RestorativeRecordBuilder() {
           file: null,
           filePreview: remote.file_url || "",
         }));
-        
+
         // Get current local items
         const currentItems = rehabHook.items || [];
-        
+
         // Find unsaved local items (those without an ID that exists in Supabase)
         const savedIds = new Set(mappedRehabPrograms.map(item => item.id));
         const unsavedLocalItems = currentItems.filter(item => !savedIds.has(item.id));
-        
+
         // Merge saved data from Supabase with unsaved local items
         const mergedItems = [
           ...mappedRehabPrograms, // All saved items from Supabase
           ...unsavedLocalItems    // Any unsaved local items
         ];
-        
+
         rehabHook.setItems(mergedItems);
       }
     }
-    
+
     fetchRehabProgramsOnMount();
   }, [user]);
 
@@ -1165,7 +1147,7 @@ export default function RestorativeRecordBuilder() {
   useEffect(() => {
     async function fetchRehabPrograms() {
       if (!user) return;
-      
+
       const { data: rehabData } = await supabase
         .from("rehab_programs")
         .select("*")
@@ -1183,20 +1165,20 @@ export default function RestorativeRecordBuilder() {
           file: null,
           filePreview: remote.file_url || "",
         }));
-        
+
         // Get current local items
         const currentItems = rehabHook.items || [];
-        
+
         // Find unsaved local items (those without an ID that exists in Supabase)
         const savedIds = new Set(mappedRehabPrograms.map(item => item.id));
         const unsavedLocalItems = currentItems.filter(item => !savedIds.has(item.id));
-        
+
         // Merge saved data from Supabase with unsaved local items
         const mergedItems = [
           ...mappedRehabPrograms, // All saved items from Supabase
           ...unsavedLocalItems    // Any unsaved local items
         ];
-        
+
         rehabHook.setItems(mergedItems);
       } else {
         // If no data in Supabase, keep any local unsaved items
@@ -1204,7 +1186,7 @@ export default function RestorativeRecordBuilder() {
         rehabHook.setItems(currentItems);
       }
     }
-    
+
     if (currentCategory === categories.findIndex(cat => cat === "rehabilitative-programs") && user) {
       fetchRehabPrograms();
     }
@@ -1348,7 +1330,7 @@ export default function RestorativeRecordBuilder() {
   // Save rehab programs specifically to Supabase
   const saveRehabProgramsToSupabase = async (formData: RehabProgram & { id: string }, isEdit: boolean) => {
     console.log("🚀 saveRehabProgramsToSupabase called with:", { formData, isEdit });
-    
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -1375,7 +1357,7 @@ export default function RestorativeRecordBuilder() {
     try {
       // Import upload function
       const { uploadFileToSupabase } = await import("./utils");
-      
+
       let fileUrl = null;
       let fileName = null;
       let fileSize = null;
@@ -1420,9 +1402,9 @@ export default function RestorativeRecordBuilder() {
         file_name: fileName,
         file_size: fileSize,
       };
-      
+
       console.log("💾 Data to save:", dataToSave);
-      
+
       const { error: rehabProgramError } = await supabase
         .from("rehab_programs")
         .upsert(dataToSave);
@@ -1757,53 +1739,6 @@ export default function RestorativeRecordBuilder() {
     }));
   };
 
-  const toggleStatusUpdates = (adminId: string) => {
-    setExpandedStatusUpdates(prev => ({
-      ...prev,
-      [adminId]: !prev[adminId]
-    }));
-  };
-
-  const toggleTimeline = (adminId: string) => {
-    setExpandedTimeline(prev => ({
-      ...prev,
-      [adminId]: !prev[adminId]
-    }));
-  };
-
-  // Tooltip data for assessment steps
-  const stepTooltips = {
-    'step1': {
-      title: 'Conditional Job Offer',
-      content: 'You have received a conditional job offer. This means the employer is interested in hiring you, pending the completion of an individualized assessment based on your criminal history record. You have the right to provide additional context through your Restorative Record.',
-      rights: ['Right to provide additional context', 'Right to challenge inaccurate information', 'Right to legal representation']
-    },
-    'step2': {
-      title: 'Individual Assessment',
-      content: 'The employer is conducting an individualized assessment of your background in relation to the specific job duties. This assessment must consider factors like the nature of the conviction, time elapsed, and job relevance. You have 5 business days to update your record or provide additional information.',
-      rights: ['Right to provide additional evidence', 'Right to explain circumstances', 'Right to appeal the decision', 'Right to request additional time']
-    },
-    'step3': {
-      title: 'Preliminary Revocation Notice',
-      content: 'If the employer is considering withdrawing the job offer, they must provide a preliminary notice explaining their reasoning. You will have an opportunity to respond and provide additional information before any final decision is made.',
-      rights: ['Right to written explanation', 'Right to respond within 5 business days', 'Right to provide counter-evidence', 'Right to request a meeting']
-    },
-    'step4': {
-      title: 'Reassessment Period',
-      content: 'After receiving your response to the preliminary notice, the employer must conduct a reassessment. They must consider any new information you provided and give you a reasonable opportunity to demonstrate rehabilitation or that the conviction is not relevant to the job.',
-      rights: ['Right to fair reassessment', 'Right to have new evidence considered', 'Right to demonstrate rehabilitation', 'Right to appeal the process']
-    },
-    'step5': {
-      title: 'Final Decision',
-      content: 'The employer makes their final hiring decision. If they decide not to hire you, they must provide a written explanation and inform you of your right to file a complaint with the appropriate agency. The entire process must be documented and defensible.',
-      rights: ['Right to written final decision', 'Right to explanation of reasoning', 'Right to file a complaint', 'Right to review documentation']
-    }
-  };
-
-  const handleTooltipToggle = (stepId: string) => {
-    setActiveTooltip(activeTooltip === stepId ? null : stepId);
-  };
-
   // Assessment tracking functions (copied from HR admin dashboard)
   const getCurrentAssessmentStep = (userId: string): number => {
     if (typeof window !== 'undefined') {
@@ -1820,7 +1755,7 @@ export default function RestorativeRecordBuilder() {
     const steps = [
       'Not Started',
       'Conditional Job Offer',
-      'Individualized Assessment', 
+      'Individualized Assessment',
       'Preliminary Job Offer Revocation',
       'Individual Reassessment',
       'Final Revocation Notice'
@@ -1844,24 +1779,24 @@ export default function RestorativeRecordBuilder() {
     // Calculate completion percentage based on sections completed
     const totalSections = categories.length;
     let completedSections = 0;
-    
+
     // This would need to be enhanced with actual data checking
     // For now, we'll simulate based on current category
     completedSections = Math.min(currentCategory + 1, totalSections);
-    
+
     return Math.round((completedSections / totalSections) * 100);
   };
 
   const renderDashboardContent = () => {
     const progress = calculateProgress();
-    
+
     switch (activeDashboardSection) {
       case 'progress':
-  return (
+        return (
           <div className="space-y-6">
             <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
               <h2 className="text-2xl font-semibold text-black mb-4">Your Restorative Record Progress</h2>
-              
+
               {/* Progress Overview */}
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
@@ -1869,9 +1804,9 @@ export default function RestorativeRecordBuilder() {
                   <span className="text-sm font-medium" style={{ color: '#E54747' }}>{progress}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div 
+                  <div
                     className="h-3 rounded-full transition-all duration-300"
-                    style={{ 
+                    style={{
                       backgroundColor: '#E54747',
                       width: `${progress}%`
                     }}
@@ -1949,7 +1884,7 @@ export default function RestorativeRecordBuilder() {
           <div className="space-y-6">
             <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
               <h2 className="text-2xl font-semibold text-black mb-4">HR Admin Status Updates</h2>
-              
+
               {/* Connected HR Admins */}
               <div className="mb-8">
                 <h3 className="text-lg font-semibold text-black mb-4">Connected HR Admins</h3>
@@ -1998,6 +1933,37 @@ export default function RestorativeRecordBuilder() {
                         {/* Collapsible Detailed Status */}
                         {expandedHRAdmins[admin.id] && (
                           <div className="border-t p-4 space-y-4" style={{ borderColor: '#E5E5E5', backgroundColor: '#F8F9FA' }}>
+                            {/* Status Overview */}
+                            <div className="space-y-3">
+                              <h5 className="font-semibold text-black">Detailed Status Updates</h5>
+
+                              <div className="border-l-4 pl-4 py-3" style={{ borderColor: '#10B981' }}>
+                                <h6 className="font-semibold text-black">Record Submitted Successfully</h6>
+                                <p className="text-sm" style={{ color: '#595959' }}>
+                                  Your Restorative Record has been completed and is available for HR review.
+                                </p>
+                                <span className="text-xs" style={{ color: '#9CA3AF' }}>2 days ago</span>
+                              </div>
+
+                              <div className="border-l-4 pl-4 py-3" style={{ borderColor: '#F59E0B' }}>
+                                <h6 className="font-semibold text-black">Assessment in Progress: {admin.stepName}</h6>
+                                <p className="text-sm" style={{ color: '#595959' }}>
+                                  {admin.company} is currently preparing your written individualized assessment based on your Restorative Record.
+                                </p>
+                                <div className="mt-2 text-xs" style={{ color: '#9CA3AF' }}>
+                                  <p>Current Step: Step {admin.currentStep} of {admin.totalSteps} - {admin.stepName}</p>
+                                  <p>Updated: 1 day ago</p>
+                                </div>
+                              </div>
+
+                              <div className="border-l-4 pl-4 py-3" style={{ borderColor: '#E5E5E5' }}>
+                                <h6 className="font-semibold" style={{ color: '#9CA3AF' }}>Next: Preliminary Job Offer Revocation</h6>
+                                <p className="text-sm" style={{ color: '#9CA3AF' }}>
+                                  Pending completion of current assessment step.
+                                </p>
+                              </div>
+                            </div>
+
                             {/* Assessment Progress Bar */}
                             <div className="p-4 rounded-lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E5E5' }}>
                               <h6 className="font-semibold text-black mb-3">Assessment Progress</h6>
@@ -2007,346 +1973,85 @@ export default function RestorativeRecordBuilder() {
                                   <span className="font-medium" style={{ color: '#F59E0B' }}>{admin.progress}% Complete</span>
                                 </div>
                                 <div className="w-full bg-gray-200 rounded-full h-2">
-                                  <div 
+                                  <div
                                     className="h-2 rounded-full transition-all duration-300"
-                                    style={{ 
+                                    style={{
                                       backgroundColor: '#F59E0B',
                                       width: `${admin.progress}%`
                                     }}
                                   />
                                 </div>
-                                <div className="grid grid-cols-5 gap-1 text-xs relative">
-                                  {/* Step 1: Conditional Job Offer */}
-                                  <div className="text-center relative">
-                                    <div className="flex flex-col items-center">
-                                      <div className="flex items-center gap-1 mb-1">
-                                        <span className="text-green-600">✓</span>
-                                        <button
-                                          onClick={() => handleTooltipToggle('step1')}
-                                          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                                          title="Learn more about this step"
-                                        >
-                                          <Info className="h-3 w-3 text-gray-500 hover:text-blue-600" />
-                                        </button>
-                                      </div>
-                                      <p style={{ color: '#10B981' }}>Conditional Job Offer</p>
-                                    </div>
-                                    
-                                    {/* Tooltip for Step 1 */}
-                                    {activeTooltip === 'step1' && (
-                                      <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-50 w-80 bg-white border rounded-lg shadow-xl p-4" style={{ borderColor: '#E5E5E5' }}>
-                                        <div className="mb-3">
-                                          <h4 className="font-semibold text-black mb-2">{stepTooltips.step1.title}</h4>
-                                          <p className="text-sm text-gray-700 mb-3">{stepTooltips.step1.content}</p>
-                                          <div>
-                                            <h5 className="font-medium text-black mb-2 text-sm">Your Rights:</h5>
-                                            <ul className="text-xs space-y-1">
-                                              {stepTooltips.step1.rights.map((right, index) => (
-                                                <li key={index} className="flex items-start gap-2">
-                                                  <span className="text-green-600 font-bold">•</span>
-                                                  <span className="text-gray-600">{right}</span>
-                                                </li>
-                                              ))}
-                                            </ul>
-                                          </div>
-                                        </div>
-                                        <button
-                                          onClick={() => setActiveTooltip(null)}
-                                          className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-                                        >
-                                          Close
-                                        </button>
-                                      </div>
-                                    )}
+                                <div className="grid grid-cols-5 gap-1 text-xs">
+                                  <div className="text-center">
+                                    <span className="text-green-600">✓</span>
+                                    <p style={{ color: '#10B981' }}>Conditional Job Offer</p>
                                   </div>
-
-                                  {/* Step 2: Individual Assessment */}
-                                  <div className="text-center relative">
-                                    <div className="flex flex-col items-center">
-                                      <div className="flex items-center gap-1 mb-1">
-                                        <span style={{ color: '#F59E0B' }}>●</span>
-                                        <button
-                                          onClick={() => handleTooltipToggle('step2')}
-                                          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                                          title="Learn more about this step"
-                                        >
-                                          <Info className="h-3 w-3 text-gray-500 hover:text-blue-600" />
-                                        </button>
-                                      </div>
-                                      <p style={{ color: '#F59E0B' }}>Individual Assessment</p>
-                                    </div>
-                                    
-                                    {/* Tooltip for Step 2 */}
-                                    {activeTooltip === 'step2' && (
-                                      <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-50 w-80 bg-white border rounded-lg shadow-xl p-4" style={{ borderColor: '#E5E5E5' }}>
-                                        <div className="mb-3">
-                                          <h4 className="font-semibold text-black mb-2">{stepTooltips.step2.title}</h4>
-                                          <p className="text-sm text-gray-700 mb-3">{stepTooltips.step2.content}</p>
-                                          <div>
-                                            <h5 className="font-medium text-black mb-2 text-sm">Your Rights:</h5>
-                                            <ul className="text-xs space-y-1">
-                                              {stepTooltips.step2.rights.map((right, index) => (
-                                                <li key={index} className="flex items-start gap-2">
-                                                  <span className="text-green-600 font-bold">•</span>
-                                                  <span className="text-gray-600">{right}</span>
-                                                </li>
-                                              ))}
-                                            </ul>
-                                          </div>
-                                        </div>
-                                        <button
-                                          onClick={() => setActiveTooltip(null)}
-                                          className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-                                        >
-                                          Close
-                                        </button>
-                                      </div>
-                                    )}
+                                  <div className="text-center">
+                                    <span style={{ color: '#F59E0B' }}>●</span>
+                                    <p style={{ color: '#F59E0B' }}>Individual Assessment</p>
                                   </div>
-
-                                  {/* Step 3: Preliminary Revocation */}
-                                  <div className="text-center relative">
-                                    <div className="flex flex-col items-center">
-                                      <div className="flex items-center gap-1 mb-1">
-                                        <span className="text-gray-400">○</span>
-                                        <button
-                                          onClick={() => handleTooltipToggle('step3')}
-                                          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                                          title="Learn more about this step"
-                                        >
-                                          <Info className="h-3 w-3 text-gray-500 hover:text-blue-600" />
-                                        </button>
-                                      </div>
-                                      <p style={{ color: '#9CA3AF' }}>Prelim. Revocation</p>
-                                    </div>
-                                    
-                                    {/* Tooltip for Step 3 */}
-                                    {activeTooltip === 'step3' && (
-                                      <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-50 w-80 bg-white border rounded-lg shadow-xl p-4" style={{ borderColor: '#E5E5E5' }}>
-                                        <div className="mb-3">
-                                          <h4 className="font-semibold text-black mb-2">{stepTooltips.step3.title}</h4>
-                                          <p className="text-sm text-gray-700 mb-3">{stepTooltips.step3.content}</p>
-                                          <div>
-                                            <h5 className="font-medium text-black mb-2 text-sm">Your Rights:</h5>
-                                            <ul className="text-xs space-y-1">
-                                              {stepTooltips.step3.rights.map((right, index) => (
-                                                <li key={index} className="flex items-start gap-2">
-                                                  <span className="text-green-600 font-bold">•</span>
-                                                  <span className="text-gray-600">{right}</span>
-                                                </li>
-                                              ))}
-                                            </ul>
-                                          </div>
-                                        </div>
-                                        <button
-                                          onClick={() => setActiveTooltip(null)}
-                                          className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-                                        >
-                                          Close
-                                        </button>
-                                      </div>
-                                    )}
+                                  <div className="text-center">
+                                    <span className="text-gray-400">○</span>
+                                    <p style={{ color: '#9CA3AF' }}>Prelim. Revocation</p>
                                   </div>
-
-                                  {/* Step 4: Reassessment */}
-                                  <div className="text-center relative">
-                                    <div className="flex flex-col items-center">
-                                      <div className="flex items-center gap-1 mb-1">
-                                        <span className="text-gray-400">○</span>
-                                        <button
-                                          onClick={() => handleTooltipToggle('step4')}
-                                          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                                          title="Learn more about this step"
-                                        >
-                                          <Info className="h-3 w-3 text-gray-500 hover:text-blue-600" />
-                                        </button>
-                                      </div>
-                                      <p style={{ color: '#9CA3AF' }}>Reassessment</p>
-                                    </div>
-                                    
-                                    {/* Tooltip for Step 4 */}
-                                    {activeTooltip === 'step4' && (
-                                      <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-50 w-80 bg-white border rounded-lg shadow-xl p-4" style={{ borderColor: '#E5E5E5' }}>
-                                        <div className="mb-3">
-                                          <h4 className="font-semibold text-black mb-2">{stepTooltips.step4.title}</h4>
-                                          <p className="text-sm text-gray-700 mb-3">{stepTooltips.step4.content}</p>
-                                          <div>
-                                            <h5 className="font-medium text-black mb-2 text-sm">Your Rights:</h5>
-                                            <ul className="text-xs space-y-1">
-                                              {stepTooltips.step4.rights.map((right, index) => (
-                                                <li key={index} className="flex items-start gap-2">
-                                                  <span className="text-green-600 font-bold">•</span>
-                                                  <span className="text-gray-600">{right}</span>
-                                                </li>
-                                              ))}
-                                            </ul>
-                                          </div>
-                                        </div>
-                                        <button
-                                          onClick={() => setActiveTooltip(null)}
-                                          className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-                                        >
-                                          Close
-                                        </button>
-                                      </div>
-                                    )}
+                                  <div className="text-center">
+                                    <span className="text-gray-400">○</span>
+                                    <p style={{ color: '#9CA3AF' }}>Reassessment</p>
                                   </div>
-
-                                  {/* Step 5: Final Decision */}
-                                  <div className="text-center relative">
-                                    <div className="flex flex-col items-center">
-                                      <div className="flex items-center gap-1 mb-1">
-                                        <span className="text-gray-400">○</span>
-                                        <button
-                                          onClick={() => handleTooltipToggle('step5')}
-                                          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                                          title="Learn more about this step"
-                                        >
-                                          <Info className="h-3 w-3 text-gray-500 hover:text-blue-600" />
-                                        </button>
-                                      </div>
-                                      <p style={{ color: '#9CA3AF' }}>Final Decision</p>
-                                    </div>
-                                    
-                                    {/* Tooltip for Step 5 */}
-                                    {activeTooltip === 'step5' && (
-                                      <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-50 w-80 bg-white border rounded-lg shadow-xl p-4" style={{ borderColor: '#E5E5E5' }}>
-                                        <div className="mb-3">
-                                          <h4 className="font-semibold text-black mb-2">{stepTooltips.step5.title}</h4>
-                                          <p className="text-sm text-gray-700 mb-3">{stepTooltips.step5.content}</p>
-                                          <div>
-                                            <h5 className="font-medium text-black mb-2 text-sm">Your Rights:</h5>
-                                            <ul className="text-xs space-y-1">
-                                              {stepTooltips.step5.rights.map((right, index) => (
-                                                <li key={index} className="flex items-start gap-2">
-                                                  <span className="text-green-600 font-bold">•</span>
-                                                  <span className="text-gray-600">{right}</span>
-                                                </li>
-                                              ))}
-                                            </ul>
-                                          </div>
-                                        </div>
-                                        <button
-                                          onClick={() => setActiveTooltip(null)}
-                                          className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-                                        >
-                                          Close
-                                        </button>
-                                      </div>
-                                    )}
+                                  <div className="text-center">
+                                    <span className="text-gray-400">○</span>
+                                    <p style={{ color: '#9CA3AF' }}>Final Decision</p>
                                   </div>
                                 </div>
                               </div>
                             </div>
 
-                            {/* Detailed Status Updates - Collapsible with new design */}
-                            <div className="border rounded-lg" style={{ borderColor: '#E5E5E5', backgroundColor: '#FFFFFF' }}>
-                              <div 
-                                className="flex items-center justify-between cursor-pointer p-4 hover:bg-gray-50 transition-all duration-200"
-                                onClick={() => toggleStatusUpdates(admin.id)}
-                              >
-                                <h6 className="font-semibold text-black">Detailed Status Updates</h6>
-                                {expandedStatusUpdates[admin.id] ? (
-                                  <ChevronDown className="h-5 w-5 text-gray-600" />
-                                ) : (
-                                  <ChevronRight className="h-5 w-5 text-gray-600" />
-                                )}
-                              </div>
-                              
-                              {expandedStatusUpdates[admin.id] && (
-                                <div className="p-4 border-t" style={{ borderColor: '#E5E5E5' }}>
-                                  <div className="space-y-3">
-                                    <div className="border-l-4 pl-4 py-3" style={{ borderColor: '#10B981' }}>
-                                      <h6 className="font-semibold text-black">Record Submitted Successfully</h6>
-                                      <p className="text-sm" style={{ color: '#595959' }}>
-                                        Your Restorative Record has been completed and is available for HR review.
-                                      </p>
-                                      <span className="text-xs" style={{ color: '#9CA3AF' }}>2 days ago</span>
-                                    </div>
-                                    
-                                    <div className="border-l-4 pl-4 py-3" style={{ borderColor: '#F59E0B' }}>
-                                      <h6 className="font-semibold text-black">Assessment in Progress: {admin.stepName}</h6>
-                                      <p className="text-sm" style={{ color: '#595959' }}>
-                                        {admin.company} is currently preparing your written individualized assessment based on your Restorative Record.
-                                      </p>
-                                      <div className="mt-2 text-xs" style={{ color: '#9CA3AF' }}>
-                                        <p>Current Step: Step {admin.currentStep} of {admin.totalSteps} - {admin.stepName}</p>
-                                        <p>Updated: 1 day ago</p>
-                                      </div>
-                                    </div>
-                                    
-                                    <div className="border-l-4 pl-4 py-3" style={{ borderColor: '#E5E5E5' }}>
-                                      <h6 className="font-semibold" style={{ color: '#9CA3AF' }}>Next: Preliminary Job Offer Revocation</h6>
-                                      <p className="text-sm" style={{ color: '#9CA3AF' }}>
-                                        Pending completion of current assessment step.
-                                      </p>
-                                    </div>
+                            {/* Estimated Timeline */}
+                            <div className="p-4 border rounded-lg" style={{ borderColor: '#E5E5E5', backgroundColor: '#FFFFFF' }}>
+                              <h6 className="font-semibold text-black mb-2">Estimated Timeline & Important Deadlines</h6>
+                              <p className="text-sm mb-3" style={{ color: '#595959' }}>
+                                Your assessment is progressing well. Based on the current step, you can expect to hear back within 3-5 business days for the next update.
+                              </p>
+
+                              {/* Important 5-day deadline notice */}
+                              <div className="p-3 rounded-lg mb-3" style={{ backgroundColor: '#FEF3C7', border: '1px solid #F59E0B' }}>
+                                <div className="flex items-start gap-2">
+                                  <span className="text-lg">⚠️</span>
+                                  <div>
+                                    <p className="font-semibold text-black mb-1">Important: 5-Day Response Window</p>
+                                    <p className="text-sm" style={{ color: '#92400E' }}>
+                                      You have <strong>5 business days</strong> from the completion of each assessment step to:
+                                    </p>
+                                    <ul className="text-sm mt-2 ml-4 list-disc" style={{ color: '#92400E' }}>
+                                      <li>Update or add information to your Restorative Record</li>
+                                      <li>Challenge the accuracy of any background check report</li>
+                                      <li>Request additional time if needed</li>
+                                    </ul>
+                                    <p className="text-xs mt-2" style={{ color: '#78350F' }}>
+                                      <strong>Deadline for current step:</strong> 3 days remaining (expires January 15, 2024)
+                                    </p>
                                   </div>
                                 </div>
-                              )}
-                            </div>
-
-                            {/* Estimated Timeline & Important Deadlines - Collapsible */}
-                            <div className="border rounded-lg" style={{ borderColor: '#E5E5E5', backgroundColor: '#FFFFFF' }}>
-                              <div 
-                                className="flex items-center justify-between cursor-pointer p-4 hover:bg-gray-50 transition-all duration-200"
-                                onClick={() => toggleTimeline(admin.id)}
-                              >
-                                <h6 className="font-semibold text-black">Estimated Timeline & Important Deadlines</h6>
-                                {expandedTimeline[admin.id] ? (
-                                  <ChevronDown className="h-5 w-5 text-gray-600" />
-                                ) : (
-                                  <ChevronRight className="h-5 w-5 text-gray-600" />
-                                )}
                               </div>
-                              
-                              {expandedTimeline[admin.id] && (
-                                <div className="p-4 border-t" style={{ borderColor: '#E5E5E5' }}>
-                                  <p className="text-sm mb-3" style={{ color: '#595959' }}>
-                                    Your assessment is progressing well. Based on the current step, you can expect to hear back within 3-5 business days for the next update.
-                                  </p>
-                                  
-                                  {/* Important 5-day deadline notice */}
-                                  <div className="p-3 rounded-lg mb-3" style={{ backgroundColor: '#FEF3C7', border: '1px solid #F59E0B' }}>
-                                    <div className="flex items-start gap-2">
-                                      <span className="text-lg">⚠️</span>
-                                      <div>
-                                        <p className="font-semibold text-black mb-1">Important: 5-Day Response Window</p>
-                                        <p className="text-sm" style={{ color: '#92400E' }}>
-                                          You have <strong>5 business days</strong> from the completion of each assessment step to:
-                                        </p>
-                                        <ul className="text-sm mt-2 ml-4 list-disc" style={{ color: '#92400E' }}>
-                                          <li>Update or add information to your Restorative Record</li>
-                                          <li>Challenge the accuracy of any background check report</li>
-                                          <li>Request additional time if needed</li>
-                                        </ul>
-                                        <p className="text-xs mt-2" style={{ color: '#78350F' }}>
-                                          <strong>Deadline for current step:</strong> 3 days remaining (expires January 15, 2024)
-                                        </p>
-                                      </div>
-                                    </div>
-                                  </div>
 
-                                  <div className="flex flex-wrap gap-2">
-                                    <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: '#E3F2FD', color: '#1976D2' }}>
-                                      Next Update Expected: Within 3 days
-                                    </span>
-                                    <button
-                                      onClick={() => handleBuilderNavigation(0)}
-                                      className="text-xs px-2 py-1 rounded transition-all duration-200 hover:opacity-90"
-                                      style={{ backgroundColor: '#E54747', color: '#FFFFFF' }}
-                                    >
-                                      Update Record Now
-                                    </button>
-                                    <button
-                                      className="text-xs px-2 py-1 rounded border transition-all duration-200 hover:opacity-90"
-                                      style={{ borderColor: '#E54747', color: '#E54747', backgroundColor: 'transparent' }}
-                                    >
-                                      Request Extension
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
+                              <div className="flex flex-wrap gap-2">
+                                <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: '#E3F2FD', color: '#1976D2' }}>
+                                  Next Update Expected: Within 3 days
+                                </span>
+                                <button
+                                  onClick={() => handleBuilderNavigation(0)}
+                                  className="text-xs px-2 py-1 rounded transition-all duration-200 hover:opacity-90"
+                                  style={{ backgroundColor: '#E54747', color: '#FFFFFF' }}
+                                >
+                                  Update Record Now
+                                </button>
+                                <button
+                                  className="text-xs px-2 py-1 rounded border transition-all duration-200 hover:opacity-90"
+                                  style={{ borderColor: '#E54747', color: '#E54747', backgroundColor: 'transparent' }}
+                                >
+                                  Request Extension
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
@@ -2393,19 +2098,18 @@ export default function RestorativeRecordBuilder() {
                   Refresh
                 </button>
               </div>
-              
+
               <div className="space-y-3">
                 {notifications.length > 0 ? (
                   notifications.map((notification) => (
-                    <div 
-                      key={notification.id} 
-                      className={`p-4 border-l-4 ${
-                        notification.type === 'request' ? 'bg-blue-50' : 
+                    <div
+                      key={notification.id}
+                      className={`p-4 border-l-4 ${notification.type === 'request' ? 'bg-blue-50' :
                         notification.type === 'connection' ? 'bg-green-50' : 'bg-yellow-50'
-                      }`} 
-                      style={{ 
-                        borderColor: notification.type === 'request' ? '#3B82F6' : 
-                                   notification.type === 'connection' ? '#10B981' : '#F59E0B' 
+                        }`}
+                      style={{
+                        borderColor: notification.type === 'request' ? '#3B82F6' :
+                          notification.type === 'connection' ? '#10B981' : '#F59E0B'
                       }}
                     >
                       <div className="flex items-start justify-between">
@@ -2430,7 +2134,7 @@ export default function RestorativeRecordBuilder() {
                             </span>
                           </div>
                         </div>
-                        
+
                         {notification.type === 'request' && (
                           <div className="flex items-center gap-2 ml-4">
                             <button
@@ -2461,7 +2165,7 @@ export default function RestorativeRecordBuilder() {
                             </button>
                           </div>
                         )}
-                        
+
                         {notification.type === 'connection' && (
                           <div className="flex items-center gap-2 ml-4">
                             <button
@@ -2687,11 +2391,10 @@ export default function RestorativeRecordBuilder() {
               {dashboardSections.map((section) => (
                 <li key={section.id}>
                   <button
-                    className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center gap-3 ${
-                      currentView === 'dashboard' && activeDashboardSection === section.id
-                        ? "text-white font-medium"
-                        : "text-black hover:bg-gray-50"
-                    }`}
+                    className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center gap-3 ${currentView === 'dashboard' && activeDashboardSection === section.id
+                      ? "text-white font-medium"
+                      : "text-black hover:bg-gray-50"
+                      }`}
                     style={{
                       backgroundColor: currentView === 'dashboard' && activeDashboardSection === section.id ? '#E54747' : 'transparent'
                     }}
@@ -2713,15 +2416,14 @@ export default function RestorativeRecordBuilder() {
           {/* Builder Sections */}
           <div>
             <h3 className="text-sm font-semibold text-black mb-3 uppercase tracking-wider">Record Builder</h3>
-          <ul className="space-y-1">
-            {categories.map((cat, idx) => (
-              <li key={cat}>
-                <button
-                    className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${
-                      currentView === 'builder' && idx === currentCategory
-                        ? "bg-red-50 font-medium border"
-                        : "hover:bg-gray-50"
-                    }`}
+            <ul className="space-y-1">
+              {categories.map((cat, idx) => (
+                <li key={cat}>
+                  <button
+                    className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${currentView === 'builder' && idx === currentCategory
+                      ? "bg-red-50 font-medium border"
+                      : "hover:bg-gray-50"
+                      }`}
                     style={{
                       color: currentView === 'builder' && idx === currentCategory ? '#E54747' : '#000000',
                       borderColor: currentView === 'builder' && idx === currentCategory ? '#E54747' : 'transparent'
@@ -2730,18 +2432,18 @@ export default function RestorativeRecordBuilder() {
                   >
                     <div className="flex items-center justify-between">
                       <span>
-                  {cat
-                    .replace(/-/g, " ")
-                    .replace(/\b\w/g, (l) => l.toUpperCase())}
+                        {cat
+                          .replace(/-/g, " ")
+                          .replace(/\b\w/g, (l) => l.toUpperCase())}
                       </span>
                       {idx <= currentCategory && (
                         <span className="text-green-600 text-sm">✓</span>
                       )}
                     </div>
-                </button>
-              </li>
-            ))}
-          </ul>
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
         </nav>
 
@@ -2784,10 +2486,10 @@ export default function RestorativeRecordBuilder() {
               </>
             ) : (
               <>
-            <div className="flex items-center justify-between mb-8">
-              <h1 className="text-3xl font-semibold text-black">
-                Restorative Record Builder
-              </h1>
+                <div className="flex items-center justify-between mb-8">
+                  <h1 className="text-3xl font-semibold text-black">
+                    Restorative Record Builder
+                  </h1>
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => handleDashboardNavigation('progress')}
@@ -2800,46 +2502,46 @@ export default function RestorativeRecordBuilder() {
                     >
                       Dashboard
                     </button>
-              <button
-                onClick={handleViewProfile}
+                    <button
+                      onClick={handleViewProfile}
                       className="px-5 py-2 text-base font-medium rounded-xl shadow transition-all duration-200 hover:opacity-90 text-white"
                       style={{ backgroundColor: '#E54747' }}
-              >
-                MY RESTORATIVE RECORD
-              </button>
+                    >
+                      MY RESTORATIVE RECORD
+                    </button>
                   </div>
-            </div>
-            <div className="mb-8">{renderSection()}</div>
-            <div className="flex justify-between">
-              <button
-                onClick={handlePrevious}
-                disabled={currentCategory === 0}
+                </div>
+                <div className="mb-8">{renderSection()}</div>
+                <div className="flex justify-between">
+                  <button
+                    onClick={handlePrevious}
+                    disabled={currentCategory === 0}
                     className="px-6 py-3 border text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{
                       color: '#595959',
                       borderColor: '#E5E5E5',
                       backgroundColor: 'transparent'
                     }}
-              >
-                Previous
-              </button>
-              {currentCategory === categories.length - 1 ? (
-                <button
-                  onClick={handleSubmit}
+                  >
+                    Previous
+                  </button>
+                  {currentCategory === categories.length - 1 ? (
+                    <button
+                      onClick={handleSubmit}
                       className="px-6 py-3 text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90 text-white"
                       style={{ backgroundColor: '#E54747' }}
-                >
-                  Submit
-                </button>
-              ) : (
-                <button
-                  onClick={handleNext}
+                    >
+                      Submit
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleNext}
                       className="px-6 py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-800 transition-all duration-200"
-                >
-                  Next
-                </button>
-              )}
-            </div>
+                    >
+                      Next
+                    </button>
+                  )}
+                </div>
               </>
             )}
           </div>
@@ -2869,5 +2571,13 @@ export default function RestorativeRecordBuilder() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function RestorativeRecordBuilder() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <RestorativeRecordBuilderForm />
+    </Suspense>
   );
 }

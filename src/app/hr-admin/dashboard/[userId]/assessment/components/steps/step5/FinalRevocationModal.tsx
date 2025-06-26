@@ -1,5 +1,5 @@
 import React from 'react';
-import PrintPreviewButton from './PrintButton';
+import PrintPreviewButton from "../../documents/PrintButton";
 
 interface FinalRevocationModalProps {
   show: boolean;
