@@ -1835,7 +1835,9 @@ export default function RestorativeRecordBuilder() {
   const dashboardSections = [
     { id: 'progress', label: 'Progress Tracking', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'progress' ? "dashboard_icons/progress-white.svg" : "dashboard_icons/progress.svg"} alt="Status Updates" className="w-5 h-5" />},
     { id: 'status', label: 'Status Updates', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'status' ? "dashboard_icons/status-updates-white.svg" : "dashboard_icons/status-updates.svg"} alt="Status Updates" className="w-5 h-5" />},
-    { id: 'notifications', label: 'Notifications', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'notifications' ? "dashboard_icons/notifications-white.svg" : "dashboard_icons/notifications.svg"} alt="Notifications" className="w-5 h-5" />}
+    { id: 'notifications', label: 'Notifications', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'notifications' ? "dashboard_icons/notifications-white.svg" : "dashboard_icons/notifications.svg"} alt="Notifications" className="w-5 h-5" />},
+    { id: 'legal-resources', label: 'Legal Resources', icon: "L", alt: "Legal Resources" },
+    { id: 'settings', label: 'Settings', icon: "S", alt: "Settings" }
   ];
 
   const handleDashboardNavigation = (section: string) => {
@@ -2772,6 +2774,11 @@ export default function RestorativeRecordBuilder() {
             </div>
           </div>
         );
+
+      case 'settings':
+        return (
+          null
+        )
 
       default:
         return null;
