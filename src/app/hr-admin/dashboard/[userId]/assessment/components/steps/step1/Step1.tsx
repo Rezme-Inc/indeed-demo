@@ -1,45 +1,74 @@
-import React from "react";
+import React, { useState } from "react";
 import { ChevronRight } from "lucide-react";
-import ConditionalJobOfferLetter from "../ConditionalJobOfferLetter";
-import CriticalInfoSection from "../CriticalInfoSection";
+import { useParams } from "next/navigation";
+import ConditionalJobOfferLetter from "./ConditionalJobOfferLetter";
+import CriticalInfoSection from "../../critical/CriticalInfoSection";
+import { useAssessmentStorageContext } from "@/context/AssessmentStorageProvider";
+import { useAssessmentSteps } from "@/context/useAssessmentSteps";
+import { useStep1Actions } from "@/hooks/useStep1Actions";
+import { useHRAdminProfile } from "@/hooks/useHRAdminProfile";
+import { useAssessmentStorage } from "@/hooks/useAssessmentStorage";
 
-interface Step1Props {
-  answers: Record<string, string>;
-  handleAnswer: (id: string, value: string) => void;
-  handleNextConditionalOffer: () => void;
-  showOfferModal: boolean;
-  setShowOfferModal: (v: boolean) => void;
-  offerForm: any;
-  editingField: string | null;
-  handleFieldEdit: (field: string) => void;
-  handleFieldChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleFieldBlur: () => void;
-  handleFieldKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-  allFieldsFilled: boolean;
-  handleSendOffer: () => void;
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-  currentStep: number;
-}
+const Step1: React.FC = () => {
+  const { answers, setAnswers, handleNext, currentStep } = useAssessmentSteps();
+  const [activeTab, setActiveTab] = useState("Legal");
+  const { step1Storage } = useAssessmentStorageContext();
+  const {
+    offerForm,
+    setOfferForm,
+    showOfferModal,
+    setShowOfferModal,
+    editingField,
+    setEditingField,
+    allFieldsFilled,
+  } = step1Storage;
 
-const Step1: React.FC<Step1Props> = ({
-  answers,
-  handleAnswer,
-  handleNextConditionalOffer,
-  showOfferModal,
-  setShowOfferModal,
-  offerForm,
-  editingField,
-  handleFieldEdit,
-  handleFieldChange,
-  handleFieldBlur,
-  handleFieldKeyDown,
-  allFieldsFilled,
-  handleSendOffer,
-  activeTab,
-  setActiveTab,
-  currentStep,
-}) => {
+  const { hrAdmin } = useHRAdminProfile();
+  const { userId } = useParams<{ userId: string }>();
+  const { setSavedOfferLetter } = useAssessmentStorage(userId as string);
+  const { sendOffer } = useStep1Actions(userId as string, step1Storage, {
+    hrAdminProfile: hrAdmin,
+    hrAdminId: hrAdmin?.id || null,
+    trackingActive: false,
+    assessmentSessionId: null,
+    setSavedOfferLetter,
+    handleNext,
+  });
+
+  const handleAnswer = (questionId: string, answer: string) => {
+    setAnswers((prev) => ({
+      ...prev,
+      [questionId]: answer,
+    }));
+  };
+
+  const handleNextConditionalOffer = () => {
+    if (answers.conditional_offer === "No") {
+      setShowOfferModal(true);
+    } else {
+      const externalOfferData = {
+        sentAt: new Date().toISOString(),
+        candidateId: userId,
+        hrAdminName: hrAdmin
+          ? `${hrAdmin.first_name} ${hrAdmin.last_name}`
+          : "",
+        company: hrAdmin?.company || "",
+        sentExternally: true,
+        timestamp: Date.now(),
+      };
+      setSavedOfferLetter(externalOfferData);
+      handleNext();
+    }
+  };
+
+  const handleFieldEdit = (field: string) => setEditingField(field);
+  const handleFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setOfferForm((prev) => ({ ...(prev as any), [e.target.name]: e.target.value }));
+  };
+  const handleFieldBlur = () => setEditingField(null);
+  const handleFieldKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") setEditingField(null);
+  };
   return (
     <>
       <div className="bg-white rounded-xl border border-gray-200 p-8 mb-8">
@@ -119,7 +148,7 @@ const Step1: React.FC<Step1Props> = ({
           handleFieldBlur={handleFieldBlur}
           handleFieldKeyDown={handleFieldKeyDown}
           allFieldsFilled={allFieldsFilled}
-          handleSendOffer={handleSendOffer}
+          handleSendOffer={sendOffer}
         />
       </div>
 

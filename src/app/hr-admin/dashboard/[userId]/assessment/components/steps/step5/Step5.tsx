@@ -1,47 +1,65 @@
-import React from "react";
+import React, { useState } from "react";
 import { CheckCircle2, Info } from "lucide-react";
-import CriticalInfoSection from "../CriticalInfoSection";
-import FinalRevocationModal from "../FinalRevocationModal";
+import CriticalInfoSection from "../../critical/CriticalInfoSection";
+import FinalRevocationModal from "./FinalRevocationModal";
+import FinalRevocationSuccessModal from "./FinalRevocationSuccessModal";
+import ExtendSuccessModal from "../../common/ExtendSuccessModal";
+import { useStep5Storage } from "@/hooks/useStep5Storage";
+import { useStep5Actions } from "@/hooks/useStep5Actions";
+import { useHireActions } from "@/hooks/useHireActions";
+import { useAssessmentStorage } from "@/hooks/useAssessmentStorage";
+import { useHRAdminProfile } from "@/hooks/useHRAdminProfile";
+import { useAssessmentSteps } from "@/context/useAssessmentSteps";
+import { useParams } from "next/navigation";
 
-interface Step5Props {
-  savedHireDecision: any;
-  handleProceedWithHire: () => void;
-  showFinalRevocationModal: boolean;
-  setShowFinalRevocationModal: (v: boolean) => void;
-  finalRevocationForm: any;
-  setFinalRevocationForm: (v: any) => void;
-  handleFinalRevocationFormChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => void;
-  handleFinalRevocationArrayChange: (
-    field: "convictions" | "jobDuties",
-    idx: number,
-    value: string
-  ) => void;
-  finalRevocationPreview: boolean;
-  setFinalRevocationPreview: (v: boolean) => void;
-  handleSendFinalRevocation: () => void;
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-  currentStep: number;
-}
-
-const Step5: React.FC<Step5Props> = ({
-  savedHireDecision,
-  handleProceedWithHire,
-  showFinalRevocationModal,
-  setShowFinalRevocationModal,
-  finalRevocationForm,
-  handleFinalRevocationFormChange,
-  setFinalRevocationForm,
-  handleFinalRevocationArrayChange,
-  finalRevocationPreview,
-  setFinalRevocationPreview,
-  handleSendFinalRevocation,
-  activeTab,
-  setActiveTab,
-  currentStep,
-}) => {
+const Step5: React.FC = () => {
+  const { userId } = useParams<{ userId: string }>();
+  const [activeTab, setActiveTab] = useState("Legal");
+  const { currentStep, setCurrentStep } = useAssessmentSteps();
+  const {
+    savedHireDecision,
+    setSavedHireDecision,
+    setSavedFinalRevocationNotice,
+  } = useAssessmentStorage(userId as string);
+  const step5Storage = useStep5Storage(userId as string);
+  const {
+    finalRevocationForm,
+    setFinalRevocationForm,
+    showFinalRevocationModal,
+    setShowFinalRevocationModal,
+    finalRevocationPreview,
+    setFinalRevocationPreview,
+    handleFinalRevocationFormChange,
+    handleFinalRevocationArrayChange,
+  } = step5Storage;
+  const { hrAdmin } = useHRAdminProfile();
+  const [showExtendSuccessModal, setShowExtendSuccessModal] = useState(false);
+  const [
+    showFinalRevocationSuccessModal,
+    setShowFinalRevocationSuccessModal,
+  ] = useState(false);
+  const { proceedWithHire } = useHireActions(userId as string, {
+    hrAdminProfile: hrAdmin,
+    hrAdminId: hrAdmin?.id || null,
+    trackingActive: false,
+    assessmentSessionId: null,
+    setSavedHireDecision,
+    setShowExtendSuccessModal,
+    currentStep,
+  });
+  const { sendFinalRevocation } = useStep5Actions(
+    userId as string,
+    step5Storage,
+    {
+      hrAdminProfile: hrAdmin,
+      hrAdminId: hrAdmin?.id || null,
+      trackingActive: false,
+      assessmentSessionId: null,
+      setSavedFinalRevocationNotice,
+      setShowFinalRevocationSuccessModal,
+      setCurrentStep,
+    },
+  );
   return (
     <>
       <div className="bg-white rounded-xl border border-gray-200 p-8 mb-8">
@@ -84,12 +102,12 @@ const Step5: React.FC<Step5Props> = ({
               className={`px-12 py-3 rounded-xl text-lg font-semibold border transition-all duration-200 w-full ${
                 savedHireDecision ? "border-green-500 text-green-700 bg-green-50" : "border-gray-300 text-gray-700 hover:bg-gray-50"
               }`}
-              onClick={() => (savedHireDecision ? undefined : handleProceedWithHire())}
-              disabled={!!savedHireDecision}
-              style={{ fontFamily: "Poppins, sans-serif" }}
-            >
-              {savedHireDecision ? "✓ Extend Offer of Employment (Selected)" : "Extend Offer of Employment"}
-            </button>
+            onClick={() => (savedHireDecision ? undefined : proceedWithHire())}
+            disabled={!!savedHireDecision}
+            style={{ fontFamily: "Poppins, sans-serif" }}
+          >
+            {savedHireDecision ? "✓ Extend Offer of Employment (Selected)" : "Extend Offer of Employment"}
+          </button>
             <button
               className={`px-12 py-3 rounded-xl text-lg font-semibold transition-all duration-200 w-full ${
                 savedHireDecision ? "opacity-50 cursor-not-allowed" : "text-white hover:opacity-90"
@@ -107,7 +125,7 @@ const Step5: React.FC<Step5Props> = ({
         show={showFinalRevocationModal}
         onClose={() => setShowFinalRevocationModal(false)}
         onPreview={() => setFinalRevocationPreview(true)}
-        onSend={handleSendFinalRevocation}
+        onSend={sendFinalRevocation}
         preview={finalRevocationPreview}
         form={finalRevocationForm}
         handleFormChange={handleFinalRevocationFormChange}
@@ -116,6 +134,22 @@ const Step5: React.FC<Step5Props> = ({
         setForm={setFinalRevocationForm}
       />
       <CriticalInfoSection activeTab={activeTab} setActiveTab={setActiveTab} currentStep={currentStep} />
+      <ExtendSuccessModal
+        open={showExtendSuccessModal}
+        onClose={() => setShowExtendSuccessModal(false)}
+        onReturn={() => {
+          setShowExtendSuccessModal(false);
+          window.location.assign("/hr-admin/dashboard");
+        }}
+      />
+      <FinalRevocationSuccessModal
+        open={showFinalRevocationSuccessModal}
+        onClose={() => setShowFinalRevocationSuccessModal(false)}
+        onReturn={() => {
+          setShowFinalRevocationSuccessModal(false);
+          window.location.assign("/hr-admin/dashboard");
+        }}
+      />
     </>
   );
 };

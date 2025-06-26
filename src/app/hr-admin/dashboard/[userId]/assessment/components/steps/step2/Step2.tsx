@@ -1,49 +1,67 @@
-import React from "react";
+import React, { useState } from "react";
 import { CheckCircle2, Info } from "lucide-react";
-import CriticalInfoSection from "../CriticalInfoSection";
-import IndividualizedAssessmentModal from "../IndividualizedAssessmentModal";
+import CriticalInfoSection from "../../critical/CriticalInfoSection";
+import IndividualizedAssessmentModal from "./IndividualizedAssessmentModal";
+import ExtendSuccessModal from "../../common/ExtendSuccessModal";
+import { useStep2Storage } from "@/hooks/useStep2Storage";
+import { useAssessmentMutators } from "@/hooks/useAssessmentMutators";
+import { useStep2Actions } from "@/hooks/useStep2Actions";
+import { useHireActions } from "@/hooks/useHireActions";
+import { useAssessmentStorage } from "@/hooks/useAssessmentStorage";
+import { useHRAdminProfile } from "@/hooks/useHRAdminProfile";
+import { useAssessmentSteps } from "@/context/useAssessmentSteps";
+import { useParams } from "next/navigation";
 
-interface Step2Props {
-  savedHireDecision: any;
-  setShowAssessmentModal: (v: boolean) => void;
-  showAssessmentModal: boolean;
-  assessmentForm: any;
-  handleAssessmentFormChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => void;
-  handleAssessmentArrayChange: (
-    field: "duties" | "activities",
-    idx: number,
-    value: string
-  ) => void;
-  assessmentPreview: boolean;
-  setAssessmentPreview: (v: boolean) => void;
-  handleSendAssessment: () => void;
-  onAddDuty: () => void;
-  onAddActivity: () => void;
-  handleProceedWithHire: () => void;
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-  currentStep: number;
-}
-
-const Step2: React.FC<Step2Props> = ({
-  savedHireDecision,
-  setShowAssessmentModal,
-  showAssessmentModal,
-  assessmentForm,
-  handleAssessmentFormChange,
-  handleAssessmentArrayChange,
-  assessmentPreview,
-  setAssessmentPreview,
-  handleSendAssessment,
-  onAddDuty,
-  onAddActivity,
-  handleProceedWithHire,
-  activeTab,
-  setActiveTab,
-  currentStep,
-}) => {
+const Step2: React.FC = () => {
+  const { userId } = useParams<{ userId: string }>();
+  const [activeTab, setActiveTab] = useState("Legal");
+  const { currentStep, setCurrentStep } = useAssessmentSteps();
+  const {
+    savedHireDecision,
+    setSavedHireDecision,
+    setSavedAssessment,
+  } = useAssessmentStorage(userId as string);
+  const step2Storage = useStep2Storage(userId as string);
+  const {
+    assessmentForm,
+    setAssessmentForm,
+    showAssessmentModal,
+    setShowAssessmentModal,
+    assessmentPreview,
+    setAssessmentPreview,
+    handleAssessmentFormChange,
+    handleAssessmentArrayChange,
+  } = step2Storage;
+  const { hrAdmin } = useHRAdminProfile();
+  const { addDuty, addActivity } = useAssessmentMutators(
+    setAssessmentForm,
+    (() => {}) as React.Dispatch<React.SetStateAction<any>>
+  );
+  const [showExtendSuccessModal, setShowExtendSuccessModal] = useState(false);
+  const [initialAssessmentResults, setInitialAssessmentResults] =
+    useState<any>(null);
+  const { sendAssessment } = useStep2Actions(
+    userId as string,
+    step2Storage,
+    {
+      hrAdminProfile: hrAdmin,
+      hrAdminId: hrAdmin?.id || null,
+      trackingActive: false,
+      assessmentSessionId: null,
+      setSavedAssessment,
+      setInitialAssessmentResults,
+      setCurrentStep,
+    }
+  );
+  const { proceedWithHire } = useHireActions(userId as string, {
+    hrAdminProfile: hrAdmin,
+    hrAdminId: hrAdmin?.id || null,
+    trackingActive: false,
+    assessmentSessionId: null,
+    setSavedHireDecision,
+    setShowExtendSuccessModal,
+    currentStep,
+  });
   return (
     <>
       <div className="bg-white rounded-xl border border-gray-200 p-8 mb-8">
@@ -105,13 +123,13 @@ const Step2: React.FC<Step2Props> = ({
           </button>
           <button
             className={`px-8 py-3 rounded-xl text-lg font-semibold border transition-all duration-200 ${savedHireDecision ? "border-green-500 text-green-700 bg-green-50" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}
-            onClick={() => (savedHireDecision ? undefined : handleProceedWithHire())}
+            onClick={() => (savedHireDecision ? undefined : proceedWithHire())}
             disabled={!!savedHireDecision}
             style={{ fontFamily: "Poppins, sans-serif" }}
           >
             {savedHireDecision ? "✓ Extend Offer of Employment (Selected)" : "Extend Offer of Employment"}
           </button>
-        </div>
+      </div>
       </div>
 
       {/* Critical Information Section */}
@@ -126,9 +144,17 @@ const Step2: React.FC<Step2Props> = ({
         handleAssessmentArrayChange={handleAssessmentArrayChange}
         assessmentPreview={assessmentPreview}
         setAssessmentPreview={setAssessmentPreview}
-        handleSendAssessment={handleSendAssessment}
-        onAddDuty={onAddDuty}
-        onAddActivity={onAddActivity}
+        handleSendAssessment={sendAssessment}
+        onAddDuty={addDuty}
+        onAddActivity={addActivity}
+      />
+      <ExtendSuccessModal
+        open={showExtendSuccessModal}
+        onClose={() => setShowExtendSuccessModal(false)}
+        onReturn={() => {
+          setShowExtendSuccessModal(false);
+          window.location.assign("/hr-admin/dashboard");
+        }}
       />
     </>
   );

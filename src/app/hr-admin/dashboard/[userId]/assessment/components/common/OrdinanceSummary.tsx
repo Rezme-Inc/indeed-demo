@@ -2,18 +2,24 @@
 
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
+interface OrdinanceSummaryProps {
+  open: boolean;
+  onClose: () => void;
+}
 
-export default function OrdinanceSummaryPage() {
-  const router = useRouter();
+export default function OrdinanceSummary({
+  open,
+  onClose,
+}: OrdinanceSummaryProps) {
+  if (!open) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-7xl mx-auto px-4">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex justify-center items-start py-8">
+      <div className="bg-white rounded-lg shadow-lg p-8 max-w-5xl w-full max-h-full overflow-y-auto">
         <Button
           variant="ghost"
           className="mb-8 flex items-center gap-2"
-          onClick={() => router.back()}
+          onClick={onClose}
         >
           <ChevronLeft className="h-4 w-4" />
           Back to Assessment

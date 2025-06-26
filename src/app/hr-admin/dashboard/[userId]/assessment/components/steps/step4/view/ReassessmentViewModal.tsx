@@ -1,6 +1,6 @@
 import React from "react";
-import DocumentMetadata from "../DocumentMetadata";
-import PrintPreviewButton from "../PrintButton";
+import DocumentMetadata from "../../../documents/DocumentMetadata";
+import PrintPreviewButton from "../../../documents/PrintButton";
 
 interface ReassessmentViewModalProps {
   open: boolean;

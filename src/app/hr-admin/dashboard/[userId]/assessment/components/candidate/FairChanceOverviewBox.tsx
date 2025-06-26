@@ -1,13 +1,10 @@
 import React from "react";
 import { Scale } from "lucide-react";
-import { useRouter } from "next/navigation";
-
 interface FairChanceOverviewBoxProps {
-  candidateId: string;
+  onViewSummary: () => void;
 }
 
-const FairChanceOverviewBox: React.FC<FairChanceOverviewBoxProps> = ({ candidateId }) => {
-  const router = useRouter();
+const FairChanceOverviewBox: React.FC<FairChanceOverviewBoxProps> = ({ onViewSummary }) => {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4 mb-8">
       <div className="flex flex-col items-center text-center space-y-3">
@@ -24,9 +21,7 @@ const FairChanceOverviewBox: React.FC<FairChanceOverviewBoxProps> = ({ candidate
           <button
             className="px-3 py-2 border border-gray-300 rounded-xl text-xs transition-all duration-200 hover:bg-gray-50"
             style={{ fontFamily: "Poppins, sans-serif", color: "#595959" }}
-            onClick={() =>
-              router.push(`/hr-admin/dashboard/${candidateId}/assessment/ordinance-summary`)
-            }
+            onClick={onViewSummary}
           >
             View Ordinance Summary
           </button>
