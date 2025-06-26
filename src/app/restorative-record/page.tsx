@@ -2129,37 +2129,6 @@ function RestorativeRecordBuilderForm() {
                         {/* Collapsible Detailed Status */}
                         {expandedHRAdmins[admin.id] && (
                           <div className="border-t p-4 space-y-4" style={{ borderColor: '#E5E5E5', backgroundColor: '#F8F9FA' }}>
-                            {/* Status Overview */}
-                            <div className="space-y-3">
-                              <h5 className="font-semibold text-black">Detailed Status Updates</h5>
-
-                              <div className="border-l-4 pl-4 py-3" style={{ borderColor: '#10B981' }}>
-                                <h6 className="font-semibold text-black">Record Submitted Successfully</h6>
-                                <p className="text-sm" style={{ color: '#595959' }}>
-                                  Your Restorative Record has been completed and is available for HR review.
-                                </p>
-                                <span className="text-xs" style={{ color: '#9CA3AF' }}>2 days ago</span>
-                              </div>
-
-                              <div className="border-l-4 pl-4 py-3" style={{ borderColor: '#F59E0B' }}>
-                                <h6 className="font-semibold text-black">Assessment in Progress: {admin.stepName}</h6>
-                                <p className="text-sm" style={{ color: '#595959' }}>
-                                  {admin.company} is currently preparing your written individualized assessment based on your Restorative Record.
-                                </p>
-                                <div className="mt-2 text-xs" style={{ color: '#9CA3AF' }}>
-                                  <p>Current Step: Step {admin.currentStep} of {admin.totalSteps} - {admin.stepName}</p>
-                                  <p>Updated: 1 day ago</p>
-                                </div>
-                              </div>
-
-                              <div className="border-l-4 pl-4 py-3" style={{ borderColor: '#E5E5E5' }}>
-                                <h6 className="font-semibold" style={{ color: '#9CA3AF' }}>Next: Preliminary Job Offer Revocation</h6>
-                                <p className="text-sm" style={{ color: '#9CA3AF' }}>
-                                  Pending completion of current assessment step.
-                                </p>
-                              </div>
-                            </div>
-
                             {/* Assessment Progress Bar */}
                             <div className="p-4 rounded-lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E5E5' }}>
                               <h6 className="font-semibold text-black mb-3">Assessment Progress</h6>
@@ -2169,9 +2138,9 @@ function RestorativeRecordBuilderForm() {
                                   <span className="font-medium" style={{ color: '#F59E0B' }}>{admin.progress}% Complete</span>
                                 </div>
                                 <div className="w-full bg-gray-200 rounded-full h-2">
-                                  <div
+                                  <div 
                                     className="h-2 rounded-full transition-all duration-300"
-                                    style={{
+                                    style={{ 
                                       backgroundColor: '#F59E0B',
                                       width: `${admin.progress}%`
                                     }}
@@ -2195,7 +2164,7 @@ function RestorativeRecordBuilderForm() {
                                         </button>
                                       </div>
                                     </div>
-                                    
+
                                     {/* Tooltip for Step 1 */}
                                     {activeTooltip === 'step1' && (
                                       <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-50 w-80 bg-white border rounded-lg shadow-xl p-4" style={{ borderColor: '#E5E5E5' }}>
@@ -2407,52 +2376,114 @@ function RestorativeRecordBuilderForm() {
                               </div>
                             </div>
 
-                            {/* Estimated Timeline */}
-                            <div className="p-4 border rounded-lg" style={{ borderColor: '#E5E5E5', backgroundColor: '#FFFFFF' }}>
-                              <h6 className="font-semibold text-black mb-2">Estimated Timeline & Important Deadlines</h6>
-                              <p className="text-sm mb-3" style={{ color: '#595959' }}>
-                                Your assessment is progressing well. Based on the current step, you can expect to hear back within 3-5 business days for the next update.
-                              </p>
+                            {/* Detailed Status Updates - Collapsible with new design */}
+                            <div className="border rounded-lg" style={{ borderColor: '#E5E5E5', backgroundColor: '#FFFFFF' }}>
+                              <div 
+                                className="flex items-center justify-between cursor-pointer p-4 hover:bg-gray-50 transition-all duration-200"
+                                onClick={() => toggleStatusUpdates(admin.id)}
+                              >
+                                <h6 className="font-semibold text-black">Detailed Status Updates</h6>
+                                {expandedStatusUpdates[admin.id] ? (
+                                  <ChevronDown className="h-5 w-5 text-gray-600" />
+                                ) : (
+                                  <ChevronRight className="h-5 w-5 text-gray-600" />
+                                )}
+                              </div>
 
-                              {/* Important 5-day deadline notice */}
-                              <div className="p-3 rounded-lg mb-3" style={{ backgroundColor: '#FEF3C7', border: '1px solid #F59E0B' }}>
-                                <div className="flex items-start gap-2">
-                                  <span className="text-lg">⚠️</span>
-                                  <div>
-                                    <p className="font-semibold text-black mb-1">Important: 5-Day Response Window</p>
-                                    <p className="text-sm" style={{ color: '#92400E' }}>
-                                      You have <strong>5 business days</strong> from the completion of each assessment step to:
-                                    </p>
-                                    <ul className="text-sm mt-2 ml-4 list-disc" style={{ color: '#92400E' }}>
-                                      <li>Update or add information to your Restorative Record</li>
-                                      <li>Challenge the accuracy of any background check report</li>
-                                      <li>Request additional time if needed</li>
-                                    </ul>
-                                    <p className="text-xs mt-2" style={{ color: '#78350F' }}>
-                                      <strong>Deadline for current step:</strong> 3 days remaining (expires January 15, 2024)
-                                    </p>
+                              {expandedStatusUpdates[admin.id] && (
+                                <div className="p-4 border-t" style={{ borderColor: '#E5E5E5' }}>
+                                  <div className="space-y-3">
+                                    <div className="border-l-4 pl-4 py-3" style={{ borderColor: '#10B981' }}>
+                                      <h6 className="font-semibold text-black">Record Submitted Successfully</h6>
+                                      <p className="text-sm" style={{ color: '#595959' }}>
+                                        Your Restorative Record has been completed and is available for HR review.
+                                      </p>
+                                      <span className="text-xs" style={{ color: '#9CA3AF' }}>2 days ago</span>
+                                    </div>
+
+                                    <div className="border-l-4 pl-4 py-3" style={{ borderColor: '#F59E0B' }}>
+                                      <h6 className="font-semibold text-black">Assessment in Progress: {admin.stepName}</h6>
+                                      <p className="text-sm" style={{ color: '#595959' }}>
+                                        {admin.company} is currently preparing your written individualized assessment based on your Restorative Record.
+                                      </p>
+                                      <div className="mt-2 text-xs" style={{ color: '#9CA3AF' }}>
+                                        <p>Current Step: Step {admin.currentStep} of {admin.totalSteps} - {admin.stepName}</p>
+                                        <p>Updated: 1 day ago</p>
+                                      </div>
+                                    </div>
+
+                                    <div className="border-l-4 pl-4 py-3" style={{ borderColor: '#E5E5E5' }}>
+                                      <h6 className="font-semibold" style={{ color: '#9CA3AF' }}>Next: Preliminary Job Offer Revocation</h6>
+                                      <p className="text-sm" style={{ color: '#9CA3AF' }}>
+                                        Pending completion of current assessment step.
+                                      </p>
+                                    </div>
                                   </div>
                                 </div>
+                              )}
+                            </div>
+
+                            {/* Estimated Timeline & Important Deadlines - Collapsible */}
+                            <div className="border rounded-lg" style={{ borderColor: '#E5E5E5', backgroundColor: '#FFFFFF' }}>
+                              <div 
+                                className="flex items-center justify-between cursor-pointer p-4 hover:bg-gray-50 transition-all duration-200"
+                                onClick={() => toggleTimeline(admin.id)}
+                              >
+                                <h6 className="font-semibold text-black">Estimated Timeline & Important Deadlines</h6>
+                                {expandedTimeline[admin.id] ? (
+                                  <ChevronDown className="h-5 w-5 text-gray-600" />
+                                ) : (
+                                  <ChevronRight className="h-5 w-5 text-gray-600" />
+                                )}
                               </div>
 
-                              <div className="flex flex-wrap gap-2">
-                                <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: '#E3F2FD', color: '#1976D2' }}>
-                                  Next Update Expected: Within 3 days
-                                </span>
-                                <button
-                                  onClick={() => handleBuilderNavigation(0)}
-                                  className="text-xs px-2 py-1 rounded transition-all duration-200 hover:opacity-90"
-                                  style={{ backgroundColor: '#E54747', color: '#FFFFFF' }}
-                                >
-                                  Update Record Now
-                                </button>
-                                <button
-                                  className="text-xs px-2 py-1 rounded border transition-all duration-200 hover:opacity-90"
-                                  style={{ borderColor: '#E54747', color: '#E54747', backgroundColor: 'transparent' }}
-                                >
-                                  Request Extension
-                                </button>
-                              </div>
+                              {expandedTimeline[admin.id] && (
+                                <div className="p-4 border-t" style={{ borderColor: '#E5E5E5' }}>
+                                  <p className="text-sm mb-3" style={{ color: '#595959' }}>
+                                    Your assessment is progressing well. Based on the current step, you can expect to hear back within 3-5 business days for the next update.
+                                  </p>
+
+                                  {/* Important 5-day deadline notice */}
+                                  <div className="p-3 rounded-lg mb-3" style={{ backgroundColor: '#FEF3C7', border: '1px solid #F59E0B' }}>
+                                    <div className="flex items-start gap-2">
+                                      <span className="text-lg">⚠️</span>
+                                      <div>
+                                        <p className="font-semibold text-black mb-1">Important: 5-Day Response Window</p>
+                                        <p className="text-sm" style={{ color: '#92400E' }}>
+                                          You have <strong>5 business days</strong> from the completion of each assessment step to:
+                                        </p>
+                                        <ul className="text-sm mt-2 ml-4 list-disc" style={{ color: '#92400E' }}>
+                                          <li>Update or add information to your Restorative Record</li>
+                                          <li>Challenge the accuracy of any background check report</li>
+                                          <li>Request additional time if needed</li>
+                                        </ul>
+                                        <p className="text-xs mt-2" style={{ color: '#78350F' }}>
+                                          <strong>Deadline for current step:</strong> 3 days remaining (expires January 15, 2024)
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex flex-wrap gap-2">
+                                    <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: '#E3F2FD', color: '#1976D2' }}>
+                                      Next Update Expected: Within 3 days
+                                    </span>
+                                    <button
+                                      onClick={() => handleBuilderNavigation(0)}
+                                      className="text-xs px-2 py-1 rounded transition-all duration-200 hover:opacity-90"
+                                      style={{ backgroundColor: '#E54747', color: '#FFFFFF' }}
+                                    >
+                                      Update Record Now
+                                    </button>
+                                    <button
+                                      className="text-xs px-2 py-1 rounded border transition-all duration-200 hover:opacity-90"
+                                      style={{ borderColor: '#E54747', color: '#E54747', backgroundColor: 'transparent' }}
+                                    >
+                                      Request Extension
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
