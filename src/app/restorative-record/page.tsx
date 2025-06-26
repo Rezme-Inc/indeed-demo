@@ -2,7 +2,7 @@
 
 import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, Suspense, useRef } from "react";
 import "react-day-picker/dist/style.css";
 import { toast } from "react-hot-toast";
 import { ChevronDown, ChevronRight, Info } from "lucide-react";
@@ -59,7 +59,7 @@ import {
 // Import hooks
 import { useFormCRUD } from "./hooks/useFormCRUD";
 
-export default function RestorativeRecordBuilder() {
+function RestorativeRecordBuilderForm() {
   const router = useRouter();
   const [currentCategory, setCurrentCategory] = useState(0);
   const [currentView, setCurrentView] = useState<'dashboard' | 'builder'>('dashboard');
@@ -348,7 +348,7 @@ export default function RestorativeRecordBuilder() {
         const stepName = getCurrentStepName(user.id);
         const progress = getProgressPercentage(user.id);
         const status = getAssessmentStatus(user.id);
-        
+
         return {
           ...profile,
           granted_at: permission?.granted_at,
@@ -362,22 +362,8 @@ export default function RestorativeRecordBuilder() {
       }) || [];
 
       setConnectedHRAdmins(connectedAdmins);
-
-      // Initialize collapsible sections as collapsed by default
-      const initialStatusState: {[key: string]: boolean} = {};
-      const initialTimelineState: {[key: string]: boolean} = {};
-      
-      connectedAdmins.forEach(admin => {
-        initialStatusState[admin.id] = false; // Start collapsed
-        initialTimelineState[admin.id] = false; // Start collapsed
-      });
-      
-      setExpandedStatusUpdates(initialStatusState);
-      setExpandedTimeline(initialTimelineState);
-
     } catch (error) {
       console.error("Error fetching connected HR admins:", error);
-      setConnectedHRAdmins([]);
     }
   };
 
@@ -436,7 +422,7 @@ export default function RestorativeRecordBuilder() {
     const notifs: Notification[] = [];
 
     // Recent new connections
-    const recentConnections = admins.filter(admin => 
+    const recentConnections = admins.filter(admin =>
       admin.hasAccess && admin.granted_at &&
       new Date(admin.granted_at).getTime() > Date.now() - (7 * 24 * 60 * 60 * 1000) // 7 days
     );
@@ -455,7 +441,7 @@ export default function RestorativeRecordBuilder() {
 
     // Potential requests (HR admins without access - simulate pending requests)
     const potentialRequests = admins.filter(admin => !admin.hasAccess);
-    
+
     // Show a few as "simulated requests" for demo purposes
     potentialRequests.slice(0, 2).forEach(admin => {
       notifs.push({
@@ -480,7 +466,7 @@ export default function RestorativeRecordBuilder() {
     if (!user) return;
 
     setProcessingPermission(adminId);
-    
+
     try {
       if (grant) {
         // Check if permission already exists
@@ -530,7 +516,7 @@ export default function RestorativeRecordBuilder() {
 
       // Refresh data
       await Promise.all([fetchConnectedHRAdmins(), fetchAllHRAdmins()]);
-      
+
     } catch (error) {
       console.error("Error updating HR admin permission:", error);
       alert("Failed to update HR admin permission. Please try again.");
@@ -549,7 +535,7 @@ export default function RestorativeRecordBuilder() {
   // Function to refresh community engagement data
   const refreshEngagements = async () => {
     if (!user) return;
-    
+
     const { data: engagementData } = await supabase
       .from("community_engagements")
       .select("*")
@@ -603,7 +589,7 @@ export default function RestorativeRecordBuilder() {
   useEffect(() => {
     async function fetchEngagements() {
       if (!user) return;
-      
+
       const { data: engagementData } = await supabase
         .from("community_engagements")
         .select("*")
@@ -678,7 +664,7 @@ export default function RestorativeRecordBuilder() {
   // Function to refresh microcredentials data
   const refreshMicrocredentials = async () => {
     if (!user) return;
-    
+
     const { data: microData } = await supabase
       .from("micro_credentials")
       .select("*")
@@ -706,7 +692,7 @@ export default function RestorativeRecordBuilder() {
   // Function to refresh mentors data
   const refreshMentors = async () => {
     if (!user) return;
-    
+
     const { data: mentorsData } = await supabase
       .from("mentors")
       .select("*")
@@ -733,7 +719,7 @@ export default function RestorativeRecordBuilder() {
   // Function to refresh employment data
   const refreshEmployment = async () => {
     if (!user) return;
-    
+
     const { data: employmentData } = await supabase
       .from("employment")
       .select("*")
@@ -762,7 +748,7 @@ export default function RestorativeRecordBuilder() {
   // Function to refresh education data
   const refreshEducation = async () => {
     if (!user) return;
-    
+
     const { data: educationData } = await supabase
       .from("education")
       .select("*")
@@ -822,7 +808,7 @@ export default function RestorativeRecordBuilder() {
   useEffect(() => {
     async function fetchMicrocredentials() {
       if (!user) return;
-      
+
       const { data: microData } = await supabase
         .from("micro_credentials")
         .select("*")
@@ -841,14 +827,14 @@ export default function RestorativeRecordBuilder() {
           file: null,
           filePreview: remote.file_url || "",
         }));
-        
+
         // Merge with existing local data if any
         const existingIds = microHook.items.map(item => item.id);
         const newItems = mappedMicrocredentials.filter(item => !existingIds.includes(item.id));
         microHook.setItems([...microHook.items, ...newItems]);
       }
     }
-    
+
     if (currentCategory === categories.findIndex(cat => cat === "microcredentials") && user) {
       fetchMicrocredentials();
     }
@@ -955,7 +941,7 @@ export default function RestorativeRecordBuilder() {
   // Function to refresh hobbies data
   const refreshHobbies = async () => {
     if (!user) return;
-    
+
     const { data: hobbiesData } = await supabase
       .from("hobbies")
       .select("*")
@@ -1005,7 +991,7 @@ export default function RestorativeRecordBuilder() {
   useEffect(() => {
     async function fetchHobbies() {
       if (!user) return;
-      
+
       const { data: hobbiesData } = await supabase
         .from("hobbies")
         .select("*")
@@ -1021,14 +1007,14 @@ export default function RestorativeRecordBuilder() {
           file: null,
           filePreview: remote.file_url || "",
         }));
-        
+
         // Merge with existing local data if any
         const existingIds = hobbiesHook.items.map(item => item.id);
         const newItems = mappedHobbies.filter(item => !existingIds.includes(item.id));
         hobbiesHook.setItems([...hobbiesHook.items, ...newItems]);
       }
     }
-    
+
     if (currentCategory === categories.findIndex(cat => cat === "hobbies") && user) {
       fetchHobbies();
     }
@@ -1038,7 +1024,7 @@ export default function RestorativeRecordBuilder() {
   useEffect(() => {
     async function fetchMentors() {
       if (!user) return;
-      
+
       const { data: mentorsData } = await supabase
         .from("mentors")
         .select("*")
@@ -1056,14 +1042,14 @@ export default function RestorativeRecordBuilder() {
           website: remote.website || "",
           narrative: remote.narrative || "",
         }));
-        
+
         // Merge with existing local data if any
         const existingIds = mentorHook.items.map(item => item.id);
         const newItems = mappedMentors.filter(item => !existingIds.includes(item.id));
         mentorHook.setItems([...mentorHook.items, ...newItems]);
       }
     }
-    
+
     if (currentCategory === categories.findIndex(cat => cat === "mentors") && user) {
       fetchMentors();
     }
@@ -1073,7 +1059,7 @@ export default function RestorativeRecordBuilder() {
   useEffect(() => {
     async function fetchEmployment() {
       if (!user) return;
-      
+
       const { data: employmentData } = await supabase
         .from("employment")
         .select("*")
@@ -1093,14 +1079,14 @@ export default function RestorativeRecordBuilder() {
           currentlyEmployed: remote.currently_employed || false,
           employedWhileIncarcerated: remote.incarcerated || false,
         }));
-        
+
         // Merge with existing local data if any
         const existingIds = employmentHook.items.map(item => item.id);
         const newItems = mappedEmployment.filter(item => !existingIds.includes(item.id));
         employmentHook.setItems([...employmentHook.items, ...newItems]);
       }
     }
-    
+
     if (currentCategory === categories.findIndex(cat => cat === "employment-history") && user) {
       fetchEmployment();
     }
@@ -1110,7 +1096,7 @@ export default function RestorativeRecordBuilder() {
   useEffect(() => {
     async function fetchEducation() {
       if (!user) return;
-      
+
       const { data: educationData } = await supabase
         .from("education")
         .select("*")
@@ -1131,14 +1117,14 @@ export default function RestorativeRecordBuilder() {
           file: null,
           filePreview: remote.file_url || "",
         }));
-        
+
         // Merge with existing local data if any
         const existingIds = educationHook.items.map(item => item.id);
         const newItems = mappedEducation.filter(item => !existingIds.includes(item.id));
         educationHook.setItems([...educationHook.items, ...newItems]);
       }
     }
-    
+
     if (currentCategory === categories.findIndex(cat => cat === "education") && user) {
       fetchEducation();
     }
@@ -1147,20 +1133,20 @@ export default function RestorativeRecordBuilder() {
   // Function to refresh rehab programs data
   const refreshRehabPrograms = async () => {
     console.log("🔄 refreshRehabPrograms called");
-    
+
     if (!user) {
       console.log("❌ No user, skipping refresh");
       return;
     }
-    
+
     console.log("📥 Fetching from Supabase...");
     const { data: rehabData } = await supabase
       .from("rehab_programs")
       .select("*")
       .eq("user_id", user.id);
-      
+
     console.log("📥 Fetched data:", rehabData);
-    
+
     if (rehabData && Array.isArray(rehabData)) {
       // Map Supabase fields to form fields
       const mappedRehabPrograms = rehabData.map((remote) => ({
@@ -1174,7 +1160,7 @@ export default function RestorativeRecordBuilder() {
         file: null,
         filePreview: remote.file_url || "",
       }));
-      
+
       console.log("🗂️ Mapped programs:", mappedRehabPrograms);
       rehabHook.setItems(mappedRehabPrograms);
       console.log("✅ Items set, current count:", mappedRehabPrograms.length);
@@ -1182,7 +1168,7 @@ export default function RestorativeRecordBuilder() {
       console.log("📭 No data found, clearing items");
       rehabHook.setItems([]);
     }
-    
+
     // Signal that data has been updated for cross-page synchronization
     localStorage.setItem('restorative-record-updated', Date.now().toString());
     console.log("🔄 Refresh complete");
@@ -1220,7 +1206,7 @@ export default function RestorativeRecordBuilder() {
   useEffect(() => {
     async function fetchRehabProgramsOnMount() {
       if (!user) return;
-      
+
       const { data: rehabData } = await supabase
         .from("rehab_programs")
         .select("*")
@@ -1238,24 +1224,24 @@ export default function RestorativeRecordBuilder() {
           file: null,
           filePreview: remote.file_url || "",
         }));
-        
+
         // Get current local items
         const currentItems = rehabHook.items || [];
-        
+
         // Find unsaved local items (those without an ID that exists in Supabase)
         const savedIds = new Set(mappedRehabPrograms.map(item => item.id));
         const unsavedLocalItems = currentItems.filter(item => !savedIds.has(item.id));
-        
+
         // Merge saved data from Supabase with unsaved local items
         const mergedItems = [
           ...mappedRehabPrograms, // All saved items from Supabase
           ...unsavedLocalItems    // Any unsaved local items
         ];
-        
+
         rehabHook.setItems(mergedItems);
       }
     }
-    
+
     fetchRehabProgramsOnMount();
   }, [user]);
 
@@ -1263,7 +1249,7 @@ export default function RestorativeRecordBuilder() {
   useEffect(() => {
     async function fetchRehabPrograms() {
       if (!user) return;
-      
+
       const { data: rehabData } = await supabase
         .from("rehab_programs")
         .select("*")
@@ -1281,20 +1267,20 @@ export default function RestorativeRecordBuilder() {
           file: null,
           filePreview: remote.file_url || "",
         }));
-        
+
         // Get current local items
         const currentItems = rehabHook.items || [];
-        
+
         // Find unsaved local items (those without an ID that exists in Supabase)
         const savedIds = new Set(mappedRehabPrograms.map(item => item.id));
         const unsavedLocalItems = currentItems.filter(item => !savedIds.has(item.id));
-        
+
         // Merge saved data from Supabase with unsaved local items
         const mergedItems = [
           ...mappedRehabPrograms, // All saved items from Supabase
           ...unsavedLocalItems    // Any unsaved local items
         ];
-        
+
         rehabHook.setItems(mergedItems);
       } else {
         // If no data in Supabase, keep any local unsaved items
@@ -1302,7 +1288,7 @@ export default function RestorativeRecordBuilder() {
         rehabHook.setItems(currentItems);
       }
     }
-    
+
     if (currentCategory === categories.findIndex(cat => cat === "rehabilitative-programs") && user) {
       fetchRehabPrograms();
     }
@@ -1446,7 +1432,7 @@ export default function RestorativeRecordBuilder() {
   // Save rehab programs specifically to Supabase
   const saveRehabProgramsToSupabase = async (formData: RehabProgram & { id: string }, isEdit: boolean) => {
     console.log("🚀 saveRehabProgramsToSupabase called with:", { formData, isEdit });
-    
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -1473,7 +1459,7 @@ export default function RestorativeRecordBuilder() {
     try {
       // Import upload function
       const { uploadFileToSupabase } = await import("./utils");
-      
+
       let fileUrl = null;
       let fileName = null;
       let fileSize = null;
@@ -1518,9 +1504,9 @@ export default function RestorativeRecordBuilder() {
         file_name: fileName,
         file_size: fileSize,
       };
-      
+
       console.log("💾 Data to save:", dataToSave);
-      
+
       const { error: rehabProgramError } = await supabase
         .from("rehab_programs")
         .upsert(dataToSave);
@@ -1920,7 +1906,7 @@ export default function RestorativeRecordBuilder() {
     const steps = [
       'Not Started',
       'Conditional Job Offer',
-      'Individualized Assessment', 
+      'Individualized Assessment',
       'Preliminary Job Offer Revocation',
       'Individual Reassessment',
       'Final Revocation Notice'
@@ -1944,20 +1930,20 @@ export default function RestorativeRecordBuilder() {
     // Calculate completion percentage based on sections completed
     const totalSections = categories.length;
     let completedSections = 0;
-    
+
     // This would need to be enhanced with actual data checking
     // For now, we'll simulate based on current category
     completedSections = Math.min(currentCategory + 1, totalSections);
-    
+
     return Math.round((completedSections / totalSections) * 100);
   };
 
   const renderDashboardContent = () => {
     const progress = calculateProgress();
-    
+
     switch (activeDashboardSection) {
       case 'progress':
-  return (
+        return (
           <div className="space-y-6">
             {/* Quick Actions */}
             <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
@@ -1999,7 +1985,8 @@ export default function RestorativeRecordBuilder() {
               </div>
             </div>
             <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
-              <h2 className="text-2xl font-semibold text-black mb-4">Your Restorative Record Progress</h2>              
+              <h2 className="text-2xl font-semibold text-black mb-4">Your Restorative Record Progress</h2>
+
               {/* Progress Overview */}
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
@@ -2007,9 +1994,9 @@ export default function RestorativeRecordBuilder() {
                   <span className="text-sm font-medium" style={{ color: '#E54747' }}>{progress}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div 
+                  <div
                     className="h-3 rounded-full transition-all duration-300"
-                    style={{ 
+                    style={{
                       backgroundColor: '#E54747',
                       width: `${progress}%`
                     }}
@@ -2048,6 +2035,43 @@ export default function RestorativeRecordBuilder() {
                 ))}
               </div>
             </div>
+
+            {/* Quick Actions */}
+            <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
+              <h3 className="text-lg font-semibold text-black mb-4">Quick Actions</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button
+                  onClick={() => handleBuilderNavigation(currentCategory)}
+                  className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
+                  style={{ borderColor: '#E5E5E5' }}
+                >
+                  <span className="flex justify-center items-center mb-2">
+                    <img src="dashboard_icons/continue-building.svg" alt="Progress" className="w-10 h-10" />
+                  </span>
+                  <span className="font-medium text-black">Continue Building</span>
+                </button>
+                <button
+                  onClick={handleViewProfile}
+                  className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
+                  style={{ borderColor: '#E5E5E5' }}
+                >
+                  <span className="flex justify-center items-center mb-2">
+                    <img src="dashboard_icons/preview.svg" alt="Preview" className="w-10 h-10" />
+                  </span>
+                  <span className="font-medium text-black">Preview Record</span>
+                </button>
+                <button
+                  onClick={() => handleDashboardNavigation('status')}
+                  className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
+                  style={{ borderColor: '#E5E5E5' }}
+                >
+                  <span className="flex justify-center items-center mb-2">
+                    <img src="dashboard_icons/check-status.svg" alt="Check Status" className="w-10 h-10" />
+                  </span>
+                  <span className="font-medium text-black">Check Status</span>
+                </button>
+              </div>
+            </div>
           </div>
         );
 
@@ -2056,7 +2080,7 @@ export default function RestorativeRecordBuilder() {
           <div className="space-y-6">
             <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
               <h2 className="text-2xl font-semibold text-black mb-4">HR Admin Status Updates</h2>
-              
+
               {/* Connected HR Admins */}
               <div className="mb-8">
                 <h3 className="text-lg font-semibold text-black mb-4">Connected HR Admins</h3>
@@ -2105,6 +2129,37 @@ export default function RestorativeRecordBuilder() {
                         {/* Collapsible Detailed Status */}
                         {expandedHRAdmins[admin.id] && (
                           <div className="border-t p-4 space-y-4" style={{ borderColor: '#E5E5E5', backgroundColor: '#F8F9FA' }}>
+                            {/* Status Overview */}
+                            <div className="space-y-3">
+                              <h5 className="font-semibold text-black">Detailed Status Updates</h5>
+
+                              <div className="border-l-4 pl-4 py-3" style={{ borderColor: '#10B981' }}>
+                                <h6 className="font-semibold text-black">Record Submitted Successfully</h6>
+                                <p className="text-sm" style={{ color: '#595959' }}>
+                                  Your Restorative Record has been completed and is available for HR review.
+                                </p>
+                                <span className="text-xs" style={{ color: '#9CA3AF' }}>2 days ago</span>
+                              </div>
+
+                              <div className="border-l-4 pl-4 py-3" style={{ borderColor: '#F59E0B' }}>
+                                <h6 className="font-semibold text-black">Assessment in Progress: {admin.stepName}</h6>
+                                <p className="text-sm" style={{ color: '#595959' }}>
+                                  {admin.company} is currently preparing your written individualized assessment based on your Restorative Record.
+                                </p>
+                                <div className="mt-2 text-xs" style={{ color: '#9CA3AF' }}>
+                                  <p>Current Step: Step {admin.currentStep} of {admin.totalSteps} - {admin.stepName}</p>
+                                  <p>Updated: 1 day ago</p>
+                                </div>
+                              </div>
+
+                              <div className="border-l-4 pl-4 py-3" style={{ borderColor: '#E5E5E5' }}>
+                                <h6 className="font-semibold" style={{ color: '#9CA3AF' }}>Next: Preliminary Job Offer Revocation</h6>
+                                <p className="text-sm" style={{ color: '#9CA3AF' }}>
+                                  Pending completion of current assessment step.
+                                </p>
+                              </div>
+                            </div>
+
                             {/* Assessment Progress Bar */}
                             <div className="p-4 rounded-lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E5E5' }}>
                               <h6 className="font-semibold text-black mb-3">Assessment Progress</h6>
@@ -2114,9 +2169,9 @@ export default function RestorativeRecordBuilder() {
                                   <span className="font-medium" style={{ color: '#F59E0B' }}>{admin.progress}% Complete</span>
                                 </div>
                                 <div className="w-full bg-gray-200 rounded-full h-2">
-                                  <div 
+                                  <div
                                     className="h-2 rounded-full transition-all duration-300"
-                                    style={{ 
+                                    style={{
                                       backgroundColor: '#F59E0B',
                                       width: `${admin.progress}%`
                                     }}
@@ -2352,114 +2407,52 @@ export default function RestorativeRecordBuilder() {
                               </div>
                             </div>
 
-                            {/* Detailed Status Updates - Collapsible with new design */}
-                            <div className="border rounded-lg" style={{ borderColor: '#E5E5E5', backgroundColor: '#FFFFFF' }}>
-                              <div 
-                                className="flex items-center justify-between cursor-pointer p-4 hover:bg-gray-50 transition-all duration-200"
-                                onClick={() => toggleStatusUpdates(admin.id)}
-                              >
-                                <h6 className="font-semibold text-black">Detailed Status Updates</h6>
-                                {expandedStatusUpdates[admin.id] ? (
-                                  <ChevronDown className="h-5 w-5 text-gray-600" />
-                                ) : (
-                                  <ChevronRight className="h-5 w-5 text-gray-600" />
-                                )}
-                              </div>
-                              
-                              {expandedStatusUpdates[admin.id] && (
-                                <div className="p-4 border-t" style={{ borderColor: '#E5E5E5' }}>
-                                  <div className="space-y-3">
-                                    <div className="border-l-4 pl-4 py-3" style={{ borderColor: '#10B981' }}>
-                                      <h6 className="font-semibold text-black">Record Submitted Successfully</h6>
-                                      <p className="text-sm" style={{ color: '#595959' }}>
-                                        Your Restorative Record has been completed and is available for HR review.
-                                      </p>
-                                      <span className="text-xs" style={{ color: '#9CA3AF' }}>2 days ago</span>
-                                    </div>
-                                    
-                                    <div className="border-l-4 pl-4 py-3" style={{ borderColor: '#F59E0B' }}>
-                                      <h6 className="font-semibold text-black">Assessment in Progress: {admin.stepName}</h6>
-                                      <p className="text-sm" style={{ color: '#595959' }}>
-                                        {admin.company} is currently preparing your written individualized assessment based on your Restorative Record.
-                                      </p>
-                                      <div className="mt-2 text-xs" style={{ color: '#9CA3AF' }}>
-                                        <p>Current Step: Step {admin.currentStep} of {admin.totalSteps} - {admin.stepName}</p>
-                                        <p>Updated: 1 day ago</p>
-                                      </div>
-                                    </div>
-                                    
-                                    <div className="border-l-4 pl-4 py-3" style={{ borderColor: '#E5E5E5' }}>
-                                      <h6 className="font-semibold" style={{ color: '#9CA3AF' }}>Next: Preliminary Job Offer Revocation</h6>
-                                      <p className="text-sm" style={{ color: '#9CA3AF' }}>
-                                        Pending completion of current assessment step.
-                                      </p>
-                                    </div>
+                            {/* Estimated Timeline */}
+                            <div className="p-4 border rounded-lg" style={{ borderColor: '#E5E5E5', backgroundColor: '#FFFFFF' }}>
+                              <h6 className="font-semibold text-black mb-2">Estimated Timeline & Important Deadlines</h6>
+                              <p className="text-sm mb-3" style={{ color: '#595959' }}>
+                                Your assessment is progressing well. Based on the current step, you can expect to hear back within 3-5 business days for the next update.
+                              </p>
+
+                              {/* Important 5-day deadline notice */}
+                              <div className="p-3 rounded-lg mb-3" style={{ backgroundColor: '#FEF3C7', border: '1px solid #F59E0B' }}>
+                                <div className="flex items-start gap-2">
+                                  <span className="text-lg">⚠️</span>
+                                  <div>
+                                    <p className="font-semibold text-black mb-1">Important: 5-Day Response Window</p>
+                                    <p className="text-sm" style={{ color: '#92400E' }}>
+                                      You have <strong>5 business days</strong> from the completion of each assessment step to:
+                                    </p>
+                                    <ul className="text-sm mt-2 ml-4 list-disc" style={{ color: '#92400E' }}>
+                                      <li>Update or add information to your Restorative Record</li>
+                                      <li>Challenge the accuracy of any background check report</li>
+                                      <li>Request additional time if needed</li>
+                                    </ul>
+                                    <p className="text-xs mt-2" style={{ color: '#78350F' }}>
+                                      <strong>Deadline for current step:</strong> 3 days remaining (expires January 15, 2024)
+                                    </p>
                                   </div>
                                 </div>
-                              )}
-                            </div>
-
-                            {/* Estimated Timeline & Important Deadlines - Collapsible */}
-                            <div className="border rounded-lg" style={{ borderColor: '#E5E5E5', backgroundColor: '#FFFFFF' }}>
-                              <div 
-                                className="flex items-center justify-between cursor-pointer p-4 hover:bg-gray-50 transition-all duration-200"
-                                onClick={() => toggleTimeline(admin.id)}
-                              >
-                                <h6 className="font-semibold text-black">Estimated Timeline & Important Deadlines</h6>
-                                {expandedTimeline[admin.id] ? (
-                                  <ChevronDown className="h-5 w-5 text-gray-600" />
-                                ) : (
-                                  <ChevronRight className="h-5 w-5 text-gray-600" />
-                                )}
                               </div>
-                              
-                              {expandedTimeline[admin.id] && (
-                                <div className="p-4 border-t" style={{ borderColor: '#E5E5E5' }}>
-                                  <p className="text-sm mb-3" style={{ color: '#595959' }}>
-                                    Your assessment is progressing well. Based on the current step, you can expect to hear back within 3-5 business days for the next update.
-                                  </p>
-                                  
-                                  {/* Important 5-day deadline notice */}
-                                  <div className="p-3 rounded-lg mb-3" style={{ backgroundColor: '#FEF3C7', border: '1px solid #F59E0B' }}>
-                                    <div className="flex items-start gap-2">
-                                      <span className="text-lg">⚠️</span>
-                                      <div>
-                                        <p className="font-semibold text-black mb-1">Important: 5-Day Response Window</p>
-                                        <p className="text-sm" style={{ color: '#92400E' }}>
-                                          You have <strong>5 business days</strong> from the completion of each assessment step to:
-                                        </p>
-                                        <ul className="text-sm mt-2 ml-4 list-disc" style={{ color: '#92400E' }}>
-                                          <li>Update or add information to your Restorative Record</li>
-                                          <li>Challenge the accuracy of any background check report</li>
-                                          <li>Request additional time if needed</li>
-                                        </ul>
-                                        <p className="text-xs mt-2" style={{ color: '#78350F' }}>
-                                          <strong>Deadline for current step:</strong> 3 days remaining (expires January 15, 2024)
-                                        </p>
-                                      </div>
-                                    </div>
-                                  </div>
 
-                                  <div className="flex flex-wrap gap-2">
-                                    <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: '#E3F2FD', color: '#1976D2' }}>
-                                      Next Update Expected: Within 3 days
-                                    </span>
-                                    <button
-                                      onClick={() => handleBuilderNavigation(0)}
-                                      className="text-xs px-2 py-1 rounded transition-all duration-200 hover:opacity-90"
-                                      style={{ backgroundColor: '#E54747', color: '#FFFFFF' }}
-                                    >
-                                      Update Record Now
-                                    </button>
-                                    <button
-                                      className="text-xs px-2 py-1 rounded border transition-all duration-200 hover:opacity-90"
-                                      style={{ borderColor: '#E54747', color: '#E54747', backgroundColor: 'transparent' }}
-                                    >
-                                      Request Extension
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
+                              <div className="flex flex-wrap gap-2">
+                                <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: '#E3F2FD', color: '#1976D2' }}>
+                                  Next Update Expected: Within 3 days
+                                </span>
+                                <button
+                                  onClick={() => handleBuilderNavigation(0)}
+                                  className="text-xs px-2 py-1 rounded transition-all duration-200 hover:opacity-90"
+                                  style={{ backgroundColor: '#E54747', color: '#FFFFFF' }}
+                                >
+                                  Update Record Now
+                                </button>
+                                <button
+                                  className="text-xs px-2 py-1 rounded border transition-all duration-200 hover:opacity-90"
+                                  style={{ borderColor: '#E54747', color: '#E54747', backgroundColor: 'transparent' }}
+                                >
+                                  Request Extension
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
@@ -2506,19 +2499,18 @@ export default function RestorativeRecordBuilder() {
                   Refresh
                 </button>
               </div>
-              
+
               <div className="space-y-3">
                 {notifications.length > 0 ? (
                   notifications.map((notification) => (
-                    <div 
-                      key={notification.id} 
-                      className={`p-4 border-l-4 ${
-                        notification.type === 'request' ? 'bg-blue-50' : 
+                    <div
+                      key={notification.id}
+                      className={`p-4 border-l-4 ${notification.type === 'request' ? 'bg-blue-50' :
                         notification.type === 'connection' ? 'bg-green-50' : 'bg-yellow-50'
-                      }`} 
-                      style={{ 
-                        borderColor: notification.type === 'request' ? '#3B82F6' : 
-                                   notification.type === 'connection' ? '#10B981' : '#F59E0B' 
+                        }`}
+                      style={{
+                        borderColor: notification.type === 'request' ? '#3B82F6' :
+                          notification.type === 'connection' ? '#10B981' : '#F59E0B'
                       }}
                     >
                       <div className="flex items-start justify-between">
@@ -2543,7 +2535,7 @@ export default function RestorativeRecordBuilder() {
                             </span>
                           </div>
                         </div>
-                        
+
                         {notification.type === 'request' && (
                           <div className="flex items-center gap-2 ml-4">
                             <button
@@ -2574,7 +2566,7 @@ export default function RestorativeRecordBuilder() {
                             </button>
                           </div>
                         )}
-                        
+
                         {notification.type === 'connection' && (
                           <div className="flex items-center gap-2 ml-4">
                             <button
@@ -2899,15 +2891,14 @@ export default function RestorativeRecordBuilder() {
           {/* Builder Sections */}
           <div>
             <h3 className="text-sm font-semibold text-black mb-3 uppercase tracking-wider">Record Builder</h3>
-          <ul className="space-y-1">
-            {categories.map((cat, idx) => (
-              <li key={cat}>
-                <button
-                    className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${
-                      currentView === 'builder' && idx === currentCategory
-                        ? "bg-red-50 font-medium border"
-                        : "hover:bg-gray-50"
-                    }`}
+            <ul className="space-y-1">
+              {categories.map((cat, idx) => (
+                <li key={cat}>
+                  <button
+                    className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${currentView === 'builder' && idx === currentCategory
+                      ? "bg-red-50 font-medium border"
+                      : "hover:bg-gray-50"
+                      }`}
                     style={{
                       color: currentView === 'builder' && idx === currentCategory ? '#E54747' : '#000000',
                       borderColor: currentView === 'builder' && idx === currentCategory ? '#E54747' : 'transparent'
@@ -2916,18 +2907,18 @@ export default function RestorativeRecordBuilder() {
                   >
                     <div className="flex items-center justify-between">
                       <span>
-                  {cat
-                    .replace(/-/g, " ")
-                    .replace(/\b\w/g, (l) => l.toUpperCase())}
+                        {cat
+                          .replace(/-/g, " ")
+                          .replace(/\b\w/g, (l) => l.toUpperCase())}
                       </span>
                       {idx <= currentCategory && (
                         <span className="text-green-600 text-sm" style={{ color: '#16A34A' }}>✓</span>
                       )}
                     </div>
-                </button>
-              </li>
-            ))}
-          </ul>
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
         </nav>
 
@@ -3043,5 +3034,13 @@ export default function RestorativeRecordBuilder() {
         </>
       )}
     </div>
+  );
+}
+
+export default function RestorativeRecordBuilder() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <RestorativeRecordBuilderForm />
+    </Suspense>
   );
 }
