@@ -6,6 +6,7 @@ import { useEffect, useState, Suspense, useRef } from "react";
 import "react-day-picker/dist/style.css";
 import { toast } from "react-hot-toast";
 import { ChevronDown, ChevronRight, Info } from "lucide-react";
+import { UserDashboardContent } from "../user/dashboard/page"
 
 // Import types
 import {
@@ -2800,7 +2801,7 @@ function RestorativeRecordBuilderForm() {
 
       case 'settings':
         return (
-          null
+          <UserDashboardContent />
         )
 
       default:
