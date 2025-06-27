@@ -355,13 +355,13 @@ export default function RezmeAdminDashboard() {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        {error && (
+      {error && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
             <p className="text-sm text-red-700" style={{ fontFamily: 'Poppins, sans-serif' }}>
               {error}
             </p>
-          </div>
-        )}
+        </div>
+      )}
 
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 space-y-4 sm:space-y-0">
@@ -369,8 +369,8 @@ export default function RezmeAdminDashboard() {
             className="text-3xl font-semibold text-black"
             style={{ fontFamily: 'Poppins, sans-serif' }}
           >
-            Rezme Admin Dashboard
-          </h1>
+          Rezme Admin Dashboard
+        </h1>
           <div className="flex items-center space-x-4">
             <a
               href="https://dashboard.stripe.com/dashboard"
@@ -405,8 +405,8 @@ export default function RezmeAdminDashboard() {
             >
               Supabase
             </a>
-            <button
-              onClick={() => setShowCreateHRAdmin(true)}
+        <button
+          onClick={() => setShowCreateHRAdmin(true)}
               className="bg-red-600 hover:bg-red-700 text-white font-medium px-6 py-3 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
               style={{ 
                 fontFamily: 'Poppins, sans-serif',
@@ -418,14 +418,14 @@ export default function RezmeAdminDashboard() {
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = '#E54747';
               }}
-            >
-              Create HR Admin
-            </button>
+        >
+          Create HR Admin
+        </button>
           </div>
-        </div>
+      </div>
 
-        {/* Create HR Admin Modal */}
-        {showCreateHRAdmin && (
+      {/* Create HR Admin Modal */}
+      {showCreateHRAdmin && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
               <div className="p-6">
@@ -433,115 +433,115 @@ export default function RezmeAdminDashboard() {
                   className="text-2xl font-semibold text-black mb-6"
                   style={{ fontFamily: 'Poppins, sans-serif' }}
                 >
-                  Create HR Admin
-                </h2>
+              Create HR Admin
+            </h2>
                 <form onSubmit={handleCreateHRAdmin} className="space-y-5">
-                  <div>
+              <div>
                     <label 
                       className="block text-sm font-medium text-black mb-2"
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                     >
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      required
+                  Email
+                </label>
+                <input
+                  type="email"
+                  required
                       className="w-full px-4 py-3 border border-gray-300 rounded-md text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors duration-200"
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                       placeholder="Email address"
-                      value={newHRAdmin.email}
-                      onChange={(e) =>
-                        setNewHRAdmin({ ...newHRAdmin, email: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div>
+                  value={newHRAdmin.email}
+                  onChange={(e) =>
+                    setNewHRAdmin({ ...newHRAdmin, email: e.target.value })
+                  }
+                />
+              </div>
+              <div>
                     <label 
                       className="block text-sm font-medium text-black mb-2"
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                     >
-                      Password
-                    </label>
-                    <input
-                      type="password"
-                      required
+                  Password
+                </label>
+                <input
+                  type="password"
+                  required
                       className="w-full px-4 py-3 border border-gray-300 rounded-md text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors duration-200"
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                       placeholder="Password"
-                      value={newHRAdmin.password}
-                      onChange={(e) =>
-                        setNewHRAdmin({ ...newHRAdmin, password: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div>
+                  value={newHRAdmin.password}
+                  onChange={(e) =>
+                    setNewHRAdmin({ ...newHRAdmin, password: e.target.value })
+                  }
+                />
+              </div>
+              <div>
                     <label 
                       className="block text-sm font-medium text-black mb-2"
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                     >
-                      First Name
-                    </label>
-                    <input
-                      type="text"
-                      required
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  required
                       className="w-full px-4 py-3 border border-gray-300 rounded-md text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors duration-200"
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                       placeholder="First Name"
-                      value={newHRAdmin.first_name}
-                      onChange={(e) =>
-                        setNewHRAdmin({ ...newHRAdmin, first_name: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div>
+                  value={newHRAdmin.first_name}
+                  onChange={(e) =>
+                    setNewHRAdmin({ ...newHRAdmin, first_name: e.target.value })
+                  }
+                />
+              </div>
+              <div>
                     <label 
                       className="block text-sm font-medium text-black mb-2"
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                     >
-                      Last Name
-                    </label>
-                    <input
-                      type="text"
-                      required
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  required
                       className="w-full px-4 py-3 border border-gray-300 rounded-md text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors duration-200"
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                       placeholder="Last Name"
-                      value={newHRAdmin.last_name}
-                      onChange={(e) =>
-                        setNewHRAdmin({ ...newHRAdmin, last_name: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div>
+                  value={newHRAdmin.last_name}
+                  onChange={(e) =>
+                    setNewHRAdmin({ ...newHRAdmin, last_name: e.target.value })
+                  }
+                />
+              </div>
+              <div>
                     <label 
                       className="block text-sm font-medium text-black mb-2"
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                     >
-                      Company
-                    </label>
-                    <input
-                      type="text"
-                      required
+                  Company
+                </label>
+                <input
+                  type="text"
+                  required
                       className="w-full px-4 py-3 border border-gray-300 rounded-md text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors duration-200"
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                       placeholder="Company name"
-                      value={newHRAdmin.company}
-                      onChange={(e) =>
-                        setNewHRAdmin({ ...newHRAdmin, company: e.target.value })
-                      }
-                    />
-                  </div>
+                  value={newHRAdmin.company}
+                  onChange={(e) =>
+                    setNewHRAdmin({ ...newHRAdmin, company: e.target.value })
+                  }
+                />
+              </div>
                   <div className="flex justify-end space-x-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setShowCreateHRAdmin(false)}
+                <button
+                  type="button"
+                  onClick={() => setShowCreateHRAdmin(false)}
                       className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
                       style={{ fontFamily: 'Poppins, sans-serif' }}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
                       className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                       style={{ 
                         fontFamily: 'Poppins, sans-serif',
@@ -553,11 +553,11 @@ export default function RezmeAdminDashboard() {
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = '#E54747';
                       }}
-                    >
-                      Create
-                    </button>
-                  </div>
-                </form>
+                >
+                  Create
+                </button>
+              </div>
+            </form>
               </div>
             </div>
           </div>
@@ -780,11 +780,11 @@ export default function RezmeAdminDashboard() {
                   </div>
                 </div>
               </div>
-            </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Users Section */}
+      {/* Users Section */}
         <div className="bg-white border border-gray-200 rounded-lg shadow-sm mb-8">
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
@@ -859,19 +859,19 @@ export default function RezmeAdminDashboard() {
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                     >
                       Candidate
-                    </th>
+                </th>
                     <th 
                       className="px-4 py-4 text-left text-sm font-medium text-black uppercase tracking-wider w-48"
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                     >
                       Contact Info
-                    </th>
+                </th>
                     <th 
                       className="px-4 py-4 text-left text-sm font-medium text-black uppercase tracking-wider w-40"
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                     >
                       Location
-                    </th>
+                </th>
                     <th 
                       className="px-4 py-4 text-left text-sm font-medium text-black uppercase tracking-wider w-32"
                       style={{ fontFamily: 'Poppins, sans-serif' }}
@@ -895,9 +895,9 @@ export default function RezmeAdminDashboard() {
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                     >
                       Actions
-                    </th>
-                  </tr>
-                </thead>
+                </th>
+              </tr>
+            </thead>
                 <tbody className="bg-white">
                   {filteredUsers.length === 0 ? (
                     <tr>
@@ -934,24 +934,24 @@ export default function RezmeAdminDashboard() {
                             )}
                             <div>
                               <p className="text-black font-medium" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                                {user.first_name} {user.last_name}
+                    {user.first_name} {user.last_name}
                               </p>
                               <p className="text-xs text-gray-600" style={{ fontFamily: 'Poppins, sans-serif' }}>
                                 Joined {formatDate(user.created_at)}
                               </p>
                             </div>
                           </div>
-                        </td>
+                  </td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           <div>
                             <p className="text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                              {user.email}
+                    {user.email}
                             </p>
                             <p className="text-sm text-gray-600" style={{ fontFamily: 'Poppins, sans-serif' }}>
                               {user.phone || "No phone"}
                             </p>
                           </div>
-                        </td>
+                  </td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           <div>
                             <p className="text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -964,7 +964,7 @@ export default function RezmeAdminDashboard() {
                               {user.zip_code || "No zip"}
                             </p>
                           </div>
-                        </td>
+                  </td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           <div className="space-y-2">
                             <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
@@ -1053,13 +1053,13 @@ export default function RezmeAdminDashboard() {
                           >
                             View Details
                           </button>
-                        </td>
-                      </tr>
+                  </td>
+                </tr>
                     ))
                   )}
-                </tbody>
-              </table>
-            </div>
+            </tbody>
+          </table>
+        </div>
           )}
           
           {/* Collapsed State Message */}
@@ -1094,9 +1094,9 @@ export default function RezmeAdminDashboard() {
               </div>
             </div>
           )}
-        </div>
+      </div>
 
-        {/* HR Admins Section */}
+      {/* HR Admins Section */}
         <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
@@ -1106,7 +1106,7 @@ export default function RezmeAdminDashboard() {
                   style={{ fontFamily: 'Poppins, sans-serif' }}
                 >
                   All HR Admins ({hrAdmins.length} total)
-                </h2>
+        </h2>
                 <button
                   onClick={() => setIsHRAdminsTableCollapsed(!isHRAdminsTableCollapsed)}
                   className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
@@ -1162,7 +1162,7 @@ export default function RezmeAdminDashboard() {
           
           {/* Table Content - conditionally rendered */}
           {!isHRAdminsTableCollapsed && (
-            <div className="overflow-x-auto">
+        <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
@@ -1170,20 +1170,20 @@ export default function RezmeAdminDashboard() {
                       className="px-2 py-3 text-left text-xs font-medium text-black uppercase tracking-wider w-24"
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                     >
-                      Name
-                    </th>
+                  Name
+                </th>
                     <th 
                       className="px-2 py-3 text-left text-xs font-medium text-black uppercase tracking-wider w-36"
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                     >
-                      Email
-                    </th>
+                  Email
+                </th>
                     <th 
                       className="px-2 py-3 text-left text-xs font-medium text-black uppercase tracking-wider w-20"
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                     >
-                      Company
-                    </th>
+                  Company
+                </th>
                     <th 
                       className="px-2 py-3 text-left text-xs font-medium text-black uppercase tracking-wider w-32"
                       style={{ fontFamily: 'Poppins, sans-serif' }}
@@ -1219,9 +1219,9 @@ export default function RezmeAdminDashboard() {
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                     >
                       Plan
-                    </th>
-                  </tr>
-                </thead>
+                </th>
+              </tr>
+            </thead>
                 <tbody className="bg-white">
                   {filteredHRAdmins.length === 0 ? (
                     <tr>
@@ -1246,25 +1246,25 @@ export default function RezmeAdminDashboard() {
                           style={{ fontFamily: 'Poppins, sans-serif' }}
                         >
                           <div className="max-w-24 truncate" title={`${admin.first_name} ${admin.last_name}`}>
-                            {admin.first_name} {admin.last_name}
+                    {admin.first_name} {admin.last_name}
                           </div>
-                        </td>
+                  </td>
                         <td 
                           className="px-2 py-3 whitespace-nowrap text-gray-600 text-sm"
                           style={{ fontFamily: 'Poppins, sans-serif' }}
                         >
                           <div className="max-w-36 truncate" title={admin.email}>
-                            {admin.email}
+                    {admin.email}
                           </div>
-                        </td>
+                  </td>
                         <td 
                           className="px-2 py-3 whitespace-nowrap text-gray-600 text-sm"
                           style={{ fontFamily: 'Poppins, sans-serif' }}
                         >
                           <div className="max-w-20 truncate" title={admin.company}>
-                            {admin.company}
+                    {admin.company}
                           </div>
-                        </td>
+                  </td>
                         <td 
                           className="px-2 py-3 whitespace-nowrap text-gray-600 text-sm"
                           style={{ fontFamily: 'Poppins, sans-serif' }}
@@ -1333,13 +1333,13 @@ export default function RezmeAdminDashboard() {
                               Free
                             </span>
                           )}
-                        </td>
-                      </tr>
+                  </td>
+                </tr>
                     ))
                   )}
-                </tbody>
-              </table>
-            </div>
+            </tbody>
+          </table>
+        </div>
           )}
           
           {/* Collapsed State Message */}
