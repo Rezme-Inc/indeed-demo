@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:security": "node scripts/test-security.js",
+    "security:test": "npm run test:security",
+    "security:audit": "npm audit --audit-level moderate"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.18",
