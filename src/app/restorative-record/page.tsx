@@ -2762,6 +2762,12 @@ function RestorativeRecordBuilderForm() {
           </div>
         );
 
+      {/* Legal Assistance Modal */}
+      case 'legal-resources':
+        return (
+          <div> <p>Legal resources coming (as soon as I talk to Jodi about the best way to do it)</p> </div>
+        )
+
       case 'settings':
         return (
           <UserDashboardContent />
