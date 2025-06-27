@@ -1,33 +1,20 @@
-/**
- * Generate a secure invitation code for HR admins
- */
-export const generateSecureCode = (): string => {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let result = '';
-  
-  for (let i = 0; i < 8; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  
-  return result;
-};
+export function generateSecureCode(): string {
+  const randomBytes = new Uint8Array(4);
+  crypto.getRandomValues(randomBytes);
+  const randomHex = Array.from(randomBytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")
+    .toUpperCase();
+  const timestamp = Date.now().toString(36).toUpperCase();
+  return (randomHex + timestamp).slice(0, 8);
+}
 
-/**
- * Get the current assessment step for a user
- */
-export const getCurrentAssessmentStep = (user: any) => {
-  if (!user?.compliance_steps) {
-    return 'pending';
+export function getCurrentAssessmentStep(user: { id: string }): number {
+  if (typeof window !== "undefined") {
+    const saved = localStorage.getItem(`assessmentCurrentStep_${user.id}`);
+    if (saved && !isNaN(Number(saved))) {
+      return Number(saved) - 1;
+    }
   }
-  
-  const steps = user.compliance_steps;
-  
-  if (!steps.conditional_job_offer) return 'conditional_job_offer';
-  if (!steps.individualized_assessment) return 'individualized_assessment';
-  if (!steps.preliminary_job_offer_revocation) return 'preliminary_job_offer_revocation';
-  if (!steps.individualized_reassessment) return 'individualized_reassessment';
-  if (!steps.final_revocation_notice) return 'final_revocation_notice';
-  if (!steps.decision) return 'decision';
-  
-  return 'completed';
-}; 
+  return 0;
+}
