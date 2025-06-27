@@ -4,6 +4,7 @@ import SmartSuggestionField from "@/components/assessment/SmartSuggestionField";
 import ReferencePanel from "@/components/assessment/ReferencePanel";
 import { useReferenceData } from "@/hooks/useReferenceData";
 import { getReferenceData } from "@/utils/referenceDataHelpers";
+import { getStep3Part2Suggestions } from "@/utils/assessmentDataAggregator";
 
 interface Part2ModalProps {
   showModal: boolean;
@@ -42,11 +43,10 @@ const Part2Modal: React.FC<Part2ModalProps> = ({
       console.log('Part2Modal - Step1 storage:', step1Storage?.offerForm);
       console.log('Part2Modal - Step2 storage:', step2Storage?.assessmentForm);
 
-      // Generate time-based suggestions from conviction data
-      const newSuggestions = {
-        conductTimeAgo: "5 years ago", // Default suggestion
-        sentenceCompletedTimeAgo: "2 years ago", // Default suggestion
-      };
+      // Use real data from Step 2 for conduct timing
+      const newSuggestions = getStep3Part2Suggestions(candidateId, candidateProfile, hrAdmin);
+
+      console.log('Part2Modal - Final suggestions:', newSuggestions);
 
       setSuggestions(newSuggestions);
 
@@ -97,7 +97,11 @@ const Part2Modal: React.FC<Part2ModalProps> = ({
     // Create a compatible data structure for the reference helper
     const compatibleData = {
       step1: step1Storage?.offerForm,
-      step2: step2Storage?.assessmentForm,
+      step2: {
+        conductDescription: step2Storage?.assessmentForm?.conduct,
+        activitiesSince: step2Storage?.assessmentForm?.activities?.join('. '),
+        rescissionReasoning: step2Storage?.assessmentForm?.rescindReason,
+      },
       databaseFields: {
         applicantName: candidateProfile ? `${candidateProfile.first_name} ${candidateProfile.last_name}` : '',
         employerName: hrAdmin?.company || '',
@@ -132,7 +136,7 @@ const Part2Modal: React.FC<Part2ModalProps> = ({
               </label>
               <button
                 type="button"
-                onClick={() => handleShowReference('convictions')}
+                onClick={() => handleShowReference('conductDescription')}
                 className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
                 title="View reference from Step 2"
               >
@@ -194,8 +198,7 @@ const Part2Modal: React.FC<Part2ModalProps> = ({
               label="How long ago was the sentence completed"
               value={formData.sentenceCompletedTimeAgo || ''}
               onChange={(value) => updateFormData({ sentenceCompletedTimeAgo: value })}
-              suggestion={suggestions.sentenceCompletedTimeAgo}
-              suggestionsEnabled={true}
+              suggestionsEnabled={false}
               placeholder="e.g., 3 years ago, 1 year ago"
               required
             />
@@ -242,4 +245,4 @@ const Part2Modal: React.FC<Part2ModalProps> = ({
   );
 };
 
-export default Part2Modal; 
+export default Part2Modal;

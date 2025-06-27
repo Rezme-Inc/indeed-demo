@@ -92,6 +92,21 @@ export function getStep3Part1Suggestions(
 }
 
 /**
+ * Helper function to get autofill suggestions for Step 3 Part 2
+ */
+export function getStep3Part2Suggestions(
+  candidateId: string,
+  candidateProfile?: any,
+  hrAdmin?: any
+) {
+  const sharedData = getSharedAssessmentData(candidateId, candidateProfile, hrAdmin);
+  
+  return {
+    conductTimeAgo: sharedData.timeAgo || "",
+  };
+}
+
+/**
  * Helper function to get autofill suggestions for Step 3 Part 3
  */
 export function getStep3Part3Suggestions(
@@ -107,3 +122,4 @@ export function getStep3Part3Suggestions(
     revocationReason: "",
   };
 } 
+ 

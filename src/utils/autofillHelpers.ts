@@ -102,3 +102,4 @@ function generateActivitiesSince(employmentData: any[], educationData: any[]): s
   
   return activities.join('. ') || 'Maintained steady employment and continued personal development.';
 } 
+ 

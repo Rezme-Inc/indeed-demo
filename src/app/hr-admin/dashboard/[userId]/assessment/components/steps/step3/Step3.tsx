@@ -3,6 +3,7 @@ import { CheckCircle2, Info } from "lucide-react";
 import CriticalInfoSection from "../../critical/CriticalInfoSection";
 import { Part1Modal, Part2Modal, Part3Modal } from "./index";
 import ExtendSuccessModal from "../../common/ExtendSuccessModal";
+import PreviewModal from "./PreviewModal";
 import { useStep3Storage } from "@/hooks/useStep3Storage";
 import { useAssessmentMutators } from "@/hooks/useAssessmentMutators";
 import { useStep3Actions } from "@/hooks/useStep3Actions";
@@ -31,6 +32,7 @@ const Step3: React.FC = () => {
     1
   );
   const [showExtendSuccessModal, setShowExtendSuccessModal] = useState(false);
+  const [showRevocationReviewModal, setShowRevocationReviewModal] = useState(false);
 
   // Form data for each part
   const [part1Data, setPart1Data] = useLocalStorageState(`step3_part1_${userId}`, {});
@@ -64,11 +66,11 @@ const Step3: React.FC = () => {
     if ((currentModalStep || 1) < 3) {
       setCurrentModalStep((currentModalStep || 1) + 1);
     } else {
-      // Complete assessment - send revocation notice
+      // Complete assessment - show revocation notice review
       console.log("Step 3 Assessment complete!", { part1Data, part2Data, part3Data });
       closeModal();
-      // Mock sending revocation notice
-      setShowExtendSuccessModal(true);
+      // Show revocation notice review modal
+      setShowRevocationReviewModal(true);
     }
   };
 
@@ -76,6 +78,14 @@ const Step3: React.FC = () => {
     if ((currentModalStep || 1) > 1) {
       setCurrentModalStep((currentModalStep || 1) - 1);
     }
+  };
+
+
+
+  const handleSendRevocationNotice = () => {
+    // Close the review modal and proceed to Step 4
+    setShowRevocationReviewModal(false);
+    setCurrentStep(4);
   };
 
   const proceedWithHire = () => {
@@ -225,6 +235,22 @@ const Step3: React.FC = () => {
         onNext={goToNextStep}
         onBack={goToPreviousStep}
         candidateId={userId}
+      />
+      <PreviewModal
+        showModal={showRevocationReviewModal}
+        setShowModal={setShowRevocationReviewModal}
+        part1Data={part1Data}
+        part2Data={part2Data}
+        part3Data={part3Data}
+        candidateProfile={candidateProfile}
+        hrAdmin={hrAdmin}
+        step1Storage={step1Storage}
+        onBack={() => {
+          setShowRevocationReviewModal(false);
+          setIsModalOpen(true);
+          setCurrentModalStep(3);
+        }}
+        onSend={handleSendRevocationNotice}
       />
       <ExtendSuccessModal
         open={showExtendSuccessModal}

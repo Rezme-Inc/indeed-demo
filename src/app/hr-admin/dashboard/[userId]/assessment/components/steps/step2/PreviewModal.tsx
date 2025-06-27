@@ -138,4 +138,4 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
   );
 };
 
-export default PreviewModal; 
+export default PreviewModal;

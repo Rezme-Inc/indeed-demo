@@ -219,4 +219,4 @@ const Part1Modal: React.FC<Part1ModalProps> = ({
   );
 };
 
-export default Part1Modal; 
+export default Part1Modal;

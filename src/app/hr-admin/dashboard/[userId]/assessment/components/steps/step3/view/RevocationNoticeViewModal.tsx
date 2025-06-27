@@ -6,12 +6,14 @@ interface RevocationNoticeViewModalProps {
   open: boolean;
   notice: any | null;
   onClose: () => void;
+  onSend?: () => void;
 }
 
 const RevocationNoticeViewModal: React.FC<RevocationNoticeViewModalProps> = ({
   open,
   notice,
   onClose,
+  onSend,
 }) => {
   if (!open || !notice) return null;
   return (
@@ -115,16 +117,28 @@ const RevocationNoticeViewModal: React.FC<RevocationNoticeViewModalProps> = ({
           />
         </div>
 
-        <div className="flex justify-end space-x-4 mt-6">
+        <div className="flex justify-between mt-6">
           <PrintPreviewButton documentSelector=".prose" documentTitle="Job Revocation Notice" />
-          <button
-            type="button"
-            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-200"
-            onClick={onClose}
-            style={{ fontFamily: "Poppins, sans-serif" }}
-          >
-            Close
-          </button>
+          <div className="flex space-x-4">
+            <button
+              type="button"
+              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-200"
+              onClick={onClose}
+              style={{ fontFamily: "Poppins, sans-serif" }}
+            >
+              Close
+            </button>
+            {onSend && (
+              <button
+                type="button"
+                className="px-6 py-2 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 transition-all duration-200"
+                onClick={onSend}
+                style={{ fontFamily: "Poppins, sans-serif" }}
+              >
+                Send Notice
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

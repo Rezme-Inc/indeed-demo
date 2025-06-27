@@ -117,4 +117,4 @@ const Part2Modal: React.FC<Part2ModalProps> = ({
   );
 };
 
-export default Part2Modal; 
+export default Part2Modal;

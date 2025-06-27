@@ -107,4 +107,4 @@ const SmartSuggestionField: React.FC<SmartSuggestionFieldProps> = ({
   );
 };
 
-export default SmartSuggestionField; 
+export default SmartSuggestionField;

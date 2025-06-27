@@ -186,4 +186,4 @@ const Part3Modal: React.FC<Part3ModalProps> = ({
   );
 };
 
-export default Part3Modal; 
+export default Part3Modal;
