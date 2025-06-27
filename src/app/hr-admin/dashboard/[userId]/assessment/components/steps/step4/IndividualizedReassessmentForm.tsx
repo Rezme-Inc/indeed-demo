@@ -1,4 +1,9 @@
 import React from "react";
+import AIAutofillButton from "@/components/assessment/AIAutofillButton";
+import SmartSuggestionField from "@/components/assessment/SmartSuggestionField";
+import ReferencePanel from "@/components/assessment/ReferencePanel";
+import { useReferenceData } from "@/hooks/useReferenceData";
+import { getStep4Suggestions, getStep4ReferenceData } from "@/utils/assessmentDataAggregator";
 
 interface IndividualizedReassessmentFormProps {
   initialAssessmentResults: any;
@@ -13,6 +18,10 @@ interface IndividualizedReassessmentFormProps {
   setReassessmentDecision: (d: "rescind" | "extend") => void;
   extendReason: string;
   setExtendReason: (v: string) => void;
+  candidateId: string;
+  candidateProfile?: any;
+  hrAdmin?: any;
+  restorativeData?: any;
 }
 
 const IndividualizedReassessmentForm: React.FC<IndividualizedReassessmentFormProps> = ({
@@ -26,7 +35,83 @@ const IndividualizedReassessmentForm: React.FC<IndividualizedReassessmentFormPro
   setReassessmentDecision,
   extendReason,
   setExtendReason,
+  candidateId,
+  candidateProfile,
+  hrAdmin,
+  restorativeData,
 }) => {
+  const { isReferencePanelOpen, currentReferenceData, showReference, closeReference } = useReferenceData();
+
+  // Track manual input state for each field
+  const [manualFields, setManualFields] = React.useState<{ [key: string]: boolean }>({});
+
+  // Debug manual fields state changes
+  React.useEffect(() => {
+    console.log('[Step4] manualFields state updated:', manualFields);
+  }, [manualFields]);
+
+  const handleAutofill = async () => {
+    const suggestions = getStep4Suggestions(candidateId, candidateProfile, hrAdmin);
+    console.log('[Step4] Autofill triggered with suggestions:', suggestions);
+
+    // Only fill empty fields and mark them as non-manual
+    const updatedForm = { ...reassessmentForm };
+    const updatedManualFields = { ...manualFields };
+
+    Object.entries(suggestions).forEach(([key, value]) => {
+      if (!updatedForm[key] && value) {
+        console.log(`[Step4] Autofilling field ${key}: "${value}"`);
+        updatedForm[key] = value;
+        updatedManualFields[key] = false; // Mark as autofilled (not manual)
+      }
+    });
+
+    console.log('[Step4] Updated manual fields state:', updatedManualFields);
+    setManualFields(updatedManualFields);
+
+    // Update form with non-empty suggestions
+    if (JSON.stringify(updatedForm) !== JSON.stringify(reassessmentForm)) {
+      // Trigger change events for each field that was updated
+      Object.entries(suggestions).forEach(([key, value]) => {
+        if (!reassessmentForm[key] && value) {
+          const event = {
+            target: { name: key, value: value }
+          } as React.ChangeEvent<HTMLInputElement>;
+          handleReassessmentFormChange(event);
+        }
+      });
+    }
+  };
+
+  const handleShowReference = (referenceType: string) => {
+    const referenceData = getStep4ReferenceData(restorativeData);
+    const data = referenceData[referenceType as keyof typeof referenceData];
+    if (data) {
+      showReference(data);
+    }
+  };
+
+  // Create wrapper functions for SmartSuggestionField compatibility
+  const createFieldHandler = (fieldName: string) => (value: string) => {
+    const event = {
+      target: { name: fieldName, value: value }
+    } as React.ChangeEvent<HTMLInputElement>;
+    handleReassessmentFormChange(event);
+  };
+
+  // Handle manual input state changes
+  const handleManualChange = (fieldName: string) => (isManual: boolean) => {
+    console.log(`[Step4] Manual change for ${fieldName}: ${isManual}`);
+    setManualFields(prev => {
+      const newState = {
+        ...prev,
+        [fieldName]: isManual
+      };
+      console.log(`[Step4] New manual fields state:`, newState);
+      return newState;
+    });
+  };
+
   return (
     <div className="flex-1 bg-white rounded-lg shadow p-8 border border-gray-200 max-h-[600px] overflow-y-auto">
       <h2 className="text-2xl font-bold mb-6">Individualized Reassessment Form</h2>
@@ -60,7 +145,7 @@ const IndividualizedReassessmentForm: React.FC<IndividualizedReassessmentFormPro
             <div>
               <b>Duties:</b>{" "}
               {initialAssessmentResults.duties &&
-              Array.isArray(initialAssessmentResults.duties)
+                Array.isArray(initialAssessmentResults.duties)
                 ? initialAssessmentResults.duties.filter(Boolean).join(", ")
                 : ""}
             </div>
@@ -73,7 +158,7 @@ const IndividualizedReassessmentForm: React.FC<IndividualizedReassessmentFormPro
             <div>
               <b>Activities since criminal activity:</b>{" "}
               {initialAssessmentResults.activities &&
-              Array.isArray(initialAssessmentResults.activities)
+                Array.isArray(initialAssessmentResults.activities)
                 ? initialAssessmentResults.activities.filter(Boolean).join(", ")
                 : ""}
             </div>
@@ -85,75 +170,93 @@ const IndividualizedReassessmentForm: React.FC<IndividualizedReassessmentFormPro
       )}
       {!reassessmentPreview ? (
         <form className="space-y-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Basic Information</h3>
+            <AIAutofillButton onAutofill={handleAutofill} />
+          </div>
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold mb-1">Employer Name</label>
-              <input
-                type="text"
-                name="employer"
+              <SmartSuggestionField
+                label="Employer Name"
                 value={reassessmentForm.employer}
-                onChange={handleReassessmentFormChange}
-                className="w-full border rounded px-3 py-2"
+                onChange={createFieldHandler('employer')}
+                suggestion={getStep4Suggestions(candidateId, candidateProfile, hrAdmin).employer}
+                suggestionsEnabled={true}
+                isManual={(() => {
+                  const isManual = manualFields.employer || false;
+                  console.log(`[Step4] Passing isManual=${isManual} to Employer Name field`);
+                  return isManual;
+                })()}
+                onManualChange={handleManualChange('employer')}
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold mb-1">Applicant Name</label>
-              <input
-                type="text"
-                name="applicant"
+              <SmartSuggestionField
+                label="Applicant Name"
                 value={reassessmentForm.applicant}
-                onChange={handleReassessmentFormChange}
-                className="w-full border rounded px-3 py-2"
+                onChange={createFieldHandler('applicant')}
+                suggestion={getStep4Suggestions(candidateId, candidateProfile, hrAdmin).applicant}
+                suggestionsEnabled={true}
+                isManual={manualFields.applicant || false}
+                onManualChange={handleManualChange('applicant')}
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold mb-1">Position Applied For</label>
-              <input
-                type="text"
-                name="position"
+              <SmartSuggestionField
+                label="Position Applied For"
                 value={reassessmentForm.position}
-                onChange={handleReassessmentFormChange}
-                className="w-full border rounded px-3 py-2"
+                onChange={createFieldHandler('position')}
+                suggestion={getStep4Suggestions(candidateId, candidateProfile, hrAdmin).position}
+                suggestionsEnabled={true}
+                isManual={manualFields.position || false}
+                onManualChange={handleManualChange('position')}
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold mb-1">Date of Conditional Offer</label>
-              <input
+              <SmartSuggestionField
+                label="Date of Conditional Offer"
                 type="date"
-                name="offerDate"
                 value={reassessmentForm.offerDate}
-                onChange={handleReassessmentFormChange}
-                className="w-full border rounded px-3 py-2"
+                onChange={createFieldHandler('offerDate')}
+                suggestion={getStep4Suggestions(candidateId, candidateProfile, hrAdmin).offerDate}
+                suggestionsEnabled={true}
+                isManual={manualFields.offerDate || false}
+                onManualChange={handleManualChange('offerDate')}
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold mb-1">Date of Reassessment</label>
-              <input
+              <SmartSuggestionField
+                label="Date of Reassessment"
                 type="date"
-                name="reassessmentDate"
                 value={reassessmentForm.reassessmentDate}
-                onChange={handleReassessmentFormChange}
-                className="w-full border rounded px-3 py-2"
+                onChange={createFieldHandler('reassessmentDate')}
+                suggestion={getStep4Suggestions(candidateId, candidateProfile, hrAdmin).reassessmentDate}
+                suggestionsEnabled={true}
+                isManual={manualFields.reassessmentDate || false}
+                onManualChange={handleManualChange('reassessmentDate')}
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold mb-1">Date of Criminal History Report</label>
-              <input
+              <SmartSuggestionField
+                label="Date of Criminal History Report"
                 type="date"
-                name="reportDate"
                 value={reassessmentForm.reportDate}
-                onChange={handleReassessmentFormChange}
-                className="w-full border rounded px-3 py-2"
+                onChange={createFieldHandler('reportDate')}
+                suggestion={getStep4Suggestions(candidateId, candidateProfile, hrAdmin).reportDate}
+                suggestionsEnabled={true}
+                isManual={manualFields.reportDate || false}
+                onManualChange={handleManualChange('reportDate')}
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold mb-1">Assessment Performed by</label>
-              <input
-                type="text"
-                name="performedBy"
+              <SmartSuggestionField
+                label="Assessment Performed by"
                 value={reassessmentForm.performedBy}
-                onChange={handleReassessmentFormChange}
-                className="w-full border rounded px-3 py-2"
+                onChange={createFieldHandler('performedBy')}
+                suggestion={getStep4Suggestions(candidateId, candidateProfile, hrAdmin).performedBy}
+                suggestionsEnabled={true}
+                isManual={manualFields.performedBy || false}
+                onManualChange={handleManualChange('performedBy')}
               />
             </div>
           </div>
@@ -204,6 +307,36 @@ const IndividualizedReassessmentForm: React.FC<IndividualizedReassessmentFormPro
               <label className="block text-sm font-semibold mb-3">
                 2. Evidence of rehabilitation and good conduct (this evidence may include, but is not limited to, documents or other information demonstrating that the Applicant attended school, a religious institution, job training, or counseling, or is involved with the community. This evidence can include letters from people who know the Applicant, such as teachers, counselors, supervisors, clergy, and parole or probation officers):
               </label>
+
+              {/* Reference buttons for evidence sources */}
+              <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm font-medium text-blue-900 mb-3">Reference sources from candidate's restorative record:</p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { key: 'education', label: 'Education & Training' },
+                    { key: 'employment', label: 'Employment History' },
+                    { key: 'programs', label: 'Rehabilitation Programs' },
+                    { key: 'community', label: 'Community Engagement' },
+                    { key: 'achievements', label: 'Achievements' },
+                    { key: 'skills', label: 'Skills & Abilities' }
+                  ].map(({ key, label }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => handleShowReference(key)}
+                      className="flex items-center gap-1 px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                      title={`View ${label.toLowerCase()} from candidate's restorative record`}
+                    >
+                      <span>👁️</span>
+                      <span>{label}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-blue-700 mt-2 italic">
+                  Click any reference above to view the candidate's record, then copy relevant information to the evidence fields below.
+                </p>
+              </div>
+
               <div className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium mb-1">a.</label>
@@ -212,7 +345,7 @@ const IndividualizedReassessmentForm: React.FC<IndividualizedReassessmentFormPro
                     value={reassessmentForm.evidenceA}
                     onChange={handleReassessmentFormChange}
                     className="w-full border rounded px-3 py-2 min-h-[60px]"
-                    placeholder="Evidence item A"
+                    placeholder="Evidence item A - Consider education, training, or certifications"
                   />
                 </div>
                 <div>
@@ -222,7 +355,7 @@ const IndividualizedReassessmentForm: React.FC<IndividualizedReassessmentFormPro
                     value={reassessmentForm.evidenceB}
                     onChange={handleReassessmentFormChange}
                     className="w-full border rounded px-3 py-2 min-h-[60px]"
-                    placeholder="Evidence item B"
+                    placeholder="Evidence item B - Consider employment history or work experience"
                   />
                 </div>
                 <div>
@@ -232,7 +365,7 @@ const IndividualizedReassessmentForm: React.FC<IndividualizedReassessmentFormPro
                     value={reassessmentForm.evidenceC}
                     onChange={handleReassessmentFormChange}
                     className="w-full border rounded px-3 py-2 min-h-[60px]"
-                    placeholder="Evidence item C"
+                    placeholder="Evidence item C - Consider rehabilitation programs or community service"
                   />
                 </div>
                 <div>
@@ -242,7 +375,7 @@ const IndividualizedReassessmentForm: React.FC<IndividualizedReassessmentFormPro
                     value={reassessmentForm.evidenceD}
                     onChange={handleReassessmentFormChange}
                     className="w-full border rounded px-3 py-2 min-h-[60px]"
-                    placeholder="Evidence item D"
+                    placeholder="Evidence item D - Consider achievements or skills development"
                   />
                 </div>
               </div>
@@ -407,6 +540,12 @@ const IndividualizedReassessmentForm: React.FC<IndividualizedReassessmentFormPro
           </div>
         </div>
       )}
+
+      <ReferencePanel
+        isOpen={isReferencePanelOpen}
+        onClose={closeReference}
+        referenceData={currentReferenceData}
+      />
     </div>
   );
 };

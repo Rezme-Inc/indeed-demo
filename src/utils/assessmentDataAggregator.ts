@@ -9,6 +9,7 @@ export interface SharedAssessmentData {
   // Step 1 data
   position: string;
   employer: string;
+  offerDate: string;
   
   // Step 2 data
   jobDuties: string[];
@@ -16,6 +17,8 @@ export interface SharedAssessmentData {
   activitiesSince: string;
   rescissionReasoning: string;
   timeAgo: string;
+  assessmentDate: string;
+  reportDate: string;
 }
 
 /**
@@ -51,6 +54,7 @@ export function getSharedAssessmentData(
       const step1Data = JSON.parse(offerFormData);
       data.position = step1Data.position || '';
       data.employer = step1Data.employer || '';
+      data.offerDate = step1Data.date || '';
     }
     
     // Step 2 data (individualized assessment)
@@ -62,6 +66,8 @@ export function getSharedAssessmentData(
       data.activitiesSince = step2Data.activities?.filter((a: string) => a.trim()).join('. ') || '';
       data.rescissionReasoning = step2Data.rescindReason || '';
       data.timeAgo = step2Data.howLongAgo || '';
+      data.assessmentDate = step2Data.assessmentDate || '';
+      data.reportDate = step2Data.reportDate || '';
     }
   } catch (error) {
     console.error('Error reading assessment data from localStorage:', error);
@@ -120,6 +126,119 @@ export function getStep3Part3Suggestions(
     jobDuties: sharedData.jobDuties?.join(', ') || "",
     seriousnessReason: "",
     revocationReason: "",
+  };
+}
+
+/**
+ * Helper function to get autofill suggestions for Step 4 Individual Reassessment
+ */
+export function getStep4Suggestions(
+  candidateId: string,
+  candidateProfile?: any,
+  hrAdmin?: any
+) {
+  const sharedData = getSharedAssessmentData(candidateId, candidateProfile, hrAdmin);
+  
+  return {
+    employer: sharedData.employerName || "",
+    applicant: sharedData.applicantName || "",
+    position: sharedData.position || "",
+    offerDate: sharedData.offerDate || "",
+    reassessmentDate: new Date().toISOString().split('T')[0], // Current date
+    reportDate: sharedData.reportDate || "",
+    performedBy: sharedData.contactName || "",
+  };
+}
+
+/**
+ * Helper function to get reference data for Step 4 evidence fields
+ * This provides context from the candidate's restorative record for evidence of rehabilitation
+ */
+export function getStep4ReferenceData(restorativeData?: any) {
+  const formatEducationContent = (education: any[]) => {
+    if (!education || education.length === 0) return "No education records available";
+    return education.map((edu, index) => 
+      `${index + 1}. ${edu.degree} in ${edu.field_of_study} from ${edu.school_name} (${edu.start_date ? new Date(edu.start_date).getFullYear() : 'N/A'}-${edu.currently_enrolled ? 'Present' : edu.end_date ? new Date(edu.end_date).getFullYear() : 'N/A'})${edu.description ? ` - ${edu.description}` : ''}`
+    );
+  };
+
+  const formatEmploymentContent = (employment: any[]) => {
+    if (!employment || employment.length === 0) return "No employment records available";
+    return employment.map((emp, index) => 
+      `${index + 1}. ${emp.title} at ${emp.company} (${emp.start_date ? new Date(emp.start_date).getFullYear() : 'N/A'}-${emp.currently_employed ? 'Present' : emp.end_date ? new Date(emp.end_date).getFullYear() : 'N/A'}) - ${emp.employment_type || 'N/A'}`
+    );
+  };
+
+  const formatProgramsContent = (programs: any[]) => {
+    if (!programs || programs.length === 0) return "No rehabilitation programs available";
+    return programs.map((prog, index) => 
+      `${index + 1}. ${prog.program_name || prog.type || 'Program'}: ${prog.details || prog.description || 'No details available'}`
+    );
+  };
+
+  const formatCommunityContent = (community: any[]) => {
+    if (!community || community.length === 0) return "No community engagement records available";
+    return community.map((comm, index) => 
+      `${index + 1}. ${comm.role || 'Role'} at ${comm.organization_name || comm.orgName || 'Organization'} - ${comm.type}: ${comm.details || 'No details available'}`
+    );
+  };
+
+  const formatAchievementsContent = (achievements: any[]) => {
+    if (!achievements || achievements.length === 0) return "No achievements available";
+    return achievements.map((ach, index) => 
+      `${index + 1}. ${ach.name} (${ach.type}) from ${ach.organization} - ${new Date(ach.date).getFullYear()}${ach.narrative ? `: ${ach.narrative}` : ''}`
+    );
+  };
+
+  const formatSkillsContent = (skills: any[]) => {
+    if (!skills || skills.length === 0) return "No skills records available";
+    return skills.map((skill, index) => {
+      const parts = [];
+      if (skill.soft_skills) parts.push(`Soft Skills: ${skill.soft_skills}`);
+      if (skill.hard_skills) parts.push(`Hard Skills: ${skill.hard_skills}`);
+      if (skill.other_skills) parts.push(`Other Skills: ${skill.other_skills}`);
+      if (skill.narrative) parts.push(`Description: ${skill.narrative}`);
+      return `${index + 1}. ${parts.join(' | ')}`;
+    });
+  };
+  
+  return {
+    education: {
+      title: "Education & Training",
+      content: restorativeData?.education ? formatEducationContent(restorativeData.education) : "No education records available",
+      source: "Restorative Record",
+      fieldType: 'array' as const
+    },
+    employment: {
+      title: "Employment History", 
+      content: restorativeData?.employment ? formatEmploymentContent(restorativeData.employment) : "No employment records available",
+      source: "Restorative Record",
+      fieldType: 'array' as const
+    },
+    programs: {
+      title: "Rehabilitative Programs",
+      content: restorativeData?.rehab_programs ? formatProgramsContent(restorativeData.rehab_programs) : "No rehabilitation programs available",
+      source: "Restorative Record", 
+      fieldType: 'array' as const
+    },
+    community: {
+      title: "Community Engagement",
+      content: restorativeData?.community_engagements ? formatCommunityContent(restorativeData.community_engagements) : "No community engagement records available",
+      source: "Restorative Record",
+      fieldType: 'array' as const
+    },
+    achievements: {
+      title: "Personal Achievements",
+      content: restorativeData?.awards ? formatAchievementsContent(restorativeData.awards) : "No achievements available",
+      source: "Restorative Record",
+      fieldType: 'array' as const
+    },
+    skills: {
+      title: "Skills & Abilities", 
+      content: restorativeData?.skills ? formatSkillsContent(restorativeData.skills) : "No skills records available",
+      source: "Restorative Record",
+      fieldType: 'array' as const
+    }
   };
 } 
  

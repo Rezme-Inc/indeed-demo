@@ -12,6 +12,7 @@ import { useAssessmentSteps } from "@/context/useAssessmentSteps";
 import { useCandidateData } from "@/context/useCandidateData";
 import { useCandidateDataFetchers } from "@/hooks/useCandidateDataFetchers";
 import { useParams } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 const Step4: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -72,17 +73,61 @@ const Step4: React.FC = () => {
   );
   const { candidateShareToken, candidateProfile } = useCandidateData();
   const [loadingCandidateData, setLoadingCandidateData] = useState(false);
+  const [restorativeData, setRestorativeData] = useState<any>(null);
   const { fetchCandidateShareToken } = useCandidateDataFetchers(
     userId as string,
     setLoadingCandidateData,
   );
 
 
+  // Function to fetch restorative data for evidence references
+  const fetchRestorativeData = async () => {
+    if (!candidateProfile?.id) return;
+
+    try {
+      const userId = candidateProfile.id;
+
+      // Fetch all restorative record data
+      const [
+        { data: education },
+        { data: employment },
+        { data: rehab_programs },
+        { data: community_engagements },
+        { data: awards },
+        { data: skills }
+      ] = await Promise.all([
+        supabase.from("education").select("*").eq("user_id", userId),
+        supabase.from("employment").select("*").eq("user_id", userId),
+        supabase.from("rehab_programs").select("*").eq("user_id", userId),
+        supabase.from("community_engagements").select("*").eq("user_id", userId),
+        supabase.from("awards").select("*").eq("user_id", userId),
+        supabase.from("skills").select("*").eq("user_id", userId)
+      ]);
+
+      setRestorativeData({
+        education: education || [],
+        employment: employment || [],
+        rehab_programs: rehab_programs || [],
+        community_engagements: community_engagements || [],
+        awards: awards || [],
+        skills: skills || []
+      });
+    } catch (error) {
+      console.error("Error fetching restorative data:", error);
+    }
+  };
+
   useEffect(() => {
     if (showReassessmentSplit && !candidateShareToken && !loadingCandidateData) {
       fetchCandidateShareToken();
     }
   }, [showReassessmentSplit]);
+
+  useEffect(() => {
+    if (showReassessmentSplit && candidateProfile?.id && !restorativeData) {
+      fetchRestorativeData();
+    }
+  }, [showReassessmentSplit, candidateProfile]);
   const businessDaysRemaining =
     typeof window !== "undefined"
       ? parseInt(localStorage.getItem("businessDaysRemaining") || "0", 10)
@@ -314,6 +359,10 @@ const Step4: React.FC = () => {
             setReassessmentDecision={setReassessmentDecision}
             extendReason={extendReason}
             setExtendReason={setExtendReason}
+            candidateId={userId as string}
+            candidateProfile={candidateProfile}
+            hrAdmin={hrAdmin}
+            restorativeData={restorativeData}
           />
           <div className="flex-1 bg-white rounded-xl shadow p-8 border border-gray-200 max-h-[600px] overflow-y-auto">
             <h2

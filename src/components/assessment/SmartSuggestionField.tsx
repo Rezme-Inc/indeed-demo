@@ -20,6 +20,8 @@ interface SmartSuggestionFieldProps {
   referenceData?: ReferenceData;
   onShowReference?: () => void;
   required?: boolean;
+  isManual?: boolean;
+  onManualChange?: (isManual: boolean) => void;
 }
 
 const SmartSuggestionField: React.FC<SmartSuggestionFieldProps> = ({
@@ -34,15 +36,75 @@ const SmartSuggestionField: React.FC<SmartSuggestionFieldProps> = ({
   referenceData,
   onShowReference,
   required = false,
+  isManual = false,
+  onManualChange,
 }) => {
+  const [showAutofilledLabel, setShowAutofilledLabel] = React.useState(false);
+  const [localIsManual, setLocalIsManual] = React.useState(isManual);
+
+  // Sync local state with prop changes (for autofill resets)
+  React.useEffect(() => {
+    setLocalIsManual(isManual);
+  }, [isManual]);
+
   const hasSuggestion = suggestion && suggestion.trim() !== "";
-  const isAutofilled = hasSuggestion && value === suggestion;
+  // Field is autofilled if: has suggestion, value matches suggestion, and NOT manually entered
+  const isAutofilled = !localIsManual && hasSuggestion && value === suggestion;
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log(`[SmartSuggestionField ${label}] State:`, {
+      value,
+      suggestion,
+      isManual,
+      localIsManual,
+      hasSuggestion,
+      isAutofilled,
+      showAutofilledLabel
+    });
+  }, [value, suggestion, isManual, localIsManual, hasSuggestion, isAutofilled, showAutofilledLabel, label]);
+
+  // Debug prop changes
+  React.useEffect(() => {
+    console.log(`[SmartSuggestionField ${label}] isManual prop changed:`, isManual);
+  }, [isManual, label]);
+
+  // Effect to show autofilled label briefly when value becomes autofilled
+  React.useEffect(() => {
+    if (isAutofilled) {
+      setShowAutofilledLabel(true);
+      const timer = setTimeout(() => {
+        setShowAutofilledLabel(false);
+      }, 3000); // Show for 3 seconds
+
+      return () => clearTimeout(timer);
+    } else {
+      setShowAutofilledLabel(false);
+    }
+  }, [isAutofilled]);
 
   const handleFocus = () => {
-    // No special focus handling needed - let user interact with field normally
+    // Hide the label when user focuses on the field
+    setShowAutofilledLabel(false);
   };
 
   const handleChange = (newValue: string) => {
+    // Mark as manual input when user types
+    console.log(`[SmartSuggestionField ${label}] User input:`, {
+      oldValue: value,
+      newValue,
+      wasManual: isManual,
+      localWasManual: localIsManual
+    });
+
+    // Immediately update local state
+    setLocalIsManual(true);
+    console.log(`[SmartSuggestionField ${label}] Setting localIsManual = true immediately`);
+
+    if (onManualChange) {
+      console.log(`[SmartSuggestionField ${label}] Calling onManualChange(true)`);
+      onManualChange(true);
+    }
     onChange(newValue);
   };
 
@@ -95,9 +157,9 @@ const SmartSuggestionField: React.FC<SmartSuggestionFieldProps> = ({
       <div className="relative">
         {renderInput()}
 
-        {/* Small indicator when autofilled */}
-        {isAutofilled && (
-          <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-600 text-xs rounded">
+        {/* Small indicator when autofilled - shows briefly then fades */}
+        {isAutofilled && showAutofilledLabel && (
+          <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-600 text-xs rounded transition-opacity duration-300">
             <Sparkles className="h-3 w-3" />
             <span>Auto-filled</span>
           </div>
