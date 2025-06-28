@@ -56,6 +56,9 @@ export function useStep3Actions(
 
       setSavedRevocationNotice(revocationData);
 
+      // Wait for React state updates to complete
+      await new Promise(resolve => setTimeout(resolve, 200));
+
       if (trackingActive && assessmentSessionId) {
         console.log("[Assessment Tracking] Saving revocation notice...");
 

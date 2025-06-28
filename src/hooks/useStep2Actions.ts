@@ -57,6 +57,9 @@ export function useStep2Actions(
 
       setSavedAssessment(assessmentData);
 
+      // Wait for React state updates to complete
+      await new Promise(resolve => setTimeout(resolve, 200));
+
       if (trackingActive && assessmentSessionId) {
         console.log("[Assessment Tracking] Saving individual assessment...");
 

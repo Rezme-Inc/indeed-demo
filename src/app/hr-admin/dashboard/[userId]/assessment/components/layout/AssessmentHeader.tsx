@@ -100,9 +100,8 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
             <FileText className="h-4 w-4" />
             View Documents
             <ChevronDown
-              className={`h-4 w-4 transition-transform duration-200 ${
-                showDocumentsDropdown ? "rotate-180" : ""
-              }`}
+              className={`h-4 w-4 transition-transform duration-200 ${showDocumentsDropdown ? "rotate-180" : ""
+                }`}
             />
           </button>
 

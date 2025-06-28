@@ -20,10 +20,21 @@ const Step3: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const [activeTab, setActiveTab] = useState("Legal");
   const { currentStep, setCurrentStep } = useAssessmentSteps();
-  const { savedHireDecision, setSavedHireDecision } = useAssessmentStorage(userId as string);
+  const { savedHireDecision, setSavedHireDecision, savedRevocationNotice, setSavedRevocationNotice } = useAssessmentStorage(userId as string);
   const { hrAdmin } = useHRAdminProfile();
   const { candidateProfile } = useCandidateData();
-  const { step1Storage, step2Storage } = useAssessmentStorageContext();
+  const { step1Storage, step2Storage, step3Storage } = useAssessmentStorageContext();
+
+  // Step 3 actions for sending revocation notice
+  const { sendRevocation } = useStep3Actions(userId as string, step3Storage, {
+    hrAdminProfile: hrAdmin,
+    hrAdminId: hrAdmin?.id || null,
+    trackingActive: false,
+    assessmentSessionId: null,
+    setSavedRevocationNotice,
+    setRevocationSentDate: () => { }, // Not used in this flow
+    setCurrentStep,
+  });
 
   // Modal state management
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -38,8 +49,6 @@ const Step3: React.FC = () => {
   const [part1Data, setPart1Data] = useLocalStorageState(`step3_part1_${userId}`, {});
   const [part2Data, setPart2Data] = useLocalStorageState(`step3_part2_${userId}`, {});
   const [part3Data, setPart3Data] = useLocalStorageState(`step3_part3_${userId}`, {});
-
-
 
   // Disable background scrolling when modal is open
   useEffect(() => {
@@ -80,12 +89,46 @@ const Step3: React.FC = () => {
     }
   };
 
+  const handleSendRevocationNotice = async () => {
+    // Combine all part data into the format expected by RevocationForm interface
+    const combinedRevocationData = {
+      // Part 1 - Basic Info (mapping to RevocationForm fields)
+      date: (part1Data as any)?.date || '',
+      applicant: (part1Data as any)?.applicantName || '',
+      position: (part1Data as any)?.position || '',
+      contactName: (part1Data as any)?.contactName || '',
+      companyName: (part1Data as any)?.companyName || '',
+      address: (part1Data as any)?.address || '',
+      phone: (part1Data as any)?.phone || '',
 
+      // Part 2 - Conviction Details (mapping to RevocationForm fields)
+      convictions: (part2Data as any)?.convictions || [],
+      timeSinceConduct: (part2Data as any)?.conductTimeAgo || '',
+      timeSinceSentence: (part2Data as any)?.sentenceCompletedTimeAgo || '',
 
-  const handleSendRevocationNotice = () => {
-    // Close the review modal and proceed to Step 4
-    setShowRevocationReviewModal(false);
-    setCurrentStep(4);
+      // Part 3 - Assessment Reasoning (mapping to RevocationForm fields)
+      jobDuties: (part3Data as any)?.jobDuties || '',
+      seriousReason: (part3Data as any)?.seriousnessReason || '',
+      fitnessReason: (part3Data as any)?.revocationReason || '',
+
+      // Additional required fields
+      numBusinessDays: "5", // String as per RevocationForm interface
+    };
+
+    // Update the step3Storage with combined data
+    step3Storage.setRevocationForm(combinedRevocationData);
+
+    // Wait a moment for the storage to update
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Now send the revocation notice
+    try {
+      await sendRevocation();
+      // Close the review modal after successful send
+      setShowRevocationReviewModal(false);
+    } catch (error) {
+      console.error("Error sending revocation notice:", error);
+    }
   };
 
   const proceedWithHire = () => {
@@ -144,6 +187,33 @@ const Step3: React.FC = () => {
           </div>
         )}
 
+        {/* Revocation Notice Sent Message */}
+        {savedRevocationNotice && (
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                <CheckCircle2 className="h-5 w-5 text-orange-600" />
+              </div>
+              <div>
+                <p
+                  className="text-sm font-semibold text-orange-900 mb-1"
+                  style={{ fontFamily: "Poppins, sans-serif" }}
+                >
+                  Revocation Notice Sent
+                </p>
+                <p
+                  className="text-sm text-orange-800"
+                  style={{ fontFamily: "Poppins, sans-serif" }}
+                >
+                  Preliminary revocation notice sent on{" "}
+                  {new Date(savedRevocationNotice.sentAt).toLocaleDateString()} to
+                  the candidate. The assessment process continues to Step 4.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Compliance Notice */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
           <div className="flex items-start gap-3">
@@ -163,9 +233,10 @@ const Step3: React.FC = () => {
 
         <div className="flex gap-4">
           <button
-            className={`px-8 py-3 rounded-xl text-lg font-semibold transition-all duration-200 ${savedHireDecision ? "opacity-50 cursor-not-allowed" : "text-white hover:opacity-90"}`}
-            onClick={() => savedHireDecision ? undefined : openModal()}
-            disabled={!!savedHireDecision}
+            className={`px-8 py-3 rounded-xl text-lg font-semibold transition-all duration-200 ${savedHireDecision || savedRevocationNotice ? "opacity-50 cursor-not-allowed" : "text-white hover:opacity-90"
+              }`}
+            onClick={() => (savedHireDecision || savedRevocationNotice) ? undefined : openModal()}
+            disabled={!!(savedHireDecision || savedRevocationNotice)}
             style={{
               fontFamily: "Poppins, sans-serif",
               backgroundColor: "#E54747",
@@ -174,9 +245,14 @@ const Step3: React.FC = () => {
             {getButtonText()}
           </button>
           <button
-            className={`px-8 py-3 rounded-xl text-lg font-semibold border transition-all duration-200 ${savedHireDecision ? "border-green-500 text-green-700 bg-green-50" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}
-            onClick={() => (savedHireDecision ? undefined : proceedWithHire())}
-            disabled={!!savedHireDecision}
+            className={`px-8 py-3 rounded-xl text-lg font-semibold border transition-all duration-200 ${savedHireDecision
+                ? "border-green-500 text-green-700 bg-green-50"
+                : savedRevocationNotice
+                  ? "opacity-50 cursor-not-allowed border-gray-300 text-gray-500"
+                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
+              }`}
+            onClick={() => (savedHireDecision || savedRevocationNotice) ? undefined : proceedWithHire()}
+            disabled={!!(savedHireDecision || savedRevocationNotice)}
             style={{ fontFamily: "Poppins, sans-serif" }}
           >
             {savedHireDecision

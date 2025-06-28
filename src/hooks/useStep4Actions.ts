@@ -61,6 +61,9 @@ export function useStep4Actions(
 
       setSavedReassessment(reassessmentData);
 
+      // Wait for React state updates to complete
+      await new Promise(resolve => setTimeout(resolve, 200));
+
       if (trackingActive && assessmentSessionId) {
         console.log("[Assessment Tracking] Saving reassessment...");
 
