@@ -42,6 +42,12 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
+  // Check if this is a route that needs CSRF protection
+  const needsCSRF = protectedRoutes.some(route => pathname.startsWith(route)) || 
+                    pathname.startsWith('/hr-admin') || 
+                    pathname.includes('assessment') ||
+                    request.nextUrl.searchParams.has('_csrf_init');
+
   // Handle CSRF protection for API routes
   if (protectedRoutes.some(route => pathname.startsWith(route))) {
     if (request.method === 'POST' || request.method === 'PUT' || request.method === 'DELETE') {
@@ -57,15 +63,34 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Generate and set CSRF token for GET requests
-  if (request.method === 'GET' && !request.cookies.get('csrf-token')) {
+  // Generate and set CSRF token for requests that need it
+  const existingToken = request.cookies.get('csrf-token')?.value;
+  
+  if (request.method === 'GET' && (needsCSRF || !existingToken)) {
     const csrfToken = generateCSRFToken();
+    
+    // Set httpOnly cookie for server-side verification
     response.cookies.set('csrf-token', csrfToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 60 * 60 * 24, // 24 hours
+      path: '/', // Ensure cookie is available site-wide
     });
+    
+    // Also set a non-httpOnly cookie that JavaScript can read
+    response.cookies.set('csrf-token-js', csrfToken, {
+      httpOnly: false, // JavaScript can read this
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 24, // 24 hours
+      path: '/',
+    });
+    
+    // Add debug logging in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[CSRF] Set token for ${pathname}, needs CSRF: ${needsCSRF}`);
+    }
   }
 
   // Set secure cookie headers for all responses

@@ -8,7 +8,7 @@ export function getCSRFToken(): string | null {
   
   const cookies = document.cookie.split(';');
   const csrfCookie = cookies.find(cookie => 
-    cookie.trim().startsWith('csrf-token=')
+    cookie.trim().startsWith('csrf-token-js=')
   );
   
   if (!csrfCookie) return null;
@@ -37,8 +37,8 @@ export async function secureFetch(url: string, options: RequestInit = {}): Promi
     console.log('CSRF token not found, attempting to initialize...');
     await initializeCSRFProtection();
     
-    // Wait a brief moment for the token to be set
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Wait longer for the token to be set
+    await new Promise(resolve => setTimeout(resolve, 300));
     
     csrfToken = getCSRFToken();
     
@@ -90,9 +90,25 @@ export async function initializeCSRFProtection(): Promise<void> {
       cache: 'no-cache'
     });
     
+    // Wait a bit longer for the cookie to be set
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
     // Verify token was set
     if (!validateCSRFToken()) {
       console.warn('CSRF token was not set after initialization request');
+      
+      // Try one more time with a different approach
+      await fetch('/', {
+        method: 'GET',
+        credentials: 'same-origin',
+        cache: 'no-cache'
+      });
+      
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      if (!validateCSRFToken()) {
+        console.error('CSRF token initialization failed after retry');
+      }
     }
   } catch (error) {
     console.warn('Failed to initialize CSRF protection:', error);
