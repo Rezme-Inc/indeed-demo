@@ -8,10 +8,11 @@ import { useHRAdminProfile } from "@/hooks/useHRAdminProfile";
 import { useHrInvites } from "@/hooks/useHrInvites";
 import { usePermittedUsers } from "@/hooks/usePermittedUsers";
 import { useSecureSession } from "@/hooks/useSecureSession";
+import { initializeCSRFProtection } from "@/lib/csrf";
 import { supabase } from "@/lib/supabase";
 import { generateSecureCode } from "@/utils/invitation";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AssessmentMetrics from "./components/AssessmentMetrics";
 import CandidateTable from "./components/CandidateTable";
 import InvitationCodeCard from "./components/InvitationCodeCard";
@@ -294,6 +295,10 @@ This invitation code will allow you to connect with our HR team: ${
       }
     }
   };
+
+  useEffect(() => {
+    initializeCSRFProtection();
+  }, []);
 
   return (
     <div
