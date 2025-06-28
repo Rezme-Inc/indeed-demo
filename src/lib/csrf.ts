@@ -13,7 +13,8 @@ export function getCSRFToken(): string | null {
   
   if (!csrfCookie) return null;
   
-  return csrfCookie.split('=')[1];
+  const token = csrfCookie.split('=')[1];
+  return token;
 }
 
 /**
@@ -37,8 +38,8 @@ export async function secureFetch(url: string, options: RequestInit = {}): Promi
     console.log('CSRF token not found, attempting to initialize...');
     await initializeCSRFProtection();
     
-    // Wait longer for the token to be set
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Wait for the token to be set
+    await new Promise(resolve => setTimeout(resolve, 200));
     
     csrfToken = getCSRFToken();
     
@@ -79,38 +80,114 @@ export function validateCSRFToken(): boolean {
  */
 export async function initializeCSRFProtection(): Promise<void> {
   if (validateCSRFToken()) {
+    console.log('✅ CSRF token already exists');
     return; // Token already exists
   }
   
-  // Make a GET request to generate CSRF token with cache busting
+  // Make a GET request to any page to trigger CSRF token generation via middleware
   try {
-    await fetch(window.location.pathname + '?_csrf_init=' + Date.now(), {
+    console.log('🔄 Initializing CSRF protection...');
+    await fetch('/api/test-csrf', {
       method: 'GET',
       credentials: 'same-origin',
       cache: 'no-cache'
     });
     
-    // Wait a bit longer for the cookie to be set
-    await new Promise(resolve => setTimeout(resolve, 200));
+    // Wait for the cookie to be set
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     // Verify token was set
-    if (!validateCSRFToken()) {
-      console.warn('CSRF token was not set after initialization request');
-      
-      // Try one more time with a different approach
-      await fetch('/', {
-        method: 'GET',
-        credentials: 'same-origin',
-        cache: 'no-cache'
-      });
-      
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      if (!validateCSRFToken()) {
-        console.error('CSRF token initialization failed after retry');
-      }
+    if (validateCSRFToken()) {
+      console.log('✅ CSRF token initialized successfully');
+    } else {
+      console.warn('⚠️ CSRF token was not set after initialization request');
     }
   } catch (error) {
     console.warn('Failed to initialize CSRF protection:', error);
   }
+}
+
+/**
+ * Test CSRF functionality - call this in browser console
+ */
+export async function testCSRF() {
+  console.log('🔧 Testing CSRF functionality...');
+  
+  // Step 1: Check current cookies
+  console.log('1. Current cookies:', document.cookie);
+  
+  // Step 2: Check if we can get CSRF token
+  const currentToken = getCSRFToken();
+  console.log('2. Current CSRF token:', currentToken);
+  
+  // Step 3: Test if middleware is running by checking headers
+  try {
+    const testResponse = await fetch('/api/test-csrf', {
+      method: 'GET',
+      credentials: 'same-origin'
+    });
+    
+    const middlewareHeader = testResponse.headers.get('X-Middleware-Test');
+    console.log('3. Middleware test header:', middlewareHeader);
+    
+    if (!middlewareHeader) {
+      console.error('❌ MIDDLEWARE NOT RUNNING! Check server console for errors.');
+      return;
+    } else {
+      console.log('✅ Middleware is running');
+    }
+    
+    // Check if cookies were set
+    console.log('4. Cookies after middleware request:', document.cookie);
+    
+  } catch (error) {
+    console.error('Error testing middleware:', error);
+    return;
+  }
+  
+  // Step 4: Initialize CSRF protection
+  console.log('5. Initializing CSRF protection...');
+  await initializeCSRFProtection();
+  
+  // Step 5: Check token after initialization
+  const newToken = getCSRFToken();
+  console.log('6. Token after initialization:', newToken);
+  
+  // Step 6: Test API call
+  try {
+    console.log('7. Testing API call...');
+    const response = await fetch('/api/test-csrf', {
+      method: 'GET',
+      credentials: 'same-origin'
+    });
+    const data = await response.json();
+    console.log('8. GET response:', data);
+    
+    // Step 7: Test POST with CSRF
+    if (newToken) {
+      console.log('9. Testing POST with CSRF token...');
+      const postResponse = await secureFetch('/api/test-csrf', {
+        method: 'POST',
+        body: JSON.stringify({ test: 'data' })
+      });
+      const postData = await postResponse.json();
+      console.log('10. POST response:', postData);
+      
+      if (postData.tokensMatch) {
+        console.log('✅ CSRF implementation working correctly!');
+      } else {
+        console.error('❌ CSRF token mismatch');
+      }
+    } else {
+      console.error('❌ No token available for POST test');
+    }
+    
+  } catch (error) {
+    console.error('Test failed:', error);
+  }
+}
+
+// Make it available globally for debugging
+if (typeof window !== 'undefined') {
+  (window as any).testCSRF = testCSRF;
 } 
