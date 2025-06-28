@@ -22,6 +22,157 @@ interface OfferLetterResults {
   offerDate: string;
 }
 
+// Helper function to convert file to base64
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result.split(',')[1]); // Remove data:application/pdf;base64, prefix
+    };
+    reader.onerror = error => reject(error);
+  });
+};
+
+// Helper function to extract text from PDF using API
+const extractTextFromPDF = async (file: File): Promise<string> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch('/api/extract-pdf-text', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.success) {
+      return result.fullText;
+    } else {
+      throw new Error(result.error || 'Failed to extract text from PDF');
+    }
+  } catch (error) {
+    console.error('Error extracting text from PDF:', error);
+    throw error;
+  }
+};
+
+// Helper function to extract job duties using AI
+const extractJobDuties = async (pdfText: string): Promise<JobDescriptionResults> => {
+  try {
+    const response = await fetch('/api/autofill-duties', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        pdfText,
+        context: 'job_description'
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.success) {
+      return {
+        position: result.data.position_title,
+        duties: result.data.suggested_duties
+      };
+    } else {
+      throw new Error(result.error || 'Failed to extract job duties');
+    }
+  } catch (error) {
+    console.error('Error extracting job duties:', error);
+    throw error;
+  }
+};
+
+// Helper function to extract offer date using AI
+const extractOfferDate = async (pdfText: string): Promise<OfferLetterResults> => {
+  try {
+    const response = await fetch('/api/autofill-date', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        pdfText,
+        context: 'offer_letter'
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.success) {
+      return {
+        offerDate: result.data.offer_date
+      };
+    } else {
+      throw new Error(result.error || 'Failed to extract offer date');
+    }
+  } catch (error) {
+    console.error('Error extracting offer date:', error);
+    throw error;
+  }
+};
+
+// Helper function to store file in localStorage as base64
+const storeFileInLocalStorage = (key: string, file: File) => {
+  fileToBase64(file).then(base64 => {
+    const fileData = {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      lastModified: file.lastModified,
+      data: base64
+    };
+    localStorage.setItem(key, JSON.stringify(fileData));
+  }).catch(error => {
+    console.error('Error storing file in localStorage:', error);
+  });
+};
+
+// Helper function to retrieve file from localStorage
+const getFileFromLocalStorage = (key: string): File | null => {
+  try {
+    const fileDataStr = localStorage.getItem(key);
+    if (!fileDataStr) return null;
+
+    const fileData = JSON.parse(fileDataStr);
+
+    // Convert base64 back to File
+    const byteCharacters = atob(fileData.data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: fileData.type });
+
+    return new File([blob], fileData.name, {
+      type: fileData.type,
+      lastModified: fileData.lastModified
+    });
+  } catch (error) {
+    console.error('Error retrieving file from localStorage:', error);
+    return null;
+  }
+};
+
 const Step1: React.FC = () => {
   const { handleNext, currentStep } = useAssessmentSteps();
   const { userId } = useParams<{ userId: string }>();
@@ -52,23 +203,24 @@ const Step1: React.FC = () => {
     offerDate: ''
   });
 
-  // Load files from localStorage on component mount
+  // Load files and data from localStorage on component mount
   useEffect(() => {
-    const savedFiles = localStorage.getItem(`step1_files_${userId}`);
+    // Load files from localStorage
+    const jobDescFile = getFileFromLocalStorage(`step1_jobDesc_file_${userId}`);
+    const offerLetterFile = getFileFromLocalStorage(`step1_offerLetter_file_${userId}`);
+    const backgroundReportFile = getFileFromLocalStorage(`step1_backgroundReport_file_${userId}`);
+
+    setUploadedFiles({
+      jobDescription: jobDescFile,
+      offerLetter: offerLetterFile,
+      backgroundReport: backgroundReportFile,
+    });
+
+    // Load processing results
     const savedJobResults = localStorage.getItem(`step1_job_results_${userId}`);
     const savedOfferResults = localStorage.getItem(`step1_offer_results_${userId}`);
     const savedJobApproval = localStorage.getItem(`step1_job_approved_${userId}`);
     const savedOfferApproval = localStorage.getItem(`step1_offer_approved_${userId}`);
-
-    if (savedFiles) {
-      try {
-        // Note: Files can't be restored from localStorage, but we can show that they were uploaded
-        const fileData = JSON.parse(savedFiles);
-        // For now, we'll just show the processing results if they exist
-      } catch (error) {
-        console.error('Error loading saved files:', error);
-      }
-    }
 
     if (savedJobResults) {
       try {
@@ -116,19 +268,8 @@ const Step1: React.FC = () => {
       [fileType]: file
     }));
 
-    // Save file info to localStorage (actual file can't be stored)
-    const fileInfo = {
-      [fileType]: {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        lastModified: file.lastModified
-      }
-    };
-    localStorage.setItem(`step1_files_${userId}`, JSON.stringify({
-      ...JSON.parse(localStorage.getItem(`step1_files_${userId}`) || '{}'),
-      ...fileInfo
-    }));
+    // Store file in localStorage
+    storeFileInLocalStorage(`step1_${fileType}_file_${userId}`, file);
 
     // Reset processing state when new files are uploaded
     if (fileType === 'jobDescription') {
@@ -150,9 +291,7 @@ const Step1: React.FC = () => {
     }));
 
     // Remove from localStorage
-    const savedFiles = JSON.parse(localStorage.getItem(`step1_files_${userId}`) || '{}');
-    delete savedFiles[fileType];
-    localStorage.setItem(`step1_files_${userId}`, JSON.stringify(savedFiles));
+    localStorage.removeItem(`step1_${fileType}_file_${userId}`);
 
     // Reset processing state when files are removed
     if (fileType === 'jobDescription') {
@@ -175,24 +314,21 @@ const Step1: React.FC = () => {
 
     setIsProcessingJobDescription(true);
 
-    // Simulate AI processing delay
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    try {
+      // Step 1: Extract text from PDF
+      const pdfText = await extractTextFromPDF(uploadedFiles.jobDescription);
 
-    // Mock AI processing results
-    const mockResults: JobDescriptionResults = {
-      position: "Software Engineer",
-      duties: [
-        "Develop and maintain web applications using React and Node.js",
-        "Collaborate with cross-functional teams to define and implement features",
-        "Write clean, maintainable, and testable code",
-        "Participate in code reviews and technical discussions",
-        "Debug and resolve technical issues in production systems"
-      ]
-    };
+      // Step 2: Extract job duties using AI
+      const results = await extractJobDuties(pdfText);
 
-    setJobDescriptionResults(mockResults);
-    setIsProcessingJobDescription(false);
-    saveJobResultsToLocalStorage(mockResults, false);
+      setJobDescriptionResults(results);
+      saveJobResultsToLocalStorage(results, false);
+    } catch (error) {
+      console.error('Error processing job description:', error);
+      alert('Failed to process job description. Please try again.');
+    } finally {
+      setIsProcessingJobDescription(false);
+    }
   };
 
   const handleProcessOfferLetter = async () => {
@@ -203,17 +339,21 @@ const Step1: React.FC = () => {
 
     setIsProcessingOfferLetter(true);
 
-    // Simulate AI processing delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      // Step 1: Extract text from PDF
+      const pdfText = await extractTextFromPDF(uploadedFiles.offerLetter);
 
-    // Mock AI processing results
-    const mockResults: OfferLetterResults = {
-      offerDate: new Date().toISOString().split('T')[0] // Today's date
-    };
+      // Step 2: Extract offer date using AI
+      const results = await extractOfferDate(pdfText);
 
-    setOfferLetterResults(mockResults);
-    setIsProcessingOfferLetter(false);
-    saveOfferResultsToLocalStorage(mockResults, false);
+      setOfferLetterResults(results);
+      saveOfferResultsToLocalStorage(results, false);
+    } catch (error) {
+      console.error('Error processing offer letter:', error);
+      alert('Failed to process offer letter. Please try again.');
+    } finally {
+      setIsProcessingOfferLetter(false);
+    }
   };
 
   const handleApproveJobDescription = (approvedResults: JobDescriptionResults) => {
