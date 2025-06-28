@@ -6,6 +6,7 @@ interface Part3ModalProps {
   assessmentForm: any;
   handleAssessmentArrayChange: (field: 'duties' | 'activities', idx: number, value: string) => void;
   onAddActivity: () => void;
+  onRemoveActivity: (index: number) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -16,6 +17,7 @@ const Part3Modal: React.FC<Part3ModalProps> = ({
   assessmentForm,
   handleAssessmentArrayChange,
   onAddActivity,
+  onRemoveActivity,
   onNext,
   onBack,
 }) => {
@@ -55,16 +57,31 @@ const Part3Modal: React.FC<Part3ModalProps> = ({
             <p className="text-sm text-gray-600 mb-4">
               Document positive changes and rehabilitation efforts made since the criminal activity occurred.
             </p>
-            {assessmentForm.activities && assessmentForm.activities.map((activity: string, idx: number) => (
-              <input
-                key={idx}
-                type="text"
-                value={activity}
-                onChange={e => handleAssessmentArrayChange('activities', idx, e.target.value)}
-                className="w-full border rounded px-3 py-2 mb-2"
-                placeholder={`Activity ${String.fromCharCode(97 + idx)} - e.g., Completed job training program, Volunteered at local shelter`}
-              />
-            ))}
+            <div className="space-y-3">
+              {assessmentForm.activities && assessmentForm.activities.map((activity: string, idx: number) => (
+                <div key={idx} className="flex gap-2">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={activity}
+                      onChange={e => handleAssessmentArrayChange('activities', idx, e.target.value)}
+                      className="w-full border rounded px-3 py-2 border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                      placeholder={`Activity ${String.fromCharCode(97 + idx)} - e.g., Completed job training program, Volunteered at local shelter`}
+                    />
+                  </div>
+                  {assessmentForm.activities.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => onRemoveActivity(idx)}
+                      className="px-3 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                      title="Remove activity"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
             <button
               type="button"
               className="mt-2 px-4 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm font-medium"

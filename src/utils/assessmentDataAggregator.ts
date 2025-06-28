@@ -193,6 +193,58 @@ export function getStep4Suggestions(
 }
 
 /**
+ * Helper function to get autofill suggestions for Step 5 Final Revocation Notice
+ */
+export function getStep5Suggestions(
+  candidateId: string,
+  candidateProfile?: any,
+  hrAdmin?: any
+) {
+  const sharedData = getSharedAssessmentData(candidateId, candidateProfile, hrAdmin);
+  
+  // Get current date in user's local timezone
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const localDate = `${year}-${month}-${day}`;
+  
+  return {
+    // Basic information
+    date: localDate, // Current date
+    applicant: sharedData.applicantName || "",
+    dateOfNotice: localDate, // Current date for notice
+    position: sharedData.position || "",
+    
+    // Job duties from Step 2
+    jobDuties: sharedData.jobDuties || [],
+    
+    // Assessment reasoning (can be pulled from Step 2 or Step 3 data)
+    seriousReason: "", // This would need to be filled manually
+    timeSinceConduct: sharedData.timeAgo || "",
+    timeSinceSentence: sharedData.timeAgo || "", // Use same timeAgo as conduct for now
+    fitnessReason: sharedData.rescissionReasoning || "",
+    
+    // Convictions (these would typically come from Step 3 data)
+    convictions: ["", "", ""], // Empty array to be filled
+    
+    // Contact information
+    contactName: sharedData.contactName || "",
+    companyName: sharedData.employerName || "",
+    address: sharedData.companyAddress || "",
+    phone: sharedData.companyPhone || "",
+    
+    // Default values for checkboxes/radios
+    noResponse: false,
+    infoSubmitted: false,
+    infoSubmittedList: "",
+    errorOnReport: "",
+    reconsideration: "",
+    reconsiderationProcedure: "",
+  };
+}
+
+/**
  * Helper function to get reference data for Step 4 evidence fields
  * This provides context from the candidate's restorative record for evidence of rehabilitation
  */

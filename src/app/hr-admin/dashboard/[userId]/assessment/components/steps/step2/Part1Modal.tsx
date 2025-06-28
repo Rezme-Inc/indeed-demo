@@ -7,6 +7,7 @@ interface Part1ModalProps {
   handleAssessmentFormChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleAssessmentArrayChange: (field: 'duties' | 'activities', idx: number, value: string) => void;
   onAddDuty: () => void;
+  onRemoveDuty: (index: number) => void;
   onNext: () => void;
 }
 
@@ -17,6 +18,7 @@ const Part1Modal: React.FC<Part1ModalProps> = ({
   handleAssessmentFormChange,
   handleAssessmentArrayChange,
   onAddDuty,
+  onRemoveDuty,
   onNext,
 }) => {
   if (!showModal) return null;
@@ -65,16 +67,31 @@ const Part1Modal: React.FC<Part1ModalProps> = ({
             <label className="block text-sm font-semibold mb-2">
               Specific duties and responsibilities of the job are:
             </label>
-            {assessmentForm.duties && assessmentForm.duties.map((duty: string, idx: number) => (
-              <input
-                key={idx}
-                type="text"
-                value={duty}
-                onChange={e => handleAssessmentArrayChange('duties', idx, e.target.value)}
-                className="w-full border rounded px-3 py-2 mb-2"
-                placeholder={`Duty ${String.fromCharCode(97 + idx)}`}
-              />
-            ))}
+            <div className="space-y-3">
+              {assessmentForm.duties && assessmentForm.duties.map((duty: string, idx: number) => (
+                <div key={idx} className="flex gap-2">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={duty}
+                      onChange={e => handleAssessmentArrayChange('duties', idx, e.target.value)}
+                      className="w-full border rounded px-3 py-2 border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                      placeholder={`Duty ${String.fromCharCode(97 + idx)}`}
+                    />
+                  </div>
+                  {assessmentForm.duties.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => onRemoveDuty(idx)}
+                      className="px-3 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                      title="Remove duty"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
             <button
               type="button"
               className="mt-2 px-4 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm font-medium"

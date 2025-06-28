@@ -36,7 +36,7 @@ const Step2: React.FC = () => {
   } = step2Storage;
   const { hrAdmin } = useHRAdminProfile();
   const { candidateProfile } = useCandidateData();
-  const { addDuty, addActivity } = useAssessmentMutators(
+  const { addDuty, addActivity, removeDuty, removeActivity } = useAssessmentMutators(
     setAssessmentForm,
     (() => { }) as React.Dispatch<React.SetStateAction<any>>
   );
@@ -189,6 +189,7 @@ const Step2: React.FC = () => {
         handleAssessmentFormChange={handleAssessmentFormChange}
         handleAssessmentArrayChange={handleAssessmentArrayChange}
         onAddDuty={addDuty}
+        onRemoveDuty={removeDuty}
         onNext={handleNext}
       />
 
@@ -207,6 +208,7 @@ const Step2: React.FC = () => {
         assessmentForm={assessmentForm}
         handleAssessmentArrayChange={handleAssessmentArrayChange}
         onAddActivity={addActivity}
+        onRemoveActivity={removeActivity}
         onNext={handleNext}
         onBack={handleBack}
       />
