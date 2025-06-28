@@ -67,11 +67,11 @@ export default function UserDashboard() {
   }, []);
 
   async function checkUser() {
-      try {
-        const {
-          data: { user },
+    try {
+      const {
+        data: { user },
         error: authError,
-        } = await supabase.auth.getUser();
+      } = await supabase.auth.getUser();
       if (authError || !user) {
         router.push("/auth/user/login");
         return;
@@ -80,10 +80,10 @@ export default function UserDashboard() {
       setUser(user);
 
       const { data: profileData, error: profileError } = await supabase
-            .from("user_profiles")
-            .select("*")
-            .eq("id", user.id)
-            .single();
+        .from("user_profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
 
       if (profileError && profileError.code !== "PGRST116") {
         console.error("Error fetching profile:", profileError);
@@ -111,14 +111,14 @@ export default function UserDashboard() {
         if (profileData.avatar_url) {
           setAvatarPreview(profileData.avatar_url);
         }
-        }
-      } catch (error) {
+      }
+    } catch (error) {
       console.error("Error checking user:", error);
       router.push("/auth/user/login");
-      } finally {
-        setLoading(false);
-      }
+    } finally {
+      setLoading(false);
     }
+  }
 
   async function handleSaveProfile() {
     if (!user) return;
@@ -183,8 +183,26 @@ export default function UserDashboard() {
   }
 
   async function handleSignOut() {
-    await supabase.auth.signOut();
-    router.push("/");
+    try {
+      const { secureLogout } = await import("@/lib/secureAuth");
+      const result = await secureLogout({
+        auditReason: "user_action",
+        redirectTo: "/",
+        clearLocalData: true,
+      });
+
+      if (!result.success) {
+        console.error("Secure logout failed:", result.error);
+        // Fallback to basic logout
+        await supabase.auth.signOut();
+        router.push("/");
+      }
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // Fallback to basic logout
+      await supabase.auth.signOut();
+      router.push("/");
+    }
   }
 
   function handleInputChange(
@@ -955,7 +973,7 @@ export default function UserDashboard() {
                         />
                       </div>
                     </div>
-            </div>
+                  </div>
                   <div className="mt-8 flex justify-end">
                     <button
                       type="submit"
@@ -1011,9 +1029,9 @@ export default function UserDashboard() {
                 >
                   {saving ? "Saving..." : "Save Changes"}
                 </button>
-            </div>
+              </div>
             )}
-            </div>
+          </div>
         </div>
       </main>
     </div>

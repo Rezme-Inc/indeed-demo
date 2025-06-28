@@ -1,20 +1,20 @@
-import React from "react";
-import {
-  FileText,
-  ChevronDown,
-  ClipboardCheck,
-  AlertTriangle,
-  RotateCcw,
-  AlertCircle,
-  Building,
-  Briefcase,
-  Mail,
-  StickyNote,
-  History,
-  ChevronLeft,
-} from "lucide-react";
 import { useDocumentUploads } from "@/context/useDocumentUploads";
+import {
+  AlertCircle,
+  AlertTriangle,
+  Briefcase,
+  Building,
+  ChevronDown,
+  ChevronLeft,
+  ClipboardCheck,
+  FileText,
+  History,
+  Mail,
+  RotateCcw,
+  StickyNote,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
+import React from "react";
 
 interface AssessmentHeaderProps {
   savedOfferLetter: any;
@@ -72,6 +72,37 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
     companyPolicyFile,
     setShowDocumentPanel,
   } = useDocumentUploads();
+
+  const handleSecureLogout = async () => {
+    try {
+      const { secureLogout } = await import("@/lib/secureAuth");
+      const result = await secureLogout({
+        auditReason: "hr_admin_user_action",
+        redirectTo: "/",
+        clearLocalData: true,
+      });
+
+      if (!result.success) {
+        console.error("Secure logout failed:", result.error);
+        // Fallback to basic logout
+        const { supabase } = await import("@/lib/supabase");
+        await supabase.auth.signOut();
+        router.push("/");
+      }
+    } catch (error) {
+      console.error("Error during secure logout:", error);
+      // Fallback to basic logout
+      try {
+        const { supabase } = await import("@/lib/supabase");
+        await supabase.auth.signOut();
+        router.push("/");
+      } catch (fallbackError) {
+        console.error("Fallback logout also failed:", fallbackError);
+        // Force redirect as last resort
+        window.location.href = "/";
+      }
+    }
+  };
 
   return (
     <header className="w-full bg-white shadow-sm flex items-center justify-between px-8 py-4 mb-8 sticky top-0 z-30 border-b border-gray-200">
@@ -303,6 +334,18 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
         >
           <ChevronLeft className="h-4 w-4" />
           Return to Dashboard
+        </button>
+
+        {/* Secure Logout Button */}
+        <button
+          onClick={handleSecureLogout}
+          className="px-4 py-2 text-white rounded-xl hover:opacity-90 text-sm font-medium flex items-center gap-2 transition-all duration-200"
+          style={{
+            fontFamily: "Poppins, sans-serif",
+            backgroundColor: "#E54747",
+          }}
+        >
+          Sign Out
         </button>
 
         {/* Tracking Status Indicator */}

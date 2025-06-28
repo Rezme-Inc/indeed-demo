@@ -1,5 +1,6 @@
 "use client";
 
+import { useSecureSession } from "@/hooks/useSecureSession";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -10,6 +11,9 @@ export default function RezmeAdminLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+
+  // Enable secure session monitoring for Rezme admin
+  useSecureSession();
 
   useEffect(() => {
     const checkAuth = async () => {
