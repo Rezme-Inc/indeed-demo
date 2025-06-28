@@ -187,6 +187,33 @@ const Step3: React.FC = () => {
           </div>
         )}
 
+        {/* Revocation Notice Sent Message */}
+        {savedRevocationNotice && (
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                <CheckCircle2 className="h-5 w-5 text-orange-600" />
+              </div>
+              <div>
+                <p
+                  className="text-sm font-semibold text-orange-900 mb-1"
+                  style={{ fontFamily: "Poppins, sans-serif" }}
+                >
+                  Revocation Notice Sent
+                </p>
+                <p
+                  className="text-sm text-orange-800"
+                  style={{ fontFamily: "Poppins, sans-serif" }}
+                >
+                  Preliminary revocation notice sent on{" "}
+                  {new Date(savedRevocationNotice.sentAt).toLocaleDateString()} to
+                  the candidate. The assessment process continues to Step 4.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Compliance Notice */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
           <div className="flex items-start gap-3">
@@ -206,9 +233,10 @@ const Step3: React.FC = () => {
 
         <div className="flex gap-4">
           <button
-            className={`px-8 py-3 rounded-xl text-lg font-semibold transition-all duration-200 text-white hover:opacity-90
+            className={`px-8 py-3 rounded-xl text-lg font-semibold transition-all duration-200 ${savedHireDecision || savedRevocationNotice ? "opacity-50 cursor-not-allowed" : "text-white hover:opacity-90"
               }`}
-            onClick={() => openModal()}
+            onClick={() => (savedHireDecision || savedRevocationNotice) ? undefined : openModal()}
+            disabled={!!(savedHireDecision || savedRevocationNotice)}
             style={{
               fontFamily: "Poppins, sans-serif",
               backgroundColor: "#E54747",
@@ -217,8 +245,14 @@ const Step3: React.FC = () => {
             {getButtonText()}
           </button>
           <button
-            className={`px-8 py-3 rounded-xl text-lg font-semibold border transition-all duration-200 border-gray-300 text-gray-700 hover:bg-gray-50`}
-            onClick={() => proceedWithHire()}
+            className={`px-8 py-3 rounded-xl text-lg font-semibold border transition-all duration-200 ${savedHireDecision
+                ? "border-green-500 text-green-700 bg-green-50"
+                : savedRevocationNotice
+                  ? "opacity-50 cursor-not-allowed border-gray-300 text-gray-500"
+                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
+              }`}
+            onClick={() => (savedHireDecision || savedRevocationNotice) ? undefined : proceedWithHire()}
+            disabled={!!(savedHireDecision || savedRevocationNotice)}
             style={{ fontFamily: "Poppins, sans-serif" }}
           >
             {savedHireDecision
