@@ -1,6 +1,20 @@
 # Security Implementation Guide
 
-This document outlines the comprehensive security measures implemented in Rezme v2.0 to protect against CSRF, XSS, and SQL injection attacks.
+graph TD
+A[User Request] --> B[Middleware Layer]
+B --> C[Security Headers Applied]
+B --> D[CSRF Token Checked]
+C --> E[Next.js App]
+D --> E
+E --> F[React Components]
+E --> G[API Routes]
+F --> H[Auto-escaped JSX]
+G --> I[Input Validation]
+G --> J[Supabase ORM]
+J --> K[Parameterized Queries]
+J --> L[RLS Policies]
+
+This document outlines the comprehensive security measures implemented in selfservice
 
 ## Overview
 
@@ -244,6 +258,67 @@ Monitor for:
 3. **Communication**: Notify stakeholders of security events
 4. **Recovery**: Implement additional protections as needed
 
+## Secure Logout Implementation
+
+### Comprehensive Session Management
+
+The secure logout system provides enterprise-grade session management:
+
+**Features:**
+
+- **Audit Logging**: All logout events are logged with context
+- **Secure Cleanup**: Complete removal of sensitive data
+- **Multi-Device Logout**: Option to logout from all devices
+- **Session Monitoring**: Automatic session validation
+- **Security Events**: Detection and response to suspicious activity
+
+**Implementation Files:**
+
+- `src/lib/secureAuth.ts` - Core secure authentication library
+- `src/hooks/useSecureSession.ts` - React hook for session management
+- `src/app/api/audit/security-event/route.ts` - Security audit logging
+- `src/app/auth/security-logout/page.tsx` - Security logout page
+
+### Usage Examples
+
+**Basic Secure Logout:**
+
+```typescript
+import { secureLogout } from "@/lib/secureAuth";
+
+const handleLogout = async () => {
+  const result = await secureLogout({
+    auditReason: "user_action",
+    redirectTo: "/",
+    clearLocalData: true,
+  });
+};
+```
+
+**Session Monitoring Hook:**
+
+```typescript
+import { useSecureSession } from "@/hooks/useSecureSession";
+
+function MyComponent() {
+  const { performSecureLogout, checkSession } = useSecureSession({
+    onSessionExpired: () => console.log("Session expired"),
+    onSecurityEvent: (reason) => console.log("Security event:", reason),
+  });
+
+  return <button onClick={() => performSecureLogout()}>Logout</button>;
+}
+```
+
+**Force Security Logout:**
+
+```typescript
+import { forceSecurityLogout } from "@/lib/secureAuth";
+
+// For suspicious activity
+await forceSecurityLogout("suspicious_activity");
+```
+
 ## Testing Security Implementation
 
 ### CSRF Testing
@@ -254,6 +329,19 @@ curl -X POST http://localhost:3000/api/send-email \
   -H "Content-Type: application/json" \
   -d '{"to":"test@example.com","subject":"Test","html":"Test"}'
 # Should return 403 Forbidden
+```
+
+### Secure Logout Testing
+
+```bash
+# Test audit endpoint CSRF protection
+curl -X POST http://localhost:3000/api/audit/security-event \
+  -H "Content-Type: application/json" \
+  -d '{"event_type":"logout","timestamp":"2024-01-01T00:00:00Z"}'
+# Should return 403 Forbidden
+
+# Test with comprehensive security test suite
+npm run test:security
 ```
 
 ### XSS Testing

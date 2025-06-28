@@ -21,7 +21,7 @@ function verifyCSRFToken(request: NextRequest): boolean {
 }
 
 // Routes that require CSRF protection
-const protectedRoutes = ['/api/send-email'];
+const protectedRoutes = ['/api/send-email', '/api/audit/security-event'];
 
 // Routes that are public and don't need authentication
 const publicRoutes = [

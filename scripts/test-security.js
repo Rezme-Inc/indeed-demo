@@ -260,6 +260,71 @@ async function testHTTPMethods() {
   }
 }
 
+async function testSecureLogout() {
+  console.log("\n🚪 Testing Secure Logout...");
+
+  try {
+    // Test audit endpoint for logout events
+    const auditResponse = await makeRequest(
+      {
+        hostname: new URL(BASE_URL).hostname,
+        port: new URL(BASE_URL).port || (isHttps ? 443 : 80),
+        path: "/api/audit/security-event",
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+      JSON.stringify({
+        event_type: "logout",
+        user_id: "test-user-id",
+        timestamp: new Date().toISOString(),
+        details: { reason: "security_test" },
+      })
+    );
+
+    // Should fail without CSRF token
+    if (auditResponse.statusCode === 403) {
+      console.log("  ✅ Audit Endpoint CSRF Protection: Protected");
+    } else {
+      console.log(
+        `  ❌ Audit Endpoint CSRF Protection: Not protected (Status: ${auditResponse.statusCode})`
+      );
+    }
+
+    // Test invalid event type
+    const invalidEventResponse = await makeRequest(
+      {
+        hostname: new URL(BASE_URL).hostname,
+        port: new URL(BASE_URL).port || (isHttps ? 443 : 80),
+        path: "/api/audit/security-event",
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+      JSON.stringify({
+        event_type: "invalid_event",
+        timestamp: new Date().toISOString(),
+      })
+    );
+
+    if (invalidEventResponse.statusCode === 400) {
+      console.log("  ✅ Audit Input Validation: Invalid event types rejected");
+    } else {
+      console.log(
+        `  ❌ Audit Input Validation: Invalid event types accepted (Status: ${invalidEventResponse.statusCode})`
+      );
+    }
+
+    console.log(
+      "  ℹ️  Note: Full logout testing requires authentication context"
+    );
+  } catch (error) {
+    console.error("❌ Error testing secure logout:", error.message);
+  }
+}
+
 async function runSecurityTests() {
   console.log("🔐 Rezme v2.0 Security Test Suite");
   console.log("==================================");
@@ -270,6 +335,7 @@ async function runSecurityTests() {
   await testRateLimiting();
   await testInputValidation();
   await testHTTPMethods();
+  await testSecureLogout();
 
   console.log("\n✨ Security testing complete!");
   console.log(
@@ -292,4 +358,5 @@ module.exports = {
   testRateLimiting,
   testInputValidation,
   testHTTPMethods,
+  testSecureLogout,
 };
