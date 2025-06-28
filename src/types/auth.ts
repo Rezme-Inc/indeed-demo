@@ -23,6 +23,8 @@ export interface HrAdminProfile {
   first_name: string;
   last_name: string;
   company: string;
+  phone?: string;
+  company_address?: string;
   connected_users: string[];
   invitation_code: string | null;
   created_at?: string;

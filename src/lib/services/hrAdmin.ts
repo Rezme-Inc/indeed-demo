@@ -6,6 +6,8 @@ export interface HRAdminProfile {
   first_name: string;
   last_name: string;
   company: string;
+  phone?: string;
+  company_address?: string;
   invitation_code?: string;
 }
 

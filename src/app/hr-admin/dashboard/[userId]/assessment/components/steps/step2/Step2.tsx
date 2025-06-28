@@ -11,6 +11,7 @@ import { useAssessmentStorage } from "@/hooks/useAssessmentStorage";
 import { useHRAdminProfile } from "@/hooks/useHRAdminProfile";
 import { useAssessmentSteps } from "@/context/useAssessmentSteps";
 import { useParams } from "next/navigation";
+import { useCandidateData } from "@/context/useCandidateData";
 
 const Step2: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -34,6 +35,7 @@ const Step2: React.FC = () => {
     handleAssessmentArrayChange,
   } = step2Storage;
   const { hrAdmin } = useHRAdminProfile();
+  const { candidateProfile } = useCandidateData();
   const { addDuty, addActivity } = useAssessmentMutators(
     setAssessmentForm,
     (() => { }) as React.Dispatch<React.SetStateAction<any>>
@@ -225,6 +227,9 @@ const Step2: React.FC = () => {
         handleAssessmentFormChange={handleAssessmentFormChange}
         onNext={handleNext}
         onBack={handleBack}
+        candidateProfile={candidateProfile}
+        hrAdmin={hrAdmin}
+        candidateId={userId as string}
       />
 
       <PreviewModal

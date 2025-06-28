@@ -63,5 +63,4 @@ const AssessmentPartWrapper: React.FC<AssessmentPartWrapperProps> = ({
   );
 };
 
-export default AssessmentPartWrapper; 
- 
+export default AssessmentPartWrapper;

@@ -1,4 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
+import AssessmentPartWrapper from "@/components/assessment/AssessmentPartWrapper";
+import SmartSuggestionField from "@/components/assessment/SmartSuggestionField";
+import { getStep2Part5Suggestions } from "@/utils/assessmentDataAggregator";
 
 interface Part5ModalProps {
   showModal: boolean;
@@ -7,6 +10,9 @@ interface Part5ModalProps {
   handleAssessmentFormChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onNext: () => void;
   onBack: () => void;
+  candidateProfile?: any;
+  hrAdmin?: any;
+  candidateId: string;
 }
 
 const Part5Modal: React.FC<Part5ModalProps> = ({
@@ -16,8 +22,56 @@ const Part5Modal: React.FC<Part5ModalProps> = ({
   handleAssessmentFormChange,
   onNext,
   onBack,
+  candidateProfile,
+  hrAdmin,
+  candidateId,
 }) => {
+  const [suggestions, setSuggestions] = useState<any>({});
+
   if (!showModal) return null;
+
+  const handleAutofill = async () => {
+    try {
+      console.log('Part5Modal - Autofill triggered');
+      console.log('Part5Modal - Candidate profile:', candidateProfile);
+      console.log('Part5Modal - HR admin:', hrAdmin);
+
+      // Use the new data aggregation utility
+      const newSuggestions = getStep2Part5Suggestions(candidateId, candidateProfile, hrAdmin);
+
+      console.log('Part5Modal - Generated suggestions:', newSuggestions);
+
+      setSuggestions(newSuggestions);
+
+      // Auto-fill only empty fields with suggestions
+      const updates: any = {};
+      Object.keys(newSuggestions).forEach(key => {
+        const suggestionValue = newSuggestions[key as keyof typeof newSuggestions];
+        const currentValue = assessmentForm[key];
+        // Only fill if field is empty and we have a suggestion
+        if (suggestionValue && (!currentValue || currentValue.trim() === '')) {
+          updates[key] = suggestionValue;
+        }
+      });
+
+      console.log('Part5Modal - Updates to apply:', updates);
+
+      if (Object.keys(updates).length > 0) {
+        // Apply updates by creating synthetic events
+        Object.keys(updates).forEach(key => {
+          const syntheticEvent = {
+            target: {
+              name: key,
+              value: updates[key]
+            }
+          } as React.ChangeEvent<HTMLInputElement>;
+          handleAssessmentFormChange(syntheticEvent);
+        });
+      }
+    } catch (error) {
+      console.error('Error during autofill:', error);
+    }
+  };
 
   const isComplete = () => {
     return assessmentForm.employer &&
@@ -28,118 +82,125 @@ const Part5Modal: React.FC<Part5ModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full p-8 relative max-h-screen overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h2 className="text-2xl font-bold">Part 5: Assessment Details</h2>
-            <p className="text-gray-600 text-sm mt-1">Step 5 of 5</p>
-          </div>
-          <button
-            className="text-gray-500 hover:text-gray-700"
-            onClick={() => setShowModal(false)}
-          >
-            ✕
-          </button>
+    <AssessmentPartWrapper
+      title="Part 5: Assessment Details"
+      stepNumber="Step 5 of 5"
+      showModal={showModal}
+      onAutofill={handleAutofill}
+      onClose={() => setShowModal(false)}
+    >
+
+      <form className="space-y-6">
+        <div className="grid grid-cols-2 gap-6">
+          <SmartSuggestionField
+            label="Employer Name"
+            value={assessmentForm.employer || ''}
+            onChange={(value) => {
+              const syntheticEvent = {
+                target: { name: 'employer', value }
+              } as React.ChangeEvent<HTMLInputElement>;
+              handleAssessmentFormChange(syntheticEvent);
+            }}
+            suggestion={suggestions.employer}
+            suggestionsEnabled={true}
+            placeholder="Enter employer/company name"
+            required
+          />
+
+          <SmartSuggestionField
+            label="Applicant Name"
+            value={assessmentForm.applicant || ''}
+            onChange={(value) => {
+              const syntheticEvent = {
+                target: { name: 'applicant', value }
+              } as React.ChangeEvent<HTMLInputElement>;
+              handleAssessmentFormChange(syntheticEvent);
+            }}
+            suggestion={suggestions.applicant}
+            suggestionsEnabled={true}
+            placeholder="Enter applicant's full name"
+            required
+          />
         </div>
 
-        <div className="mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-900 rounded">
-          <b>Notice:</b> All fields are required to complete the assessment.
+        <div className="grid grid-cols-2 gap-6">
+          <SmartSuggestionField
+            label="Date of Conditional Offer"
+            value={assessmentForm.offerDate || ''}
+            onChange={(value) => {
+              const syntheticEvent = {
+                target: { name: 'offerDate', value }
+              } as React.ChangeEvent<HTMLInputElement>;
+              handleAssessmentFormChange(syntheticEvent);
+            }}
+            suggestion={suggestions.offerDate}
+            suggestionsEnabled={true}
+            type="date"
+            required
+          />
+
+          <SmartSuggestionField
+            label="Date of Assessment"
+            value={assessmentForm.assessmentDate || ''}
+            onChange={(value) => {
+              const syntheticEvent = {
+                target: { name: 'assessmentDate', value }
+              } as React.ChangeEvent<HTMLInputElement>;
+              handleAssessmentFormChange(syntheticEvent);
+            }}
+            suggestion={suggestions.assessmentDate}
+            suggestionsEnabled={true}
+            type="date"
+            required
+          />
         </div>
 
-        <form className="space-y-6">
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-semibold mb-2">Employer Name</label>
-              <input
-                type="text"
-                name="employer"
-                value={assessmentForm.employer || ''}
-                onChange={handleAssessmentFormChange}
-                className="w-full border rounded px-3 py-2"
-                placeholder="Enter employer/company name"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold mb-2">Applicant Name</label>
-              <input
-                type="text"
-                name="applicant"
-                value={assessmentForm.applicant || ''}
-                onChange={handleAssessmentFormChange}
-                className="w-full border rounded px-3 py-2"
-                placeholder="Enter applicant's full name"
-              />
-            </div>
-          </div>
+        <SmartSuggestionField
+          label="Assessment Performed by"
+          value={assessmentForm.performedBy || ''}
+          onChange={(value) => {
+            const syntheticEvent = {
+              target: { name: 'performedBy', value }
+            } as React.ChangeEvent<HTMLInputElement>;
+            handleAssessmentFormChange(syntheticEvent);
+          }}
+          suggestion={suggestions.performedBy}
+          suggestionsEnabled={true}
+          placeholder="Enter name of person performing assessment"
+          required
+        />
+      </form>
 
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-semibold mb-2">Date of Conditional Offer</label>
-              <input
-                type="date"
-                name="offerDate"
-                value={assessmentForm.offerDate || ''}
-                onChange={handleAssessmentFormChange}
-                className="w-full border rounded px-3 py-2"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold mb-2">Date of Assessment</label>
-              <input
-                type="date"
-                name="assessmentDate"
-                value={assessmentForm.assessmentDate || ''}
-                onChange={handleAssessmentFormChange}
-                className="w-full border rounded px-3 py-2"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold mb-2">Assessment Performed by</label>
-            <input
-              type="text"
-              name="performedBy"
-              value={assessmentForm.performedBy || ''}
-              onChange={handleAssessmentFormChange}
-              className="w-full border rounded px-3 py-2"
-              placeholder="Enter name of person performing assessment"
-            />
-          </div>
-        </form>
-
-        <div className="flex justify-between mt-8">
+      <div className="flex justify-between mt-8">
+        <button
+          type="button"
+          className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200"
+          onClick={() => setShowModal(false)}
+        >
+          Save for Later
+        </button>
+        <div className="flex gap-4">
           <button
             type="button"
             className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200"
-            onClick={() => setShowModal(false)}
+            onClick={onBack}
           >
-            Save for Later
+            Back
           </button>
-          <div className="flex gap-4">
-            <button
-              type="button"
-              className="px-6 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200"
-              onClick={onBack}
-            >
-              Back
-            </button>
-            <button
-              type="button"
-              className={`px-6 py-2 rounded font-semibold ${isComplete()
-                ? "bg-red-500 text-white hover:bg-red-600"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                }`}
-              onClick={onNext}
-              disabled={!isComplete()}
-            >
-              Review & Send
-            </button>
-          </div>
+          <button
+            type="button"
+            className={`px-6 py-2 rounded font-semibold ${isComplete()
+              ? "bg-red-500 text-white hover:bg-red-600"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+            onClick={onNext}
+            disabled={!isComplete()}
+          >
+            Review & Send
+          </button>
         </div>
       </div>
-    </div>
+    </AssessmentPartWrapper>
   );
 };
 

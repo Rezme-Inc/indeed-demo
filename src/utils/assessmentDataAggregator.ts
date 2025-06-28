@@ -40,6 +40,8 @@ export function getSharedAssessmentData(
   if (hrAdmin) {
     data.employerName = hrAdmin.company;
     data.contactName = `${hrAdmin.first_name} ${hrAdmin.last_name}`;
+    data.companyAddress = hrAdmin.company_address || '';
+    data.companyPhone = hrAdmin.phone || '';
   }
   
   // Only read localStorage if we're in the browser
@@ -86,6 +88,13 @@ export function getStep3Part1Suggestions(
 ) {
   const sharedData = getSharedAssessmentData(candidateId, candidateProfile, hrAdmin);
   
+  // Get current date in user's local timezone
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const localDate = `${year}-${month}-${day}`;
+  
   return {
     applicantName: sharedData.applicantName || "",
     position: sharedData.position || "",
@@ -93,7 +102,7 @@ export function getStep3Part1Suggestions(
     companyName: sharedData.employerName || "",
     address: sharedData.companyAddress || "",
     phone: sharedData.companyPhone || "",
-    date: new Date().toISOString().split('T')[0]
+    date: localDate
   };
 }
 
@@ -130,6 +139,32 @@ export function getStep3Part3Suggestions(
 }
 
 /**
+ * Helper function to get autofill suggestions for Step 2 Part 5 (Assessment Details)
+ */
+export function getStep2Part5Suggestions(
+  candidateId: string,
+  candidateProfile?: any,
+  hrAdmin?: any
+) {
+  const sharedData = getSharedAssessmentData(candidateId, candidateProfile, hrAdmin);
+  
+  // Get current date in user's local timezone
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const localDate = `${year}-${month}-${day}`;
+  
+  return {
+    employer: sharedData.employerName || "",
+    applicant: sharedData.applicantName || "",
+    offerDate: sharedData.offerDate || "",
+    assessmentDate: localDate, // Current date in user's local timezone
+    performedBy: sharedData.contactName || "",
+  };
+}
+
+/**
  * Helper function to get autofill suggestions for Step 4 Individual Reassessment
  */
 export function getStep4Suggestions(
@@ -139,12 +174,19 @@ export function getStep4Suggestions(
 ) {
   const sharedData = getSharedAssessmentData(candidateId, candidateProfile, hrAdmin);
   
+  // Get current date in user's local timezone
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const localDate = `${year}-${month}-${day}`;
+  
   return {
     employer: sharedData.employerName || "",
     applicant: sharedData.applicantName || "",
     position: sharedData.position || "",
     offerDate: sharedData.offerDate || "",
-    reassessmentDate: new Date().toISOString().split('T')[0], // Current date
+    reassessmentDate: localDate, // Current date in user's local timezone
     reportDate: sharedData.reportDate || "",
     performedBy: sharedData.contactName || "",
   };
