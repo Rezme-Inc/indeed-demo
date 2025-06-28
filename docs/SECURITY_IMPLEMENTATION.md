@@ -52,18 +52,67 @@ The security implementation follows defense-in-depth principles with multiple la
 ### How It Works
 
 1. **Token Generation**: Middleware generates unique CSRF tokens for each session
-2. **Token Storage**: Tokens stored in httpOnly cookies with secure flags
+2. **Token Storage**: Tokens stored in secure cookies (accessible to JavaScript for client-side use)
 3. **Token Validation**: All state-changing requests must include valid CSRF tokens
 4. **Token Verification**: Server validates tokens before processing requests
 
 ### Implementation Details
 
-**Middleware Configuration** (`middleware.ts`):
+**Middleware Configuration** (`src/middleware.js`):
 
-- Generates CSRF tokens automatically
-- Validates tokens for POST/PUT/DELETE requests
-- Returns 403 Forbidden for invalid tokens
-- Applies secure cookie settings
+> **Important**: Middleware must be located in `src/middleware.js` (not root `middleware.ts`) for this project structure
+
+```javascript
+// CSRF Token Generation - for all GET requests
+if (request.method === "GET") {
+  const existingToken = request.cookies.get("csrf-token-js")?.value;
+
+  if (!existingToken) {
+    const token =
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15);
+    console.log("🔑 Setting new CSRF token:", token.substring(0, 8) + "...");
+
+    response.cookies.set("csrf-token-js", token, {
+      httpOnly: false, // Must be false for client-side JavaScript access
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24, // 24 hours
+    });
+  }
+}
+
+// CSRF Token Validation for state-changing requests
+if (["POST", "PUT", "DELETE", "PATCH"].includes(request.method)) {
+  const csrfHeader = request.headers.get("X-CSRF-Token");
+  const csrfCookie = request.cookies.get("csrf-token-js")?.value;
+
+  // Skip CSRF validation for certain paths
+  const skipPaths = ["/api/auth", "/auth"];
+  const shouldSkip = skipPaths.some((path) =>
+    request.nextUrl.pathname.startsWith(path)
+  );
+
+  if (
+    !shouldSkip &&
+    (!csrfHeader || !csrfCookie || csrfHeader !== csrfCookie)
+  ) {
+    return NextResponse.json(
+      { error: "CSRF token validation failed" },
+      { status: 403 }
+    );
+  }
+}
+```
+
+**Key Configuration Details:**
+
+- **File Location**: `src/middleware.js` (critical for Next.js app directory structure)
+- **Cookie Name**: `csrf-token-js` (accessible to JavaScript)
+- **httpOnly**: `false` (required for client-side token access)
+- **Security**: Secure in production, allows HTTP in development
+- **Validation**: Automatic for all POST/PUT/DELETE/PATCH requests
 
 **Client-Side Integration** (`src/lib/csrf.ts`):
 
@@ -75,7 +124,7 @@ The security implementation follows defense-in-depth principles with multiple la
 
 - `/api/send-email` - Email sending endpoint
 - `/api/audit/security-event` - Security audit logging endpoint
-- Add additional API routes to `protectedRoutes` array in middleware
+- All POST/PUT/DELETE/PATCH requests except auth routes
 
 ### Usage Example
 
@@ -89,29 +138,222 @@ const response = await secureFetch("/api/send-email", {
 });
 ```
 
+### CSRF Testing Utilities
+
+#### Test API Endpoint (`/api/test-csrf`)
+
+A dedicated testing endpoint for verifying CSRF implementation:
+
+**GET Request** - Check token status:
+
+```bash
+curl -s http://localhost:3000/api/test-csrf | jq '.'
+```
+
+**Response:**
+
+```json
+{
+  "message": "CSRF Test Endpoint",
+  "hasCSRFToken": true,
+  "csrfTokenLength": 20,
+  "allCookies": [{ "name": "csrf-token-js", "hasValue": true }],
+  "timestamp": "2025-06-28T02:28:51.833Z"
+}
+```
+
+**POST Request** - Test token validation:
+
+```bash
+curl -s -X POST http://localhost:3000/api/test-csrf \
+  -H "X-CSRF-Token: your-token-here" \
+  -H "Content-Type: application/json" \
+  -b cookies.txt -d '{"test": "data"}' | jq '.'
+```
+
+**Response:**
+
+```json
+{
+  "message": "CSRF POST Test",
+  "hasCSRFHeader": true,
+  "hasCSRFCookie": true,
+  "tokensMatch": true,
+  "headerLength": 20,
+  "cookieLength": 20,
+  "timestamp": "2025-06-28T02:29:06.114Z"
+}
+```
+
+**Fields Explained:**
+
+- `hasCSRFToken`: Whether a CSRF token cookie exists
+- `hasCSRFHeader`: Whether the X-CSRF-Token header was provided
+- `hasCSRFCookie`: Whether the csrf-token-js cookie exists
+- `tokensMatch`: Whether header and cookie tokens match (critical for validation)
+- `csrfTokenLength`: Length of the token (should be 20 characters)
+
+#### Browser Console Testing (`testCSRF()`)
+
+A comprehensive testing function available in the browser console:
+
+**Usage:**
+
+```javascript
+// In browser console (F12)
+testCSRF();
+```
+
+**What it Tests:**
+
+1. **Current State**: Shows existing cookies and tokens
+2. **Middleware Check**: Verifies middleware is running via headers
+3. **Token Initialization**: Tests CSRF protection setup
+4. **GET Request**: Tests token generation
+5. **POST Request**: Tests token validation
+6. **Final Validation**: Confirms complete CSRF flow
+
+**Expected Output:**
+
+```
+🔧 Testing CSRF functionality...
+1. Current cookies: csrf-token-js=abc123...
+2. Current CSRF token: abc123xyz789
+3. Middleware test header: working
+✅ Middleware is running
+4. Cookies after middleware request: csrf-token-js=abc123...
+5. Initializing CSRF protection...
+✅ CSRF token initialized successfully
+6. Token after initialization: abc123xyz789
+7. Testing API call...
+8. GET response: {message: "CSRF Test Endpoint", hasCSRFToken: true, ...}
+9. Testing POST with CSRF token...
+10. POST response: {message: "CSRF POST Test", tokensMatch: true, ...}
+✅ CSRF implementation working correctly!
+```
+
+**Error Indicators:**
+
+- `❌ MIDDLEWARE NOT RUNNING!` - Middleware not executing
+- `❌ CSRF token mismatch` - Token validation failing
+- `❌ No token available for POST test` - Token generation failing
+
+**Common Issues:**
+
+- If middleware headers are missing, check middleware location (`src/middleware.js`)
+- If tokens don't match, verify cookie settings in middleware
+- If initialization fails, check server console for errors
+
+#### Testing Commands Reference
+
+**Quick Tests:**
+
+```bash
+# 1. Check if middleware is running
+curl -I http://localhost:3000/ | grep -i middleware
+
+# 2. Test token generation
+curl -s http://localhost:3000/api/test-csrf | jq '.hasCSRFToken'
+
+# 3. Full token lifecycle test
+curl -s http://localhost:3000/api/test-csrf -c cookies.txt
+curl -s http://localhost:3000/api/test-csrf -b cookies.txt | jq '.hasCSRFToken'
+
+# 4. Test validation failure (should return 403)
+curl -s -X POST http://localhost:3000/api/test-csrf \
+  -H "Content-Type: application/json" \
+  -d '{"test": "data"}'
+
+# 5. Test validation success (should return 200)
+TOKEN=$(curl -s http://localhost:3000/api/test-csrf -c cookies.txt | jq -r '.csrfToken // empty')
+curl -s -X POST http://localhost:3000/api/test-csrf \
+  -H "X-CSRF-Token: $TOKEN" \
+  -H "Content-Type: application/json" \
+  -b cookies.txt -d '{"test": "data"}' | jq '.tokensMatch'
+```
+
+**Browser Testing:**
+
+```javascript
+// Quick browser tests
+console.log("Token:", getCSRFToken());
+console.log("Valid:", validateCSRFToken());
+
+// Test secure fetch
+secureFetch("/api/test-csrf", {
+  method: "POST",
+  body: JSON.stringify({ test: "browser" }),
+})
+  .then((r) => r.json())
+  .then(console.log);
+
+// Full test suite
+testCSRF();
+```
+
+### Debugging CSRF Issues
+
+If CSRF tokens are not working:
+
+1. **Check Middleware Location**: Ensure middleware is in `src/middleware.js`
+2. **Verify Console Logs**: Look for "🔥 MIDDLEWARE RUNNING:" messages
+3. **Test Headers**: Check for `X-Middleware-Test: working` header
+4. **Check Cookies**: Verify `csrf-token-js` cookie is set
+5. **Clear Cache**: Remove `.next` directory and restart server
+
+**Quick Debug Steps:**
+
+```bash
+# 1. Test if middleware is running
+curl -I http://localhost:3000/ | grep -i middleware
+
+# 2. Use the test endpoint
+curl -s http://localhost:3000/api/test-csrf | jq '.'
+
+# 3. Use browser console function
+# Open browser console (F12) and run: testCSRF()
+```
+
 ## XSS Protection Implementation
 
 ### Content Security Policy (CSP)
 
-Configured in `next.config.js` with restrictive policies:
+**Important Update**: Security headers are now configured in `src/middleware.js` (not `next.config.js`):
 
 ```javascript
-"default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com",
-  "img-src 'self' data: blob: https:",
-  "connect-src 'self' wss: https:",
-  "frame-src 'self'",
-  "object-src 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "frame-ancestors 'none'";
+// Add comprehensive security headers
+response.headers.set(
+  "Content-Security-Policy",
+  "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com; " +
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    "font-src 'self' https://fonts.gstatic.com; " +
+    "img-src 'self' data: blob: https:; " +
+    "connect-src 'self' wss: https:; " +
+    "frame-src 'self'; " +
+    "object-src 'none'; " +
+    "base-uri 'self'; " +
+    "form-action 'self'; " +
+    "frame-ancestors 'none'"
+);
+
+response.headers.set("X-Content-Type-Options", "nosniff");
+response.headers.set("X-XSS-Protection", "1; mode=block");
+response.headers.set("X-Frame-Options", "DENY");
+response.headers.set(
+  "Strict-Transport-Security",
+  "max-age=31536000; includeSubDomains"
+);
+response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+response.headers.set(
+  "Permissions-Policy",
+  "camera=(), microphone=(), geolocation=()"
+);
 ```
 
 ### Security Headers
 
-Multiple security headers configured:
+Multiple security headers configured in middleware:
 
 - **X-Content-Type-Options**: Prevents MIME-type sniffing
 - **X-XSS-Protection**: Enables browser XSS filtering
@@ -119,6 +361,7 @@ Multiple security headers configured:
 - **Strict-Transport-Security**: Forces HTTPS connections
 - **Referrer-Policy**: Controls referrer information leakage
 - **Permissions-Policy**: Restricts dangerous browser features
+- **X-Middleware-Test**: Debug header to verify middleware is running
 
 ### Input Validation
 
@@ -163,16 +406,23 @@ Comprehensive RLS policies implemented:
 
 ### Secure Cookie Settings
 
-Configured in middleware for optimal security:
+**CSRF Token Cookies** (configured in `src/middleware.js`):
 
-```typescript
-response.cookies.set("csrf-token", csrfToken, {
-  httpOnly: true, // Prevent XSS access
+```javascript
+response.cookies.set("csrf-token-js", token, {
+  httpOnly: false, // Required for client-side JavaScript access
   secure: process.env.NODE_ENV === "production", // HTTPS only in production
-  sameSite: "strict", // CSRF protection
+  sameSite: "lax", // Balance between security and functionality
+  path: "/",
   maxAge: 60 * 60 * 24, // 24 hours
 });
 ```
+
+**Important Notes:**
+
+- **httpOnly: false**: Required for CSRF tokens as client-side JavaScript needs access
+- **secure**: Automatically enables HTTPS-only in production
+- **sameSite: 'lax'**: Provides CSRF protection while allowing legitimate cross-site requests
 
 ### Supabase Authentication Cookies
 
