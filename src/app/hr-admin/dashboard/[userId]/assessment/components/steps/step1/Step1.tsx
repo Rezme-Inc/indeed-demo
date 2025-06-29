@@ -1,13 +1,14 @@
-import React, { useState } from "react";
-import { ChevronRight } from "lucide-react";
-import { useParams } from "next/navigation";
-import ConditionalJobOfferLetter from "./ConditionalJobOfferLetter";
-import CriticalInfoSection from "../../critical/CriticalInfoSection";
 import { useAssessmentStorageContext } from "@/context/AssessmentStorageProvider";
 import { useAssessmentSteps } from "@/context/useAssessmentSteps";
-import { useStep1Actions } from "@/hooks/useStep1Actions";
-import { useHRAdminProfile } from "@/hooks/useHRAdminProfile";
 import { useAssessmentStorage } from "@/hooks/useAssessmentStorage";
+import { useHRAdminProfile } from "@/hooks/useHRAdminProfile";
+import { useStep1Actions } from "@/hooks/useStep1Actions";
+import { initializeCSRFProtection } from "@/lib/csrf";
+import { ChevronRight } from "lucide-react";
+import { useParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import CriticalInfoSection from "../../critical/CriticalInfoSection";
+import ConditionalJobOfferLetter from "./ConditionalJobOfferLetter";
 
 const Step1: React.FC = () => {
   const { answers, setAnswers, handleNext, currentStep } = useAssessmentSteps();
@@ -63,12 +64,20 @@ const Step1: React.FC = () => {
 
   const handleFieldEdit = (field: string) => setEditingField(field);
   const handleFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setOfferForm((prev) => ({ ...(prev as any), [e.target.name]: e.target.value }));
+    setOfferForm((prev) => ({
+      ...(prev as any),
+      [e.target.name]: e.target.value,
+    }));
   };
   const handleFieldBlur = () => setEditingField(null);
   const handleFieldKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") setEditingField(null);
   };
+
+  useEffect(() => {
+    initializeCSRFProtection();
+  }, []);
+
   return (
     <>
       <div className="bg-white rounded-xl border border-gray-200 p-8 mb-8">
@@ -130,7 +139,9 @@ const Step1: React.FC = () => {
             }`}
             style={{
               fontFamily: "Poppins, sans-serif",
-              backgroundColor: answers.conditional_offer ? "#E54747" : "transparent",
+              backgroundColor: answers.conditional_offer
+                ? "#E54747"
+                : "transparent",
             }}
             onClick={handleNextConditionalOffer}
             disabled={!answers.conditional_offer}

@@ -6,23 +6,26 @@ interface EmailData {
   from?: string;
 }
 
+import { secureFetch } from '@/lib/csrf';
 import { supabase } from '@/lib/supabase';
 
 export const sendEmail = async ({ to, subject, html, from = process.env.SENDGRID_FROM_EMAIL }: EmailData) => {
   try {
-    const response = await fetch('/api/send-email', {
+    const response = await secureFetch('/api/send-email', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({ to, subject, html, from }),
     });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to send email');
+    }
 
     const result = await response.json();
     return { success: result.success, response: result };
   } catch (error) {
     console.error('Error sending email:', error);
-    return { success: false, error };
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 };
 
