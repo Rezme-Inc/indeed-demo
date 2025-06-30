@@ -115,7 +115,7 @@ export function PersonalAchievementsSection({
           setAwardFormTouched(true);
           awardsHook.handleSave();
         }}
-        submitText="Save Award"
+        submitText="Award"
         isEditing={!!awardsHook.editingId}
       >
         <div>

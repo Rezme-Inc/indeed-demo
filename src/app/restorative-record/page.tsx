@@ -1528,9 +1528,31 @@ function RestorativeRecordBuilderForm() {
         return (
           <IntroductionSection
             formData={formData}
-            onChange={(updates) =>
-              setFormData((prev) => ({ ...prev, ...updates }))
-            }
+            onChange={(updates) => {
+              if (updates === null) {
+                // Clear the form data when updates is null
+                setFormData({
+                  facebookUrl: "",
+                  linkedinUrl: "",
+                  redditUrl: "",
+                  digitalPortfolioUrl: "",
+                  instagramUrl: "",
+                  githubUrl: "",
+                  tiktokUrl: "",
+                  pinterestUrl: "",
+                  twitterUrl: "",
+                  personalWebsiteUrl: "",
+                  handshakeUrl: "",
+                  preferredOccupation: "",
+                  personalNarrative: "",
+                  languageProficiency: "No Proficiency",
+                  otherLanguages: [],
+                });
+              } else {
+                // Update with new data
+                setFormData((prev) => ({ ...prev, ...updates }));
+              }
+            }}
             onDelete={handleDeleteIntroduction}
           />
         );
