@@ -514,6 +514,7 @@ export default function UserDashboard() {
                       name="date_of_birth"
                       value={profileData.date_of_birth}
                       onChange={handleInputChange}
+                      max={new Date().toISOString().split('T')[0]}
                       className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     />
                   </div>
