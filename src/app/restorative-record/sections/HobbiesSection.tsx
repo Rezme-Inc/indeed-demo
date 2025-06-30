@@ -161,6 +161,8 @@ export function HobbiesSection({
           error={hobbiesFileError}
           onChange={handleHobbiesFileChange}
           onError={setHobbiesFileError}
+          fileName={hobbiesHook.form.fileName}
+          fileSize={hobbiesHook.form.fileSize}
         />
       </FormDialog>
     </div>

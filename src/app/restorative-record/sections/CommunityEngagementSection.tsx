@@ -191,6 +191,8 @@ export function CommunityEngagementSection({
           error={engagementFileError}
           onChange={handleEngagementFileChange}
           onError={setEngagementFileError}
+          fileName={engagementHook.form.fileName}
+          fileSize={engagementHook.form.fileSize}
         />
       </FormDialog>
     </div>
