@@ -63,6 +63,46 @@ const Step3: React.FC = () => {
     };
   }, [isModalOpen]);
 
+  // Helper function to combine part data into RevocationForm format
+  const getCombinedRevocationData = () => {
+    return {
+      // Part 1 - Basic Info (mapping to RevocationForm fields)
+      date: (part1Data as any)?.date || '',
+      applicant: (part1Data as any)?.applicantName || '',
+      position: (part1Data as any)?.position || '',
+      contactName: (part1Data as any)?.contactName || '',
+      companyName: (part1Data as any)?.companyName || '',
+      address: (part1Data as any)?.address || '',
+      phone: (part1Data as any)?.phone || '',
+
+      // Part 2 - Conviction Details (mapping to RevocationForm fields)
+      convictions: (part2Data as any)?.convictions || [],
+      timeSinceConduct: (part2Data as any)?.conductTimeAgo || '',
+      timeSinceSentence: (part2Data as any)?.sentenceCompletedTimeAgo || '',
+
+      // Part 3 - Assessment Reasoning (mapping to RevocationForm fields)
+      jobDuties: (part3Data as any)?.jobDuties || '',
+      seriousReason: (part3Data as any)?.seriousnessReason || '',
+      fitnessReason: (part3Data as any)?.revocationReason || '',
+
+      // Additional required fields
+      numBusinessDays: "5", // String as per RevocationForm interface
+    };
+  };
+
+  // Sync part data to step3Storage whenever part data changes
+  useEffect(() => {
+    const combinedData = getCombinedRevocationData();
+    // Only update if there's actual data to avoid unnecessary updates
+    const hasData = combinedData.date || combinedData.applicant || combinedData.position ||
+      (combinedData.convictions && combinedData.convictions.length > 0 && combinedData.convictions.some((c: string) => c.trim())) ||
+      combinedData.jobDuties || combinedData.seriousReason || combinedData.fitnessReason;
+
+    if (hasData) {
+      step3Storage.setRevocationForm(combinedData);
+    }
+  }, [part1Data, part2Data, part3Data, step3Storage]);
+
   const openModal = () => {
     setIsModalOpen(true);
   };
@@ -90,30 +130,7 @@ const Step3: React.FC = () => {
   };
 
   const handleSendRevocationNotice = async () => {
-    // Combine all part data into the format expected by RevocationForm interface
-    const combinedRevocationData = {
-      // Part 1 - Basic Info (mapping to RevocationForm fields)
-      date: (part1Data as any)?.date || '',
-      applicant: (part1Data as any)?.applicantName || '',
-      position: (part1Data as any)?.position || '',
-      contactName: (part1Data as any)?.contactName || '',
-      companyName: (part1Data as any)?.companyName || '',
-      address: (part1Data as any)?.address || '',
-      phone: (part1Data as any)?.phone || '',
-
-      // Part 2 - Conviction Details (mapping to RevocationForm fields)
-      convictions: (part2Data as any)?.convictions || [],
-      timeSinceConduct: (part2Data as any)?.conductTimeAgo || '',
-      timeSinceSentence: (part2Data as any)?.sentenceCompletedTimeAgo || '',
-
-      // Part 3 - Assessment Reasoning (mapping to RevocationForm fields)
-      jobDuties: (part3Data as any)?.jobDuties || '',
-      seriousReason: (part3Data as any)?.seriousnessReason || '',
-      fitnessReason: (part3Data as any)?.revocationReason || '',
-
-      // Additional required fields
-      numBusinessDays: "5", // String as per RevocationForm interface
-    };
+    const combinedRevocationData = getCombinedRevocationData();
 
     // Update the step3Storage with combined data
     step3Storage.setRevocationForm(combinedRevocationData);
@@ -149,6 +166,7 @@ const Step3: React.FC = () => {
 
     return hasProgress ? "Continue Assessment" : "Issue Preliminary Job Offer Revocation";
   };
+
   return (
     <>
       <div className="bg-white rounded-xl border border-gray-200 p-8 mb-8">
@@ -246,10 +264,10 @@ const Step3: React.FC = () => {
           </button>
           <button
             className={`px-8 py-3 rounded-xl text-lg font-semibold border transition-all duration-200 ${savedHireDecision
-                ? "border-green-500 text-green-700 bg-green-50"
-                : savedRevocationNotice
-                  ? "opacity-50 cursor-not-allowed border-gray-300 text-gray-500"
-                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
+              ? "border-green-500 text-green-700 bg-green-50"
+              : savedRevocationNotice
+                ? "opacity-50 cursor-not-allowed border-gray-300 text-gray-500"
+                : "border-gray-300 text-gray-700 hover:bg-gray-50"
               }`}
             onClick={() => (savedHireDecision || savedRevocationNotice) ? undefined : proceedWithHire()}
             disabled={!!(savedHireDecision || savedRevocationNotice)}
