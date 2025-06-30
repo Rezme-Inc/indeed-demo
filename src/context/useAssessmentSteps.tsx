@@ -54,7 +54,12 @@ export function AssessmentStepsProvider({ children, candidateId }: ProviderProps
     localStorage.setItem(`assessmentNotes_${candidateId}`, notes);
   }, [notes, candidateId]);
 
-  const handleNext = () => setCurrentStep((s) => s + 1);
+  const handleNext = () => {
+    // Step 1 -> Step 2 only
+    if (currentStep === 1) {
+      setCurrentStep(2);
+    }
+  };
   const handleBack = () => setCurrentStep((s) => Math.max(1, s - 1));
 
   return (

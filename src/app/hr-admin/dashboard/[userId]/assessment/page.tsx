@@ -103,6 +103,11 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
   const { fetchCandidateShareToken, fetchTimelineData } =
     useCandidateDataFetchers(params.userId, setLoadingCandidateData);
 
+  // Auto-fetch candidate data on component mount
+  useEffect(() => {
+    fetchCandidateShareToken();
+  }, [fetchCandidateShareToken]);
+
   // Conditional Offer Letter State
   const [showOfferLetterModal, setShowOfferLetterModal] = useState(false);
   const [showAssessmentViewModal, setShowAssessmentViewModal] = useState(false);

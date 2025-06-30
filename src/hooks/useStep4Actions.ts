@@ -89,7 +89,7 @@ export function useStep4Actions(
       setReassessmentPreview(false);
       setShowReassessmentSplit(false);
       setInitialAssessmentResults({ ...reassessmentForm });
-      setCurrentStep((prev) => prev + 1);
+      setCurrentStep(5);
     } catch (error) {
       console.error("Error in sendReassessment:", error);
     }

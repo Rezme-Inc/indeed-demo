@@ -92,7 +92,7 @@ export function useStep5Actions(
       setShowFinalRevocationModal(false);
       setFinalRevocationPreview(false);
       setShowFinalRevocationSuccessModal(true);
-      setCurrentStep((prev) => prev + 1);
+      setCurrentStep(6);
 
       try {
         await supabase

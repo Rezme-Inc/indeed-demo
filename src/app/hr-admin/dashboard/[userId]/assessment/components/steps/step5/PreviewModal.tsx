@@ -12,31 +12,48 @@ interface PreviewModalProps {
 }
 
 function isStep5Complete(part1Data: any, part2Data: any, part3Data: any, part4Data: any) {
-  // Check Part 1 completion
+  // Check Part 1 completion (basic info - mapped from Part 4)
   if (!part1Data?.date || !part1Data?.applicant || !part1Data?.dateOfNotice) {
     return false;
   }
 
-  // Check Part 2 completion - at least one conviction must be filled
+  // Check Part 2 completion (decision details - mapped from Part 1)
+  // At least one response option must be selected
+  const hasResponse = part2Data?.noResponse || part2Data?.infoSubmitted;
+  if (!hasResponse) {
+    return false;
+  }
+
+  // If info was submitted, the list must be filled
+  if (part2Data?.infoSubmitted && (!part2Data?.infoSubmittedList || part2Data.infoSubmittedList.trim() === '')) {
+    return false;
+  }
+
+  // Error determination must be selected
+  if (!part2Data?.errorOnReport || (part2Data.errorOnReport !== 'was' && part2Data.errorOnReport !== 'was not')) {
+    return false;
+  }
+
+  // At least one conviction must be filled
   if (!part2Data?.convictions || !Array.isArray(part2Data.convictions) ||
     part2Data.convictions.filter((c: string) => c && c.trim() !== "").length === 0) {
     return false;
   }
 
-  // Check Part 3 completion
+  // Check Part 3 completion (assessment details - mapped from Part 2)
   if (!part3Data?.position || !part3Data?.jobDuties || !Array.isArray(part3Data.jobDuties) ||
     part3Data.jobDuties.filter((d: string) => d && d.trim() !== "").length === 0 ||
     !part3Data?.timeSinceConduct || !part3Data?.timeSinceSentence || !part3Data?.seriousReason) {
     return false;
   }
 
-  // Check Part 4 completion
+  // Check Part 4 completion (final decision reasoning + contact info)
   if (!part4Data?.fitnessReason || !part4Data?.contactName || !part4Data?.companyName) {
     return false;
   }
 
-  // If user selected reconsideration procedure, they must fill in the procedure field
-  if (part4Data.reconsideration === 'procedure' && (!part4Data.reconsiderationProcedure || part4Data.reconsiderationProcedure.trim() === '')) {
+  // If user selected the reconsideration procedure option, they must fill in the procedure field
+  if (part4Data?.reconsideration === 'procedure' && (!part4Data?.reconsiderationProcedure || part4Data.reconsiderationProcedure.trim() === '')) {
     return false;
   }
 
@@ -56,6 +73,11 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
   if (!showModal) return null;
 
   const isComplete = isStep5Complete(part1Data, part2Data, part3Data, part4Data);
+
+  // Only log if completion check fails
+  if (!isComplete) {
+    console.log("Step 5 Preview - Some fields are incomplete. Check the form data.");
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">

@@ -85,7 +85,7 @@ export function useStep3Actions(
       setShowRevocationModal(false);
       setRevocationPreview(false);
       setRevocationSentDate(new Date());
-      setCurrentStep((prev) => prev + 1);
+      setCurrentStep(4);
     } catch (error) {
       console.error("Error in sendRevocation:", error);
     }

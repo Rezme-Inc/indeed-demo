@@ -191,6 +191,9 @@ const Step2: React.FC = () => {
         onAddDuty={addDuty}
         onRemoveDuty={removeDuty}
         onNext={handleNext}
+        candidateProfile={candidateProfile}
+        hrAdmin={hrAdmin}
+        candidateId={userId as string}
       />
 
       <Part2Modal
@@ -200,6 +203,9 @@ const Step2: React.FC = () => {
         handleAssessmentFormChange={handleAssessmentFormChange}
         onNext={handleNext}
         onBack={handleBack}
+        candidateProfile={candidateProfile}
+        hrAdmin={hrAdmin}
+        candidateId={userId as string}
       />
 
       <Part3Modal

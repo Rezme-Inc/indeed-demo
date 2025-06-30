@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { CheckCircle2, Info } from "lucide-react";
 import CriticalInfoSection from "../../critical/CriticalInfoSection";
 import { Part1Modal, Part2Modal, Part3Modal } from "./index";
@@ -64,7 +64,7 @@ const Step3: React.FC = () => {
   }, [isModalOpen]);
 
   // Helper function to combine part data into RevocationForm format
-  const getCombinedRevocationData = () => {
+  const getCombinedRevocationData = useCallback(() => {
     return {
       // Part 1 - Basic Info (mapping to RevocationForm fields)
       date: (part1Data as any)?.date || '',
@@ -88,7 +88,7 @@ const Step3: React.FC = () => {
       // Additional required fields
       numBusinessDays: "5", // String as per RevocationForm interface
     };
-  };
+  }, [part1Data, part2Data, part3Data]);
 
   // Sync part data to step3Storage whenever part data changes
   useEffect(() => {
@@ -101,7 +101,7 @@ const Step3: React.FC = () => {
     if (hasData) {
       step3Storage.setRevocationForm(combinedData);
     }
-  }, [part1Data, part2Data, part3Data, step3Storage]);
+  }, [getCombinedRevocationData]);
 
   const openModal = () => {
     setIsModalOpen(true);

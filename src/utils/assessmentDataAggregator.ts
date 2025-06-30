@@ -34,14 +34,18 @@ export function getSharedAssessmentData(
   
   // Database fields from context data
   if (candidateProfile) {
-    data.applicantName = `${candidateProfile.first_name} ${candidateProfile.last_name}`;
+    data.applicantName = `${candidateProfile.first_name || ''} ${candidateProfile.last_name || ''}`.trim();
+  } else {
+    console.warn('[getSharedAssessmentData] candidateProfile is missing');
   }
   
   if (hrAdmin) {
-    data.employerName = hrAdmin.company;
-    data.contactName = `${hrAdmin.first_name} ${hrAdmin.last_name}`;
+    data.employerName = hrAdmin.company || '';
+    data.contactName = `${hrAdmin.first_name || ''} ${hrAdmin.last_name || ''}`.trim();
     data.companyAddress = hrAdmin.company_address || '';
     data.companyPhone = hrAdmin.phone || '';
+  } else {
+    console.warn('[getSharedAssessmentData] hrAdmin is missing');
   }
   
   // Only read localStorage if we're in the browser
@@ -50,20 +54,28 @@ export function getSharedAssessmentData(
   }
   
   try {
-    // Step 1 data (conditional job offer)
-    const offerFormData = localStorage.getItem(`offerForm_${candidateId}`);
-    if (offerFormData) {
-      const step1Data = JSON.parse(offerFormData);
-      data.position = step1Data.position || '';
-      data.employer = step1Data.employer || '';
-      data.offerDate = step1Data.date || '';
+    // Step 1 data (conditional job offer from approved offer letter results)
+    const offerResultsData = localStorage.getItem(`step1_offer_results_${candidateId}`);
+    if (offerResultsData) {
+      const offerResults = JSON.parse(offerResultsData);
+      data.offerDate = offerResults.offerDate || '';
+      console.log(`[getSharedAssessmentData] Found offer date from Step 1: ${data.offerDate}`);
+    } else {
+      console.warn(`[getSharedAssessmentData] No offer results found for candidateId: ${candidateId}`);
+    }
+
+    // Step 1 AI processing results (job duties and position)
+    const jobResultsData = localStorage.getItem(`step1_job_results_${candidateId}`);
+    if (jobResultsData) {
+      const jobResults = JSON.parse(jobResultsData);
+      data.jobDuties = jobResults.duties?.filter((d: string) => d.trim()) || [];
+      data.position = jobResults.position || '';
     }
     
-    // Step 2 data (individualized assessment)
+    // Step 2 data (individualized assessment - no longer contains job duties)
     const assessmentFormData = localStorage.getItem(`assessmentForm_${candidateId}`);
     if (assessmentFormData) {
       const step2Data = JSON.parse(assessmentFormData);
-      data.jobDuties = step2Data.duties?.filter((d: string) => d.trim()) || [];
       data.conductDescription = step2Data.conduct || '';
       data.activitiesSince = step2Data.activities?.filter((a: string) => a.trim()).join('. ') || '';
       data.rescissionReasoning = step2Data.rescindReason || '';
@@ -76,6 +88,46 @@ export function getSharedAssessmentData(
   }
   
   return data;
+}
+
+/**
+ * Helper function to get autofill suggestions for Step 2 Part 1 (Position & Job Duties)
+ */
+export function getStep2Part1Suggestions(
+  candidateId: string,
+  candidateProfile?: any,
+  hrAdmin?: any
+) {
+  const sharedData = getSharedAssessmentData(candidateId, candidateProfile, hrAdmin);
+  
+  return {
+    position: sharedData.position || "",
+    duties: sharedData.jobDuties || [],
+  };
+}
+
+/**
+ * Helper function to get autofill suggestions for Step 2 Part 2 (Criminal History Details)
+ */
+export function getStep2Part2Suggestions(
+  candidateId: string,
+  candidateProfile?: any,
+  hrAdmin?: any
+) {
+  const sharedData = getSharedAssessmentData(candidateId, candidateProfile, hrAdmin);
+  
+  // Get current date in user's local timezone for report date
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const localDate = `${year}-${month}-${day}`;
+  
+  return {
+    reportDate: sharedData.reportDate || localDate, // Use stored report date or current date
+    howLongAgo: sharedData.timeAgo || "",
+    conduct: sharedData.conductDescription || "",
+  };
 }
 
 /**
@@ -216,7 +268,7 @@ export function getStep5Suggestions(
     dateOfNotice: localDate, // Current date for notice
     position: sharedData.position || "",
     
-    // Job duties from Step 2
+    // Job duties from Step 1 AI processing results
     jobDuties: sharedData.jobDuties || [],
     
     // Assessment reasoning (can be pulled from Step 2 or Step 3 data)

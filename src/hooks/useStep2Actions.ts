@@ -85,7 +85,7 @@ export function useStep2Actions(
       setShowAssessmentModal(false);
       setAssessmentPreview(false);
       setInitialAssessmentResults({ ...assessmentForm });
-      setCurrentStep((prev) => prev + 1);
+      setCurrentStep(3);
     } catch (error) {
       console.error("Error in sendAssessment:", error);
     }

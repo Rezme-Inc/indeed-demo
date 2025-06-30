@@ -94,7 +94,6 @@ const Step5: React.FC = () => {
       setCurrentModalStep((currentModalStep || 1) + 1);
     } else {
       // Complete assessment - show final preview
-      console.log("Step 5 Assessment complete!", { part1Data, part2Data, part3Data, part4Data });
       closeModal();
       setShowFinalPreview(true);
     }
@@ -109,33 +108,35 @@ const Step5: React.FC = () => {
   // Combine all part data for the final revocation form
   const getCombinedFormData = () => {
     return {
-      // Part 1 - Basic Info
-      date: (part1Data as any)?.date || '',
-      applicant: (part1Data as any)?.applicant || '',
-      dateOfNotice: (part1Data as any)?.dateOfNotice || '',
+      // Basic Info (from Part 4)
+      date: (part4Data as any)?.currentDate || '',
+      applicant: (part4Data as any)?.applicant || '',
+      dateOfNotice: (part4Data as any)?.dateOfNotice || '',
 
-      // Part 2 - Decision Details
-      noResponse: (part2Data as any)?.noResponse || false,
-      infoSubmitted: (part2Data as any)?.infoSubmitted || false,
-      infoSubmittedList: (part2Data as any)?.infoSubmittedList || '',
-      errorOnReport: (part2Data as any)?.errorOnReport || '',
-      convictions: (part2Data as any)?.convictions || [''],
+      // Decision Details (from Part 1)
+      noResponse: (part1Data as any)?.noResponse || false,
+      infoSubmitted: (part1Data as any)?.infoSubmitted || false,
+      infoSubmittedList: (part1Data as any)?.infoSubmittedList || '',
+      errorOnReport: (part1Data as any)?.errorOnReport || '',
+      convictions: (part1Data as any)?.convictions || [],
 
-      // Part 3 - Assessment Details
-      seriousReason: (part3Data as any)?.seriousReason || '',
-      timeSinceConduct: (part3Data as any)?.timeSinceConduct || '',
-      timeSinceSentence: (part3Data as any)?.timeSinceSentence || '',
-      position: (part3Data as any)?.position || '',
-      jobDuties: (part3Data as any)?.jobDuties || [''],
+      // Assessment Details (from Part 2)
+      seriousReason: (part2Data as any)?.seriousReason || '',
+      timeSinceConduct: (part2Data as any)?.timeSinceConduct || '',
+      timeSinceSentence: (part2Data as any)?.timeSinceSentence || '',
+      position: (part2Data as any)?.position || '',
+      jobDuties: (part2Data as any)?.jobDuties || [],
 
-      // Part 4 - Final Details & Contact
-      fitnessReason: (part4Data as any)?.fitnessReason || '',
-      reconsideration: (part4Data as any)?.reconsideration || '',
-      reconsiderationProcedure: (part4Data as any)?.reconsiderationProcedure || '',
+      // Final Decision Reasoning (from Part 3)
+      fitnessReason: (part3Data as any)?.fitnessReason || '',
+
+      // Contact Info (from Part 4)
       contactName: (part4Data as any)?.contactName || '',
       companyName: (part4Data as any)?.companyName || '',
       address: (part4Data as any)?.address || '',
       phone: (part4Data as any)?.phone || '',
+      reconsideration: (part4Data as any)?.reconsideration || '',
+      reconsiderationProcedure: (part4Data as any)?.reconsiderationProcedure || '',
     };
   };
 
@@ -289,10 +290,38 @@ const Step5: React.FC = () => {
       <PreviewModal
         showModal={showFinalPreview}
         setShowModal={setShowFinalPreview}
-        part1Data={part1Data}
-        part2Data={part2Data}
-        part3Data={part3Data}
-        part4Data={part4Data}
+        part1Data={{
+          // Basic info from Part 4
+          date: (part4Data as any)?.currentDate || '',
+          applicant: (part4Data as any)?.applicant || '',
+          dateOfNotice: (part4Data as any)?.dateOfNotice || '',
+        }}
+        part2Data={{
+          // Decision details from Part 1
+          noResponse: (part1Data as any)?.noResponse || false,
+          infoSubmitted: (part1Data as any)?.infoSubmitted || false,
+          infoSubmittedList: (part1Data as any)?.infoSubmittedList || '',
+          errorOnReport: (part1Data as any)?.errorOnReport || '',
+          convictions: (part1Data as any)?.convictions || [],
+        }}
+        part3Data={{
+          // Assessment details from Part 2
+          seriousReason: (part2Data as any)?.seriousReason || '',
+          timeSinceConduct: (part2Data as any)?.timeSinceConduct || '',
+          timeSinceSentence: (part2Data as any)?.timeSinceSentence || '',
+          position: (part2Data as any)?.position || '',
+          jobDuties: (part2Data as any)?.jobDuties || [],
+        }}
+        part4Data={{
+          // Final decision reasoning from Part 3 + contact info from Part 4
+          fitnessReason: (part3Data as any)?.fitnessReason || '',
+          contactName: (part4Data as any)?.contactName || '',
+          companyName: (part4Data as any)?.companyName || '',
+          address: (part4Data as any)?.address || '',
+          phone: (part4Data as any)?.phone || '',
+          reconsideration: (part4Data as any)?.reconsideration || '',
+          reconsiderationProcedure: (part4Data as any)?.reconsiderationProcedure || '',
+        }}
         onBack={() => {
           setShowFinalPreview(false);
           setIsModalOpen(true);
