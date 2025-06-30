@@ -1345,6 +1345,19 @@ function RestorativeRecordBuilderForm() {
     return () => window.removeEventListener('focus', handleFocus);
   }, [currentCategory, user]);
 
+  const recordHookMap = {
+    "introduction": formData,
+    "personal-achievements": awardsHook,
+    "skills": skillsHook,
+    "community-engagement": engagementHook,
+    "rehabilitative-programs": rehabHook,
+    "microcredentials": microHook,
+    "mentors": mentorHook,
+    "education": educationHook,
+    "employment-history": employmentHook,
+    "hobbies": hobbiesHook,
+  };
+
   // Navigation
   const handleNext = async () => {
     if (currentCategory < categories.length - 1) {
@@ -2055,14 +2068,8 @@ function RestorativeRecordBuilderForm() {
   };
 
   const calculateProgress = () => {
-    // Calculate completion percentage based on sections completed
     const totalSections = categories.length;
-    let completedSections = 0;
-
-    // This would need to be enhanced with actual data checking
-    // For now, we'll simulate based on current category
-    completedSections = Math.min(currentCategory + 1, totalSections);
-
+    const completedSections = Object.values(sectionCompletion).filter(Boolean).length;
     return Math.round((completedSections / totalSections) * 100);
   };
 
@@ -2141,10 +2148,8 @@ function RestorativeRecordBuilderForm() {
                         {cat.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
                       </h3>
                       <div className="flex items-center gap-2">
-                        {idx <= currentCategory ? (
-                          <span className="text-green-600">✓</span>
-                        ) : (
-                          <span className="text-gray-400">○</span>
+                        {sectionCompletion[cat] && (
+                          <span className="text-green-600 text-sm" style={{ color: '#16A34A' }}>✓</span>
                         )}
                         <button
                           onClick={() => handleBuilderNavigation(idx)}
@@ -3130,6 +3135,18 @@ function RestorativeRecordBuilderForm() {
     // TODO: Send form data to backend or legal team
   };
 
+  const sectionCompletion: Record<string, boolean> = categories.reduce((acc, cat) => {
+    const section = recordHookMap[cat as keyof typeof recordHookMap];
+    if (cat === "introduction" && typeof section === "object" && "personalNarrative" in section) {
+      acc[cat] = Boolean(section.personalNarrative);
+    } else if (section && "items" in section && Array.isArray(section.items)) {
+      acc[cat] = section.items.length > 0;
+    } else {
+      acc[cat] = false;
+    }
+    return acc;
+  }, {} as Record<string, boolean>);
+
   return (
     <div className="min-h-screen bg-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
       <div className="flex">
@@ -3197,7 +3214,7 @@ function RestorativeRecordBuilderForm() {
                           .replace(/-/g, " ")
                           .replace(/\b\w/g, (l) => l.toUpperCase())}
                       </span>
-                      {idx <= currentCategory && (
+                      {sectionCompletion[cat] && (
                         <span className="text-green-600 text-sm" style={{ color: '#16A34A' }}>✓</span>
                       )}
                     </div>
