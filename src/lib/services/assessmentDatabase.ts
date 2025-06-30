@@ -262,6 +262,58 @@ export class AssessmentDatabaseService {
     }
   }
 
+  // Get assessment status for multiple candidates (for dashboard)
+  static async getMultipleAssessmentStatus(candidateIds: string[]): Promise<Map<string, AssessmentStatus>> {
+    const { data: user } = await supabase.auth.getUser();
+    const statusMap = new Map<string, AssessmentStatus>();
+    
+    if (!user.user || candidateIds.length === 0) return statusMap;
+
+    try {
+      const { data, error } = await supabase
+        .from('assessments_new')
+        .select('candidate_id, current_step, status, completed_at_step')
+        .eq('hr_id', user.user.id)
+        .in('candidate_id', candidateIds);
+
+      if (error) {
+        console.error('[AssessmentDB] Error getting multiple assessment statuses:', error);
+        // Return default status for all candidates
+        candidateIds.forEach(id => {
+          statusMap.set(id, { current_step: 1, status: 'not_started' });
+        });
+        return statusMap;
+      }
+
+      // Process found assessments
+      if (data) {
+        data.forEach(assessment => {
+          statusMap.set(assessment.candidate_id, {
+            current_step: assessment.current_step,
+            status: assessment.status,
+            completed_at_step: assessment.completed_at_step
+          });
+        });
+      }
+
+      // Add default status for candidates not found in assessments
+      candidateIds.forEach(id => {
+        if (!statusMap.has(id)) {
+          statusMap.set(id, { current_step: 1, status: 'not_started' });
+        }
+      });
+
+      return statusMap;
+    } catch (err) {
+      console.error('[AssessmentDB] Exception in getMultipleAssessmentStatus:', err);
+      // Return default status for all candidates on error
+      candidateIds.forEach(id => {
+        statusMap.set(id, { current_step: 1, status: 'not_started' });
+      });
+      return statusMap;
+    }
+  }
+
   // Check if assessment exists
   static async assessmentExists(candidateId: string): Promise<boolean> {
     const { data: user } = await supabase.auth.getUser();
