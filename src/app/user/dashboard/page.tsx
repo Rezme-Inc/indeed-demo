@@ -410,34 +410,43 @@ export function UserDashboardContent() {
         <div className="bg-white rounded-lg border border-gray-200">
           {/* Profile Header */}
           <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <img
-                  src={
-                    avatarPreview ||
-                    `https://ui-avatars.com/api/?name=${profileData.first_name}+${profileData.last_name}&background=E54747&color=fff`
-                  }
-                  alt="Avatar"
-                  className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
-                />
-                <label className="absolute bottom-0 right-0 bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors">
-                  <span className="text-sm">+</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarChange}
-                    className="hidden"
+            <div className="flex justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="relative">
+                  <img
+                    src={
+                      avatarPreview ||
+                      `https://ui-avatars.com/api/?name=${profileData.first_name}+${profileData.last_name}&background=E54747&color=fff`
+                    }
+                    alt="Avatar"
+                    className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
                   />
-                </label>
+                  <label className="absolute bottom-0 right-0 bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors">
+                    <span className="text-sm">+</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarChange}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-black">
+                    {profileData.first_name || profileData.last_name
+                      ? `${profileData.first_name} ${profileData.last_name}`
+                      : "Welcome!"}
+                  </h2>
+                  <p className="text-secondary">{user?.email}</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-semibold text-black">
-                  {profileData.first_name || profileData.last_name
-                    ? `${profileData.first_name} ${profileData.last_name}`
-                    : "Welcome!"}
-                </h2>
-                <p className="text-secondary">{user?.email}</p>
-              </div>
+              <button
+                onClick={handleSignOut}
+                className="px-5 py-2 text-base font-medium rounded-xl shadow hover:opacity-90 border ml-auto"
+                style={{ color: '#E54747', backgroundColor: '#FFFFFF', borderColor: '#E54747' }}
+              >
+                Sign Out
+              </button>
             </div>
           </div>
 
@@ -1176,12 +1185,6 @@ export default function UserDashboard() {
                 className="px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-red-600 transition-colors duration-200"
               >
                 To Restorative Record
-              </button>
-              <button
-                onClick={handleSignOut}
-                className="px-4 py-2 text-secondary hover:text-black font-medium transition-colors duration-200"
-              >
-                Sign Out
               </button>
             </div>
           </div>

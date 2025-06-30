@@ -348,7 +348,8 @@ export default function MyRestorativeRecordProfile() {
                   My Rézme Dashboard
                 </a>
               </Link>
-              <button
+              {/* Removes legal assistance from preview */}
+              {/* <button
                 className="px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-md hover:bg-gray-50"
                 style={{ 
                   color: '#595959',
@@ -356,7 +357,7 @@ export default function MyRestorativeRecordProfile() {
                 }}
                 onClick={() => setShowLegalModal(true)}>
                 Legal Assistance
-              </button>
+              </button> */}
               <button
                 className="px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-md hover:bg-gray-50"
                 style={{ 
@@ -375,7 +376,8 @@ export default function MyRestorativeRecordProfile() {
                 }}>
                 Share
               </button>
-              <Link href="/user/dashboard" passHref legacyBehavior>
+              {/* Removes settings from preview */}
+              {/* <Link href="/user/dashboard" passHref legacyBehavior>
                 <a className="px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-md hover:bg-gray-50"
                    style={{ 
                      color: '#595959',
@@ -383,7 +385,7 @@ export default function MyRestorativeRecordProfile() {
                    }}>
                   Settings
                 </a>
-              </Link>
+              </Link> */}
             </div>
 
             {/* Right: User Profile */}
