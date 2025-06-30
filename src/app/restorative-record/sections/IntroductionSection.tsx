@@ -4,16 +4,20 @@ import { Introduction } from "../types";
 import { FormDialog } from "../components/FormDialog";
 import { RecordItem } from "../components/RecordItem";
 import { supabase } from "@/lib/supabase";
+import { saveToSupabase } from "../utils/saveToSupabase";
 
 interface IntroductionSectionProps {
   formData: Introduction | null;
   onChange: (updates: Partial<Introduction> | null) => void;
   onDelete?: () => void;
+  onSaveToSupabase?: (data: Introduction) => Promise<void>;
 }
 
 export const IntroductionSection: React.FC<IntroductionSectionProps> = ({
   formData,
   onChange,
+  onDelete,
+  onSaveToSupabase,
 }) => {
   const [showForm, setShowForm] = useState(false);
   const [localForm, setLocalForm] = useState<Introduction>(
@@ -207,10 +211,13 @@ export const IntroductionSection: React.FC<IntroductionSectionProps> = ({
           setShowForm(false);
           setNarrativeTouched(false);
         }}
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
           setNarrativeTouched(true);
-          handleSave();
+          setShowForm(false);
+          if (onSaveToSupabase) {
+            await onSaveToSupabase(localForm);
+          }
         }}
         submitText="Introduction"
         isEditing={!!formData}
