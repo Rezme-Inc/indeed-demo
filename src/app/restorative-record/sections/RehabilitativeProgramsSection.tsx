@@ -227,6 +227,8 @@ export function RehabilitativeProgramsSection({
           error={rehabFileError}
           onChange={handleRehabFileChange}
           onError={setRehabFileError}
+          fileName={rehabHook.form.fileName}
+          fileSize={rehabHook.form.fileSize}
         />
       </FormDialog>
     </div>

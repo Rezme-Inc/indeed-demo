@@ -192,6 +192,8 @@ export function PersonalAchievementsSection({
           maxSize={MAX_AWARD_FILE_SIZE}
           onChange={handleAwardFileChange}
           onError={setAwardFileError}
+          fileName={awardsHook.form.fileName}
+          fileSize={awardsHook.form.fileSize}
         />
         <div>
           <label className="block font-medium text-black mb-2">Narrative</label>

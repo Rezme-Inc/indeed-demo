@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 
-export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-export const MAX_AWARD_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+export const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+export const MAX_AWARD_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 
 export const validateFileSize = (file: File, maxSize: number = MAX_FILE_SIZE): { isValid: boolean; error?: string } => {
   if (file.size > maxSize) {
