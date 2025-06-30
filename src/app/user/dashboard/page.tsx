@@ -658,10 +658,43 @@ export default function UserDashboard() {
                         type="text"
                         name="ssn"
                         value={wotcData.ssn}
-                        onChange={handleWotcInputChange}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, ''); // Only allow digits
+                          if (value.length <= 9) {
+                            const syntheticEvent = {
+                              target: {
+                                name: 'ssn',
+                                value: value,
+                                type: 'text'
+                              }
+                            } as React.ChangeEvent<HTMLInputElement>;
+                            handleWotcInputChange(syntheticEvent);
+                          }
+                        }}
+                        onBlur={(e) => {
+                          // Mask with dots when field loses focus if SSN has been saved
+                          if (wotcData.ssn && wotcData.ssn.length === 9) {
+                            e.target.value = '•••-••-••••';
+                          }
+                        }}
+                        onFocus={(e) => {
+                          // Show actual digits when focused for editing
+                          if (wotcData.ssn && wotcData.ssn.length === 9) {
+                            e.target.value = wotcData.ssn;
+                          }
+                        }}
                         className="w-full px-4 py-2 border border-gray-200 rounded-lg"
+                        placeholder="9 digits required"
+                        maxLength={9}
+                        pattern="[0-9]{9}"
+                        title="Must be exactly 9 digits"
                         required
                       />
+                      {wotcData.ssn && wotcData.ssn.length > 0 && wotcData.ssn.length < 9 && (
+                        <p className="text-red-500 text-xs mt-1">
+                          SSN must be exactly 9 digits ({wotcData.ssn.length}/9)
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-black mb-1">
