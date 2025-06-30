@@ -16,7 +16,6 @@ interface IntroductionSectionProps {
 export const IntroductionSection: React.FC<IntroductionSectionProps> = ({
   formData,
   onChange,
-  onDelete,
   onSaveToSupabase,
 }) => {
   const [occupationInput, setOccupationInput] = useState("");
@@ -109,11 +108,6 @@ export const IntroductionSection: React.FC<IntroductionSectionProps> = ({
       }
     );
     setShowForm(true);
-  };
-
-  const handleSave = () => {
-    onChange(localForm);
-    setShowForm(false);
   };
 
   // Delete introduction from Supabase and local state
