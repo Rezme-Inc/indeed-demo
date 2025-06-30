@@ -3147,6 +3147,85 @@ function RestorativeRecordBuilderForm() {
     return acc;
   }, {} as Record<string, boolean>);
 
+  // Define refreshAwards before useEffect
+  const refreshAwards = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data: awardsData } = await supabase
+      .from("awards")
+      .select("*")
+      .eq("user_id", user.id);
+    if (awardsData && Array.isArray(awardsData)) {
+      const mappedAwards = awardsData.map((remote) => ({
+        id: remote.id,
+        type: remote.type || "",
+        name: remote.name || "",
+        organization: remote.organization || "",
+        date: remote.date || "",
+        file: null,
+        filePreview: remote.file_url || "",
+        fileName: remote.file_name || undefined,
+        fileSize: remote.file_size || undefined,
+        narrative: remote.narrative || "",
+      }));
+      const localAwards = awardsHook.items || [];
+      const mergedAwards = [
+        ...mappedAwards.filter(
+          (remote) => !localAwards.some((local) => local.id === remote.id)
+        ),
+        ...localAwards,
+      ];
+      awardsHook.setItems(mergedAwards);
+    }
+  };
+
+  const refreshSkills = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data: skillsData } = await supabase
+      .from("skills")
+      .select("*")
+      .eq("user_id", user.id);
+    if (skillsData && Array.isArray(skillsData)) {
+      const mappedSkills = skillsData.map((remote) => ({
+        id: remote.id,
+        softSkills: Array.isArray(remote.soft_skills) ? remote.soft_skills.join(", ") : "",
+        hardSkills: Array.isArray(remote.hard_skills) ? remote.hard_skills.join(", ") : "",
+        otherSkills: remote.other_skills || "",
+        file: null,
+        filePreview: remote.file_url || "",
+        fileName: remote.file_name || undefined,
+        fileSize: remote.file_size || undefined,
+        narrative: remote.narrative || "",
+      }));
+      const localSkills = skillsHook.items || [];
+      const mergedSkills = [
+        ...mappedSkills.filter(
+          (remote) => !localSkills.some((local) => local.id === remote.id)
+        ),
+        ...localSkills,
+      ];
+      skillsHook.setItems(mergedSkills);
+    }
+  };
+
+  // Now your useEffect can use them
+  useEffect(() => {
+    if (activeDashboardSection === "progress" && user) {
+      refreshAwards?.();
+      refreshSkills?.();
+      refreshEngagements?.();
+      refreshRehabPrograms?.();
+      refreshMicrocredentials?.();
+      refreshMentors?.();
+      refreshEducation?.();
+      refreshEmployment?.();
+      refreshHobbies?.();
+      // Add any other fetch/refresh functions you have
+    }
+  }, [activeDashboardSection, user]);
+
+  
   return (
     <div className="min-h-screen bg-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
       <div className="flex">
