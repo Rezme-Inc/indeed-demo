@@ -488,6 +488,7 @@ export default function UserDashboard() {
                       name="first_name"
                       value={profileData.first_name}
                       onChange={handleInputChange}
+                      maxLength={20}
                       className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     />
                   </div>
@@ -500,6 +501,7 @@ export default function UserDashboard() {
                       name="last_name"
                       value={profileData.last_name}
                       onChange={handleInputChange}
+                      maxLength={20}
                       className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     />
                   </div>
