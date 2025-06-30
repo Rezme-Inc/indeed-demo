@@ -514,6 +514,7 @@ export default function UserDashboard() {
                       name="date_of_birth"
                       value={profileData.date_of_birth}
                       onChange={handleInputChange}
+                      max={new Date().toISOString().split('T')[0]}
                       className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     />
                   </div>
@@ -684,11 +685,31 @@ export default function UserDashboard() {
                       type="text"
                       name="zip_code"
                       value={profileData.zip_code}
-                      onChange={handleInputChange}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, ''); // Only allow digits
+                        if (value.length <= 9) {
+                          const syntheticEvent = {
+                            target: {
+                              name: 'zip_code',
+                              value: value,
+                              type: 'text'
+                            }
+                          } as React.ChangeEvent<HTMLInputElement>;
+                          handleInputChange(syntheticEvent);
+                        }
+                      }}
                       className="w-full px-4 py-2 border border-gray-100 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                      placeholder="Zip code"
+                      placeholder="Numbers only, max 9 digits"
+                      maxLength={9}
+                      pattern="[0-9]{1,9}"
+                      title="Must be numbers only, maximum 9 digits"
                       required
                     />
+                    {profileData.zip_code && profileData.zip_code.length > 0 && profileData.zip_code.length < 5 && (
+                      <p className="text-red-500 text-xs mt-1">
+                        ZIP code should be at least 5 digits ({profileData.zip_code.length}/5)
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
