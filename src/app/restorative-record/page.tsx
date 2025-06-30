@@ -2976,7 +2976,6 @@ function RestorativeRecordBuilderForm() {
         return (
           <div className="space-y-6">
             <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
-              <h2 className="text-2xl font-semibold text-black mb-4">Legal Resources</h2>
               <div className="w-full">
                 <div className="p-6">
                   <div className="mb-4 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
