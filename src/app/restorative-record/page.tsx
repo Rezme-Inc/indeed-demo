@@ -99,6 +99,14 @@ function RestorativeRecordBuilderForm() {
   const originalDashboardSection = useRef<string | null>(null);
   const originalView = useRef<'dashboard' | 'builder' | null>(null);
   const originalBuilderSection = useRef<number | null>(null);
+  const [showLegalModal, setShowLegalModal] = useState(false);
+  const [legalForm, setLegalForm] = useState({
+    name: "",
+    email: "",
+    question: "",
+    employers: "",
+  });
+  const [legalSubmitted, setLegalSubmitted] = useState(false);
 
   const tutorialSteps = [
     {
@@ -2765,7 +2773,153 @@ function RestorativeRecordBuilderForm() {
       {/* Legal Assistance Modal */}
       case 'legal-resources':
         return (
-          <div> <p>Legal resources coming (as soon as I talk to Jodi about the best way to do it)</p> </div>
+          <div className="space-y-6">
+            <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
+              <h2 className="text-2xl font-semibold text-black mb-4">Legal Resources</h2>
+              <div className="w-full">
+                <div className="p-6">
+                  <div className="mb-4 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    <p className="mb-3 leading-relaxed text-sm">
+                      If you believe you have experienced employment discrimination or have questions about your rights under Fair Chance Hiring laws, you can contact a legal team for assistance. Your inquiry will be sent to the appropriate legal professionals in your jurisdiction.
+                    </p>
+                    <ul className="list-disc pl-5 text-xs mb-3 space-y-1" style={{ color: '#595959' }}>
+                      <li>Fair Chance Hiring laws protect individuals with criminal records from unfair discrimination in employment.</li>
+                      <li>You have the right to know if an employer has run a background check on you.</li>
+                      <li>Legal teams can help you understand your rights and options if you believe you have been treated unfairly.</li>
+                    </ul>
+                    <div className="border-l-4 p-4 my-4 rounded-lg" style={{ borderColor: '#E54747', backgroundColor: '#fef7f7' }}>
+                      <div className="font-semibold mb-2 text-sm" style={{ color: '#E54747', fontFamily: 'Poppins, sans-serif' }}>
+                        San Diego Applicants
+                      </div>
+                      <p className="mb-2 text-black leading-relaxed text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        If you would like to file a fair chance complaint, please complete the{' '}
+                        <a
+                          href="https://forms.office.com/Pages/ResponsePage.aspx?id=E69jRSnAs0G3TJZejuyPlqdlrWcla0pGkN2zYgm3FclUMUVUMDdGOFZDWlNJSlRDODBNMDNRWVNHOCQlQCN0PWcu"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium underline transition-colors duration-200 hover:opacity-80"
+                          style={{ color: '#E54747' }}
+                        >
+                          official fair chance complaint inquiry form
+                        </a>
+                        .
+                      </p>
+                      <p className="mb-2 text-black text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        If you are unable to fill out the form, contact us via:
+                      </p>
+                      <ul className="text-black text-xs mb-2 space-y-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        <li>
+                          <span className="font-medium">Email:</span>{' '}
+                          <a
+                            href="mailto:olse@sdcounty.ca.gov"
+                            className="font-medium underline transition-colors duration-200 hover:opacity-80"
+                            style={{ color: '#E54747' }}
+                          >
+                            olse@sdcounty.ca.gov
+                          </a>
+                        </li>
+                        <li>
+                          <span className="font-medium">Office:</span>{' '}
+                          <a
+                            href="tel:6195315129"
+                            className="font-medium underline transition-colors duration-200 hover:opacity-80"
+                            style={{ color: '#E54747' }}
+                          >
+                            619-531-5129
+                          </a>
+                        </li>
+                        <li>We are open Monday-Friday 8:00 am-5:00 pm</li>
+                      </ul>
+                      <p className="text-black text-xs" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        If your question is not related to fair chance hiring, please call{' '}
+                        <a
+                          href="tel:8586943900"
+                          className="font-medium underline transition-colors duration-200 hover:opacity-80"
+                          style={{ color: '#E54747' }}
+                        >
+                          858-694-3900
+                        </a>
+                        .
+                      </p>
+                    </div>
+                  </div>
+                  {legalSubmitted ? (
+                    <div className="text-center py-8 px-4 rounded-lg" style={{ backgroundColor: '#f0f9ff', color: '#059669', fontFamily: 'Poppins, sans-serif' }}>
+                      <div className="text-base font-medium mb-2">Thank you!</div>
+                      <div className="text-sm">Your request has been submitted. A legal professional will contact you soon.</div>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleLegalSubmit} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-black mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          Your Name
+                        </label>
+                        <input
+                          type="text"
+                          name="name"
+                          value={legalForm.name}
+                          onChange={handleLegalInputChange}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 text-sm"
+                          style={{ fontFamily: 'Poppins, sans-serif' }}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-black mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          Your Email
+                        </label>
+                        <input
+                          type="email"
+                          name="email"
+                          value={legalForm.email}
+                          onChange={handleLegalInputChange}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 text-sm"
+                          style={{ fontFamily: 'Poppins, sans-serif' }}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-black mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          Describe your question or issue
+                        </label>
+                        <textarea
+                          name="question"
+                          value={legalForm.question}
+                          onChange={handleLegalInputChange}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 resize-none text-sm"
+                          style={{ fontFamily: 'Poppins, sans-serif' }}
+                          rows={3}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-black mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          Employer(s) who have run background checks on you
+                        </label>
+                        <input
+                          type="text"
+                          name="employers"
+                          value={legalForm.employers}
+                          onChange={handleLegalInputChange}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 text-sm"
+                          style={{ fontFamily: 'Poppins, sans-serif' }}
+                          placeholder="Enter employer names, separated by commas"
+                          required
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        className="w-full px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-md text-sm"
+                        style={{ backgroundColor: '#E54747', color: 'white', fontFamily: 'Poppins, sans-serif' }}
+                      >
+                        Submit Request
+                      </button>
+                    </form>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         )
 
       case 'settings':
@@ -2844,6 +2998,18 @@ function RestorativeRecordBuilderForm() {
       </button>
     </div>
   );
+
+  const handleLegalInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setLegalForm({ ...legalForm, [e.target.name]: e.target.value });
+  };
+
+  const handleLegalSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLegalSubmitted(true);
+    // TODO: Send form data to backend or legal team
+  };
 
   return (
     <div className="min-h-screen bg-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
