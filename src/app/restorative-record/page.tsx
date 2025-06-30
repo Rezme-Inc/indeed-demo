@@ -1279,12 +1279,18 @@ function RestorativeRecordBuilderForm() {
 
   // Handlers for file uploads
   const handleAwardFileChange = (file: File | null) => {
+    console.log("🏆 Award file change:", file ? file.name : "null");
     if (file) {
       awardsHook.updateForm({
         file,
         filePreview: createFilePreview(file),
         fileName: file.name,
         fileSize: file.size,
+      });
+      console.log("🏆 Award form updated with file:", {
+        fileName: file.name,
+        fileSize: file.size,
+        preview: createFilePreview(file).substring(0, 50) + "..."
       });
     } else {
       awardsHook.updateForm({
@@ -1293,16 +1299,22 @@ function RestorativeRecordBuilderForm() {
         fileName: undefined,
         fileSize: undefined,
       });
+      console.log("🏆 Award file cleared");
     }
   };
 
   const handleSkillsFileChange = (file: File | null) => {
+    console.log("💪 Skills file change:", file ? file.name : "null");
     if (file) {
       skillsHook.updateForm({
         file,
         filePreview: createFilePreview(file),
         fileName: file.name,
         fileSize: file.size,
+      });
+      console.log("💪 Skills form updated with file:", {
+        fileName: file.name,
+        fileSize: file.size
       });
     } else {
       skillsHook.updateForm({
@@ -1311,16 +1323,22 @@ function RestorativeRecordBuilderForm() {
         fileName: undefined,
         fileSize: undefined,
       });
+      console.log("💪 Skills file cleared");
     }
   };
 
   const handleEngagementFileChange = (file: File | null) => {
+    console.log("🤝 Engagement file change:", file ? file.name : "null");
     if (file) {
       engagementHook.updateForm({
         file,
         filePreview: createFilePreview(file),
         fileName: file.name,
         fileSize: file.size,
+      });
+      console.log("🤝 Engagement form updated with file:", {
+        fileName: file.name,
+        fileSize: file.size
       });
     } else {
       engagementHook.updateForm({
@@ -1329,16 +1347,22 @@ function RestorativeRecordBuilderForm() {
         fileName: undefined,
         fileSize: undefined,
       });
+      console.log("🤝 Engagement file cleared");
     }
   };
 
   const handleMicroFileChange = (file: File | null) => {
+    console.log("🎓 Microcredential file change:", file ? file.name : "null");
     if (file) {
       microHook.updateForm({
         file,
         filePreview: createFilePreview(file),
         fileName: file.name,
         fileSize: file.size,
+      });
+      console.log("🎓 Microcredential form updated with file:", {
+        fileName: file.name,
+        fileSize: file.size
       });
     } else {
       microHook.updateForm({
@@ -1347,16 +1371,22 @@ function RestorativeRecordBuilderForm() {
         fileName: undefined,
         fileSize: undefined,
       });
+      console.log("🎓 Microcredential file cleared");
     }
   };
 
   const handleEducationFileChange = (file: File | null) => {
+    console.log("📚 Education file change:", file ? file.name : "null");
     if (file) {
       educationHook.updateForm({
         file,
         filePreview: createFilePreview(file),
         fileName: file.name,
         fileSize: file.size,
+      });
+      console.log("📚 Education form updated with file:", {
+        fileName: file.name,
+        fileSize: file.size
       });
     } else {
       educationHook.updateForm({
@@ -1365,16 +1395,22 @@ function RestorativeRecordBuilderForm() {
         fileName: undefined,
         fileSize: undefined,
       });
+      console.log("📚 Education file cleared");
     }
   };
 
   const handleHobbiesFileChange = (file: File | null) => {
+    console.log("🎨 Hobbies file change:", file ? file.name : "null");
     if (file) {
       hobbiesHook.updateForm({
         file,
         filePreview: createFilePreview(file),
         fileName: file.name,
         fileSize: file.size,
+      });
+      console.log("🎨 Hobbies form updated with file:", {
+        fileName: file.name,
+        fileSize: file.size
       });
     } else {
       hobbiesHook.updateForm({
@@ -1383,16 +1419,22 @@ function RestorativeRecordBuilderForm() {
         fileName: undefined,
         fileSize: undefined,
       });
+      console.log("🎨 Hobbies file cleared");
     }
   };
 
   const handleRehabFileChange = (file: File | null) => {
+    console.log("🔄 Rehab file change:", file ? file.name : "null");
     if (file) {
       rehabHook.updateForm({
         file,
         filePreview: createFilePreview(file),
         fileName: file.name,
         fileSize: file.size,
+      });
+      console.log("🔄 Rehab form updated with file:", {
+        fileName: file.name,
+        fileSize: file.size
       });
     } else {
       rehabHook.updateForm({
@@ -1401,6 +1443,7 @@ function RestorativeRecordBuilderForm() {
         fileName: undefined,
         fileSize: undefined,
       });
+      console.log("🔄 Rehab file cleared");
     }
   };
 
@@ -1527,10 +1570,41 @@ function RestorativeRecordBuilderForm() {
 
   // Save to Supabase
   const handleSaveToSupabase = async () => {
+    console.log("💾 handleSaveToSupabase called");
+    
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      console.log("❌ No user found for save");
+      return;
+    }
+
+    console.log("👤 User ID for save:", user.id);
+
+    // Log current form states to see if files are present
+    console.log("🏆 Awards items with files:", awardsHook.items.map(item => ({
+      id: item.id,
+      name: item.name,
+      hasFile: !!item.file,
+      fileName: item.fileName,
+      fileSize: item.fileSize
+    })));
+    
+    console.log("💪 Skills items with files:", skillsHook.items.map(item => ({
+      id: item.id,
+      hasFile: !!item.file,
+      fileName: item.fileName,
+      fileSize: item.fileSize
+    })));
+    
+    console.log("🤝 Engagement items with files:", engagementHook.items.map(item => ({
+      id: item.id,
+      role: item.role,
+      hasFile: !!item.file,
+      fileName: item.fileName,
+      fileSize: item.fileSize
+    })));
 
     // Create a toast wrapper that matches the expected format
     const toastWrapper = (options: {
@@ -1545,6 +1619,8 @@ function RestorativeRecordBuilderForm() {
       }
     };
 
+    console.log("🚀 Calling saveToSupabase...");
+    
     await saveToSupabase({
       user,
       formData,
@@ -1560,6 +1636,8 @@ function RestorativeRecordBuilderForm() {
       mentorHook,
       toast: toastWrapper,
     });
+    
+    console.log("✅ saveToSupabase completed");
   };
 
   // Fetch introduction from Supabase on mount and when navigating to the Introduction section
