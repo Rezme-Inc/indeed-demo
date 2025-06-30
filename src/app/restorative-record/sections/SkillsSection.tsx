@@ -160,6 +160,8 @@ export function SkillsSection({
           error={skillsFileError}
           onChange={handleSkillsFileChange}
           onError={setSkillsFileError}
+          fileName={skillsHook.form.fileName}
+          fileSize={skillsHook.form.fileSize}
         />
         <div>
           <label className="block font-medium mb-1">Narrative</label>

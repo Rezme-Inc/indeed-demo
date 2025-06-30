@@ -193,6 +193,8 @@ export function MicrocredentialsSection({
           error={microFileError}
           onChange={handleMicroFileChange}
           onError={setMicroFileError}
+          fileName={microHook.form.fileName}
+          fileSize={microHook.form.fileSize}
         />
       </FormDialog>
     </div>

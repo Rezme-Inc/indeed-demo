@@ -8,6 +8,8 @@ export interface Award {
   date: string;
   file: File | null;
   filePreview: string;
+  fileName?: string;
+  fileSize?: number;
   narrative: string;
 }
 
@@ -24,6 +26,8 @@ export interface Education {
   description: string;
   file: File | null;
   filePreview: string;
+  fileName?: string;
+  fileSize?: number;
 }
 
 export interface Employment {
@@ -118,6 +122,8 @@ export interface Hobby {
   narrative: string;
   file: File | null;
   filePreview: string;
+  fileName?: string;
+  fileSize?: number;
 }
 
 export interface RehabProgram {
@@ -130,6 +136,8 @@ export interface RehabProgram {
   narrative: string;
   file: File | null;
   filePreview: string;
+  fileName?: string;
+  fileSize?: number;
 }
 
 export interface Skill {
@@ -139,6 +147,8 @@ export interface Skill {
   otherSkills: string;
   file: File | null;
   filePreview: string;
+  fileName?: string;
+  fileSize?: number;
   narrative: string;
 }
 
@@ -151,6 +161,8 @@ export interface Engagement {
   details: string;
   file: File | null;
   filePreview: string;
+  fileName?: string;
+  fileSize?: number;
 }
 
 export interface Microcredential {
@@ -164,6 +176,8 @@ export interface Microcredential {
   narrative: string;
   file: File | null;
   filePreview: string;
+  fileName?: string;
+  fileSize?: number;
 }
 
 export interface Mentor {

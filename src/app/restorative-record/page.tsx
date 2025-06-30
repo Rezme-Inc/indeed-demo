@@ -210,6 +210,8 @@ function RestorativeRecordBuilderForm() {
       date: "",
       file: null,
       filePreview: "",
+      fileName: undefined,
+      fileSize: undefined,
       narrative: "",
     },
     validateForm: (form) => {
@@ -238,6 +240,8 @@ function RestorativeRecordBuilderForm() {
           date: remote.date || "",
           file: null, // File upload not restored from DB
           filePreview: remote.file_url || "",
+          fileName: remote.file_name || undefined,
+          fileSize: remote.file_size || undefined,
           narrative: remote.narrative || "",
         }));
         // Merge with local unsaved entries by id
@@ -266,6 +270,8 @@ function RestorativeRecordBuilderForm() {
       otherSkills: "",
       file: null,
       filePreview: "",
+      fileName: undefined,
+      fileSize: undefined,
       narrative: "",
     },
     validateForm: (form) => {
@@ -293,6 +299,8 @@ function RestorativeRecordBuilderForm() {
           otherSkills: remote.other_skills || "",
           file: null, // File upload not restored from DB
           filePreview: remote.file_url || "",
+          fileName: remote.file_name || undefined,
+          fileSize: remote.file_size || undefined,
           narrative: remote.narrative || "",
         }));
         // Merge with local unsaved entries by id
@@ -560,6 +568,8 @@ function RestorativeRecordBuilderForm() {
         details: remote.details || "",
         file: null, // File upload not restored from DB
         filePreview: remote.file_url || "",
+        fileName: remote.file_name || undefined,
+        fileSize: remote.file_size || undefined,
       }));
       engagementHook.setItems(mappedEngagements);
     } else {
@@ -577,6 +587,8 @@ function RestorativeRecordBuilderForm() {
       details: "",
       file: null,
       filePreview: "",
+      fileName: undefined,
+      fileSize: undefined,
     },
     validateForm: (form) => {
       return !!(form.type && form.role && form.orgName && form.details);
@@ -614,6 +626,8 @@ function RestorativeRecordBuilderForm() {
           details: remote.details || "",
           file: null, // File upload not restored from DB
           filePreview: remote.file_url || "",
+          fileName: remote.file_name || undefined,
+          fileSize: remote.file_size || undefined,
         }));
         engagementHook.setItems(mappedEngagements);
       } else {
@@ -691,6 +705,8 @@ function RestorativeRecordBuilderForm() {
         narrative: remote.narrative || "",
         file: null,
         filePreview: remote.file_url || "",
+        fileName: remote.file_name || undefined,
+        fileSize: remote.file_size || undefined,
       }));
       microHook.setItems(mappedMicrocredentials);
     } else {
@@ -777,6 +793,8 @@ function RestorativeRecordBuilderForm() {
         description: remote.description || "",
         file: null,
         filePreview: remote.file_url || "",
+        fileName: remote.file_name || undefined,
+        fileSize: remote.file_size || undefined,
       }));
       educationHook.setItems(mappedEducation);
     } else {
@@ -796,6 +814,8 @@ function RestorativeRecordBuilderForm() {
       narrative: "",
       file: null,
       filePreview: "",
+      fileName: undefined,
+      fileSize: undefined,
     },
     validateForm: (form) => {
       return !!(form.name && form.org && form.issueDate);
@@ -835,6 +855,8 @@ function RestorativeRecordBuilderForm() {
           narrative: remote.narrative || "",
           file: null,
           filePreview: remote.file_url || "",
+          fileName: remote.file_name || undefined,
+          fileSize: remote.file_size || undefined,
         }));
 
         // Merge with existing local data if any
@@ -889,6 +911,8 @@ function RestorativeRecordBuilderForm() {
       description: "",
       file: null,
       filePreview: "",
+      fileName: undefined,
+      fileSize: undefined,
     },
     validateForm: (form) => {
       return !!(
@@ -965,6 +989,8 @@ function RestorativeRecordBuilderForm() {
         narrative: remote.narrative || "",
         file: null,
         filePreview: remote.file_url || "",
+        fileName: remote.file_name || undefined,
+        fileSize: remote.file_size || undefined,
       }));
       hobbiesHook.setItems(mappedHobbies);
     } else {
@@ -981,6 +1007,8 @@ function RestorativeRecordBuilderForm() {
       narrative: "",
       file: null,
       filePreview: "",
+      fileName: undefined,
+      fileSize: undefined,
     },
     validateForm: (form) => {
       return !!(form.general || form.sports || form.other);
@@ -1015,6 +1043,8 @@ function RestorativeRecordBuilderForm() {
           narrative: remote.narrative || "",
           file: null,
           filePreview: remote.file_url || "",
+          fileName: remote.file_name || undefined,
+          fileSize: remote.file_size || undefined,
         }));
 
         // Merge with existing local data if any
@@ -1125,6 +1155,8 @@ function RestorativeRecordBuilderForm() {
           description: remote.description || "",
           file: null,
           filePreview: remote.file_url || "",
+          fileName: remote.file_name || undefined,
+          fileSize: remote.file_size || undefined,
         }));
 
         // Merge with existing local data if any
@@ -1362,6 +1394,15 @@ function RestorativeRecordBuilderForm() {
       awardsHook.updateForm({
         file,
         filePreview: createFilePreview(file),
+        fileName: file.name,
+        fileSize: file.size,
+      });
+    } else {
+      awardsHook.updateForm({
+        file: null,
+        filePreview: "",
+        fileName: undefined,
+        fileSize: undefined,
       });
     }
   };
@@ -1371,6 +1412,15 @@ function RestorativeRecordBuilderForm() {
       skillsHook.updateForm({
         file,
         filePreview: createFilePreview(file),
+        fileName: file.name,
+        fileSize: file.size,
+      });
+    } else {
+      skillsHook.updateForm({
+        file: null,
+        filePreview: "",
+        fileName: undefined,
+        fileSize: undefined,
       });
     }
   };
@@ -1380,6 +1430,15 @@ function RestorativeRecordBuilderForm() {
       engagementHook.updateForm({
         file,
         filePreview: createFilePreview(file),
+        fileName: file.name,
+        fileSize: file.size,
+      });
+    } else {
+      engagementHook.updateForm({
+        file: null,
+        filePreview: "",
+        fileName: undefined,
+        fileSize: undefined,
       });
     }
   };
@@ -1389,6 +1448,15 @@ function RestorativeRecordBuilderForm() {
       microHook.updateForm({
         file,
         filePreview: createFilePreview(file),
+        fileName: file.name,
+        fileSize: file.size,
+      });
+    } else {
+      microHook.updateForm({
+        file: null,
+        filePreview: "",
+        fileName: undefined,
+        fileSize: undefined,
       });
     }
   };
@@ -1398,6 +1466,15 @@ function RestorativeRecordBuilderForm() {
       educationHook.updateForm({
         file,
         filePreview: createFilePreview(file),
+        fileName: file.name,
+        fileSize: file.size,
+      });
+    } else {
+      educationHook.updateForm({
+        file: null,
+        filePreview: "",
+        fileName: undefined,
+        fileSize: undefined,
       });
     }
   };
@@ -1407,6 +1484,15 @@ function RestorativeRecordBuilderForm() {
       hobbiesHook.updateForm({
         file,
         filePreview: createFilePreview(file),
+        fileName: file.name,
+        fileSize: file.size,
+      });
+    } else {
+      hobbiesHook.updateForm({
+        file: null,
+        filePreview: "",
+        fileName: undefined,
+        fileSize: undefined,
       });
     }
   };
@@ -1416,6 +1502,15 @@ function RestorativeRecordBuilderForm() {
       rehabHook.updateForm({
         file,
         filePreview: createFilePreview(file),
+        fileName: file.name,
+        fileSize: file.size,
+      });
+    } else {
+      rehabHook.updateForm({
+        file: null,
+        filePreview: "",
+        fileName: undefined,
+        fileSize: undefined,
       });
     }
   };
