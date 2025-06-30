@@ -282,10 +282,47 @@ export default function UserDashboard() {
     const { name, value, type } = e.target;
     const newValue =
       type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
-    setWotcData((prev) => ({
-      ...prev,
-      [name]: newValue,
-    }));
+    
+    // Define parent-child relationships
+    const parentChildMap: { [key: string]: string[] } = {
+      voc_rehab: ["ticket_work", "va"],
+      snap_6mo: ["snap_3of5"],
+      vet_disab_discharged: ["vet_disab_unemp", "tanf_18mo"],
+    };
+
+    // Define child-parent relationships (reverse mapping)
+    const childParentMap: { [key: string]: string } = {
+      ticket_work: "voc_rehab",
+      va: "voc_rehab",
+      snap_3of5: "snap_6mo",
+      vet_disab_unemp: "vet_disab_discharged",
+      tanf_18mo: "vet_disab_discharged",
+    };
+
+    let updatedWotcData = { ...wotcData };
+
+    // Update the current field
+    (updatedWotcData as any)[name] = newValue;
+
+    // Handle parent-child logic for checkboxes
+    if (type === "checkbox") {
+      const isChecked = newValue as boolean;
+
+      // If this is a parent checkbox being unchecked, uncheck all its children
+      if (!isChecked && parentChildMap[name]) {
+        parentChildMap[name].forEach(child => {
+          (updatedWotcData as any)[child] = false;
+        });
+      }
+
+      // If this is a child checkbox being checked, check its parent
+      if (isChecked && childParentMap[name]) {
+        const parentName = childParentMap[name];
+        (updatedWotcData as any)[parentName] = true;
+      }
+    }
+
+    setWotcData(updatedWotcData);
   }
 
   // Fetch HR permissions
