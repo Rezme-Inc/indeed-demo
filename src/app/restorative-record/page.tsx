@@ -2237,7 +2237,7 @@ function RestorativeRecordBuilderForm() {
                             border: '1px solid #FECACA'
                           }}
                         >
-                          {idx <= currentCategory ? 'Review' : 'Start'}
+                          {sectionCompletion[cat] ? 'Review' : 'Start'}
                         </button>
                       </div>
                     </div>
