@@ -1542,7 +1542,7 @@ function RestorativeRecordBuilderForm() {
   };
 
   // Save to Supabase
-  const handleSaveToSupabase = async () => {
+  const handleSaveToSupabase = async (introductionOverride?: Introduction) => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -1563,7 +1563,7 @@ function RestorativeRecordBuilderForm() {
 
     await saveToSupabase({
       user,
-      formData,
+      formData: introductionOverride || formData,
       educationHook,
       rehabPrograms,
       rehabHook,
@@ -1639,10 +1639,34 @@ function RestorativeRecordBuilderForm() {
         return (
           <IntroductionSection
             formData={formData}
-            onChange={(updates) =>
-              setFormData((prev) => ({ ...prev, ...updates }))
-            }
+            onChange={(updates) => {
+              if (updates === null) {
+                setFormData({
+                  facebookUrl: "",
+                  linkedinUrl: "",
+                  redditUrl: "",
+                  digitalPortfolioUrl: "",
+                  instagramUrl: "",
+                  githubUrl: "",
+                  tiktokUrl: "",
+                  pinterestUrl: "",
+                  twitterUrl: "",
+                  personalWebsiteUrl: "",
+                  handshakeUrl: "",
+                  preferredOccupation: "",
+                  personalNarrative: "",
+                  languageProficiency: "No Proficiency",
+                  otherLanguages: [],
+                });
+              } else {
+                setFormData((prev) => ({ ...prev, ...updates }));
+              }
+            }}
             onDelete={handleDeleteIntroduction}
+            onSaveToSupabase={async (newIntroduction) => {
+              setFormData(newIntroduction);
+              await handleSaveToSupabase(newIntroduction);
+            }}
           />
         );
 
