@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from 'react';
 import AIAutofillButton from "@/components/assessment/AIAutofillButton";
 import SmartSuggestionField from "@/components/assessment/SmartSuggestionField";
 import ReferencePanel from "@/components/assessment/ReferencePanel";
@@ -41,9 +41,8 @@ const IndividualizedReassessmentForm: React.FC<IndividualizedReassessmentFormPro
   restorativeData,
 }) => {
   const { isReferencePanelOpen, currentReferenceData, showReference, closeReference } = useReferenceData();
-
-  // Track manual input state for each field
-  const [manualFields, setManualFields] = React.useState<{ [key: string]: boolean }>({});
+  const [manualFields, setManualFields] = useState<Record<string, boolean>>({});
+  const [suggestions, setSuggestions] = useState<any>({});
 
   // Debug manual fields state changes
   React.useEffect(() => {
@@ -51,35 +50,41 @@ const IndividualizedReassessmentForm: React.FC<IndividualizedReassessmentFormPro
   }, [manualFields]);
 
   const handleAutofill = async () => {
-    const suggestions = getStep4Suggestions(candidateId, candidateProfile, hrAdmin);
-    console.log('[Step4] Autofill triggered with suggestions:', suggestions);
+    try {
+      console.log('[Step4] Starting autofill...');
+      console.log('[Step4] Candidate profile:', candidateProfile);
+      console.log('[Step4] HR admin:', hrAdmin);
 
-    // Only fill empty fields and mark them as non-manual
-    const updatedForm = { ...reassessmentForm };
-    const updatedManualFields = { ...manualFields };
-
-    Object.entries(suggestions).forEach(([key, value]) => {
-      if (!updatedForm[key] && value) {
-        console.log(`[Step4] Autofilling field ${key}: "${value}"`);
-        updatedForm[key] = value;
-        updatedManualFields[key] = false; // Mark as autofilled (not manual)
+      if (!candidateProfile || !hrAdmin) {
+        console.warn('[Step4] Missing candidateProfile or hrAdmin data');
+        return;
       }
-    });
 
-    console.log('[Step4] Updated manual fields state:', updatedManualFields);
-    setManualFields(updatedManualFields);
+      // Get suggestions using the async function
+      const newSuggestions = await getStep4Suggestions(candidateId, candidateProfile, hrAdmin);
+      console.log('[Step4] Generated suggestions:', newSuggestions);
 
-    // Update form with non-empty suggestions
-    if (JSON.stringify(updatedForm) !== JSON.stringify(reassessmentForm)) {
-      // Trigger change events for each field that was updated
-      Object.entries(suggestions).forEach(([key, value]) => {
-        if (!reassessmentForm[key] && value) {
-          const event = {
-            target: { name: key, value: value }
+      setSuggestions(newSuggestions);
+
+      // Auto-fill only empty fields
+      Object.keys(newSuggestions).forEach(key => {
+        const suggestionValue = newSuggestions[key as keyof typeof newSuggestions];
+        const currentValue = reassessmentForm[key];
+
+        if (suggestionValue && (!currentValue || currentValue.trim() === '')) {
+          const syntheticEvent = {
+            target: {
+              name: key,
+              value: suggestionValue
+            }
           } as React.ChangeEvent<HTMLInputElement>;
-          handleReassessmentFormChange(event);
+          handleReassessmentFormChange(syntheticEvent);
         }
       });
+
+      console.log('[Step4] Autofill completed');
+    } catch (error) {
+      console.error('[Step4] Error during autofill:', error);
     }
   };
 
@@ -180,7 +185,7 @@ const IndividualizedReassessmentForm: React.FC<IndividualizedReassessmentFormPro
                 label="Employer Name"
                 value={reassessmentForm.employer}
                 onChange={createFieldHandler('employer')}
-                suggestion={getStep4Suggestions(candidateId, candidateProfile, hrAdmin).employer}
+                suggestion={suggestions.employer}
                 suggestionsEnabled={true}
                 isManual={(() => {
                   const isManual = manualFields.employer || false;
@@ -195,7 +200,7 @@ const IndividualizedReassessmentForm: React.FC<IndividualizedReassessmentFormPro
                 label="Applicant Name"
                 value={reassessmentForm.applicant}
                 onChange={createFieldHandler('applicant')}
-                suggestion={getStep4Suggestions(candidateId, candidateProfile, hrAdmin).applicant}
+                suggestion={suggestions.applicant}
                 suggestionsEnabled={true}
                 isManual={manualFields.applicant || false}
                 onManualChange={handleManualChange('applicant')}
@@ -206,7 +211,7 @@ const IndividualizedReassessmentForm: React.FC<IndividualizedReassessmentFormPro
                 label="Position Applied For"
                 value={reassessmentForm.position}
                 onChange={createFieldHandler('position')}
-                suggestion={getStep4Suggestions(candidateId, candidateProfile, hrAdmin).position}
+                suggestion={suggestions.position}
                 suggestionsEnabled={true}
                 isManual={manualFields.position || false}
                 onManualChange={handleManualChange('position')}
@@ -218,7 +223,7 @@ const IndividualizedReassessmentForm: React.FC<IndividualizedReassessmentFormPro
                 type="date"
                 value={reassessmentForm.offerDate}
                 onChange={createFieldHandler('offerDate')}
-                suggestion={getStep4Suggestions(candidateId, candidateProfile, hrAdmin).offerDate}
+                suggestion={suggestions.offerDate}
                 suggestionsEnabled={true}
                 isManual={manualFields.offerDate || false}
                 onManualChange={handleManualChange('offerDate')}
@@ -230,7 +235,7 @@ const IndividualizedReassessmentForm: React.FC<IndividualizedReassessmentFormPro
                 type="date"
                 value={reassessmentForm.reassessmentDate}
                 onChange={createFieldHandler('reassessmentDate')}
-                suggestion={getStep4Suggestions(candidateId, candidateProfile, hrAdmin).reassessmentDate}
+                suggestion={suggestions.reassessmentDate}
                 suggestionsEnabled={true}
                 isManual={manualFields.reassessmentDate || false}
                 onManualChange={handleManualChange('reassessmentDate')}
@@ -242,7 +247,7 @@ const IndividualizedReassessmentForm: React.FC<IndividualizedReassessmentFormPro
                 type="date"
                 value={reassessmentForm.reportDate}
                 onChange={createFieldHandler('reportDate')}
-                suggestion={getStep4Suggestions(candidateId, candidateProfile, hrAdmin).reportDate}
+                suggestion={suggestions.reportDate}
                 suggestionsEnabled={true}
                 isManual={manualFields.reportDate || false}
                 onManualChange={handleManualChange('reportDate')}
@@ -253,7 +258,7 @@ const IndividualizedReassessmentForm: React.FC<IndividualizedReassessmentFormPro
                 label="Assessment Performed by"
                 value={reassessmentForm.performedBy}
                 onChange={createFieldHandler('performedBy')}
-                suggestion={getStep4Suggestions(candidateId, candidateProfile, hrAdmin).performedBy}
+                suggestion={suggestions.performedBy}
                 suggestionsEnabled={true}
                 isManual={manualFields.performedBy || false}
                 onManualChange={handleManualChange('performedBy')}

@@ -5,7 +5,7 @@ interface AssessmentPartWrapperProps {
   title: string;
   stepNumber: string;
   children: React.ReactNode;
-  onAutofill: () => Promise<void>;
+  onAutofill?: () => Promise<void>;
   onClose?: () => void;
   showModal: boolean;
   autofillDisabled?: boolean;
@@ -33,10 +33,12 @@ const AssessmentPartWrapper: React.FC<AssessmentPartWrapperProps> = ({
           </div>
 
           <div className="flex items-center gap-3">
-            <AIAutofillButton
-              onAutofill={onAutofill}
-              disabled={autofillDisabled}
-            />
+            {onAutofill && (
+              <AIAutofillButton
+                onAutofill={onAutofill}
+                disabled={autofillDisabled}
+              />
+            )}
             {onClose && (
               <button
                 className="text-gray-500 hover:text-gray-700 text-2xl leading-none"

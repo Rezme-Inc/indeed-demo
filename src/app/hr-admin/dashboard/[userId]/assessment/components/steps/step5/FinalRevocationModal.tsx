@@ -38,16 +38,18 @@ const FinalRevocationModal: React.FC<FinalRevocationModalProps> = ({
   const [isAutofilling, setIsAutofilling] = useState(false);
 
   const handleAutofill = async () => {
-    if (isAutofilling) return;
-
     setIsAutofilling(true);
     try {
       console.log('Step5 - Autofill triggered');
       console.log('Step5 - Candidate profile:', candidateProfile);
       console.log('Step5 - HR admin:', hrAdmin);
 
-      // Use the new data aggregation utility
-      const suggestions = getStep5Suggestions(candidateId, candidateProfile, hrAdmin);
+      if (!candidateProfile || !hrAdmin) {
+        console.warn('Step5 - Missing candidateProfile or hrAdmin data');
+        return;
+      }
+
+      const suggestions = await getStep5Suggestions(candidateId, candidateProfile, hrAdmin);
 
       console.log('Step5 - Generated suggestions:', suggestions);
 
@@ -131,36 +133,30 @@ const FinalRevocationModal: React.FC<FinalRevocationModalProps> = ({
           <form className="space-y-10" style={{ fontFamily: 'Poppins, sans-serif' }}>
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold mb-1 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Date</label>
                 <SmartSuggestionField
+                  label="Date"
                   type="date"
                   value={form.date}
                   onChange={(value) => setForm((prev: any) => ({ ...prev, date: value }))}
-                  className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  style={{ fontFamily: 'Poppins, sans-serif' }}
-                  suggestions={[]}
+                  suggestionsEnabled={false}
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-1 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Applicant Name</label>
                 <SmartSuggestionField
+                  label="Applicant Name"
                   type="text"
                   value={form.applicant}
                   onChange={(value) => setForm((prev: any) => ({ ...prev, applicant: value }))}
-                  className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  style={{ fontFamily: 'Poppins, sans-serif' }}
-                  suggestions={[]}
+                  suggestionsEnabled={false}
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-1 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Date of Notice</label>
                 <SmartSuggestionField
+                  label="Date of Notice"
                   type="date"
                   value={form.dateOfNotice}
                   onChange={(value) => setForm((prev: any) => ({ ...prev, dateOfNotice: value }))}
-                  className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  style={{ fontFamily: 'Poppins, sans-serif' }}
-                  suggestions={[]}
+                  suggestionsEnabled={false}
                 />
               </div>
             </div>
@@ -207,28 +203,25 @@ const FinalRevocationModal: React.FC<FinalRevocationModalProps> = ({
             <ol className="list-decimal ml-8 mb-8 space-y-4 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
               <li>The nature and seriousness of the conduct that led to your conviction(s), which we assessed as follows: <input type="text" name="seriousReason" value={form.seriousReason} onChange={handleFormChange} className="border border-gray-300 rounded-xl px-2 py-1 w-2/3 inline-block focus:ring-2 focus:ring-red-500 focus:border-red-500" style={{ fontFamily: 'Poppins, sans-serif' }} /></li>
               <li>How long ago the conduct occurred that led to your conviction, which was: <SmartSuggestionField
+                label=""
                 type="text"
                 value={form.timeSinceConduct}
                 onChange={(value) => setForm((prev: any) => ({ ...prev, timeSinceConduct: value }))}
-                className="border border-gray-300 rounded-xl px-2 py-1 w-1/3 inline-block focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                style={{ fontFamily: 'Poppins, sans-serif' }}
-                suggestions={[]}
+                suggestionsEnabled={false}
               /> and how long ago you completed your sentence, which was: <SmartSuggestionField
+                  label=""
                   type="text"
                   value={form.timeSinceSentence}
                   onChange={(value) => setForm((prev: any) => ({ ...prev, timeSinceSentence: value }))}
-                  className="border border-gray-300 rounded-xl px-2 py-1 w-1/3 inline-block focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  style={{ fontFamily: 'Poppins, sans-serif' }}
-                  suggestions={[]}
+                  suggestionsEnabled={false}
                 />.</li>
               <li>The specific duties and responsibilities of the position of <SmartSuggestionField
+                label=""
                 type="text"
                 value={form.position}
                 onChange={(value) => setForm((prev: any) => ({ ...prev, position: value }))}
-                className="border border-gray-300 rounded-xl px-2 py-1 w-1/2 inline-block mx-2 focus:ring-2 focus:ring-red-500 focus:border-red-500"
                 placeholder="[INSERT POSITION]"
-                style={{ fontFamily: 'Poppins, sans-serif' }}
-                suggestions={[]}
+                suggestionsEnabled={false}
               />, which are:
                 <div className="flex flex-col gap-2 mt-2">
                   {[0, 1, 2, 3].map((idx) => (
@@ -284,47 +277,39 @@ const FinalRevocationModal: React.FC<FinalRevocationModalProps> = ({
             </div>
             <div className="grid grid-cols-2 gap-10 mb-8">
               <div>
-                <label className="block text-sm font-semibold mb-1 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Employer contact person name</label>
                 <SmartSuggestionField
+                  label="Employer contact person name"
                   type="text"
                   value={form.contactName}
                   onChange={(value) => setForm((prev: any) => ({ ...prev, contactName: value }))}
-                  className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  style={{ fontFamily: 'Poppins, sans-serif' }}
-                  suggestions={[]}
+                  suggestionsEnabled={false}
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-1 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Employer company name</label>
                 <SmartSuggestionField
+                  label="Employer company name"
                   type="text"
                   value={form.companyName}
                   onChange={(value) => setForm((prev: any) => ({ ...prev, companyName: value }))}
-                  className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  style={{ fontFamily: 'Poppins, sans-serif' }}
-                  suggestions={[]}
+                  suggestionsEnabled={false}
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-1 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Employer address</label>
                 <SmartSuggestionField
+                  label="Employer address"
                   type="text"
                   value={form.address}
                   onChange={(value) => setForm((prev: any) => ({ ...prev, address: value }))}
-                  className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  style={{ fontFamily: 'Poppins, sans-serif' }}
-                  suggestions={[]}
+                  suggestionsEnabled={false}
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-1 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Employer contact phone number</label>
                 <SmartSuggestionField
+                  label="Employer contact phone number"
                   type="text"
                   value={form.phone}
                   onChange={(value) => setForm((prev: any) => ({ ...prev, phone: value }))}
-                  className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  style={{ fontFamily: 'Poppins, sans-serif' }}
-                  suggestions={[]}
+                  suggestionsEnabled={false}
                 />
               </div>
             </div>

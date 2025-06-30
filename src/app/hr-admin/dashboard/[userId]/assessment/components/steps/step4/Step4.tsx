@@ -13,6 +13,7 @@ import { useCandidateData } from "@/context/useCandidateData";
 import { useCandidateDataFetchers } from "@/hooks/useCandidateDataFetchers";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { AssessmentDatabaseService } from "@/lib/services/assessmentDatabase";
 
 const Step4: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -42,6 +43,8 @@ const Step4: React.FC = () => {
   } = step4Storage;
   const [initialAssessmentResults, setInitialAssessmentResults] =
     useState<any>(null);
+  const [businessDaysFromStep3, setBusinessDaysFromStep3] = useState<number | null>(null);
+  const [isStep4CompletedFromDB, setIsStep4CompletedFromDB] = useState(false);
   const { hrAdmin } = useHRAdminProfile();
   const [showExtendSuccessModal, setShowExtendSuccessModal] = useState(false);
   const { proceedWithHire, proceedWithReassessment } = useHireActions(
@@ -79,6 +82,46 @@ const Step4: React.FC = () => {
     setLoadingCandidateData,
   );
 
+  // Load assessment data from database when component mounts
+  useEffect(() => {
+    const loadAssessmentData = async () => {
+      try {
+        console.log('[Step4] Loading assessment data from database...');
+
+        // Get Step 3 data to extract business days
+        const step3Data = await AssessmentDatabaseService.getStepData(userId, 3);
+        if (step3Data) {
+          console.log('[Step4] Step 3 data loaded:', step3Data);
+          const businessDays = parseInt(step3Data.numBusinessDays || "5");
+          setBusinessDaysFromStep3(businessDays);
+          console.log('[Step4] Business days from Step 3:', businessDays);
+
+          // Check if Step 4 is completed and load data from database
+          const currentStep = await AssessmentDatabaseService.getCurrentStep(userId);
+          if (currentStep > 4) {
+            console.log("[Step4] Step 4 is completed, loading from database...");
+            const step4Data = await AssessmentDatabaseService.getStepData(userId, 4);
+            if (step4Data) {
+              console.log("[Step4] Step 4 data loaded from database:", step4Data);
+              setIsStep4CompletedFromDB(true);
+
+              // Load the reassessment form data from database
+              const { setReassessmentForm } = step4Storage;
+              setReassessmentForm(step4Data as any);
+            }
+          }
+        }
+
+        // TODO: Load other assessment data for initialAssessmentResults
+        // This could include data from Steps 1, 2, and 3 combined
+
+      } catch (error) {
+        console.error('[Step4] Error loading assessment data:', error);
+      }
+    };
+
+    loadAssessmentData();
+  }, [userId]);
 
   // Function to fetch restorative data for evidence references
   const fetchRestorativeData = async () => {
@@ -128,10 +171,7 @@ const Step4: React.FC = () => {
       fetchRestorativeData();
     }
   }, [showReassessmentSplit, candidateProfile]);
-  const businessDaysRemaining =
-    typeof window !== "undefined"
-      ? parseInt(localStorage.getItem("businessDaysRemaining") || "0", 10)
-      : 0;
+  const businessDaysRemaining = businessDaysFromStep3;
   return (
     <>
       {!showReassessmentSplit && (
@@ -159,6 +199,30 @@ const Step4: React.FC = () => {
                     is complete.
                   </p>
                 </div>
+
+                {isStep4CompletedFromDB && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <CheckCircle2 className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p
+                          className="text-sm font-semibold text-blue-900 mb-1"
+                          style={{ fontFamily: "Poppins, sans-serif" }}
+                        >
+                          Step 4 Completed - Data Loaded from Database
+                        </p>
+                        <p
+                          className="text-sm text-blue-800"
+                          style={{ fontFamily: "Poppins, sans-serif" }}
+                        >
+                          This step has been completed previously. The reassessment form data has been loaded from the database.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -194,26 +258,45 @@ const Step4: React.FC = () => {
             </div>
             <div className="w-full flex flex-col items-center">
               <div className="flex flex-col items-center bg-red-50 rounded-xl px-12 py-4 mb-4 border border-red-100">
-                <span
-                  className="text-4xl font-bold"
-                  style={{
-                    fontFamily: "Poppins, sans-serif",
-                    color: "#E54747",
-                  }}
-                >
-                  {businessDaysRemaining}
-                </span>
-                <div
-                  className="text-lg"
-                  style={{
-                    fontFamily: "Poppins, sans-serif",
-                    color: "#E54747",
-                  }}
-                >
-                  Business Days Remaining
-                </div>
-              </div>
-            </div>
+                {businessDaysRemaining !== null ? (
+                  <>
+                    <span
+                      className="text-4xl font-bold"
+                      style={{
+                        fontFamily: "Poppins, sans-serif",
+                        color: "#E54747",
+                      }}
+                    >
+                      {businessDaysRemaining}
+                    </span>
+                    <div
+                      className="text-lg"
+                      style={{
+                        fontFamily: "Poppins, sans-serif",
+                        color: "#E54747",
+                      }}
+                    >
+                      Business Days Remaining
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div
+                      className="animate-spin rounded-full h-8 w-8 border-b-2 mb-2"
+                      style={{ borderColor: "#E54747" }}
+                    ></div>
+                    <div
+                      className="text-lg"
+                      style={{
+                        fontFamily: "Poppins, sans-serif",
+                        color: "#E54747",
+                      }}
+                    >
+                      Loading...
+                    </div>
+                  </>
+                )}
+              </div>            </div>
           </div>
           <div className="w-full bg-gray-50 rounded-xl p-6 mb-6 border border-gray-200">
             <div
@@ -227,7 +310,7 @@ const Step4: React.FC = () => {
               style={{ fontFamily: "Poppins, sans-serif", color: "#595959" }}
             >
               <li>
-                The candidate has {businessDaysRemaining} business days to
+                The candidate has {businessDaysRemaining !== null ? businessDaysRemaining : "..."} business days to
                 respond with mitigating evidence
               </li>
               <li>

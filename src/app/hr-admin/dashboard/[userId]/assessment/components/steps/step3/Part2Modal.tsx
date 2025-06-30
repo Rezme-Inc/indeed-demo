@@ -44,7 +44,7 @@ const Part2Modal: React.FC<Part2ModalProps> = ({
       console.log('Part2Modal - Step2 storage:', step2Storage?.assessmentForm);
 
       // Use real data from Step 2 for conduct timing
-      const newSuggestions = getStep3Part2Suggestions(candidateId, candidateProfile, hrAdmin);
+      const newSuggestions = await getStep3Part2Suggestions(candidateId, candidateProfile, hrAdmin);
 
       console.log('Part2Modal - Final suggestions:', newSuggestions);
 
@@ -122,7 +122,7 @@ const Part2Modal: React.FC<Part2ModalProps> = ({
     <>
       <AssessmentPartWrapper
         title="Part 2: Conviction Details"
-        stepNumber="Step 2 of 3"
+        stepNumber="Step 2 of 4"
         showModal={showModal}
         onAutofill={handleAutofill}
         onClose={() => setShowModal(false)}

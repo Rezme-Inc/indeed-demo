@@ -37,60 +37,70 @@ const Part1Modal: React.FC<Part1ModalProps> = ({
   if (!showModal) return null;
 
   const handleAutofill = async () => {
-    if (!candidateProfile || !hrAdmin) {
-      console.warn('Missing required data for autofill');
-      return;
-    }
-
-    setIsAutofilling(true);
     try {
-      const newSuggestions = getStep2Part1Suggestions(candidateId, candidateProfile, hrAdmin);
-      console.log('Part1 autofill suggestions:', newSuggestions);
+      console.log('Part1Modal - Autofill triggered');
+      console.log('Part1Modal - Candidate profile:', candidateProfile);
+      console.log('Part1Modal - HR admin:', hrAdmin);
+
+      if (!candidateProfile || !hrAdmin) {
+        console.warn('Part1Modal - Missing candidateProfile or hrAdmin data');
+        return;
+      }
+
+      // Use the new async data aggregation utility
+      const newSuggestions = await getStep2Part1Suggestions(candidateId, candidateProfile, hrAdmin);
+
+      console.log('Part1Modal - Generated suggestions:', newSuggestions);
 
       setSuggestions(newSuggestions);
 
-      // Only fill empty fields to preserve user input
-      const updatedAssessmentForm = { ...assessmentForm };
+      // Auto-fill only empty fields with suggestions
+      const updates: any = {};
 
-      // Fill position if empty
-      if (!updatedAssessmentForm.position && newSuggestions.position) {
-        updatedAssessmentForm.position = newSuggestions.position;
+      // Handle position field
+      if (newSuggestions.position && (!assessmentForm.position || assessmentForm.position.trim() === '')) {
+        updates.position = newSuggestions.position;
       }
 
-      // Fill duties if empty or has only empty strings
-      if ((!updatedAssessmentForm.duties || updatedAssessmentForm.duties.every((d: string) => !d.trim())) &&
-        newSuggestions.duties && newSuggestions.duties.length > 0) {
+      console.log('Part1Modal - Updates to apply:', updates);
 
-        // First, ensure we have enough duties in the array by adding empty ones
-        const currentLength = assessmentForm.duties?.length || 0;
-        const newLength = newSuggestions.duties.length;
-
-        if (newLength > currentLength) {
-          // Add empty duties to match the new length
-          for (let i = currentLength; i < newLength; i++) {
-            onAddDuty();
-          }
-        }
-
-        // Then fill all duties with the suggestions
-        setTimeout(() => {
-          newSuggestions.duties.forEach((duty: string, index: number) => {
-            handleAssessmentArrayChange('duties', index, duty);
-          });
-        }, 50); // Small delay to ensure state updates
-      }
-
-      // Apply updates by creating synthetic events
-      if (updatedAssessmentForm.position !== assessmentForm.position) {
+      // Apply position update
+      if (updates.position) {
         const syntheticEvent = {
-          target: { name: 'position', value: updatedAssessmentForm.position }
+          target: {
+            name: 'position',
+            value: updates.position
+          }
         } as React.ChangeEvent<HTMLInputElement>;
         handleAssessmentFormChange(syntheticEvent);
       }
+
+      // Handle duties array - need to expand array first if needed
+      if (newSuggestions.duties && newSuggestions.duties.length > 0) {
+        const currentDuties = assessmentForm.duties || [''];
+        const suggestedDuties = newSuggestions.duties;
+
+        // Expand duties array to match suggested duties length
+        const targetLength = Math.max(currentDuties.length, suggestedDuties.length);
+
+        // Add more duty fields if needed
+        for (let i = currentDuties.length; i < targetLength; i++) {
+          onAddDuty();
+        }
+
+        // Use setTimeout to ensure state updates before filling values
+        setTimeout(() => {
+          // Fill duties that are empty
+          suggestedDuties.forEach((suggestedDuty, index) => {
+            const currentDuty = assessmentForm.duties?.[index];
+            if (suggestedDuty && (!currentDuty || currentDuty.trim() === '')) {
+              handleAssessmentArrayChange('duties', index, suggestedDuty);
+            }
+          });
+        }, 100);
+      }
     } catch (error) {
-      console.error('Error during Part1 autofill:', error);
-    } finally {
-      setIsAutofilling(false);
+      console.error('Error during autofill:', error);
     }
   };
 

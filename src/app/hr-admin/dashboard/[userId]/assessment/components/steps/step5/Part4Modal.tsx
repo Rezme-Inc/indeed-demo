@@ -46,7 +46,7 @@ const Part4Modal: React.FC<Part4ModalProps> = ({
 
     setIsAutofilling(true);
     try {
-      const newSuggestions = getStep5Suggestions(candidateId, candidateProfile, hrAdmin);
+      const newSuggestions = await getStep5Suggestions(candidateId, candidateProfile, hrAdmin);
       console.log('Part4 autofill suggestions:', newSuggestions);
 
       setSuggestions(newSuggestions);

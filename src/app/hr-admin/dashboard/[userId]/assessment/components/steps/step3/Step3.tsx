@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { CheckCircle2, Info } from "lucide-react";
 import CriticalInfoSection from "../../critical/CriticalInfoSection";
-import { Part1Modal, Part2Modal, Part3Modal } from "./index";
+import { Part1Modal, Part2Modal, Part3Modal, Part4Modal } from "./index";
 import ExtendSuccessModal from "../../common/ExtendSuccessModal";
 import PreviewModal from "./PreviewModal";
-import { useStep3Storage } from "@/hooks/useStep3Storage";
+import { useStep3Storage, RevocationForm } from "@/hooks/useStep3Storage";
 import { useAssessmentMutators } from "@/hooks/useAssessmentMutators";
 import { useStep3Actions } from "@/hooks/useStep3Actions";
 import { useHireActions } from "@/hooks/useHireActions";
@@ -15,6 +15,7 @@ import { useAssessmentSteps } from "@/context/useAssessmentSteps";
 import { useParams } from "next/navigation";
 import { useCandidateData } from "@/context/useCandidateData";
 import { useAssessmentStorageContext } from "@/context/AssessmentStorageProvider";
+import { AssessmentDatabaseService } from "@/lib/services/assessmentDatabase";
 
 const Step3: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -24,6 +25,88 @@ const Step3: React.FC = () => {
   const { hrAdmin } = useHRAdminProfile();
   const { candidateProfile } = useCandidateData();
   const { step1Storage, step2Storage, step3Storage } = useAssessmentStorageContext();
+  const [isStep3CompletedFromDB, setIsStep3CompletedFromDB] = useState(false);
+
+  // Load Step 3 data on component mount
+  useEffect(() => {
+    const loadStep3Data = async () => {
+      try {
+        console.log('[Step3] Starting to load Step 3 data...');
+
+        // Check if assessment exists
+        const assessmentExists = await AssessmentDatabaseService.assessmentExists(userId as string);
+        console.log('[Step3] Assessment exists:', assessmentExists);
+
+        if (assessmentExists) {
+          // Get current step to determine if Step 3 is completed
+          const dbCurrentStep = await AssessmentDatabaseService.getCurrentStep(userId as string);
+          console.log('[Step3] Current step from DB:', dbCurrentStep);
+
+          // Step 3 is completed if current step > 3
+          const isStep3Completed = dbCurrentStep > 3;
+          console.log('[Step3] Step 3 completion status:', isStep3Completed);
+
+          if (isStep3Completed) {
+            console.log('[Step3] Step 3 is completed, loading from database...');
+            const stepData = await AssessmentDatabaseService.getStepData(userId as string, 3);
+            console.log('[Step3] Loaded step data from DB:', stepData);
+
+            if (stepData) {
+              // Update the revocation form with database data
+              step3Storage.setRevocationForm(stepData as RevocationForm);
+
+              // Map database data back to individual part data for the UI
+              const dbData = stepData as RevocationForm;
+
+              // Part 1 data mapping
+              setPart1Data({
+                date: dbData.date || '',
+                applicantName: dbData.applicant || '',
+                position: dbData.position || '',
+                contactName: dbData.contactName || '',
+                companyName: dbData.companyName || '',
+                address: dbData.address || '',
+                phone: dbData.phone || '',
+              });
+
+              // Part 2 data mapping
+              setPart2Data({
+                convictions: dbData.convictions || [],
+                conductTimeAgo: dbData.timeSinceConduct || '',
+                sentenceCompletedTimeAgo: dbData.timeSinceSentence || '',
+              });
+
+              // Part 3 data mapping
+              setPart3Data({
+                jobDuties: dbData.jobDuties || '',
+                seriousnessReason: dbData.seriousReason || '',
+                revocationReason: dbData.fitnessReason || '',
+              });
+
+              // Part 4 data mapping
+              setPart4Data({
+                businessDays: dbData.numBusinessDays || "5",
+              });
+
+              setIsStep3CompletedFromDB(true);
+              console.log('[Step3] Step 3 data loaded from database and mapped to parts');
+            }
+          } else {
+            console.log('[Step3] Step 3 not completed, using localStorage data');
+          }
+        } else {
+          console.log('[Step3] No assessment exists, using localStorage data');
+        }
+      } catch (error) {
+        console.error('[Step3] Error loading step data:', error);
+        // Continue with localStorage data on error
+      }
+    };
+
+    if (userId) {
+      loadStep3Data();
+    }
+  }, [userId, step3Storage]);
 
   // Step 3 actions for sending revocation notice
   const { sendRevocation } = useStep3Actions(userId as string, step3Storage, {
@@ -49,6 +132,7 @@ const Step3: React.FC = () => {
   const [part1Data, setPart1Data] = useLocalStorageState(`step3_part1_${userId}`, {});
   const [part2Data, setPart2Data] = useLocalStorageState(`step3_part2_${userId}`, {});
   const [part3Data, setPart3Data] = useLocalStorageState(`step3_part3_${userId}`, {});
+  const [part4Data, setPart4Data] = useLocalStorageState(`step3_part4_${userId}`, {});
 
   // Disable background scrolling when modal is open
   useEffect(() => {
@@ -85,10 +169,10 @@ const Step3: React.FC = () => {
       seriousReason: (part3Data as any)?.seriousnessReason || '',
       fitnessReason: (part3Data as any)?.revocationReason || '',
 
-      // Additional required fields
-      numBusinessDays: "5", // String as per RevocationForm interface
+      // Part 4 - Response Period
+      numBusinessDays: (part4Data as any)?.businessDays || "5", // Default to 5 if not set
     };
-  }, [part1Data, part2Data, part3Data]);
+  }, [part1Data, part2Data, part3Data, part4Data]);
 
   // Sync part data to step3Storage whenever part data changes
   useEffect(() => {
@@ -112,11 +196,11 @@ const Step3: React.FC = () => {
   };
 
   const goToNextStep = () => {
-    if ((currentModalStep || 1) < 3) {
+    if ((currentModalStep || 1) < 4) {
       setCurrentModalStep((currentModalStep || 1) + 1);
     } else {
       // Complete assessment - show revocation notice review
-      console.log("Step 3 Assessment complete!", { part1Data, part2Data, part3Data });
+      console.log("Step 3 Assessment complete!", { part1Data, part2Data, part3Data, part4Data });
       closeModal();
       // Show revocation notice review modal
       setShowRevocationReviewModal(true);
@@ -162,7 +246,8 @@ const Step3: React.FC = () => {
     const hasProgress = (currentModalStep || 1) > 1 ||
       Object.keys(part1Data || {}).length > 0 ||
       Object.keys(part2Data || {}).length > 0 ||
-      Object.keys(part3Data || {}).length > 0;
+      Object.keys(part3Data || {}).length > 0 ||
+      Object.keys(part4Data || {}).length > 0;
 
     return hasProgress ? "Continue Assessment" : "Issue Preliminary Job Offer Revocation";
   };
@@ -176,6 +261,31 @@ const Step3: React.FC = () => {
         >
           Preliminary Job Offer Revocation
         </h2>
+
+        {/* Step 3 Completion Notice */}
+        {isStep3CompletedFromDB && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p
+                  className="text-sm font-semibold text-green-900 mb-1"
+                  style={{ fontFamily: "Poppins, sans-serif" }}
+                >
+                  Step 3 Completed
+                </p>
+                <p
+                  className="text-sm text-green-800"
+                  style={{ fontFamily: "Poppins, sans-serif" }}
+                >
+                  This preliminary revocation notice has been completed and saved to the database. The data shown below is loaded from the database.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Hire Decision Success Message */}
         {savedHireDecision && (
@@ -330,19 +440,36 @@ const Step3: React.FC = () => {
         onBack={goToPreviousStep}
         candidateId={userId}
       />
+
+      {/* Part 4 Modal */}
+      <Part4Modal
+        showModal={isModalOpen && (currentModalStep || 1) === 4}
+        setShowModal={closeModal}
+        formData={part4Data || {}}
+        updateFormData={(updates) => setPart4Data({ ...(part4Data || {}), ...updates })}
+        candidateProfile={candidateProfile}
+        hrAdmin={hrAdmin}
+        step1Storage={step1Storage}
+        step2Storage={step2Storage}
+        onNext={goToNextStep}
+        onBack={goToPreviousStep}
+        candidateId={userId}
+      />
+
       <PreviewModal
         showModal={showRevocationReviewModal}
         setShowModal={setShowRevocationReviewModal}
         part1Data={part1Data}
         part2Data={part2Data}
         part3Data={part3Data}
+        part4Data={part4Data}
         candidateProfile={candidateProfile}
         hrAdmin={hrAdmin}
         step1Storage={step1Storage}
         onBack={() => {
           setShowRevocationReviewModal(false);
           setIsModalOpen(true);
-          setCurrentModalStep(3);
+          setCurrentModalStep(4);
         }}
         onSend={handleSendRevocationNotice}
       />

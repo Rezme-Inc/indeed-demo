@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { AssessmentDatabaseService } from "@/lib/services/assessmentDatabase";
 
 interface AssessmentStepsState {
   currentStep: number;
@@ -9,6 +10,7 @@ interface AssessmentStepsState {
   setNotes: React.Dispatch<React.SetStateAction<string>>;
   handleNext: () => void;
   handleBack: () => void;
+  syncCurrentStepFromDatabase: () => Promise<void>;
 }
 
 const AssessmentStepsContext = createContext<AssessmentStepsState | undefined>(
@@ -35,6 +37,30 @@ export function AssessmentStepsProvider({ children, candidateId }: ProviderProps
     if (typeof window === "undefined") return "";
     return localStorage.getItem(`assessmentNotes_${candidateId}`) || "";
   });
+
+  // Sync current step from database on component mount
+  const syncCurrentStepFromDatabase = async () => {
+    try {
+      console.log('[AssessmentSteps] Syncing current step from database...');
+      const dbCurrentStep = await AssessmentDatabaseService.getCurrentStep(candidateId);
+      console.log('[AssessmentSteps] Database current step:', dbCurrentStep);
+
+      if (dbCurrentStep !== currentStep) {
+        console.log('[AssessmentSteps] Updating current step from database:', dbCurrentStep);
+        setCurrentStep(dbCurrentStep);
+        // Also update localStorage to keep it in sync
+        localStorage.setItem(`assessmentCurrentStep_${candidateId}`, dbCurrentStep.toString());
+      }
+    } catch (error) {
+      console.error('[AssessmentSteps] Error syncing current step from database:', error);
+      // Keep the localStorage value as fallback
+    }
+  };
+
+  // Load current step from database on mount
+  useEffect(() => {
+    syncCurrentStepFromDatabase();
+  }, [candidateId]);
 
   useEffect(() => {
     localStorage.setItem(
@@ -73,6 +99,7 @@ export function AssessmentStepsProvider({ children, candidateId }: ProviderProps
         setNotes,
         handleNext,
         handleBack,
+        syncCurrentStepFromDatabase,
       }}
     >
       {children}

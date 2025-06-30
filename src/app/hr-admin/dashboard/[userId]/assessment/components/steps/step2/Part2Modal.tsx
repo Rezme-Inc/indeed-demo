@@ -32,19 +32,24 @@ const Part2Modal: React.FC<Part2ModalProps> = ({
   if (!showModal) return null;
 
   const handleAutofill = async () => {
-    if (!candidateProfile || !hrAdmin) {
-      console.warn('Missing required data for autofill');
-      return;
-    }
-
-    setIsAutofilling(true);
     try {
-      const newSuggestions = getStep2Part2Suggestions(candidateId, candidateProfile, hrAdmin);
-      console.log('Part2 autofill suggestions:', newSuggestions);
+      console.log('Part2Modal - Autofill triggered');
+      console.log('Part2Modal - Candidate profile:', candidateProfile);
+      console.log('Part2Modal - HR admin:', hrAdmin);
+
+      if (!candidateProfile || !hrAdmin) {
+        console.warn('Part2Modal - Missing candidateProfile or hrAdmin data');
+        return;
+      }
+
+      // Use the new async data aggregation utility
+      const newSuggestions = await getStep2Part2Suggestions(candidateId, candidateProfile, hrAdmin);
+
+      console.log('Part2Modal - Generated suggestions:', newSuggestions);
 
       setSuggestions(newSuggestions);
 
-      // Only fill empty fields to preserve user input
+      // Auto-fill only empty fields with suggestions
       const updates: any = {};
       Object.keys(newSuggestions).forEach(key => {
         const suggestionValue = newSuggestions[key as keyof typeof newSuggestions];
@@ -54,6 +59,8 @@ const Part2Modal: React.FC<Part2ModalProps> = ({
           updates[key] = suggestionValue;
         }
       });
+
+      console.log('Part2Modal - Updates to apply:', updates);
 
       if (Object.keys(updates).length > 0) {
         // Apply updates by creating synthetic events
@@ -68,9 +75,7 @@ const Part2Modal: React.FC<Part2ModalProps> = ({
         });
       }
     } catch (error) {
-      console.error('Error during Part2 autofill:', error);
-    } finally {
-      setIsAutofilling(false);
+      console.error('Error during autofill:', error);
     }
   };
 

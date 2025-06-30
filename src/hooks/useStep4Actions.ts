@@ -3,6 +3,7 @@ import { getCandidateEmail, sendReassessmentEmail } from "@/app/restorative-reco
 import { safeAssessmentTracking } from "@/lib/services/safeAssessmentTracking";
 import { HRAdminProfile } from "@/lib/services/hrAdmin";
 import { useStep4Storage } from "./useStep4Storage";
+import { AssessmentDatabaseService } from "@/lib/services/assessmentDatabase";
 
 interface Step4ActionOptions {
   hrAdminProfile: HRAdminProfile | null;
@@ -38,16 +39,41 @@ export function useStep4Actions(
   } = options;
 
   const sendReassessment = useCallback(async () => {
+    if (!reassessmentForm) {
+      console.error('[Step4] Reassessment form is null, cannot send');
+      return;
+    }
+
+    // Create streamlined data structure
+    const evidenceFields = [
+      reassessmentForm.evidenceA,
+      reassessmentForm.evidenceB,
+      reassessmentForm.evidenceC,
+      reassessmentForm.evidenceD
+    ].filter(evidence => evidence && evidence.trim());
+
     const reassessmentData = {
-      ...reassessmentForm,
-      decision: reassessmentDecision,
-      extendReason,
+      error: reassessmentForm.error || "",
       sentAt: new Date().toISOString(),
+      decision: reassessmentDecision,
+      employer: reassessmentForm.employer || "",
+      position: reassessmentForm.position || "",
+      applicant: reassessmentForm.applicant || "",
+      evidence: evidenceFields,
+      offerDate: reassessmentForm.offerDate || "",
+      errorYesNo: reassessmentForm.errorYesNo || "No",
+      reportDate: reassessmentForm.reportDate || "",
       candidateId,
+      companyName: hrAdminProfile?.company || "",
       hrAdminName: hrAdminProfile
         ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}`
         : "",
-      companyName: hrAdminProfile?.company || "",
+      performedBy: hrAdminProfile
+        ? `${hrAdminProfile.first_name} ${hrAdminProfile.last_name}`
+        : "",
+      extendReason: reassessmentDecision === "extend" ? extendReason : "",
+      rescindReason: reassessmentForm.rescindReason || "",
+      reassessmentDate: reassessmentForm.reassessmentDate || "",
     };
 
     try {
@@ -60,6 +86,33 @@ export function useStep4Actions(
       await sendReassessmentEmail(reassessmentData, candidateEmail);
 
       setSavedReassessment(reassessmentData);
+
+      // Save to database and advance to next step
+      console.log('[Step4] Saving reassessment data to database...');
+      const dbSaved = await AssessmentDatabaseService.completeStep(
+        candidateId,
+        4,
+        reassessmentData,
+        5 // Move to step 5
+      );
+
+      if (dbSaved) {
+        console.log('[Step4] Reassessment data saved to database successfully');
+        
+        // Clear localStorage for Step 4
+        const step4Keys = [
+          `reassessmentForm_${candidateId}`,
+        ];
+        
+        step4Keys.forEach(key => {
+          console.log(`[Step4] Clearing localStorage key: ${key}`);
+          localStorage.removeItem(key);
+        });
+        
+        console.log('[Step4] Step 4 localStorage cleared');
+      } else {
+        console.error('[Step4] Failed to save reassessment data to database');
+      }
 
       // Wait for React state updates to complete
       await new Promise(resolve => setTimeout(resolve, 200));

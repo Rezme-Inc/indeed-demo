@@ -36,8 +36,8 @@ const Part5Modal: React.FC<Part5ModalProps> = ({
       console.log('Part5Modal - Candidate profile:', candidateProfile);
       console.log('Part5Modal - HR admin:', hrAdmin);
 
-      // Use the new data aggregation utility
-      const newSuggestions = getStep2Part5Suggestions(candidateId, candidateProfile, hrAdmin);
+      // Use the new async data aggregation utility
+      const newSuggestions = await getStep2Part5Suggestions(candidateId, candidateProfile, hrAdmin);
 
       console.log('Part5Modal - Generated suggestions:', newSuggestions);
 

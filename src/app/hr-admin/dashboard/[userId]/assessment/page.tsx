@@ -36,6 +36,7 @@ import Step5 from "./components/steps/step5/Step5";
 import Step6 from "./components/steps/step6/Step6";
 import TimelinePanel from "./components/layout/TimelinePanel";
 import { supabase } from "@/lib/supabase";
+import { AssessmentDatabaseService } from "@/lib/services/assessmentDatabase";
 /**
  * HR Admin Assessment Page with Form Persistence
  *
@@ -231,6 +232,40 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
 
     initializeTracking();
   }, [hrAdminId, params.userId]);
+
+  // Initialize assessment database record (ensure assessment exists)
+  useEffect(() => {
+    async function initializeAssessmentDatabase() {
+      if (!params.userId) {
+        console.log("[Assessment DB] No candidate ID available");
+        return;
+      }
+
+      try {
+        console.log("[Assessment DB] Checking if assessment exists for candidate:", params.userId);
+
+        // Check if assessment already exists
+        const assessmentExists = await AssessmentDatabaseService.assessmentExists(params.userId);
+
+        if (!assessmentExists) {
+          console.log("[Assessment DB] Assessment doesn't exist, creating new assessment record...");
+          const success = await AssessmentDatabaseService.initializeAssessment(params.userId);
+
+          if (success) {
+            console.log("[Assessment DB] Assessment initialized successfully");
+          } else {
+            console.error("[Assessment DB] Failed to initialize assessment");
+          }
+        } else {
+          console.log("[Assessment DB] Assessment already exists");
+        }
+      } catch (error) {
+        console.error("[Assessment DB] Error during assessment initialization:", error);
+      }
+    }
+
+    initializeAssessmentDatabase();
+  }, [params.userId]);
 
   // Load timeline data on mount
   useEffect(() => {

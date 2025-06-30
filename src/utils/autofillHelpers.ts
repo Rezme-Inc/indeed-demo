@@ -53,7 +53,7 @@ function generateJobDuties(skillsData: any[], employmentData: any[]): string[] {
         if (Array.isArray(recentJob.responsibilities)) {
           responsibilities = recentJob.responsibilities;
         } else if (typeof recentJob.responsibilities === 'string') {
-          responsibilities = recentJob.responsibilities.split(/[,;]/).map((r: string) => r.trim()).filter(r => r.length > 0);
+          responsibilities = recentJob.responsibilities.split(/[,;]/).map((r: string) => r.trim()).filter((r: string) => r.length > 0);
         }
         
         duties.push(...responsibilities);

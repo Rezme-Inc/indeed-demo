@@ -6,6 +6,7 @@ import { useAssessmentSteps } from "@/context/useAssessmentSteps";
 import FileUploadSection from "./FileUploadSection";
 import TemplateModal from "./TemplateModal";
 import { CONDITIONAL_OFFER_TEMPLATE } from "./templateContent";
+import { AssessmentDatabaseService } from "@/lib/services/assessmentDatabase";
 
 interface UploadedFiles {
   jobDescription: File | null;
@@ -193,6 +194,7 @@ const Step1: React.FC = () => {
   const [isProcessingOfferLetter, setIsProcessingOfferLetter] = useState(false);
   const [jobDescriptionApproved, setJobDescriptionApproved] = useState(false);
   const [offerLetterApproved, setOfferLetterApproved] = useState(false);
+  const [isStep1CompletedFromDB, setIsStep1CompletedFromDB] = useState(false);
 
   // Manual input states
   const [manualJobDescData, setManualJobDescData] = useState({
@@ -205,46 +207,71 @@ const Step1: React.FC = () => {
 
   // Load files and data from localStorage on component mount
   useEffect(() => {
-    // Load files from localStorage
-    const jobDescFile = getFileFromLocalStorage(`step1_jobDesc_file_${userId}`);
-    const offerLetterFile = getFileFromLocalStorage(`step1_offerLetter_file_${userId}`);
-    const backgroundReportFile = getFileFromLocalStorage(`step1_backgroundReport_file_${userId}`);
-
-    setUploadedFiles({
-      jobDescription: jobDescFile,
-      offerLetter: offerLetterFile,
-      backgroundReport: backgroundReportFile,
-    });
-
-    // Load processing results
-    const savedJobResults = localStorage.getItem(`step1_job_results_${userId}`);
-    const savedOfferResults = localStorage.getItem(`step1_offer_results_${userId}`);
-    const savedJobApproval = localStorage.getItem(`step1_job_approved_${userId}`);
-    const savedOfferApproval = localStorage.getItem(`step1_offer_approved_${userId}`);
-
-    if (savedJobResults) {
+    const loadStep1Data = async () => {
       try {
-        setJobDescriptionResults(JSON.parse(savedJobResults));
+        console.log('[Step1] Starting to load Step 1 data...');
+
+        // For Step 1, we only need to check localStorage on mount
+        // Database queries should only happen when user tries to proceed
+        console.log('[Step1] Loading from localStorage...');
+
+        // Load files from localStorage
+        const jobDescFile = getFileFromLocalStorage(`step1_jobDescription_file_${userId}`);
+        const offerLetterFile = getFileFromLocalStorage(`step1_offerLetter_file_${userId}`);
+        const backgroundReportFile = getFileFromLocalStorage(`step1_backgroundReport_file_${userId}`);
+
+        setUploadedFiles({
+          jobDescription: jobDescFile,
+          offerLetter: offerLetterFile,
+          backgroundReport: backgroundReportFile,
+        });
+
+        // Load processing results
+        const savedJobResults = localStorage.getItem(`step1_job_results_${userId}`);
+        const savedOfferResults = localStorage.getItem(`step1_offer_results_${userId}`);
+        const savedJobApproval = localStorage.getItem(`step1_job_approved_${userId}`);
+        const savedOfferApproval = localStorage.getItem(`step1_offer_approved_${userId}`);
+
+        if (savedJobResults) {
+          try {
+            setJobDescriptionResults(JSON.parse(savedJobResults));
+          } catch (error) {
+            console.error('Error loading saved job results:', error);
+          }
+        }
+
+        if (savedOfferResults) {
+          try {
+            setOfferLetterResults(JSON.parse(savedOfferResults));
+          } catch (error) {
+            console.error('Error loading saved offer results:', error);
+          }
+        }
+
+        if (savedJobApproval) {
+          setJobDescriptionApproved(JSON.parse(savedJobApproval));
+        }
+
+        if (savedOfferApproval) {
+          setOfferLetterApproved(JSON.parse(savedOfferApproval));
+        }
+
       } catch (error) {
-        console.error('Error loading saved job results:', error);
+        console.error('[Step1] Error loading Step 1 data:', error);
+        // Fall back to localStorage only if there are any issues
+        const jobDescFile = getFileFromLocalStorage(`step1_jobDescription_file_${userId}`);
+        const offerLetterFile = getFileFromLocalStorage(`step1_offerLetter_file_${userId}`);
+        const backgroundReportFile = getFileFromLocalStorage(`step1_backgroundReport_file_${userId}`);
+
+        setUploadedFiles({
+          jobDescription: jobDescFile,
+          offerLetter: offerLetterFile,
+          backgroundReport: backgroundReportFile,
+        });
       }
-    }
+    };
 
-    if (savedOfferResults) {
-      try {
-        setOfferLetterResults(JSON.parse(savedOfferResults));
-      } catch (error) {
-        console.error('Error loading saved offer results:', error);
-      }
-    }
-
-    if (savedJobApproval) {
-      setJobDescriptionApproved(JSON.parse(savedJobApproval));
-    }
-
-    if (savedOfferApproval) {
-      setOfferLetterApproved(JSON.parse(savedOfferApproval));
-    }
+    loadStep1Data();
   }, [userId]);
 
   // Save results to localStorage
@@ -391,9 +418,80 @@ const Step1: React.FC = () => {
 
   const canProceed = uploadedFiles.backgroundReport && uploadedFiles.offerLetter && jobDescriptionApproved && offerLetterApproved;
 
-  const handleNextStep = () => {
-    if (canProceed) {
-      handleNext();
+  const handleNextStep = async () => {
+    if (!canProceed) {
+      return;
+    }
+
+    try {
+      console.log('[Step1] Starting Step 1 completion process...');
+
+      // Gather all approved Step 1 data
+      const step1Data = {
+        // Position and duties from approved job description results
+        position: jobDescriptionResults?.position || '',
+        duties: jobDescriptionResults?.duties || [],
+
+        // Offer date from approved offer letter results
+        offer_date: offerLetterResults?.offerDate || '',
+
+        // Additional metadata
+        job_description_approved: jobDescriptionApproved,
+        offer_letter_approved: offerLetterApproved,
+        background_report_uploaded: !!uploadedFiles.backgroundReport,
+
+        // Timestamps
+        completed_at: new Date().toISOString(),
+      };
+
+      console.log('[Step1] Gathered Step 1 data for database:', step1Data);
+
+      // Initialize assessment if it doesn't exist
+      const assessmentExists = await AssessmentDatabaseService.assessmentExists(userId as string);
+      if (!assessmentExists) {
+        console.log('[Step1] Initializing new assessment...');
+        const initSuccess = await AssessmentDatabaseService.initializeAssessment(userId as string);
+        if (!initSuccess) {
+          console.error('[Step1] Failed to initialize assessment');
+          alert('Failed to initialize assessment. Please try again.');
+          return;
+        }
+      }
+
+      // Save Step 1 data to database and advance to Step 2
+      console.log('[Step1] Saving Step 1 data to database...');
+      const saveSuccess = await AssessmentDatabaseService.completeStep(
+        userId as string,
+        1, // Step number
+        step1Data,
+        2 // Next step
+      );
+
+      if (saveSuccess) {
+        console.log('[Step1] Successfully saved Step 1 data to database');
+
+        // Clear localStorage only after successful database save
+        localStorage.removeItem(`step1_job_results_${userId}`);
+        localStorage.removeItem(`step1_offer_results_${userId}`);
+        localStorage.removeItem(`step1_job_approved_${userId}`);
+        localStorage.removeItem(`step1_offer_approved_${userId}`);
+
+        // Clear file storage (optional - could keep for reference)
+        localStorage.removeItem(`step1_jobDescription_file_${userId}`);
+        localStorage.removeItem(`step1_offerLetter_file_${userId}`);
+        localStorage.removeItem(`step1_backgroundReport_file_${userId}`);
+
+        console.log('[Step1] Cleared localStorage, proceeding to Step 2');
+
+        // Proceed to next step
+        handleNext();
+      } else {
+        console.error('[Step1] Failed to save Step 1 data to database');
+        alert('Failed to save assessment data. Please try again.');
+      }
+    } catch (error) {
+      console.error('[Step1] Error during Step 1 completion:', error);
+      alert('An error occurred while saving your progress. Please try again.');
     }
   };
 
@@ -406,6 +504,31 @@ const Step1: React.FC = () => {
         >
           Document Upload & Processing
         </h2>
+
+        {/* Step 1 Completion Notice */}
+        {isStep1CompletedFromDB && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p
+                  className="text-sm font-semibold text-green-900 mb-1"
+                  style={{ fontFamily: "Poppins, sans-serif" }}
+                >
+                  Step 1 Already Completed
+                </p>
+                <p
+                  className="text-sm text-green-800"
+                  style={{ fontFamily: "Poppins, sans-serif" }}
+                >
+                  This step has been completed and saved to the database. Position: <strong>{jobDescriptionResults?.position}</strong>, Offer Date: <strong>{offerLetterResults?.offerDate}</strong>
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-8">
           {/* Job Description Upload */}

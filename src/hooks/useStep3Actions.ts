@@ -3,6 +3,7 @@ import { getCandidateEmail, sendRevocationEmail } from "@/app/restorative-record
 import { safeAssessmentTracking } from "@/lib/services/safeAssessmentTracking";
 import { HRAdminProfile } from "@/lib/services/hrAdmin";
 import { useStep3Storage } from "./useStep3Storage";
+import { AssessmentDatabaseService } from "@/lib/services/assessmentDatabase";
 
 interface Step3ActionOptions {
   hrAdminProfile: HRAdminProfile | null;
@@ -46,6 +47,8 @@ export function useStep3Actions(
     };
 
     try {
+      console.log('[Step3Actions] Starting to send revocation and save to database...');
+
       const candidateEmail = await getCandidateEmail(candidateId);
       if (!candidateEmail) {
         console.error("Error fetching candidate email");
@@ -55,6 +58,21 @@ export function useStep3Actions(
       await sendRevocationEmail(revocationData, candidateEmail);
 
       setSavedRevocationNotice(revocationData);
+
+      // Save Step 3 data to database and update current step to 4
+      console.log('[Step3Actions] Completing Step 3 and updating to Step 4...');
+      if (revocationForm) {
+        await AssessmentDatabaseService.completeStep(candidateId, 3, revocationForm, 4);
+      }
+
+      // Clear localStorage for Step 3
+      console.log('[Step3Actions] Clearing Step 3 localStorage...');
+      localStorage.removeItem(`revocationForm_${candidateId}`);
+      localStorage.removeItem(`step3_current_modal_step_${candidateId}`);
+      localStorage.removeItem(`step3_part1_${candidateId}`);
+      localStorage.removeItem(`step3_part2_${candidateId}`);
+      localStorage.removeItem(`step3_part3_${candidateId}`);
+      localStorage.removeItem(`step3_part4_${candidateId}`);
 
       // Wait for React state updates to complete
       await new Promise(resolve => setTimeout(resolve, 200));
@@ -86,6 +104,8 @@ export function useStep3Actions(
       setRevocationPreview(false);
       setRevocationSentDate(new Date());
       setCurrentStep(4);
+      
+      console.log('[Step3Actions] Step 3 completed successfully');
     } catch (error) {
       console.error("Error in sendRevocation:", error);
     }

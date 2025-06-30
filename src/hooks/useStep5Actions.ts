@@ -4,6 +4,7 @@ import { safeAssessmentTracking } from "@/lib/services/safeAssessmentTracking";
 import { supabase } from "@/lib/supabase";
 import { HRAdminProfile } from "@/lib/services/hrAdmin";
 import { useStep5Storage } from "./useStep5Storage";
+import { AssessmentDatabaseService } from "@/lib/services/assessmentDatabase";
 
 interface Step5ActionOptions {
   hrAdminProfile: HRAdminProfile | null;
@@ -35,9 +36,12 @@ export function useStep5Actions(
     setCurrentStep,
   } = options;
 
-  const sendFinalRevocation = useCallback(async () => {
+  const sendFinalRevocation = useCallback(async (customData?: any) => {
+    // Use custom data if provided, otherwise fall back to storage
+    const baseData = customData || finalRevocationForm;
+    
     const finalRevocationData = {
-      ...finalRevocationForm,
+      ...baseData,
       sentAt: new Date().toISOString(),
       candidateId,
       hrAdminName: hrAdminProfile
@@ -56,6 +60,38 @@ export function useStep5Actions(
       await sendFinalRevocationEmail(finalRevocationData, candidateEmail);
 
       setSavedFinalRevocationNotice(finalRevocationData);
+
+      // Save to database and advance to next step (Step 6 - completion)
+      console.log('[Step5] Saving final revocation data to database...');
+      const dbSaved = await AssessmentDatabaseService.completeStep(
+        candidateId,
+        5,
+        finalRevocationData,
+        6 // Move to step 6 (completion)
+      );
+
+      if (dbSaved) {
+        console.log('[Step5] Final revocation data saved to database successfully');
+        
+        // Clear localStorage for Step 5
+        const step5Keys = [
+          `finalRevocationForm_${candidateId}`,
+          `step5_part1_${candidateId}`,
+          `step5_part2_${candidateId}`,
+          `step5_part3_${candidateId}`,
+          `step5_part4_${candidateId}`,
+          `step5_current_modal_step_${candidateId}`,
+        ];
+        
+        step5Keys.forEach(key => {
+          console.log(`[Step5] Clearing localStorage key: ${key}`);
+          localStorage.removeItem(key);
+        });
+        
+        console.log('[Step5] Step 5 localStorage cleared');
+      } else {
+        console.error('[Step5] Failed to save final revocation data to database');
+      }
 
       // Wait for React state updates to complete
       await new Promise(resolve => setTimeout(resolve, 200));

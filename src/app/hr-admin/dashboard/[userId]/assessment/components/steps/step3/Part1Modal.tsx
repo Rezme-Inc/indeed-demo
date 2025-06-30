@@ -42,7 +42,7 @@ const Part1Modal: React.FC<Part1ModalProps> = ({
       console.log('Part1Modal - Step2 storage:', step2Storage?.assessmentForm);
 
       // Use the new data aggregation utility
-      const newSuggestions = getStep3Part1Suggestions(candidateId, candidateProfile, hrAdmin);
+      const newSuggestions = await getStep3Part1Suggestions(candidateId, candidateProfile, hrAdmin);
 
       console.log('Part1Modal - Final suggestions:', newSuggestions);
 
@@ -101,7 +101,7 @@ const Part1Modal: React.FC<Part1ModalProps> = ({
     <>
       <AssessmentPartWrapper
         title="Part 1: Basic Information"
-        stepNumber="Step 1 of 3"
+        stepNumber="Step 1 of 4"
         showModal={showModal}
         onAutofill={handleAutofill}
         onClose={() => setShowModal(false)}

@@ -14,6 +14,8 @@ import { useAssessmentSteps } from "@/context/useAssessmentSteps";
 import { useLocalStorageState } from "@/hooks/useLocalStorageState";
 import { useParams } from "next/navigation";
 import { useCandidateData } from "@/context/useCandidateData";
+import { AssessmentDatabaseService } from "@/lib/services/assessmentDatabase";
+import { getStep5Suggestions } from "@/utils/assessmentDataAggregator";
 
 const Step5: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -27,6 +29,9 @@ const Step5: React.FC = () => {
   const step5Storage = useStep5Storage(userId as string);
   const { hrAdmin } = useHRAdminProfile();
   const { candidateProfile } = useCandidateData();
+
+  // Database integration state
+  const [isStep5CompletedFromDB, setIsStep5CompletedFromDB] = useState(false);
 
   // Modal state management
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -68,6 +73,37 @@ const Step5: React.FC = () => {
     },
   );
 
+  // Load assessment data from database when component mounts
+  useEffect(() => {
+    const loadAssessmentData = async () => {
+      try {
+        console.log('[Step5] Loading assessment data from database...');
+
+        // Check if Step 5 is completed and load data from database
+        const assessmentExists = await AssessmentDatabaseService.assessmentExists(userId);
+        if (assessmentExists) {
+          const currentStep = await AssessmentDatabaseService.getCurrentStep(userId);
+          if (currentStep > 5) {
+            console.log("[Step5] Step 5 is completed, loading from database...");
+            const step5Data = await AssessmentDatabaseService.getStepData(userId, 5);
+            if (step5Data) {
+              console.log("[Step5] Step 5 data loaded from database:", step5Data);
+              setIsStep5CompletedFromDB(true);
+
+              // Load the final revocation form data from database
+              step5Storage.setFinalRevocationForm(step5Data as any);
+            }
+          }
+        }
+
+      } catch (error) {
+        console.error('[Step5] Error loading assessment data:', error);
+      }
+    };
+
+    loadAssessmentData();
+  }, [userId]);
+
   // Disable background scrolling when modal is open
   useEffect(() => {
     if (isModalOpen || showFinalPreview) {
@@ -105,53 +141,88 @@ const Step5: React.FC = () => {
     }
   };
 
-  // Combine all part data for the final revocation form
-  const getCombinedFormData = () => {
-    return {
-      // Basic Info (from Part 4)
-      date: (part4Data as any)?.currentDate || '',
-      applicant: (part4Data as any)?.applicant || '',
-      dateOfNotice: (part4Data as any)?.dateOfNotice || '',
+  // Combine all part data for the final revocation form with autofill fallback
+  const getCombinedFormData = async () => {
+    // Get autofill suggestions as fallback for empty form data
+    let autofillData = {};
+    if (candidateProfile && hrAdmin) {
+      try {
+        autofillData = await getStep5Suggestions(userId, candidateProfile, hrAdmin);
+        console.log('[Step5] Autofill fallback data:', autofillData);
+      } catch (error) {
+        console.error('[Step5] Error getting autofill fallback:', error);
+      }
+    }
 
-      // Decision Details (from Part 1)
-      noResponse: (part1Data as any)?.noResponse || false,
-      infoSubmitted: (part1Data as any)?.infoSubmitted || false,
-      infoSubmittedList: (part1Data as any)?.infoSubmittedList || '',
-      errorOnReport: (part1Data as any)?.errorOnReport || '',
-      convictions: (part1Data as any)?.convictions || [],
+    // Get current date as fallback
+    const today = new Date().toISOString().split('T')[0];
 
-      // Assessment Details (from Part 2)
-      seriousReason: (part2Data as any)?.seriousReason || '',
-      timeSinceConduct: (part2Data as any)?.timeSinceConduct || '',
-      timeSinceSentence: (part2Data as any)?.timeSinceSentence || '',
-      position: (part2Data as any)?.position || '',
-      jobDuties: (part2Data as any)?.jobDuties || [],
-
-      // Final Decision Reasoning (from Part 3)
-      fitnessReason: (part3Data as any)?.fitnessReason || '',
-
-      // Contact Info (from Part 4)
-      contactName: (part4Data as any)?.contactName || '',
-      companyName: (part4Data as any)?.companyName || '',
-      address: (part4Data as any)?.address || '',
-      phone: (part4Data as any)?.phone || '',
-      reconsideration: (part4Data as any)?.reconsideration || '',
-      reconsiderationProcedure: (part4Data as any)?.reconsiderationProcedure || '',
+    // Helper function to get non-empty value with fallback
+    const getValueWithFallback = (partValue: any, autofillValue: any, defaultValue: any = '') => {
+      if (partValue && partValue !== '' && partValue !== null && partValue !== undefined) {
+        return partValue;
+      }
+      if (autofillValue && autofillValue !== '' && autofillValue !== null && autofillValue !== undefined) {
+        return autofillValue;
+      }
+      return defaultValue;
     };
+
+    // Helper for arrays
+    const getArrayWithFallback = (partArray: any, autofillArray: any, defaultArray: any = []) => {
+      if (partArray && Array.isArray(partArray) && partArray.length > 0 && partArray.some((item: any) => item && item !== '')) {
+        return partArray;
+      }
+      if (autofillArray && Array.isArray(autofillArray) && autofillArray.length > 0) {
+        return autofillArray;
+      }
+      return defaultArray;
+    };
+
+    const combinedData = {
+      // Basic Info (from Part 4 modal) with autofill fallback
+      date: getValueWithFallback((part4Data as any)?.currentDate, (autofillData as any)?.date, today),
+      applicant: getValueWithFallback((part4Data as any)?.applicant, (autofillData as any)?.applicant, ''),
+      dateOfNotice: getValueWithFallback((part4Data as any)?.dateOfNotice, (autofillData as any)?.dateOfNotice, today),
+
+      // Decision Details (from Part 1 modal) - mostly manual input, keep defaults
+      noResponse: (part1Data as any)?.noResponse || (autofillData as any)?.noResponse || false,
+      infoSubmitted: (part1Data as any)?.infoSubmitted || (autofillData as any)?.infoSubmitted || false,
+      infoSubmittedList: getValueWithFallback((part1Data as any)?.infoSubmittedList, (autofillData as any)?.infoSubmittedList, ''),
+      errorOnReport: getValueWithFallback((part1Data as any)?.errorOnReport, (autofillData as any)?.errorOnReport, ''),
+      convictions: getArrayWithFallback((part1Data as any)?.convictions, (autofillData as any)?.convictions, []),
+
+      // Assessment Details (from Part 2 modal) with autofill fallback from previous steps
+      seriousReason: getValueWithFallback((part2Data as any)?.seriousReason, (autofillData as any)?.seriousReason, ''),
+      timeSinceConduct: getValueWithFallback((part2Data as any)?.timeSinceConduct, (autofillData as any)?.timeSinceConduct, ''),
+      timeSinceSentence: getValueWithFallback((part2Data as any)?.timeSinceSentence, (autofillData as any)?.timeSinceSentence, ''),
+      position: getValueWithFallback((part2Data as any)?.position, (autofillData as any)?.position, ''),
+      jobDuties: getArrayWithFallback((part2Data as any)?.jobDuties, (autofillData as any)?.jobDuties, []),
+
+      // Final Decision Reasoning (from Part 3 modal)
+      fitnessReason: getValueWithFallback((part3Data as any)?.fitnessReason, (autofillData as any)?.fitnessReason, ''),
+
+      // Contact Info (from Part 4 modal) with autofill fallback
+      contactName: getValueWithFallback((part4Data as any)?.contactName, (autofillData as any)?.contactName, ''),
+      companyName: getValueWithFallback((part4Data as any)?.companyName, (autofillData as any)?.companyName, ''),
+      address: getValueWithFallback((part4Data as any)?.address, (autofillData as any)?.address, ''),
+      phone: getValueWithFallback((part4Data as any)?.phone, (autofillData as any)?.phone, ''),
+      reconsideration: getValueWithFallback((part4Data as any)?.reconsideration, (autofillData as any)?.reconsideration, ''),
+      reconsiderationProcedure: getValueWithFallback((part4Data as any)?.reconsiderationProcedure, (autofillData as any)?.reconsiderationProcedure, ''),
+    };
+
+    return combinedData;
   };
 
   const handleSendFinalRevocation = async () => {
-    const combinedData = getCombinedFormData();
+    const combinedData = await getCombinedFormData();
 
-    // Update the step5Storage with combined data
+    // Update the step5Storage with combined data for future use
     step5Storage.setFinalRevocationForm(combinedData);
 
-    // Wait a moment for the storage to update
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    // Now send the final revocation notice
+    // Send the final revocation notice with combined data directly
     try {
-      await sendFinalRevocation();
+      await sendFinalRevocation(combinedData);
       // Close the preview modal after successful send
       setShowFinalPreview(false);
     } catch (error) {
@@ -189,6 +260,24 @@ const Step5: React.FC = () => {
                   </p>
                   <p className="text-sm text-green-800" style={{ fontFamily: "Poppins, sans-serif" }}>
                     Decision made on {new Date(savedHireDecision.sentAt).toLocaleDateString()} to extend the offer of employment to this candidate. The assessment process is complete.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {isStep5CompletedFromDB && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 mt-0.5">
+                  <CheckCircle2 className="h-5 w-5 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-red-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+                    Step 5 Completed - Final Revocation Notice Sent
+                  </p>
+                  <p className="text-sm text-red-800" style={{ fontFamily: "Poppins, sans-serif" }}>
+                    This step has been completed previously. The final revocation notice has been sent and the assessment process is complete. All data has been loaded from the database.
                   </p>
                 </div>
               </div>

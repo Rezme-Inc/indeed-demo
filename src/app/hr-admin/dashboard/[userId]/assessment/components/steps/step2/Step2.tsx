@@ -3,7 +3,7 @@ import { CheckCircle2, Info } from "lucide-react";
 import CriticalInfoSection from "../../critical/CriticalInfoSection";
 import { Part1Modal, Part2Modal, Part3Modal, Part4Modal, Part5Modal, PreviewModal } from "./index";
 import ExtendSuccessModal from "../../common/ExtendSuccessModal";
-import { useStep2Storage } from "@/hooks/useStep2Storage";
+import { useStep2Storage, AssessmentForm } from "@/hooks/useStep2Storage";
 import { useAssessmentMutators } from "@/hooks/useAssessmentMutators";
 import { useStep2Actions } from "@/hooks/useStep2Actions";
 import { useHireActions } from "@/hooks/useHireActions";
@@ -12,11 +12,13 @@ import { useHRAdminProfile } from "@/hooks/useHRAdminProfile";
 import { useAssessmentSteps } from "@/context/useAssessmentSteps";
 import { useParams } from "next/navigation";
 import { useCandidateData } from "@/context/useCandidateData";
+import { AssessmentDatabaseService } from "@/lib/services/assessmentDatabase";
 
 const Step2: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const [activeTab, setActiveTab] = useState("Legal");
   const { currentStep, setCurrentStep } = useAssessmentSteps();
+  const [isStep2CompletedFromDB, setIsStep2CompletedFromDB] = useState(false);
 
   // Separate state for modal visibility (independent of step tracking)
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -66,6 +68,53 @@ const Step2: React.FC = () => {
     currentStep,
   });
 
+  // Load Step 2 data on component mount
+  useEffect(() => {
+    const loadStep2Data = async () => {
+      try {
+        console.log('[Step2] Starting to load Step 2 data...');
+
+        // Check if assessment exists
+        const assessmentExists = await AssessmentDatabaseService.assessmentExists(userId as string);
+        console.log('[Step2] Assessment exists:', assessmentExists);
+
+        if (assessmentExists) {
+          // Get current step to determine if Step 2 is completed
+          const dbCurrentStep = await AssessmentDatabaseService.getCurrentStep(userId as string);
+          console.log('[Step2] Current step from DB:', dbCurrentStep);
+
+          // Step 2 is completed if current step > 2
+          const isStep2Completed = dbCurrentStep > 2;
+          console.log('[Step2] Step 2 completion status:', isStep2Completed);
+
+          if (isStep2Completed) {
+            console.log('[Step2] Step 2 is completed, loading from database...');
+            const stepData = await AssessmentDatabaseService.getStepData(userId as string, 2);
+            console.log('[Step2] Loaded step data from DB:', stepData);
+
+            if (stepData) {
+              // Update the assessment form with database data
+              setAssessmentForm(stepData as AssessmentForm);
+              setIsStep2CompletedFromDB(true);
+              console.log('[Step2] Step 2 data loaded from database');
+            }
+          } else {
+            console.log('[Step2] Step 2 not completed, using localStorage data');
+          }
+        } else {
+          console.log('[Step2] No assessment exists, using localStorage data');
+        }
+      } catch (error) {
+        console.error('[Step2] Error loading step data:', error);
+        // Continue with localStorage data on error
+      }
+    };
+
+    if (userId) {
+      loadStep2Data();
+    }
+  }, [userId, setAssessmentForm]);
+
   // Modal navigation functions
   const handleNext = () => {
     if (currentModalStep === 1) setCurrentModalStep(2);
@@ -113,6 +162,31 @@ const Step2: React.FC = () => {
         >
           Individualized Assessment
         </h2>
+
+        {/* Step 2 Completion Notice */}
+        {isStep2CompletedFromDB && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p
+                  className="text-sm font-semibold text-green-900 mb-1"
+                  style={{ fontFamily: "Poppins, sans-serif" }}
+                >
+                  Step 2 Completed
+                </p>
+                <p
+                  className="text-sm text-green-800"
+                  style={{ fontFamily: "Poppins, sans-serif" }}
+                >
+                  This individualized assessment has been completed and saved to the database. The data shown below is loaded from the database.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Hire Decision Success Message */}
         {savedHireDecision && (
