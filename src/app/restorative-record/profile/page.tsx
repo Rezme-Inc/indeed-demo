@@ -96,6 +96,7 @@ export default function MyRestorativeRecordProfile() {
           .from("awards")
           .select("*")
           .eq("user_id", user.id);
+        console.log("🏆 Awards data from DB:", awardsData);
         setAchievements(awardsData || []);
 
         // Fetch skills
@@ -103,6 +104,7 @@ export default function MyRestorativeRecordProfile() {
           .from("skills")
           .select("*")
           .eq("user_id", user.id);
+        console.log("💪 Skills data from DB:", skillsData);
         setSkills(skillsData || []);
 
         // Fetch community engagements
@@ -110,6 +112,7 @@ export default function MyRestorativeRecordProfile() {
           .from("community_engagements")
           .select("*")
           .eq("user_id", user.id);
+        console.log("🤝 Community engagement data from DB:", engagementData);
         if (engagementData && Array.isArray(engagementData)) {
           const mappedEngagements = engagementData.map((remote) => ({
             id: remote.id,
@@ -132,6 +135,19 @@ export default function MyRestorativeRecordProfile() {
           .from("rehab_programs")
           .select("*")
           .eq("user_id", user.id);
+        console.log("🔄 Rehab programs data from DB:", newRehabData);
+        console.log("🔄 Rehab programs count:", newRehabData?.length || 0);
+        if (newRehabData && newRehabData.length > 0) {
+          newRehabData.forEach((program: any, index: number) => {
+            console.log(`🔄 Program ${index + 1}:`, {
+              id: program.id,
+              program: program.program,
+              file_url: program.file_url,
+              file_name: program.file_name,
+              file_size: program.file_size
+            });
+          });
+        }
         setNewRehabPrograms(newRehabData || []);
 
         // Fetch hobbies
@@ -139,6 +155,7 @@ export default function MyRestorativeRecordProfile() {
           .from("hobbies")
           .select("*")
           .eq("user_id", user.id);
+        console.log("🎨 Hobbies data from DB:", hobbiesData);
         setHobbies(hobbiesData || []);
 
         // Fetch microcredentials/certifications
@@ -146,6 +163,7 @@ export default function MyRestorativeRecordProfile() {
           .from("micro_credentials")
           .select("*")
           .eq("user_id", user.id);
+        console.log("🎓 Certifications data from DB:", certsData);
         setCertifications(certsData || []);
 
         // Fetch mentors
@@ -167,6 +185,7 @@ export default function MyRestorativeRecordProfile() {
           .from("education")
           .select("*")
           .eq("user_id", user.id);
+        console.log("📚 Education data from DB:", educationData);
         setEducation(educationData || []);
       } catch (error) {
         console.error("Error fetching restorative record data:", error);
@@ -271,6 +290,28 @@ export default function MyRestorativeRecordProfile() {
     e.preventDefault();
     setLegalSubmitted(true);
     // TODO: Send form data to backend or legal team
+  };
+
+  // Helper function to extract filename from URL
+  const extractFilenameFromUrl = (url: string): string => {
+    try {
+      const urlParts = url.split('/');
+      const filename = urlParts[urlParts.length - 1];
+      // Remove any query parameters
+      return filename.split('?')[0] || "Download file";
+    } catch {
+      return "Download file";
+    }
+  };
+
+  // Helper function to get file size estimate (fallback)
+  const getFileSizeEstimate = (url: string): string => {
+    if (url.toLowerCase().includes('.pdf')) {
+      return "(PDF document)";
+    } else if (url.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/)) {
+      return "(Image file)";
+    }
+    return "(File attachment)";
   };
 
   if (loading) {
@@ -382,9 +423,29 @@ export default function MyRestorativeRecordProfile() {
       <div className="max-w-5xl mx-auto py-8 px-4 md:px-6">
         {/* Page Title */}
         <div className="mb-8">
-          <h1 className="text-3xl font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            My Restorative Record
-          </h1>
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              My Restorative Record
+            </h1>
+            <button
+              onClick={() => {
+                console.log("🔄 Manual refresh triggered");
+                window.location.reload();
+              }}
+              className="px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-md hover:bg-gray-50"
+              style={{ 
+                color: '#595959',
+                border: '1px solid #E5E5E5',
+                fontFamily: 'Poppins, sans-serif'
+              }}
+              title="Refresh data"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Refresh
+            </button>
+          </div>
         </div>
 
         {/* Share Modal */}
@@ -946,12 +1007,12 @@ export default function MyRestorativeRecordProfile() {
                   Narrative: {award.narrative}
                 </div>
               )}
-              {/* External Links Section - Always at bottom */}
-              {award.file_url && (
-                <div className="text-sm mt-4 pt-3 border-t border-gray-100">
+              {/* File Upload Section - Always at bottom */}
+              <div className="text-sm mt-4 pt-3 border-t border-gray-100">
+                {award.file_url ? (
                   <a
                     href={award.file_url}
-                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md hover:bg-red-500 hover:text-white"
                     style={{ 
                       color: '#E54747', 
                       backgroundColor: '#fef7f7',
@@ -961,15 +1022,22 @@ export default function MyRestorativeRecordProfile() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {award.file_name || "View attachment"}
-                    {award.file_size && (
-                      <span className="ml-2" style={{ color: '#595959' }}>
-                        ({formatFileSize(award.file_size)})
-                      </span>
-                    )}
+                    View Upload
                   </a>
-                </div>
-              )}
+                ) : (
+                  <span 
+                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium"
+                    style={{ 
+                      color: '#9CA3AF', 
+                      backgroundColor: '#F9FAFB',
+                      border: '1px solid #E5E7EB',
+                      fontFamily: 'Poppins, sans-serif'
+                    }}
+                  >
+                    No file uploaded
+                  </span>
+                )}
+              </div>
             </div>
           ))}
           {achievements.length === 0 && (
@@ -1034,12 +1102,12 @@ export default function MyRestorativeRecordProfile() {
                   <span className="font-medium">Narrative:</span> {skill.narrative}
                 </div>
               )}
-              {/* External Links Section - Always at bottom */}
-              {skill.file_url && (
-                <div className="text-sm mt-4 pt-3 border-t border-gray-100">
+              {/* File Upload Section - Always at bottom */}
+              <div className="text-sm mt-4 pt-3 border-t border-gray-100">
+                {skill.file_url ? (
                   <a
                     href={skill.file_url}
-                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md hover:bg-red-500 hover:text-white"
                     style={{ 
                       color: '#E54747', 
                       backgroundColor: '#fef7f7',
@@ -1049,15 +1117,22 @@ export default function MyRestorativeRecordProfile() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {skill.file_name || "View attachment"}
-                    {skill.file_size && (
-                      <span className="ml-2" style={{ color: '#595959' }}>
-                        ({formatFileSize(skill.file_size)})
-                      </span>
-                    )}
+                    View Upload
                   </a>
-                </div>
-              )}
+                ) : (
+                  <span 
+                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium"
+                    style={{ 
+                      color: '#9CA3AF', 
+                      backgroundColor: '#F9FAFB',
+                      border: '1px solid #E5E7EB',
+                      fontFamily: 'Poppins, sans-serif'
+                    }}
+                  >
+                    No file uploaded
+                  </span>
+                )}
+              </div>
             </div>
           ))}
           {skills.length === 0 && (
@@ -1115,47 +1190,38 @@ export default function MyRestorativeRecordProfile() {
                 <span className="font-medium">Details:</span> {eng.details}
               </div>
               {/* External Links Section - Always at bottom */}
-              <div className="mt-4 pt-3 border-t border-gray-100 space-y-3">
+              <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap gap-3">
                 {eng.orgWebsite && (
-                  <div className="text-sm">
-                    <a
-                      href={eng.orgWebsite}
-                      className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md mr-3"
-                      style={{ 
-                        color: '#E54747', 
-                        backgroundColor: '#fef7f7',
-                        border: '1px solid #E54747',
-                        fontFamily: 'Poppins, sans-serif'
-                      }}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Visit Website
-                    </a>
-                  </div>
+                  <a
+                    href={eng.orgWebsite}
+                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md hover:bg-red-500 hover:text-white"
+                    style={{ 
+                      color: '#E54747', 
+                      backgroundColor: '#fef7f7',
+                      border: '1px solid #E54747',
+                      fontFamily: 'Poppins, sans-serif'
+                    }}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Visit Website
+                  </a>
                 )}
                 {eng.file_url && (
-                  <div className="text-sm">
-                    <a
-                      href={eng.file_url}
-                      className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
-                      style={{ 
-                        color: '#E54747', 
-                        backgroundColor: '#fef7f7',
-                        border: '1px solid #E54747',
-                        fontFamily: 'Poppins, sans-serif'
-                      }}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {eng.file_name || "View attachment"}
-                      {eng.file_size && (
-                        <span className="ml-2" style={{ color: '#595959' }}>
-                          ({formatFileSize(eng.file_size)})
-                        </span>
-                      )}
-                    </a>
-                  </div>
+                  <a
+                    href={eng.file_url}
+                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md hover:bg-red-500 hover:text-white"
+                    style={{ 
+                      color: '#E54747', 
+                      backgroundColor: '#fef7f7',
+                      border: '1px solid #E54747',
+                      fontFamily: 'Poppins, sans-serif'
+                    }}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    View Upload
+                  </a>
                 )}
               </div>
             </div>
@@ -1195,12 +1261,22 @@ export default function MyRestorativeRecordProfile() {
                     d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
                   />
                 </svg>
-              </a>
+                </a>
             </Link>
           </div>
           
           {/* Display new format rehab programs */}
-          {newRehabPrograms.map((program: any, idx: number) => (
+          {newRehabPrograms.map((program: any, idx: number) => {
+            console.log(`🔄 Rendering program ${idx + 1}:`, {
+              id: program.id,
+              program: program.program,
+              hasFileUrl: !!program.file_url,
+              file_url: program.file_url,
+              file_name: program.file_name,
+              file_size: program.file_size
+            });
+            
+            return (
             <div
               key={idx}
               className="p-6 mb-4 bg-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
@@ -1232,12 +1308,12 @@ export default function MyRestorativeRecordProfile() {
                   <span className="font-medium">Narrative:</span> {program.narrative}
                 </div>
               )}
-              {/* External Links Section - Always at bottom */}
-              {program.file_url && (
-                <div className="text-sm mt-4 pt-3 border-t border-gray-100">
+              {/* File Upload Section - Always at bottom */}
+              <div className="text-sm mt-4 pt-3 border-t border-gray-100">
+                {program.file_url ? (
                   <a
                     href={program.file_url}
-                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md hover:bg-red-500 hover:text-white"
                     style={{ 
                       color: '#E54747', 
                       backgroundColor: '#fef7f7',
@@ -1247,17 +1323,25 @@ export default function MyRestorativeRecordProfile() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {program.file_name || "View attachment"}
-                    {program.file_size && (
-                      <span className="ml-2" style={{ color: '#595959' }}>
-                        ({formatFileSize(program.file_size)})
-                      </span>
-                    )}
+                    View Upload
                   </a>
-                </div>
-              )}
+                ) : (
+                  <span 
+                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium"
+                    style={{ 
+                      color: '#9CA3AF', 
+                      backgroundColor: '#F9FAFB',
+                      border: '1px solid #E5E7EB',
+                      fontFamily: 'Poppins, sans-serif'
+                    }}
+                  >
+                    No file uploaded
+                  </span>
+                )}
+              </div>
             </div>
-          ))}
+          );
+        })}
 
           {/* Display old format rehab programs (for backward compatibility) */}
           
@@ -1325,12 +1409,12 @@ export default function MyRestorativeRecordProfile() {
                   <span className="font-medium">Narrative:</span> {hobby.narrative}
                 </div>
               )}
-              {/* External Links Section - Always at bottom */}
-              {hobby.file_url && (
-                <div className="text-sm mt-4 pt-3 border-t border-gray-100">
+              {/* File Upload Section - Always at bottom */}
+              <div className="text-sm mt-4 pt-3 border-t border-gray-100">
+                {hobby.file_url ? (
                   <a
                     href={hobby.file_url}
-                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md hover:bg-red-500 hover:text-white"
                     style={{ 
                       color: '#E54747', 
                       backgroundColor: '#fef7f7',
@@ -1340,15 +1424,22 @@ export default function MyRestorativeRecordProfile() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {hobby.file_name || "View attachment"}
-                    {hobby.file_size && (
-                      <span className="ml-2" style={{ color: '#595959' }}>
-                        ({formatFileSize(hobby.file_size)})
-                      </span>
-                    )}
+                    View Upload
                   </a>
-                </div>
-              )}
+                ) : (
+                  <span 
+                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium"
+                    style={{ 
+                      color: '#9CA3AF', 
+                      backgroundColor: '#F9FAFB',
+                      border: '1px solid #E5E7EB',
+                      fontFamily: 'Poppins, sans-serif'
+                    }}
+                  >
+                    No file uploaded
+                  </span>
+                )}
+              </div>
             </div>
           ))}
           {hobbies.length === 0 && (
@@ -1422,49 +1513,40 @@ export default function MyRestorativeRecordProfile() {
               )}
               {/* External Links Section - Always at bottom */}
               {(cert.credential_url || cert.file_url) && (
-                <div className="mt-4 pt-3 border-t border-gray-100 space-y-3">
+                <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap gap-3">
                   {cert.credential_url && (
-                    <div className="text-sm">
-                      <a
-                        href={cert.credential_url.startsWith("http://") || cert.credential_url.startsWith("https://") 
-                          ? cert.credential_url 
-                          : `https://${cert.credential_url}`}
-                        className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md mr-3"
-                        style={{ 
-                          color: '#E54747', 
-                          backgroundColor: '#fef7f7',
-                          border: '1px solid #E54747',
-                          fontFamily: 'Poppins, sans-serif'
-                        }}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        View Credential
-                      </a>
-                    </div>
+                    <a
+                      href={cert.credential_url.startsWith("http://") || cert.credential_url.startsWith("https://") 
+                        ? cert.credential_url 
+                        : `https://${cert.credential_url}`}
+                      className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md hover:bg-red-500 hover:text-white"
+                      style={{ 
+                        color: '#E54747', 
+                        backgroundColor: '#fef7f7',
+                        border: '1px solid #E54747',
+                        fontFamily: 'Poppins, sans-serif'
+                      }}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View Credential
+                    </a>
                   )}
                   {cert.file_url && (
-                    <div className="text-sm">
-                      <a
-                        href={cert.file_url}
-                        className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
-                        style={{ 
-                          color: '#E54747', 
-                          backgroundColor: '#fef7f7',
-                          border: '1px solid #E54747',
-                          fontFamily: 'Poppins, sans-serif'
-                        }}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {cert.file_name || "View attachment"}
-                        {cert.file_size && (
-                          <span className="ml-2" style={{ color: '#595959' }}>
-                            ({formatFileSize(cert.file_size)})
-                          </span>
-                        )}
-                      </a>
-                    </div>
+                    <a
+                      href={cert.file_url}
+                      className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md hover:bg-red-500 hover:text-white"
+                      style={{ 
+                        color: '#E54747', 
+                        backgroundColor: '#fef7f7',
+                        border: '1px solid #E54747',
+                        fontFamily: 'Poppins, sans-serif'
+                      }}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View Upload
+                    </a>
                   )}
                 </div>
               )}
@@ -1748,12 +1830,12 @@ export default function MyRestorativeRecordProfile() {
                   <span className="font-medium">Description:</span> {edu.description}
                 </div>
               )}
-              {/* External Links Section - Always at bottom */}
-              {edu.file_url && (
-                <div className="text-sm mt-4 pt-3 border-t border-gray-100">
+              {/* File Upload Section - Always at bottom */}
+              <div className="text-sm mt-4 pt-3 border-t border-gray-100">
+                {edu.file_url ? (
                   <a
                     href={edu.file_url}
-                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md hover:bg-red-500 hover:text-white"
                     style={{ 
                       color: '#E54747', 
                       backgroundColor: '#fef7f7',
@@ -1763,15 +1845,22 @@ export default function MyRestorativeRecordProfile() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {edu.file_name || "View attachment"}
-                    {edu.file_size && (
-                      <span className="ml-2" style={{ color: '#595959' }}>
-                        ({formatFileSize(edu.file_size)})
-                      </span>
-                    )}
+                    View Upload
                   </a>
-                </div>
-              )}
+                ) : (
+                  <span 
+                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium"
+                    style={{ 
+                      color: '#9CA3AF', 
+                      backgroundColor: '#F9FAFB',
+                      border: '1px solid #E5E7EB',
+                      fontFamily: 'Poppins, sans-serif'
+                    }}
+                  >
+                    No file uploaded
+                  </span>
+                )}
+              </div>
             </div>
           ))}
           {education.length === 0 && (
