@@ -73,6 +73,7 @@ export function useStep3Actions(
       localStorage.removeItem(`step3_part2_${candidateId}`);
       localStorage.removeItem(`step3_part3_${candidateId}`);
       localStorage.removeItem(`step3_part4_${candidateId}`);
+      localStorage.removeItem(`revocationNotice_${candidateId}`); // Clear main revocation notice key that controls View Documents dropdown
 
       // Wait for React state updates to complete
       await new Promise(resolve => setTimeout(resolve, 200));

@@ -7,6 +7,7 @@ import { useCandidateData } from "@/context/useCandidateData";
 import { useDocumentUploads } from "@/context/useDocumentUploads";
 import { useAssessmentStorage } from "@/hooks/useAssessmentStorage";
 import { useCandidateDataFetchers } from "@/hooks/useCandidateDataFetchers";
+import { useDocumentAvailability } from "@/hooks/useDocumentAvailability";
 import { useDocumentHandlers } from "@/hooks/useDocumentHandlers";
 import { useHRAdminProfile } from "@/hooks/useHRAdminProfile";
 import { safeAssessmentTracking } from "@/lib/services/safeAssessmentTracking";
@@ -124,6 +125,9 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
   // HR Admin profile
   const { hrAdmin: hrAdminProfile, loading: headerLoading } =
     useHRAdminProfile();
+
+  // Database-driven document availability (replaces localStorage-based saved document states)
+  const documentAvailability = useDocumentAvailability(params.userId);
 
   // Assessment tracking state
   const [assessmentSessionId, setAssessmentSessionId] = useState<string | null>(
@@ -323,15 +327,10 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
     >
       {/* Sleek Sticky Header */}
       <AssessmentHeader
-        savedOfferLetter={savedOfferLetter}
-        savedAssessment={savedAssessment}
-        savedRevocationNotice={savedRevocationNotice}
-        savedReassessment={savedReassessment}
-        savedFinalRevocationNotice={savedFinalRevocationNotice}
+        documentAvailability={documentAvailability}
         trackingActive={trackingActive}
         hrAdminProfile={hrAdminProfile}
         headerLoading={headerLoading}
-        handleViewOfferLetter={handleViewOfferLetter}
         handleViewDocument={viewDocument}
         setShowAssessmentViewModal={setShowAssessmentViewModal}
         setShowRevocationViewModal={setShowRevocationViewModal}
@@ -477,31 +476,31 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
 
       <OfferLetterViewModal
         open={showOfferLetterModal}
-        offerLetter={savedOfferLetter}
+        candidateId={params.userId}
         onClose={() => setShowOfferLetterModal(false)}
       />
 
       <AssessmentViewModal
         open={showAssessmentViewModal}
-        assessment={savedAssessment}
+        candidateId={params.userId}
         onClose={() => setShowAssessmentViewModal(false)}
       />
 
       <RevocationNoticeViewModal
         open={showRevocationViewModal}
-        notice={savedRevocationNotice}
+        candidateId={params.userId}
         onClose={() => setShowRevocationViewModal(false)}
       />
 
       <ReassessmentViewModal
         open={showReassessmentViewModal}
-        reassessment={savedReassessment}
+        candidateId={params.userId}
         onClose={() => setShowReassessmentViewModal(false)}
       />
 
       <FinalRevocationViewModal
         open={showFinalRevocationViewModal}
-        notice={savedFinalRevocationNotice}
+        candidateId={params.userId}
         onClose={() => setShowFinalRevocationViewModal(false)}
       />
 

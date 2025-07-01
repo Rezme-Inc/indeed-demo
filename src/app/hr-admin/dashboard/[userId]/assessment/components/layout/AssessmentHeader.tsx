@@ -1,4 +1,5 @@
 import { useDocumentUploads } from "@/context/useDocumentUploads";
+import { DocumentAvailability } from "@/hooks/useDocumentAvailability";
 import {
   AlertCircle,
   AlertTriangle,
@@ -17,15 +18,10 @@ import { useRouter } from "next/navigation";
 import React from "react";
 
 interface AssessmentHeaderProps {
-  savedOfferLetter: any;
-  savedAssessment: any;
-  savedRevocationNotice: any;
-  savedReassessment: any;
-  savedFinalRevocationNotice: any;
+  documentAvailability: DocumentAvailability;
   trackingActive: boolean;
   hrAdminProfile: any;
   headerLoading: boolean;
-  handleViewOfferLetter: () => void;
   handleViewDocument: (
     file: File,
     type:
@@ -44,15 +40,10 @@ interface AssessmentHeaderProps {
 }
 
 const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
-  savedOfferLetter,
-  savedAssessment,
-  savedRevocationNotice,
-  savedReassessment,
-  savedFinalRevocationNotice,
+  documentAvailability,
   trackingActive,
   hrAdminProfile,
   headerLoading,
-  handleViewOfferLetter,
   handleViewDocument,
   setShowAssessmentViewModal,
   setShowRevocationViewModal,
@@ -138,20 +129,8 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
 
           {showDocumentsDropdown && (
             <div className="absolute top-full mt-2 right-0 bg-white border border-gray-200 rounded-xl shadow-lg py-2 min-w-64 z-50">
-              {savedOfferLetter && (
-                <button
-                  onClick={() => {
-                    handleViewOfferLetter();
-                    setShowDocumentsDropdown(false);
-                  }}
-                  className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-all duration-200"
-                  style={{ fontFamily: "Poppins, sans-serif" }}
-                >
-                  <FileText className="h-4 w-4" />
-                  View Conditional Job Offer
-                </button>
-              )}
-              {savedAssessment && (
+
+              {documentAvailability.hasAssessment && (
                 <button
                   onClick={() => {
                     setShowAssessmentViewModal(true);
@@ -164,7 +143,7 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
                   View Assessment
                 </button>
               )}
-              {savedRevocationNotice && (
+              {documentAvailability.hasRevocationNotice && (
                 <button
                   onClick={() => {
                     setShowRevocationViewModal(true);
@@ -177,7 +156,7 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
                   View Revocation Notice
                 </button>
               )}
-              {savedReassessment && (
+              {documentAvailability.hasReassessment && (
                 <button
                   onClick={() => {
                     setShowReassessmentViewModal(true);
@@ -190,7 +169,7 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
                   View Reassessment
                 </button>
               )}
-              {savedFinalRevocationNotice && (
+              {documentAvailability.hasFinalRevocationNotice && (
                 <button
                   onClick={() => {
                     setShowFinalRevocationViewModal(true);
@@ -281,11 +260,10 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
                   View Company Policy
                 </button>
               )}
-              {!savedOfferLetter &&
-                !savedAssessment &&
-                !savedRevocationNotice &&
-                !savedReassessment &&
-                !savedFinalRevocationNotice &&
+              {!documentAvailability.hasAssessment &&
+                !documentAvailability.hasRevocationNotice &&
+                !documentAvailability.hasReassessment &&
+                !documentAvailability.hasFinalRevocationNotice &&
                 !backgroundCheckFile &&
                 !jobDescriptionFile &&
                 !jobPostingFile &&

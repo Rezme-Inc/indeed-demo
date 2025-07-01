@@ -81,6 +81,7 @@ export function useStep5Actions(
           `step5_part3_${candidateId}`,
           `step5_part4_${candidateId}`,
           `step5_current_modal_step_${candidateId}`,
+          `finalRevocationNotice_${candidateId}`, // Clear main final revocation key that controls View Documents dropdown
         ];
         
         step5Keys.forEach(key => {

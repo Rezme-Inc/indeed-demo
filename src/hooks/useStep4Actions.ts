@@ -102,6 +102,7 @@ export function useStep4Actions(
         // Clear localStorage for Step 4
         const step4Keys = [
           `reassessmentForm_${candidateId}`,
+          `reassessment_${candidateId}`, // Clear main reassessment key that controls View Documents dropdown
         ];
         
         step4Keys.forEach(key => {

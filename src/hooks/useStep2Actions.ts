@@ -71,6 +71,7 @@ export function useStep2Actions(
       console.log('[Step2Actions] Clearing Step 2 localStorage...');
       localStorage.removeItem(`assessmentForm_${candidateId}`);
       localStorage.removeItem(`assessmentModalStep_${candidateId}`);
+      localStorage.removeItem(`assessment_${candidateId}`);
 
       // Wait for React state updates to complete
       await new Promise(resolve => setTimeout(resolve, 200));

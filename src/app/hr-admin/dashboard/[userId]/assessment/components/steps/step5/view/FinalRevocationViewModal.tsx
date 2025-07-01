@@ -1,19 +1,92 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import DocumentMetadata from "../../../documents/DocumentMetadata";
 import PrintPreviewButton from "../../../documents/PrintButton";
+import { DocumentDataService, FinalRevocationData } from "@/lib/services/documentDataService";
 
 interface FinalRevocationViewModalProps {
   open: boolean;
-  notice: any | null;
+  candidateId: string;
   onClose: () => void;
 }
 
 const FinalRevocationViewModal: React.FC<FinalRevocationViewModalProps> = ({
   open,
-  notice,
+  candidateId,
   onClose,
 }) => {
-  if (!open || !notice) return null;
+  const [documentData, setDocumentData] = useState<FinalRevocationData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch document data when modal opens
+  useEffect(() => {
+    if (open && candidateId) {
+      fetchDocumentData();
+    }
+  }, [open, candidateId]);
+
+  const fetchDocumentData = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log('[FinalRevocationViewModal] Fetching document data for candidate:', candidateId);
+      const data = await DocumentDataService.getFinalRevocationData(candidateId);
+
+      if (data) {
+        setDocumentData(data);
+        console.log('[FinalRevocationViewModal] Document data loaded:', data);
+      } else {
+        setError('Failed to load document data');
+      }
+    } catch (err) {
+      console.error('[FinalRevocationViewModal] Error fetching document data:', err);
+      setError('Error loading document data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!open) return null;
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+        <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-8 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-lg font-semibold" style={{ fontFamily: "Poppins, sans-serif" }}>
+            Loading document data...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !documentData) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+        <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-8 text-center">
+          <div className="text-red-500 mb-4">
+            <svg className="h-12 w-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <p className="text-lg font-semibold mb-4" style={{ fontFamily: "Poppins, sans-serif" }}>
+            {error || 'Document not found'}
+          </p>
+          <button
+            className="px-6 py-2 bg-gray-500 text-white rounded-xl font-semibold hover:bg-gray-600 transition-all duration-200"
+            onClick={onClose}
+            style={{ fontFamily: "Poppins, sans-serif" }}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const notice = documentData.step5Data;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
       <div className="bg-white rounded-xl shadow-lg max-w-7xl w-full p-16 relative max-h-screen overflow-y-auto border border-gray-200">
@@ -129,9 +202,9 @@ const FinalRevocationViewModal: React.FC<FinalRevocationViewModalProps> = ({
 
           <DocumentMetadata
             sentDate={notice.sentAt}
-            hrAdminName={notice.hrAdminName}
-            companyName={notice.companyName}
-            candidateId={notice.candidateId}
+            hrAdminName={documentData.hrAdminProfile ? `${documentData.hrAdminProfile.first_name} ${documentData.hrAdminProfile.last_name}` : ''}
+            companyName={documentData.hrAdminProfile?.company || ''}
+            candidateId={candidateId}
           />
         </div>
 
