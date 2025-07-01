@@ -141,6 +141,7 @@ export function PersonalAchievementsSection({
             ))}
           </select>
         </div>
+
         <div>
           <label className="block font-medium text-black mb-2">
             Name of Award *
@@ -156,8 +157,13 @@ export function PersonalAchievementsSection({
             } px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all`}
             placeholder="Enter name of Award"
             required
+            maxLength={100}
           />
+          <div className="text-xs text-secondary text-right mt-1">
+            {awardsHook.form.name.length}/100 characters
+          </div>
         </div>
+
         <div>
           <label className="block font-medium text-black mb-2">
             Award Organization *
@@ -175,8 +181,13 @@ export function PersonalAchievementsSection({
             } px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all`}
             placeholder="Enter Award Organization name"
             required
+            maxLength={100}
           />
+          <div className="text-xs text-secondary text-right mt-1">
+            {awardsHook.form.organization.length}/100 characters
+          </div>
         </div>
+
         <DatePickerField
           label="Date Awarded"
           value={awardsHook.form.date}
