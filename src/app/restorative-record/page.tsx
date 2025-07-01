@@ -3662,7 +3662,7 @@ function RestorativeRecordBuilderForm() {
                   onClick={handleNext}
                   className="px-6 py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-800 transition-all duration-200"
                 >
-                  Next
+                  Save
                 </button>
               )}
             </div>
