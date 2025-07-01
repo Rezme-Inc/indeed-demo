@@ -107,6 +107,10 @@ function RestorativeRecordBuilderForm() {
     employers: "",
   });
   const [legalSubmitted, setLegalSubmitted] = useState(false);
+  // Add new state for hover tutorial
+  const [hoverTutorialStep, setHoverTutorialStep] = useState<number | null>(null);
+  const [hoverTutorialActive, setHoverTutorialActive] = useState(false);
+  const [helpMenuOpen, setHelpMenuOpen] = useState(false);
 
   const tutorialSteps = [
     {
@@ -189,7 +193,7 @@ function RestorativeRecordBuilderForm() {
     },
   ];
 
-  function TutorialTooltip({ step, onNext, onBack, onClose, showBack, isLastStep }: { step: any; onNext: () => void; onBack: () => void; onClose: () => void; showBack: boolean; isLastStep: boolean }) {
+  function TutorialTooltip({ step, onNext, onBack, onClose, showBack, isLastStep, hideControls = false }: { step: any; onNext: () => void; onBack: () => void; onClose: () => void; showBack: boolean; isLastStep: boolean; hideControls?: boolean }) {
     const ref = useRef<HTMLDivElement>(null);
 
     // Helper to position the tooltip
@@ -252,15 +256,17 @@ function RestorativeRecordBuilderForm() {
       <div ref={ref} className="bg-white border-2 border-red-400 shadow-xl rounded-xl p-4 max-w-xs animate-fade-in">
         <h4 className="font-bold mb-2 text-black">{step.title}</h4>
         <p className="mb-4 text-gray-700">{step.description}</p>
-        <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="text-sm px-2 py-1 rounded bg-gray-200">Close</button>
-          {showBack && (
-            <button onClick={onBack} className="text-sm px-2 py-1 rounded bg-gray-200">Back</button>
-          )}
-          <button onClick={onNext} className="text-sm px-2 py-1 rounded bg-red-500 text-white">
-            {isLastStep ? 'Done' : 'Next'}
-          </button>
-        </div>
+        {!hideControls && (
+          <div className="flex justify-end gap-2">
+            <button onClick={onClose} className="text-sm px-2 py-1 rounded bg-gray-200">Close</button>
+            {showBack && (
+              <button onClick={onBack} className="text-sm px-2 py-1 rounded bg-gray-200">Back</button>
+            )}
+            <button onClick={onNext} className="text-sm px-2 py-1 rounded bg-red-500 text-white">
+              {isLastStep ? 'Done' : 'Next'}
+            </button>
+          </div>
+        )}
       </div>
     );
   }
@@ -3245,7 +3251,7 @@ function RestorativeRecordBuilderForm() {
 
   // Create a shared button group for MY RESTORATIVE RECORD and Help
   const ButtonGroup = (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 relative">
       <button
         id="my-restorative-record-btn"
         onClick={handleViewProfile}
@@ -3254,14 +3260,45 @@ function RestorativeRecordBuilderForm() {
       >
         MY RESTORATIVE RECORD
       </button>
-      <button
-        onClick={startTutorial}
-        className="px-5 py-2 text-base font-medium rounded-xl shadow hover:opacity-90 border ml-2"
-        style={{ color: '#E54747', backgroundColor: '#FFFFFF', borderColor: '#E54747' }}
-        title="Show Tutorial"
-      >
-        Help
-      </button>
+      <div className="relative">
+        <button
+          onClick={() => setHelpMenuOpen((v) => !v)}
+          className="px-5 py-2 text-base font-medium rounded-xl shadow hover:opacity-90 border ml-2"
+          style={{ color: '#E54747', backgroundColor: '#FFFFFF', borderColor: '#E54747', fontFamily: 'Poppins, sans-serif' }}
+          title="Help & Hints"
+        >
+          Help
+        </button>
+        {helpMenuOpen && (
+          <div className="absolute right-0 mt-2 w-56 bg-white border rounded-xl shadow-xl z-50" style={{ borderColor: '#E5E5E5', fontFamily: 'Poppins, sans-serif' }}>
+            {/* Caret/triangle */}
+            <div style={{ position: 'absolute', top: '-10px', right: '16px', width: 0, height: 0, borderLeft: '8px solid transparent', borderRight: '8px solid transparent', borderBottom: '10px solid #E5E5E5' }} />
+            <div style={{ position: 'absolute', top: '-8px', right: '17px', width: 0, height: 0, borderLeft: '7px solid transparent', borderRight: '7px solid transparent', borderBottom: '9px solid #fff' }} />
+            <button
+              className="block w-full text-left px-5 py-3 rounded-xl transition-all duration-150 hover:bg-red-50 text-black font-medium"
+              style={{ fontFamily: 'Poppins, sans-serif', color: '#E54747', borderBottom: '1px solid #F3F4F6' }}
+              onClick={() => {
+                setHelpMenuOpen(false);
+                setTutorialStep(1); // or 0 if you use 0-based
+                setHoverTutorialActive(false);
+              }}
+            >
+              Step-by-step Tutorial
+            </button>
+            <button
+              className="block w-full text-left px-5 py-3 rounded-xl transition-all duration-150 hover:bg-red-50 text-black font-medium"
+              style={{ fontFamily: 'Poppins, sans-serif', color: '#E54747' }}
+              onClick={() => {
+                setHelpMenuOpen(false);
+                setHoverTutorialActive(true);
+                setTutorialStep(null);
+              }}
+            >
+              Hover Hints
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 
@@ -3413,6 +3450,41 @@ function RestorativeRecordBuilderForm() {
     }
   }, [tutorialStep, connectedHRAdmins]);
 
+  // Add effect to attach hover listeners when hoverTutorialActive is true
+  useEffect(() => {
+    if (!hoverTutorialActive) return;
+    // For each tutorial step, add listeners to the element with the matching id
+    const listeners: { el: HTMLElement, enter: any, leave: any }[] = [];
+    tutorialSteps.forEach((step, idx) => {
+      const el = document.getElementById(step.targetId);
+      if (el) {
+        const enter = () => setHoverTutorialStep(idx);
+        const leave = () => setHoverTutorialStep(null);
+        el.addEventListener('mouseenter', enter);
+        el.addEventListener('mouseleave', leave);
+        listeners.push({ el, enter, leave });
+      }
+    });
+    return () => {
+      listeners.forEach(({ el, enter, leave }) => {
+        el.removeEventListener('mouseenter', enter);
+        el.removeEventListener('mouseleave', leave);
+      });
+    };
+  }, [hoverTutorialActive, tutorialSteps]);
+
+  // Render the hover tutorial tooltip if active
+  {hoverTutorialActive && hoverTutorialStep !== null && (
+    <TutorialTooltip
+      step={tutorialSteps[hoverTutorialStep]}
+      onNext={() => setHoverTutorialStep(null)}
+      onBack={() => setHoverTutorialStep(null)}
+      onClose={() => setHoverTutorialStep(null)}
+      showBack={false}
+      isLastStep={false}
+      hideControls={true}
+    />
+  )}
   
   return (
     <div className="min-h-screen bg-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -3602,6 +3674,26 @@ function RestorativeRecordBuilderForm() {
             isLastStep={tutorialStep === tutorialSteps.length}
           />
         </>
+      )}
+      {hoverTutorialActive && hoverTutorialStep !== null && (
+        <TutorialTooltip
+          step={tutorialSteps[hoverTutorialStep]}
+          onNext={() => setHoverTutorialStep(null)}
+          onBack={() => setHoverTutorialStep(null)}
+          onClose={() => setHoverTutorialStep(null)}
+          showBack={false}
+          isLastStep={false}
+          hideControls={true}
+        />
+      )}
+      {hoverTutorialActive && (
+        <div
+          onClick={() => setHoverTutorialActive(false)}
+          className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[9999] px-6 py-3 rounded-xl shadow-lg cursor-pointer"
+          style={{ backgroundColor: '#E54747', color: 'white', fontFamily: 'Poppins, sans-serif', fontWeight: 500 }}
+        >
+          Hover hints are enabled. <span className="underline">Click here to disable</span>.
+        </div>
       )}
     </div>
   );
