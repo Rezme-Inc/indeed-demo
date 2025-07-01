@@ -1,7 +1,4 @@
-import React, { useState } from "react";
-import { Sparkles } from 'lucide-react';
-import SmartSuggestionField from "@/components/assessment/SmartSuggestionField";
-import { getStep2Part2Suggestions } from "@/utils/assessmentDataAggregator";
+import React from "react";
 
 interface Part2ModalProps {
   showModal: boolean;
@@ -10,9 +7,6 @@ interface Part2ModalProps {
   handleAssessmentFormChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onNext: () => void;
   onBack: () => void;
-  candidateProfile?: any;
-  hrAdmin?: any;
-  candidateId: string;
 }
 
 const Part2Modal: React.FC<Part2ModalProps> = ({
@@ -22,62 +16,8 @@ const Part2Modal: React.FC<Part2ModalProps> = ({
   handleAssessmentFormChange,
   onNext,
   onBack,
-  candidateProfile,
-  hrAdmin,
-  candidateId,
 }) => {
-  const [isAutofilling, setIsAutofilling] = useState(false);
-  const [suggestions, setSuggestions] = useState<any>({});
-
   if (!showModal) return null;
-
-  const handleAutofill = async () => {
-    try {
-      console.log('Part2Modal - Autofill triggered');
-      console.log('Part2Modal - Candidate profile:', candidateProfile);
-      console.log('Part2Modal - HR admin:', hrAdmin);
-
-      if (!candidateProfile || !hrAdmin) {
-        console.warn('Part2Modal - Missing candidateProfile or hrAdmin data');
-        return;
-      }
-
-      // Use the new async data aggregation utility
-      const newSuggestions = await getStep2Part2Suggestions(candidateId, candidateProfile, hrAdmin);
-
-      console.log('Part2Modal - Generated suggestions:', newSuggestions);
-
-      setSuggestions(newSuggestions);
-
-      // Auto-fill only empty fields with suggestions
-      const updates: any = {};
-      Object.keys(newSuggestions).forEach(key => {
-        const suggestionValue = newSuggestions[key as keyof typeof newSuggestions];
-        const currentValue = assessmentForm[key];
-        // Only fill if field is empty and we have a suggestion
-        if (suggestionValue && (!currentValue || currentValue.trim() === '')) {
-          updates[key] = suggestionValue;
-        }
-      });
-
-      console.log('Part2Modal - Updates to apply:', updates);
-
-      if (Object.keys(updates).length > 0) {
-        // Apply updates by creating synthetic events
-        Object.keys(updates).forEach(key => {
-          const syntheticEvent = {
-            target: {
-              name: key,
-              value: updates[key]
-            }
-          } as React.ChangeEvent<HTMLInputElement>;
-          handleAssessmentFormChange(syntheticEvent);
-        });
-      }
-    } catch (error) {
-      console.error('Error during autofill:', error);
-    }
-  };
 
   const isComplete = () => {
     return assessmentForm.reportDate &&
@@ -93,23 +33,12 @@ const Part2Modal: React.FC<Part2ModalProps> = ({
             <h2 className="text-2xl font-bold" style={{ fontFamily: 'Poppins, sans-serif' }}>Part 2: Criminal History Details</h2>
             <p className="text-gray-600 text-sm mt-1" style={{ fontFamily: 'Poppins, sans-serif' }}>Step 2 of 5</p>
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleAutofill}
-              disabled={isAutofilling}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-              style={{ fontFamily: 'Poppins, sans-serif' }}
-            >
-              <Sparkles className="h-4 w-4" />
-              {isAutofilling ? 'Autofilling...' : 'AI Autofill'}
-            </button>
-            <button
-              className="text-gray-500 hover:text-gray-700"
-              onClick={() => setShowModal(false)}
-            >
-              ✕
-            </button>
-          </div>
+          <button
+            className="text-gray-500 hover:text-gray-700"
+            onClick={() => setShowModal(false)}
+          >
+            ✕
+          </button>
         </div>
 
         <div className="mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-900 rounded">
@@ -118,53 +47,48 @@ const Part2Modal: React.FC<Part2ModalProps> = ({
 
         <form className="space-y-6">
           <div>
-            <SmartSuggestionField
-              label="Date of Criminal History Report"
+            <label className="block text-sm font-medium text-gray-700 mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              Date of Criminal History Report <span className="text-red-500">*</span>
+            </label>
+            <input
               type="date"
+              name="reportDate"
               value={assessmentForm.reportDate || ''}
-              onChange={(value) => {
-                const syntheticEvent = {
-                  target: { name: 'reportDate', value }
-                } as React.ChangeEvent<HTMLInputElement>;
-                handleAssessmentFormChange(syntheticEvent);
-              }}
-              suggestion={suggestions.reportDate}
-              suggestionsEnabled={true}
+              onChange={handleAssessmentFormChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              style={{ fontFamily: 'Poppins, sans-serif' }}
               required
             />
           </div>
 
           <div>
-            <SmartSuggestionField
-              label="How long ago did the criminal activity occur:"
+            <label className="block text-sm font-medium text-gray-700 mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              How long ago did the criminal activity occur: <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="howLongAgo"
               value={assessmentForm.howLongAgo || ''}
-              onChange={(value) => {
-                const syntheticEvent = {
-                  target: { name: 'howLongAgo', value }
-                } as React.ChangeEvent<HTMLInputElement>;
-                handleAssessmentFormChange(syntheticEvent);
-              }}
-              suggestion={suggestions.howLongAgo}
-              suggestionsEnabled={true}
+              onChange={handleAssessmentFormChange}
               placeholder="e.g., 5 years ago, 2 months ago"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              style={{ fontFamily: 'Poppins, sans-serif' }}
               required
             />
           </div>
 
           <div>
-            <SmartSuggestionField
-              label="Description of the criminal conduct and why the conduct is of concern with respect to the position in question"
-              type="textarea"
+            <label className="block text-sm font-medium text-gray-700 mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              Description of the criminal conduct and why the conduct is of concern with respect to the position in question <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              name="conduct"
               value={assessmentForm.conduct || ''}
-              onChange={(value) => {
-                const syntheticEvent = {
-                  target: { name: 'conduct', value }
-                } as React.ChangeEvent<HTMLInputElement>;
-                handleAssessmentFormChange(syntheticEvent);
-              }}
-              suggestion={suggestions.conduct}
-              suggestionsEnabled={true}
+              onChange={handleAssessmentFormChange}
               placeholder="Provide detailed description of the criminal conduct and explain why it's concerning for this specific position..."
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              style={{ fontFamily: 'Poppins, sans-serif' }}
               required
             />
           </div>

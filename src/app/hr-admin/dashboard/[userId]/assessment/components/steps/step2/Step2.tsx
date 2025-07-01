@@ -6,7 +6,7 @@ import ExtendSuccessModal from "../../common/ExtendSuccessModal";
 import { useStep2Storage, AssessmentForm } from "@/hooks/useStep2Storage";
 import { useAssessmentMutators } from "@/hooks/useAssessmentMutators";
 import { useStep2Actions } from "@/hooks/useStep2Actions";
-import { useHireActions } from "@/hooks/useHireActions";
+import { useUniversalHireActions } from "@/hooks/useUniversalHireActions";
 import { useAssessmentStorage } from "@/hooks/useAssessmentStorage";
 import { useHRAdminProfile } from "@/hooks/useHRAdminProfile";
 import { useAssessmentSteps } from "@/context/useAssessmentSteps";
@@ -58,7 +58,7 @@ const Step2: React.FC = () => {
       setCurrentStep,
     }
   );
-  const { proceedWithHire } = useHireActions(userId as string, {
+  const { proceedWithHire } = useUniversalHireActions(userId as string, {
     hrAdminProfile: hrAdmin,
     hrAdminId: hrAdmin?.id || null,
     trackingActive: false,
@@ -277,9 +277,6 @@ const Step2: React.FC = () => {
         handleAssessmentFormChange={handleAssessmentFormChange}
         onNext={handleNext}
         onBack={handleBack}
-        candidateProfile={candidateProfile}
-        hrAdmin={hrAdmin}
-        candidateId={userId as string}
       />
 
       <Part3Modal

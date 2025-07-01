@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { CheckCircle2, Info, FileText } from "lucide-react";
 import CriticalInfoSection from "../../critical/CriticalInfoSection";
 import IndividualizedReassessmentForm from "./IndividualizedReassessmentForm";
 import ExtendSuccessModal from "../../common/ExtendSuccessModal";
 import { useStep4Storage } from "@/hooks/useStep4Storage";
 import { useStep4Actions } from "@/hooks/useStep4Actions";
-import { useHireActions } from "@/hooks/useHireActions";
+import { useUniversalHireActions } from "@/hooks/useUniversalHireActions";
 import { useAssessmentStorage } from "@/hooks/useAssessmentStorage";
 import { useHRAdminProfile } from "@/hooks/useHRAdminProfile";
 import { useAssessmentSteps } from "@/context/useAssessmentSteps";
@@ -47,20 +47,31 @@ const Step4: React.FC = () => {
   const [isStep4CompletedFromDB, setIsStep4CompletedFromDB] = useState(false);
   const { hrAdmin } = useHRAdminProfile();
   const [showExtendSuccessModal, setShowExtendSuccessModal] = useState(false);
-  const { proceedWithHire, proceedWithReassessment } = useHireActions(
-    userId as string,
-    {
-      hrAdminProfile: hrAdmin,
-      hrAdminId: hrAdmin?.id || null,
-      trackingActive: false,
-      assessmentSessionId: null,
-      setSavedHireDecision,
-      setSavedPreliminaryDecision,
-      setShowExtendSuccessModal,
-      setShowReassessmentInfoModal,
-      currentStep,
-    },
-  );
+  const { proceedWithHire } = useUniversalHireActions(userId as string, {
+    hrAdminProfile: hrAdmin,
+    hrAdminId: hrAdmin?.id || null,
+    trackingActive: false,
+    assessmentSessionId: null,
+    setSavedHireDecision,
+    setShowExtendSuccessModal,
+    currentStep,
+  });
+
+  const proceedWithReassessment = useCallback(() => {
+    const reassessmentDecisionData = {
+      decision: 'reassessment',
+      decisionType: 'adverse_action',
+      sentAt: new Date().toISOString(),
+      candidateId: userId,
+      hrAdminName: hrAdmin
+        ? `${hrAdmin.first_name} ${hrAdmin.last_name}`
+        : '',
+      companyName: hrAdmin?.company || '',
+    };
+
+    setSavedPreliminaryDecision(reassessmentDecisionData);
+    setShowReassessmentInfoModal(true);
+  }, [userId, hrAdmin, setSavedPreliminaryDecision, setShowReassessmentInfoModal]);
   const { sendReassessment } = useStep4Actions(
     userId as string,
     step4Storage,
@@ -74,6 +85,23 @@ const Step4: React.FC = () => {
       setCurrentStep,
     },
   );
+
+  // Wrapper function to handle send based on decision type
+  const handleSendReassessment = useCallback(async () => {
+    const { reassessmentDecision } = step4Storage;
+
+    console.log('[Step4] Sending reassessment with decision:', reassessmentDecision);
+
+    if (reassessmentDecision === 'extend') {
+      // If extending offer, use universal hire hook
+      console.log('[Step4] Extend offer selected, triggering universal hire flow');
+      await proceedWithHire();
+    } else {
+      // If rescinding offer, use regular reassessment flow
+      console.log('[Step4] Rescind offer selected, using regular reassessment flow');
+      await sendReassessment();
+    }
+  }, [step4Storage, proceedWithHire, sendReassessment]);
   const { candidateShareToken, candidateProfile } = useCandidateData();
   const [loadingCandidateData, setLoadingCandidateData] = useState(false);
   const [restorativeData, setRestorativeData] = useState<any>(null);
@@ -437,7 +465,7 @@ const Step4: React.FC = () => {
             handleReassessmentFormChange={handleReassessmentFormChange}
             reassessmentPreview={reassessmentPreview}
             setReassessmentPreview={setReassessmentPreview}
-            handleSendReassessment={sendReassessment}
+            handleSendReassessment={handleSendReassessment}
             reassessmentDecision={reassessmentDecision}
             setReassessmentDecision={setReassessmentDecision}
             extendReason={extendReason}

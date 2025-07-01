@@ -7,7 +7,7 @@ import PreviewModal from "./PreviewModal";
 import { useStep3Storage, RevocationForm } from "@/hooks/useStep3Storage";
 import { useAssessmentMutators } from "@/hooks/useAssessmentMutators";
 import { useStep3Actions } from "@/hooks/useStep3Actions";
-import { useHireActions } from "@/hooks/useHireActions";
+import { useUniversalHireActions } from "@/hooks/useUniversalHireActions";
 import { useLocalStorageState } from "@/hooks/useLocalStorageState";
 import { useAssessmentStorage } from "@/hooks/useAssessmentStorage";
 import { useHRAdminProfile } from "@/hooks/useHRAdminProfile";
@@ -232,15 +232,15 @@ const Step3: React.FC = () => {
     }
   };
 
-  const proceedWithHire = () => {
-    // Mock hire decision
-    setSavedHireDecision({
-      decision: 'hire',
-      sentAt: new Date().toISOString(),
-      hrAdminId: hrAdmin?.id || null
-    });
-    setShowExtendSuccessModal(true);
-  };
+  const { proceedWithHire } = useUniversalHireActions(userId as string, {
+    hrAdminProfile: hrAdmin,
+    hrAdminId: hrAdmin?.id || null,
+    trackingActive: false,
+    assessmentSessionId: null,
+    setSavedHireDecision,
+    setShowExtendSuccessModal,
+    currentStep,
+  });
 
   const getButtonText = () => {
     const hasProgress = (currentModalStep || 1) > 1 ||
