@@ -2232,8 +2232,16 @@ function RestorativeRecordBuilderForm() {
               <h3 className="text-lg font-semibold text-black mb-4">Quick Actions</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <button
-                  id="continue-building-btn" 
-                  onClick={() => handleBuilderNavigation(currentCategory)}
+                  id="continue-building-btn"
+                  onClick={() => {
+                    // Find the first incomplete section
+                    const firstIncompleteIdx = categories.findIndex(cat => !sectionCompletion[cat]);
+                    if (firstIncompleteIdx !== -1) {
+                      handleBuilderNavigation(firstIncompleteIdx);
+                    } else {
+                      handleBuilderNavigation(currentCategory);
+                    }
+                  }}
                   className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
                   style={{ borderColor: '#E5E5E5' }}
                 >
