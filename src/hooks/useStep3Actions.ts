@@ -4,6 +4,7 @@ import { safeAssessmentTracking } from "@/lib/services/safeAssessmentTracking";
 import { HRAdminProfile } from "@/lib/services/hrAdmin";
 import { useStep3Storage } from "./useStep3Storage";
 import { AssessmentDatabaseService } from "@/lib/services/assessmentDatabase";
+import { useDocumentRefresh } from "@/context/DocumentRefreshContext";
 
 interface Step3ActionOptions {
   hrAdminProfile: HRAdminProfile | null;
@@ -34,6 +35,8 @@ export function useStep3Actions(
     setRevocationSentDate,
     setCurrentStep,
   } = options;
+
+  const { refreshDocuments } = useDocumentRefresh();
 
   const sendRevocation = useCallback(async () => {
     const revocationData = {
@@ -106,11 +109,15 @@ export function useStep3Actions(
       setRevocationSentDate(new Date());
       setCurrentStep(4);
       
+      // Refresh document availability to show the new revocation notice
+      console.log('[Step3Actions] Refreshing document availability...');
+      await refreshDocuments();
+      
       console.log('[Step3Actions] Step 3 completed successfully');
     } catch (error) {
       console.error("Error in sendRevocation:", error);
     }
-  }, [revocationForm, candidateId, hrAdminProfile, hrAdminId, trackingActive, assessmentSessionId, setSavedRevocationNotice, setShowRevocationModal, setRevocationPreview, setRevocationSentDate, setCurrentStep]);
+  }, [revocationForm, candidateId, hrAdminProfile, hrAdminId, trackingActive, assessmentSessionId, setSavedRevocationNotice, setShowRevocationModal, setRevocationPreview, setRevocationSentDate, setCurrentStep, refreshDocuments]);
 
   return { sendRevocation };
 }

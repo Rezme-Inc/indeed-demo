@@ -3,6 +3,7 @@ import { AssessmentDatabaseService } from '@/lib/services/assessmentDatabase';
 import { supabase } from '@/lib/supabase';
 import { HRAdminProfile } from '@/lib/services/hrAdmin';
 import { safeAssessmentTracking } from '@/lib/services/safeAssessmentTracking';
+import { useDocumentRefresh } from '@/context/DocumentRefreshContext';
 
 interface UniversalHireActionOptions {
   hrAdminProfile: HRAdminProfile | null;
@@ -24,6 +25,8 @@ export function useUniversalHireActions(candidateId: string, options: UniversalH
     setShowExtendSuccessModal,
     currentStep,
   } = options;
+
+  const { refreshDocuments } = useDocumentRefresh();
 
   const proceedWithHire = useCallback(async () => {
     try {
@@ -179,7 +182,11 @@ export function useUniversalHireActions(candidateId: string, options: UniversalH
         }
       }
 
-      // 6. Show success modal
+      // 6. Refresh document availability
+      console.log('[UniversalHire] Refreshing document availability...');
+      await refreshDocuments();
+
+      // 7. Show success modal
       console.log('[UniversalHire] Hire process completed successfully');
       setShowExtendSuccessModal(true);
 
@@ -201,6 +208,7 @@ export function useUniversalHireActions(candidateId: string, options: UniversalH
     currentStep,
     setSavedHireDecision,
     setShowExtendSuccessModal,
+    refreshDocuments,
   ]);
 
   return { proceedWithHire };

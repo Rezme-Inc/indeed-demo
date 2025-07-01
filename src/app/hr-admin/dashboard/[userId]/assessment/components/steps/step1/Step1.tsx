@@ -7,7 +7,9 @@ import FileUploadSection from "./FileUploadSection";
 import TemplateModal from "./TemplateModal";
 import { CONDITIONAL_OFFER_TEMPLATE } from "./templateContent";
 import { AssessmentDatabaseService } from "@/lib/services/assessmentDatabase";
+import { FileStorageService, UploadedFile } from "@/lib/services/fileStorageService";
 import { initializeCSRFProtection, secureFetch } from "@/lib/csrf";
+import { useDocumentRefresh } from "@/context/DocumentRefreshContext";
 
 interface UploadedFiles {
   jobDescription: File | null;
@@ -126,45 +128,48 @@ const extractOfferDate = async (pdfText: string): Promise<OfferLetterResults> =>
   }
 };
 
-// Helper function to store file in localStorage as base64
-const storeFileInLocalStorage = (key: string, file: File) => {
-  fileToBase64(file).then(base64 => {
-    const fileData = {
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      lastModified: file.lastModified,
-      data: base64
-    };
-    localStorage.setItem(key, JSON.stringify(fileData));
-  }).catch(error => {
-    console.error('Error storing file in localStorage:', error);
-  });
+// Helper function to upload and store file in Supabase
+const uploadFileToSupabase = async (
+  candidateId: string,
+  file: File,
+  fileType: 'job_desc' | 'offer_letter' | 'background_report'
+): Promise<UploadedFile | null> => {
+  try {
+    console.log('[Step1] Uploading file to Supabase:', { fileName: file.name, fileType });
+
+    const result = await FileStorageService.uploadFile(candidateId, file, fileType, 1);
+
+    if (result.success && result.file) {
+      console.log('[Step1] File uploaded successfully:', result.file);
+      return result.file;
+    } else {
+      console.error('[Step1] File upload failed:', result.error);
+      alert(`Failed to upload ${file.name}: ${result.error}`);
+      return null;
+    }
+  } catch (error) {
+    console.error('[Step1] Error uploading file:', error);
+    alert(`Failed to upload ${file.name}. Please try again.`);
+    return null;
+  }
 };
 
-// Helper function to retrieve file from localStorage
-const getFileFromLocalStorage = (key: string): File | null => {
+// Helper function to get file from Supabase for processing
+const getFileFromSupabase = async (bucketPath: string): Promise<File | null> => {
   try {
-    const fileDataStr = localStorage.getItem(key);
-    if (!fileDataStr) return null;
+    console.log('[Step1] Downloading file from Supabase:', bucketPath);
 
-    const fileData = JSON.parse(fileDataStr);
+    const file = await FileStorageService.downloadFile(bucketPath);
 
-    // Convert base64 back to File
-    const byteCharacters = atob(fileData.data);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    if (file) {
+      console.log('[Step1] File downloaded successfully:', file.name);
+      return file;
+    } else {
+      console.error('[Step1] Failed to download file');
+      return null;
     }
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: fileData.type });
-
-    return new File([blob], fileData.name, {
-      type: fileData.type,
-      lastModified: fileData.lastModified
-    });
   } catch (error) {
-    console.error('Error retrieving file from localStorage:', error);
+    console.error('[Step1] Error downloading file:', error);
     return null;
   }
 };
@@ -172,11 +177,23 @@ const getFileFromLocalStorage = (key: string): File | null => {
 const Step1: React.FC = () => {
   const { handleNext, currentStep } = useAssessmentSteps();
   const { userId } = useParams<{ userId: string }>();
+  const { refreshDocuments } = useDocumentRefresh();
   const [activeTab, setActiveTab] = useState("Legal");
   const [showTemplateModal, setShowTemplateModal] = useState(false);
 
-  // File upload state
+  // File upload state - track both File objects and uploaded file metadata
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFiles>({
+    jobDescription: null,
+    offerLetter: null,
+    backgroundReport: null,
+  });
+
+  // Track uploaded file metadata from Supabase
+  const [uploadedFileMetadata, setUploadedFileMetadata] = useState<{
+    jobDescription: UploadedFile | null;
+    offerLetter: UploadedFile | null;
+    backgroundReport: UploadedFile | null;
+  }>({
     jobDescription: null,
     offerLetter: null,
     backgroundReport: null,
@@ -203,119 +220,71 @@ const Step1: React.FC = () => {
   // Load files and data from localStorage/database on component mount
   useEffect(() => {
     const loadStep1Data = async () => {
+      console.log('[Step1] Loading data for candidate:', userId);
+
+      // Check if step is already completed in database
       try {
-        console.log('[Step1] Starting to load Step 1 data...');
+        const assessmentStatus = await AssessmentDatabaseService.getAssessmentStatus(userId as string);
 
-        // First check if Step 1 is already completed in database
-        const currentStep = await AssessmentDatabaseService.getCurrentStep(userId as string);
-        console.log('[Step1] Current step from database:', currentStep);
-
-        if (currentStep !== null && currentStep > 1) {
-          // Step 1 is completed, load from database
-          console.log('[Step1] Step 1 already completed, loading from database...');
-          const step1Data = await AssessmentDatabaseService.getStepData(userId as string, 1) as any;
-
-          if (step1Data) {
-            console.log('[Step1] Loaded Step 1 data from database:', step1Data);
-
-            // Set completion status and data from database
-            setIsStep1CompletedFromDB(true);
-
-            if (step1Data.position && step1Data.duties) {
-              setJobDescriptionResults({
-                position: step1Data.position,
-                duties: step1Data.duties
-              });
-              setJobDescriptionApproved(true);
-            }
-
-            if (step1Data.offer_date) {
-              setOfferLetterResults({
-                offerDate: step1Data.offer_date
-              });
-              setOfferLetterApproved(true);
-            }
-
-            return; // Skip localStorage loading if data found in database
-          }
+        if (assessmentStatus && assessmentStatus.current_step > 1) {
+          console.log('[Step1] Step 1 completed in database, showing completion notice');
+          setIsStep1CompletedFromDB(true);
+          return;
+        } else {
+          console.log('[Step1] Step 1 not yet completed in database');
+          setIsStep1CompletedFromDB(false);
         }
-
-        // Load from localStorage if not completed or no database data
-        console.log('[Step1] Loading from localStorage...');
-
-        // Load files from localStorage
-        const jobDescFile = getFileFromLocalStorage(`step1_jobDescription_file_${userId}`);
-        const offerLetterFile = getFileFromLocalStorage(`step1_offerLetter_file_${userId}`);
-        const backgroundReportFile = getFileFromLocalStorage(`step1_backgroundReport_file_${userId}`);
-
-        setUploadedFiles({
-          jobDescription: jobDescFile,
-          offerLetter: offerLetterFile,
-          backgroundReport: backgroundReportFile,
-        });
-
-        // Load processing results
-        const savedJobResults = localStorage.getItem(`step1_job_results_${userId}`);
-        const savedOfferResults = localStorage.getItem(`step1_offer_results_${userId}`);
-        const savedJobApproval = localStorage.getItem(`step1_job_approved_${userId}`);
-        const savedOfferApproval = localStorage.getItem(`step1_offer_approved_${userId}`);
-
-        if (savedJobResults) {
-          try {
-            setJobDescriptionResults(JSON.parse(savedJobResults));
-          } catch (error) {
-            console.error('Error loading saved job results:', error);
-          }
-        }
-
-        if (savedOfferResults) {
-          try {
-            setOfferLetterResults(JSON.parse(savedOfferResults));
-          } catch (error) {
-            console.error('Error loading saved offer results:', error);
-          }
-        }
-
-        if (savedJobApproval) {
-          setJobDescriptionApproved(JSON.parse(savedJobApproval));
-        }
-
-        if (savedOfferApproval) {
-          setOfferLetterApproved(JSON.parse(savedOfferApproval));
-        }
-
-        // Load manual input data from localStorage
-        const savedManualJobData = localStorage.getItem(`step1_manual_job_data_${userId}`);
-        const savedManualOfferData = localStorage.getItem(`step1_manual_offer_data_${userId}`);
-
-        if (savedManualJobData) {
-          try {
-            setManualJobDescData(JSON.parse(savedManualJobData));
-          } catch (error) {
-            console.error('Error loading saved manual job data:', error);
-          }
-        }
-
-        if (savedManualOfferData) {
-          try {
-            setManualOfferData(JSON.parse(savedManualOfferData));
-          } catch (error) {
-            console.error('Error loading saved manual offer data:', error);
-          }
-        }
-
       } catch (error) {
-        console.error('[Step1] Error loading Step 1 data:', error);
-        // Fall back to localStorage only if there are any issues
-        const jobDescFile = getFileFromLocalStorage(`step1_jobDescription_file_${userId}`);
-        const offerLetterFile = getFileFromLocalStorage(`step1_offerLetter_file_${userId}`);
-        const backgroundReportFile = getFileFromLocalStorage(`step1_backgroundReport_file_${userId}`);
+        console.error('[Step1] Error checking database completion status:', error);
+        setIsStep1CompletedFromDB(false);
+      }
 
-        setUploadedFiles({
-          jobDescription: jobDescFile,
-          offerLetter: offerLetterFile,
-          backgroundReport: backgroundReportFile,
+      // Load saved files from Supabase
+      console.log('[Step1] Loading files from Supabase...');
+
+      try {
+        const [jobDescFiles, offerLetterFiles, backgroundFiles] = await Promise.all([
+          FileStorageService.getFilesByCategory(userId as string, 'job_desc'),
+          FileStorageService.getFilesByCategory(userId as string, 'offer_letter'),
+          FileStorageService.getFilesByCategory(userId as string, 'background_report')
+        ]);
+
+        // Get the latest file from each category
+        const latestJobDesc = jobDescFiles.length > 0 ? jobDescFiles[0] : null;
+        const latestOfferLetter = offerLetterFiles.length > 0 ? offerLetterFiles[0] : null;
+        const latestBackground = backgroundFiles.length > 0 ? backgroundFiles[0] : null;
+
+        setUploadedFileMetadata({
+          jobDescription: latestJobDesc,
+          offerLetter: latestOfferLetter,
+          backgroundReport: latestBackground,
         });
+
+        // Download files for processing if they exist
+        const loadedFiles: UploadedFiles = {
+          jobDescription: null,
+          offerLetter: null,
+          backgroundReport: null,
+        };
+
+        if (latestJobDesc) {
+          const jobDescFile = await getFileFromSupabase(latestJobDesc.bucket_path);
+          if (jobDescFile) loadedFiles.jobDescription = jobDescFile;
+        }
+
+        if (latestOfferLetter) {
+          const offerFile = await getFileFromSupabase(latestOfferLetter.bucket_path);
+          if (offerFile) loadedFiles.offerLetter = offerFile;
+        }
+
+        if (latestBackground) {
+          const backgroundFile = await getFileFromSupabase(latestBackground.bucket_path);
+          if (backgroundFile) loadedFiles.backgroundReport = backgroundFile;
+        }
+
+        setUploadedFiles(loadedFiles);
+      } catch (error) {
+        console.error('[Step1] Error loading files from Supabase:', error);
       }
     };
 
@@ -346,14 +315,39 @@ const Step1: React.FC = () => {
     localStorage.setItem(`step1_manual_offer_data_${userId}`, JSON.stringify(data));
   };
 
-  const handleFileUpload = (fileType: keyof UploadedFiles, file: File) => {
+  const handleFileUpload = async (fileType: keyof UploadedFiles, file: File) => {
+    console.log('[Step1] Uploading file:', { fileType, fileName: file.name });
+
+    // Update UI immediately with the file
     setUploadedFiles(prev => ({
       ...prev,
       [fileType]: file
     }));
 
-    // Store file in localStorage
-    storeFileInLocalStorage(`step1_${fileType}_file_${userId}`, file);
+    // Upload file to Supabase storage
+    const uploadedFile = await uploadFileToSupabase(userId as string, file, fileType === 'jobDescription' ? 'job_desc' :
+      fileType === 'offerLetter' ? 'offer_letter' : 'background_report');
+
+    if (uploadedFile) {
+      // Update metadata state
+      setUploadedFileMetadata(prev => ({
+        ...prev,
+        [fileType]: uploadedFile
+      }));
+      console.log('[Step1] File uploaded successfully to Supabase');
+
+      // Refresh document availability to show the new file
+      console.log('[Step1] Refreshing document availability...');
+      await refreshDocuments();
+    } else {
+      console.error('[Step1] File upload failed');
+      // Revert UI state if upload failed
+      setUploadedFiles(prev => ({
+        ...prev,
+        [fileType]: null
+      }));
+      return;
+    }
 
     // Reset processing state when new files are uploaded
     if (fileType === 'jobDescription') {
@@ -368,14 +362,38 @@ const Step1: React.FC = () => {
     }
   };
 
-  const handleFileRemove = (fileType: keyof UploadedFiles) => {
+  const handleFileRemove = async (fileType: keyof UploadedFiles) => {
+    console.log('[Step1] Removing file:', { fileType });
+
+    // Get the uploaded file metadata
+    const fileMetadata = uploadedFileMetadata[fileType];
+
+    if (fileMetadata) {
+      // Delete from Supabase storage
+      const deleteSuccess = await FileStorageService.deleteFile(userId as string, fileMetadata.id);
+
+      if (deleteSuccess) {
+        console.log('[Step1] File deleted successfully from Supabase');
+
+        // Refresh document availability to remove the deleted file
+        console.log('[Step1] Refreshing document availability...');
+        await refreshDocuments();
+      } else {
+        console.error('[Step1] Failed to delete file from Supabase');
+        // Continue with UI update even if deletion failed
+      }
+    }
+
+    // Update UI state
     setUploadedFiles(prev => ({
       ...prev,
       [fileType]: null
     }));
 
-    // Remove from localStorage
-    localStorage.removeItem(`step1_${fileType}_file_${userId}`);
+    setUploadedFileMetadata(prev => ({
+      ...prev,
+      [fileType]: null
+    }));
 
     // Reset processing state when files are removed
     if (fileType === 'jobDescription') {

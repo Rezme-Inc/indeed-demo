@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { HRAdminProfile } from "@/lib/services/hrAdmin";
 import { useStep5Storage } from "./useStep5Storage";
 import { AssessmentDatabaseService } from "@/lib/services/assessmentDatabase";
+import { useDocumentRefresh } from "@/context/DocumentRefreshContext";
 
 interface Step5ActionOptions {
   hrAdminProfile: HRAdminProfile | null;
@@ -35,6 +36,8 @@ export function useStep5Actions(
     setShowFinalRevocationSuccessModal,
     setCurrentStep,
   } = options;
+
+  const { refreshDocuments } = useDocumentRefresh();
 
   const sendFinalRevocation = useCallback(async (customData?: any) => {
     // Use custom data if provided, otherwise fall back to storage
@@ -131,6 +134,10 @@ export function useStep5Actions(
       setShowFinalRevocationSuccessModal(true);
       setCurrentStep(6);
 
+      // Refresh document availability to show the new final revocation
+      console.log('[Step5Actions] Refreshing document availability...');
+      await refreshDocuments();
+
       try {
         await supabase
           .from("user_profiles")
@@ -142,7 +149,7 @@ export function useStep5Actions(
     } catch (error) {
       console.error("Error in sendFinalRevocation:", error);
     }
-  }, [finalRevocationForm, candidateId, hrAdminProfile, hrAdminId, trackingActive, assessmentSessionId, setSavedFinalRevocationNotice, setShowFinalRevocationModal, setFinalRevocationPreview, setShowFinalRevocationSuccessModal, setCurrentStep]);
+  }, [finalRevocationForm, candidateId, hrAdminProfile, hrAdminId, trackingActive, assessmentSessionId, setSavedFinalRevocationNotice, setShowFinalRevocationModal, setFinalRevocationPreview, setShowFinalRevocationSuccessModal, setCurrentStep, refreshDocuments]);
 
   return { sendFinalRevocation };
 }

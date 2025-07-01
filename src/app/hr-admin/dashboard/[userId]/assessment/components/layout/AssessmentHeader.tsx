@@ -1,5 +1,7 @@
 import { useDocumentUploads } from "@/context/useDocumentUploads";
 import { DocumentAvailability } from "@/hooks/useDocumentAvailability";
+import { FileStorageService, UploadedFile } from "@/lib/services/fileStorageService";
+import StoredDocumentViewer from "@/app/hr-admin/dashboard/[userId]/assessment/components/documents/StoredDocumentViewer";
 import {
   AlertCircle,
   AlertTriangle,
@@ -13,9 +15,10 @@ import {
   Mail,
   RotateCcw,
   StickyNote,
+  Download,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 
 interface AssessmentHeaderProps {
   documentAvailability: DocumentAvailability;
@@ -64,6 +67,11 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
     setShowDocumentPanel,
   } = useDocumentUploads();
 
+  // State for stored document viewer
+  const [showStoredDocumentViewer, setShowStoredDocumentViewer] = useState(false);
+  const [viewingStoredFile, setViewingStoredFile] = useState<UploadedFile | null>(null);
+  const [viewingStoredFileUrl, setViewingStoredFileUrl] = useState<string | null>(null);
+
   const handleSecureLogout = async () => {
     try {
       const { secureLogout } = await import("@/lib/secureAuth");
@@ -93,6 +101,33 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
         window.location.href = "/";
       }
     }
+  };
+
+  const handleViewUploadedFile = async (file: UploadedFile) => {
+    try {
+      console.log('[AssessmentHeader] Viewing stored file:', { file });
+
+      // Get signed URL for the file
+      const fileUrl = await FileStorageService.getFileUrl(file.bucket_path);
+      if (!fileUrl) {
+        alert('Failed to get file URL. Please try again.');
+        return;
+      }
+
+      // Set up the modal viewer
+      setViewingStoredFile(file);
+      setViewingStoredFileUrl(fileUrl);
+      setShowStoredDocumentViewer(true);
+    } catch (error) {
+      console.error('[AssessmentHeader] Error viewing uploaded file:', error);
+      alert('Failed to view file. Please try again.');
+    }
+  };
+
+  const handleCloseStoredDocumentViewer = () => {
+    setShowStoredDocumentViewer(false);
+    setViewingStoredFile(null);
+    setViewingStoredFileUrl(null);
   };
 
   return (
@@ -182,6 +217,23 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
                   View Final Revocation
                 </button>
               )}
+
+              {/* Show uploaded files from Step 1 */}
+              {documentAvailability.uploadedFiles.map((file) => (
+                <button
+                  key={file.id}
+                  onClick={() => {
+                    handleViewUploadedFile(file);
+                    setShowDocumentsDropdown(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-all duration-200"
+                  style={{ fontFamily: "Poppins, sans-serif" }}
+                >
+                  <FileText className="h-4 w-4" />
+                  View {file.file_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </button>
+              ))}
+
               {backgroundCheckFile && (
                 <button
                   onClick={() => {
@@ -264,6 +316,7 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
                 !documentAvailability.hasRevocationNotice &&
                 !documentAvailability.hasReassessment &&
                 !documentAvailability.hasFinalRevocationNotice &&
+                documentAvailability.uploadedFiles.length === 0 &&
                 !backgroundCheckFile &&
                 !jobDescriptionFile &&
                 !jobPostingFile &&
@@ -369,6 +422,14 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
           </>
         ) : null}
       </div>
+
+      {/* Stored Document Viewer Modal */}
+      <StoredDocumentViewer
+        isOpen={showStoredDocumentViewer}
+        onClose={handleCloseStoredDocumentViewer}
+        file={viewingStoredFile}
+        fileUrl={viewingStoredFileUrl}
+      />
     </header>
   );
 };

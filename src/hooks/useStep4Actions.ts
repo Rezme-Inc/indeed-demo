@@ -4,6 +4,7 @@ import { safeAssessmentTracking } from "@/lib/services/safeAssessmentTracking";
 import { HRAdminProfile } from "@/lib/services/hrAdmin";
 import { useStep4Storage } from "./useStep4Storage";
 import { AssessmentDatabaseService } from "@/lib/services/assessmentDatabase";
+import { useDocumentRefresh } from "@/context/DocumentRefreshContext";
 
 interface Step4ActionOptions {
   hrAdminProfile: HRAdminProfile | null;
@@ -37,6 +38,8 @@ export function useStep4Actions(
     setInitialAssessmentResults,
     setCurrentStep,
   } = options;
+
+  const { refreshDocuments } = useDocumentRefresh();
 
   const sendReassessment = useCallback(async () => {
     if (!reassessmentForm) {
@@ -144,10 +147,14 @@ export function useStep4Actions(
       setShowReassessmentSplit(false);
       setInitialAssessmentResults({ ...reassessmentForm });
       setCurrentStep(5);
+      
+      // Refresh document availability to show the new reassessment
+      console.log('[Step4Actions] Refreshing document availability...');
+      await refreshDocuments();
     } catch (error) {
       console.error("Error in sendReassessment:", error);
     }
-  }, [reassessmentForm, reassessmentDecision, extendReason, candidateId, hrAdminProfile, hrAdminId, trackingActive, assessmentSessionId, setSavedReassessment, setShowReassessmentInfoModal, setReassessmentPreview, setShowReassessmentSplit, setInitialAssessmentResults, setCurrentStep]);
+  }, [reassessmentForm, reassessmentDecision, extendReason, candidateId, hrAdminProfile, hrAdminId, trackingActive, assessmentSessionId, setSavedReassessment, setShowReassessmentInfoModal, setReassessmentPreview, setShowReassessmentSplit, setInitialAssessmentResults, setCurrentStep, refreshDocuments]);
 
   return { sendReassessment };
 }

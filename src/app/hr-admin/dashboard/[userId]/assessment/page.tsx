@@ -5,6 +5,7 @@ import AssessmentProgressBar from "./components/layout/AssessmentProgressBar";
 import { AssessmentProvider } from "@/context/AssessmentProvider";
 import { useCandidateData } from "@/context/useCandidateData";
 import { useDocumentUploads } from "@/context/useDocumentUploads";
+import { DocumentRefreshProvider } from "@/context/DocumentRefreshContext";
 import { useAssessmentStorage } from "@/hooks/useAssessmentStorage";
 import { useCandidateDataFetchers } from "@/hooks/useCandidateDataFetchers";
 import { useDocumentAvailability } from "@/hooks/useDocumentAvailability";
@@ -449,17 +450,19 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
           {/* Right Column: Main Content */}
           <div className="lg:col-span-5 space-y-8">
             {/* Main Question Card Placeholder */}
-            {currentStep === 1 && <Step1 />}
-            {currentStep === 2 && <Step2 />}
-            {currentStep === 3 && <Step3 />}
-            {currentStep === 4 && <Step4 />}
-            {currentStep === 5 && <Step5 />}
-            {currentStep === 6 && (
-              <Step6
-                onViewCandidateResponse={handleViewCandidateResponse}
-                currentStep={currentStep}
-              />
-            )}
+            <DocumentRefreshProvider refreshDocuments={documentAvailability.refresh}>
+              {currentStep === 1 && <Step1 />}
+              {currentStep === 2 && <Step2 />}
+              {currentStep === 3 && <Step3 />}
+              {currentStep === 4 && <Step4 />}
+              {currentStep === 5 && <Step5 />}
+              {currentStep === 6 && (
+                <Step6
+                  onViewCandidateResponse={handleViewCandidateResponse}
+                  currentStep={currentStep}
+                />
+              )}
+            </DocumentRefreshProvider>
           </div>
         </div>
       </div>

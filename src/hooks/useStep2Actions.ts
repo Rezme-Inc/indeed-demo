@@ -4,6 +4,7 @@ import { safeAssessmentTracking } from "@/lib/services/safeAssessmentTracking";
 import { HRAdminProfile } from "@/lib/services/hrAdmin";
 import { useStep2Storage } from "./useStep2Storage";
 import { AssessmentDatabaseService } from "@/lib/services/assessmentDatabase";
+import { useDocumentRefresh } from "@/context/DocumentRefreshContext";
 
 interface Step2ActionOptions {
   hrAdminProfile: HRAdminProfile | null;
@@ -35,6 +36,8 @@ export function useStep2Actions(
     setInitialAssessmentResults,
     setCurrentStep,
   } = options;
+
+  const { refreshDocuments } = useDocumentRefresh();
 
   const sendAssessment = useCallback(async () => {
     const assessmentData = {
@@ -103,11 +106,15 @@ export function useStep2Actions(
       setInitialAssessmentResults({ ...assessmentForm });
       setCurrentStep(3);
       
+      // Refresh document availability to show the new assessment
+      console.log('[Step2Actions] Refreshing document availability...');
+      await refreshDocuments();
+      
       console.log('[Step2Actions] Step 2 completed successfully');
     } catch (error) {
       console.error("Error in sendAssessment:", error);
     }
-  }, [assessmentForm, candidateId, hrAdminProfile, hrAdminId, trackingActive, assessmentSessionId, setSavedAssessment, setShowAssessmentModal, setAssessmentPreview, setInitialAssessmentResults, setCurrentStep]);
+  }, [assessmentForm, candidateId, hrAdminProfile, hrAdminId, trackingActive, assessmentSessionId, setSavedAssessment, setShowAssessmentModal, setAssessmentPreview, setInitialAssessmentResults, setCurrentStep, refreshDocuments]);
 
   return { sendAssessment };
 }
