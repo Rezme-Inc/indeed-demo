@@ -134,7 +134,7 @@ const Part2Modal: React.FC<Part2ModalProps> = ({
                 Convictions that led to decision to revoke offer
                 <span className="text-red-500 ml-1">*</span>
               </label>
-              <button
+              {/* <button
                 type="button"
                 onClick={() => handleShowReference('conductDescription')}
                 className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
@@ -142,7 +142,7 @@ const Part2Modal: React.FC<Part2ModalProps> = ({
               >
                 <span>👁️</span>
                 <span>View Reference</span>
-              </button>
+              </button> */}
             </div>
 
             <div className="space-y-3">
