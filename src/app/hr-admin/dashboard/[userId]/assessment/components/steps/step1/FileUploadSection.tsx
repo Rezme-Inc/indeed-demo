@@ -110,16 +110,17 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
       const updatedData = { ...manualData, duties: newDuties };
       onManualDataChange(updatedData);
 
-      // Mark this duty as manually edited
+      // Mark this specific duty as manually edited (this will turn its background white)
       setManuallyEditedFields(prev => ({
         ...prev,
         [`duty_${index}`]: true
       }));
 
-      // Auto-approve if all required fields are filled for job description
-      if (fileType === 'job_description' && updatedData.position?.trim() && newDuties.some((d: string) => d.trim())) {
-        onManualApprove?.(updatedData);
-      }
+      // Don't auto-approve on every change - let user explicitly approve
+      // Auto-approval was causing issues by overwriting AI data
+      // if (fileType === 'job_description' && updatedData.position?.trim() && newDuties.some((d: string) => d.trim())) {
+      //   onManualApprove?.(updatedData);
+      // }
     }
   };
 
@@ -127,16 +128,17 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
     if (onManualDataChange) {
       const updatedData = { ...manualData, position: value };
       onManualDataChange(updatedData);
-      // Mark position as manually edited
+      // Mark position as manually edited (this will turn its background white)
       setManuallyEditedFields(prev => ({
         ...prev,
         position: true
       }));
 
-      // Auto-approve if all required fields are filled for job description
-      if (fileType === 'job_description' && value.trim() && updatedData.duties?.some((d: string) => d.trim())) {
-        onManualApprove?.(updatedData);
-      }
+      // Don't auto-approve on every change - let user explicitly approve
+      // Auto-approval was causing issues by overwriting AI data
+      // if (fileType === 'job_description' && value.trim() && updatedData.duties?.some((d: string) => d.trim())) {
+      //   onManualApprove?.(updatedData);
+      // }
     }
   };
 
@@ -144,16 +146,17 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
     if (onManualDataChange) {
       const updatedData = { ...manualData, offerDate: value };
       onManualDataChange(updatedData);
-      // Mark offer date as manually edited
+      // Mark offer date as manually edited (this will turn its background white)
       setManuallyEditedFields(prev => ({
         ...prev,
         offerDate: true
       }));
 
-      // Auto-approve if offer date is filled
-      if (fileType === 'offer_letter' && value.trim()) {
-        onManualApprove?.(updatedData);
-      }
+      // Don't auto-approve on every change - let user explicitly approve
+      // Auto-approval was causing issues by overwriting AI data
+      // if (fileType === 'offer_letter' && value.trim()) {
+      //   onManualApprove?.(updatedData);
+      // }
     }
   };
 
@@ -189,37 +192,60 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
 
   const handleApproveAIResults = (results: any) => {
     if (fileType === 'job_description') {
-      // Populate manual input fields with AI results
+      // Preserve existing user input and append AI results
+      const existingPosition = manualData?.position?.trim() || '';
+      const existingDuties = manualData?.duties?.filter((duty: string) => duty.trim()) || [];
+      const aiDuties = results.duties || [];
+
       const updatedData = {
-        position: results.position || '',
-        duties: results.duties || ['']
+        // Keep existing position if user already entered one, otherwise use AI position
+        position: existingPosition || results.position || '',
+        // Append AI duties to existing duties, or use AI duties if none exist
+        duties: existingDuties.length > 0 ? [...existingDuties, ...aiDuties] : aiDuties
       };
       onManualDataChange?.(updatedData);
 
-      // Mark fields as AI populated
-      const aiFields: { [key: string]: boolean } = { position: true };
-      results.duties?.forEach((_: string, index: number) => {
-        aiFields[`duty_${index}`] = true;
-      });
-      setAiPopulatedFields(aiFields);
+      // Mark fields as AI populated based on what was actually filled by AI
+      const aiFields: { [key: string]: boolean } = {};
 
-      // Reset manual edit tracking
-      setManuallyEditedFields({});
+      // Only mark position as AI populated if it was actually filled by AI (not existing)
+      if (!existingPosition && results.position) {
+        aiFields.position = true;
+      }
+
+      // Mark the AI duties as AI populated (starting from existing duties length)
+      const startIndex = existingDuties.length;
+      aiDuties.forEach((_: string, index: number) => {
+        aiFields[`duty_${startIndex + index}`] = true;
+      });
+
+      // Preserve existing AI field tracking and add new ones
+      setAiPopulatedFields(prev => ({ ...prev, ...aiFields }));
+
+      // Don't reset manual edit tracking - this preserves user modifications
+      // Any field the user has edited will keep its white background
+      // Only newly AI-populated fields will have purple background
+      // setManuallyEditedFields({});
 
       // Automatically approve since user chose to use AI results
       onManualApprove?.(updatedData);
     } else if (fileType === 'offer_letter') {
-      // Populate manual input fields with AI results
+      // For offer letter, preserve existing date if user already entered one
+      const existingOfferDate = manualData?.offerDate?.trim() || '';
+
       const updatedData = {
-        offerDate: results.offerDate || ''
+        offerDate: existingOfferDate || results.offerDate || ''
       };
       onManualDataChange?.(updatedData);
 
-      // Mark field as AI populated
-      setAiPopulatedFields({ offerDate: true });
+      // Only mark as AI populated if it was actually filled by AI (not existing)
+      if (!existingOfferDate && results.offerDate) {
+        setAiPopulatedFields(prev => ({ ...prev, offerDate: true }));
+      }
 
-      // Reset manual edit tracking
-      setManuallyEditedFields({});
+      // Don't reset manual edit tracking - this preserves user modifications
+      // If user has edited the date, it will keep its white background
+      // setManuallyEditedFields({});
 
       // Automatically approve since user chose to use AI results
       onManualApprove?.(updatedData);
@@ -230,10 +256,12 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
     const isAiPopulated = aiPopulatedFields[fieldName];
     const isManuallyEdited = manuallyEditedFields[fieldName];
 
+    // If field was AI populated and hasn't been manually edited, show purple styling
     if (isAiPopulated && !isManuallyEdited) {
       return 'border-purple-300 bg-purple-50';
     }
-    return 'border-gray-300';
+    // Otherwise show white/default styling
+    return 'border-gray-300 bg-white';
   };
 
   const canApproveManualData = () => {
@@ -358,7 +386,8 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
             <h4 className="text-md font-semibold text-gray-900" style={{ fontFamily: "Poppins, sans-serif" }}>
               Manual Input
             </h4>
-            {processingResults && (
+            {/* Only show AI message if any field is actually AI-populated and not manually edited */}
+            {Object.keys(aiPopulatedFields).some(key => aiPopulatedFields[key] && !manuallyEditedFields[key]) && (
               <span className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded" style={{ fontFamily: "Poppins, sans-serif" }}>
                 Fields populated from AI
               </span>
@@ -434,6 +463,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
           </div>
 
 
+
         </div>
       );
     }
@@ -445,7 +475,8 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
             <h4 className="text-md font-semibold text-gray-900" style={{ fontFamily: "Poppins, sans-serif" }}>
               Manual Input
             </h4>
-            {processingResults && (
+            {/* Only show AI message if the offer date field is actually AI-populated and not manually edited */}
+            {aiPopulatedFields.offerDate && !manuallyEditedFields.offerDate && (
               <span className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded" style={{ fontFamily: "Poppins, sans-serif" }}>
                 Field populated from AI
               </span>
@@ -472,6 +503,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
               </p>
             )}
           </div>
+
 
 
         </div>

@@ -205,14 +205,47 @@ const Step1: React.FC = () => {
     offerDate: ''
   });
 
-  // Load files and data from localStorage on component mount
+  // Load files and data from localStorage/database on component mount
   useEffect(() => {
     const loadStep1Data = async () => {
       try {
         console.log('[Step1] Starting to load Step 1 data...');
 
-        // For Step 1, we only need to check localStorage on mount
-        // Database queries should only happen when user tries to proceed
+        // First check if Step 1 is already completed in database
+        const currentStep = await AssessmentDatabaseService.getCurrentStep(userId as string);
+        console.log('[Step1] Current step from database:', currentStep);
+
+        if (currentStep !== null && currentStep > 1) {
+          // Step 1 is completed, load from database
+          console.log('[Step1] Step 1 already completed, loading from database...');
+          const step1Data = await AssessmentDatabaseService.getStepData(userId as string, 1) as any;
+
+          if (step1Data) {
+            console.log('[Step1] Loaded Step 1 data from database:', step1Data);
+
+            // Set completion status and data from database
+            setIsStep1CompletedFromDB(true);
+
+            if (step1Data.position && step1Data.duties) {
+              setJobDescriptionResults({
+                position: step1Data.position,
+                duties: step1Data.duties
+              });
+              setJobDescriptionApproved(true);
+            }
+
+            if (step1Data.offer_date) {
+              setOfferLetterResults({
+                offerDate: step1Data.offer_date
+              });
+              setOfferLetterApproved(true);
+            }
+
+            return; // Skip localStorage loading if data found in database
+          }
+        }
+
+        // Load from localStorage if not completed or no database data
         console.log('[Step1] Loading from localStorage...');
 
         // Load files from localStorage
@@ -256,6 +289,26 @@ const Step1: React.FC = () => {
           setOfferLetterApproved(JSON.parse(savedOfferApproval));
         }
 
+        // Load manual input data from localStorage
+        const savedManualJobData = localStorage.getItem(`step1_manual_job_data_${userId}`);
+        const savedManualOfferData = localStorage.getItem(`step1_manual_offer_data_${userId}`);
+
+        if (savedManualJobData) {
+          try {
+            setManualJobDescData(JSON.parse(savedManualJobData));
+          } catch (error) {
+            console.error('Error loading saved manual job data:', error);
+          }
+        }
+
+        if (savedManualOfferData) {
+          try {
+            setManualOfferData(JSON.parse(savedManualOfferData));
+          } catch (error) {
+            console.error('Error loading saved manual offer data:', error);
+          }
+        }
+
       } catch (error) {
         console.error('[Step1] Error loading Step 1 data:', error);
         // Fall back to localStorage only if there are any issues
@@ -287,6 +340,15 @@ const Step1: React.FC = () => {
       localStorage.setItem(`step1_offer_results_${userId}`, JSON.stringify(results));
     }
     localStorage.setItem(`step1_offer_approved_${userId}`, JSON.stringify(approved));
+  };
+
+  // Save manual input data to localStorage
+  const saveManualJobDataToLocalStorage = (data: any) => {
+    localStorage.setItem(`step1_manual_job_data_${userId}`, JSON.stringify(data));
+  };
+
+  const saveManualOfferDataToLocalStorage = (data: any) => {
+    localStorage.setItem(`step1_manual_offer_data_${userId}`, JSON.stringify(data));
   };
 
   const handleFileUpload = (fileType: keyof UploadedFiles, file: File) => {
@@ -387,36 +449,48 @@ const Step1: React.FC = () => {
     setJobDescriptionResults(approvedResults);
     setJobDescriptionApproved(true);
     saveJobResultsToLocalStorage(approvedResults, true);
+
+    // Update manual input to match approved AI results so UI reflects what will be saved
+    const updatedManualData = {
+      position: approvedResults.position,
+      duties: approvedResults.duties
+    };
+    setManualJobDescData(updatedManualData);
+    saveManualJobDataToLocalStorage(updatedManualData);
   };
 
   const handleApproveOfferLetter = (approvedResults: OfferLetterResults) => {
     setOfferLetterResults(approvedResults);
     setOfferLetterApproved(true);
     saveOfferResultsToLocalStorage(approvedResults, true);
-  };
 
-  const handleManualJobDescApprove = (data: any) => {
-    console.log('Approved manual job description data:', data);
-    const results = {
-      position: data.position,
-      duties: data.duties.filter((duty: string) => duty.trim() !== '')
+    // Update manual input to match approved AI results so UI reflects what will be saved
+    const updatedManualData = {
+      offerDate: approvedResults.offerDate
     };
-    setJobDescriptionResults(results);
-    setJobDescriptionApproved(true);
-    saveJobResultsToLocalStorage(results, true);
+    setManualOfferData(updatedManualData);
+    saveManualOfferDataToLocalStorage(updatedManualData);
   };
 
-  const handleManualOfferApprove = (data: any) => {
-    console.log('Approved manual offer data:', data);
-    const results = {
-      offerDate: data.offerDate
-    };
-    setOfferLetterResults(results);
-    setOfferLetterApproved(true);
-    saveOfferResultsToLocalStorage(results, true);
-  };
 
-  const canProceed = uploadedFiles.backgroundReport && uploadedFiles.offerLetter && jobDescriptionApproved && offerLetterApproved;
+
+  // Check if all required fields are completed (from AI results OR manual input)
+  const hasJobDescription = (
+    // Either AI-approved results
+    (jobDescriptionApproved && jobDescriptionResults?.position && jobDescriptionResults?.duties?.length > 0) ||
+    // Or manual input filled
+    (manualJobDescData?.position?.trim() && manualJobDescData?.duties?.some((duty: string) => duty.trim()))
+  );
+  const hasOfferDate = (
+    // Either AI-approved results
+    (offerLetterApproved && offerLetterResults?.offerDate) ||
+    // Or manual input filled
+    (manualOfferData?.offerDate?.trim())
+  );
+  const hasBackgroundReport = !!uploadedFiles.backgroundReport;
+
+  // Only background report upload is required, but all fields must be completed
+  const canProceed = hasBackgroundReport && hasJobDescription && hasOfferDate;
 
   const handleNextStep = async () => {
     if (!canProceed) {
@@ -426,14 +500,17 @@ const Step1: React.FC = () => {
     try {
       console.log('[Step1] Starting Step 1 completion process...');
 
-      // Gather all approved Step 1 data
+      // Gather all Step 1 data (prioritize manual input since it reflects user's final choice)
       const step1Data = {
-        // Position and duties from approved job description results
-        position: jobDescriptionResults?.position || '',
-        duties: jobDescriptionResults?.duties || [],
+        // Position and duties from manual input (updated when AI approved) OR AI results as fallback
+        position: manualJobDescData?.position?.trim() || jobDescriptionResults?.position || '',
+        duties: (() => {
+          const filteredManualDuties = manualJobDescData?.duties?.filter((duty: string) => duty.trim()) || [];
+          return filteredManualDuties.length > 0 ? filteredManualDuties : (jobDescriptionResults?.duties || []);
+        })(),
 
-        // Offer date from approved offer letter results
-        offer_date: offerLetterResults?.offerDate || '',
+        // Offer date from manual input (updated when AI approved) OR AI results as fallback  
+        offer_date: manualOfferData?.offerDate?.trim() || offerLetterResults?.offerDate || '',
 
         // Additional metadata
         job_description_approved: jobDescriptionApproved,
@@ -475,6 +552,10 @@ const Step1: React.FC = () => {
         localStorage.removeItem(`step1_offer_results_${userId}`);
         localStorage.removeItem(`step1_job_approved_${userId}`);
         localStorage.removeItem(`step1_offer_approved_${userId}`);
+
+        // Clear manual input data
+        localStorage.removeItem(`step1_manual_job_data_${userId}`);
+        localStorage.removeItem(`step1_manual_offer_data_${userId}`);
 
         // Clear file storage (optional - could keep for reference)
         localStorage.removeItem(`step1_jobDescription_file_${userId}`);
@@ -533,13 +614,13 @@ const Step1: React.FC = () => {
         <div className="space-y-8">
           {/* Job Description Upload */}
           <FileUploadSection
-            title="Job Description"
-            description="Upload the job description for the position the candidate applied for. This will be used to extract job duties and position details."
+            title="Job Description (Optional)"
+            description="Upload the job description to automatically extract position and duties, or enter them manually below. Position and job duties are required to proceed."
             fileType="job_description"
             file={uploadedFiles.jobDescription}
             onFileUpload={(file) => handleFileUpload('jobDescription', file)}
             onFileRemove={() => handleFileRemove('jobDescription')}
-            required={true}
+            required={false}
             showProcessing={true}
             isProcessing={isProcessingJobDescription}
             onProcess={handleProcessJobDescription}
@@ -548,19 +629,21 @@ const Step1: React.FC = () => {
             isApproved={jobDescriptionApproved}
             showManualInput={true}
             manualData={manualJobDescData}
-            onManualDataChange={setManualJobDescData}
-            onManualApprove={handleManualJobDescApprove}
+            onManualDataChange={(data) => {
+              setManualJobDescData(data);
+              saveManualJobDataToLocalStorage(data);
+            }}
           />
 
           {/* Conditional Offer Letter Upload */}
           <FileUploadSection
-            title="Conditional Job Offer Letter"
-            description="Upload the conditional job offer letter sent to the candidate. If you haven't sent one yet, use our template below."
+            title="Conditional Job Offer Letter (Optional)"
+            description="Upload the conditional job offer letter to automatically extract the offer date, or enter it manually below. If you haven't sent one yet, use our template. Offer date is required to proceed."
             fileType="offer_letter"
             file={uploadedFiles.offerLetter}
             onFileUpload={(file) => handleFileUpload('offerLetter', file)}
             onFileRemove={() => handleFileRemove('offerLetter')}
-            required={true}
+            required={false}
             showTemplate={true}
             onShowTemplate={() => setShowTemplateModal(true)}
             showProcessing={true}
@@ -571,8 +654,10 @@ const Step1: React.FC = () => {
             isApproved={offerLetterApproved}
             showManualInput={true}
             manualData={manualOfferData}
-            onManualDataChange={setManualOfferData}
-            onManualApprove={handleManualOfferApprove}
+            onManualDataChange={(data) => {
+              setManualOfferData(data);
+              saveManualOfferDataToLocalStorage(data);
+            }}
           />
 
           {/* Criminal Background Report Upload */}
@@ -587,7 +672,7 @@ const Step1: React.FC = () => {
           />
 
           {/* Validation Notices */}
-          {(!uploadedFiles.backgroundReport || !uploadedFiles.offerLetter || !jobDescriptionApproved || !offerLetterApproved) && (
+          {!canProceed && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-4">
               <div className="flex items-start gap-3">
                 <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
@@ -596,17 +681,14 @@ const Step1: React.FC = () => {
                     Required to proceed to Step 2:
                   </p>
                   <ul className="text-sm text-red-800 space-y-1" style={{ fontFamily: "Poppins, sans-serif" }}>
-                    {!uploadedFiles.offerLetter && (
-                      <li>• Upload conditional job offer letter</li>
-                    )}
-                    {!uploadedFiles.backgroundReport && (
+                    {!hasBackgroundReport && (
                       <li>• Upload criminal background report</li>
                     )}
-                    {uploadedFiles.jobDescription && !jobDescriptionApproved && (
-                      <li>• Process and approve job description (position & duties)</li>
+                    {!hasJobDescription && (
+                      <li>• Complete position and job duties (upload job description + approve, or enter manually)</li>
                     )}
-                    {uploadedFiles.offerLetter && !offerLetterApproved && (
-                      <li>• Process and approve offer letter (offer date)</li>
+                    {!hasOfferDate && (
+                      <li>• Complete offer date (upload offer letter + approve, or enter manually)</li>
                     )}
                   </ul>
                 </div>
