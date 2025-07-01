@@ -153,7 +153,7 @@ function RestorativeRecordBuilderForm() {
     },
     {
       targetId: "deadline-dropdown",
-      title: "Time Sensitive (IMPORTANT)",
+      title: "Estamated Timeline (IMPORTANT)",
       description: "This is where you see who is waiting on who, and how much time each side has to submit documents.",
       dashboardSection: 'status',
     },
@@ -162,6 +162,24 @@ function RestorativeRecordBuilderForm() {
       title: "Notifications",
       description: "View important notifications and HR admin access requests.",
       dashboardSection: 'notifications',
+    },
+    {
+      targetId: "grant-access",
+      title: "Grant Access",
+      description: "You must accept an HR admin's access request to give them your restorative record.",
+      dashboardSection: 'notifications',
+    },
+    {
+      targetId: "legal-resources",
+      title: "Legal Resources",
+      description: "Access information about your rights in fair chance hiring or file a complaint.",
+      dashboardSection: "legal-resources"
+    },
+    {
+      targetId: "settings",
+      title: "Settings",
+      description: "Make changes to your profile",
+      dashboardSection: "settings"
     },
     {
       targetId: "my-restorative-record-btn",
@@ -2790,6 +2808,7 @@ function RestorativeRecordBuilderForm() {
                         {notification.type === 'request' && (
                           <div className="flex items-center gap-2 ml-4">
                             <button
+                              id="grant-access"
                               onClick={() => handleHRAdminPermission(notification.adminId, true)}
                               disabled={processingPermission === notification.adminId}
                               className="px-3 py-1 text-xs font-medium rounded-lg transition-all duration-200 hover:opacity-90 disabled:opacity-50"
@@ -3350,6 +3369,7 @@ function RestorativeRecordBuilderForm() {
 
   // Automatically open first HR admin details when tutorial step is 'admin-details-btn'
   useEffect(() => {
+    // TODO: Change this to a switch case?
     if (
       tutorialStep &&
       tutorialSteps[tutorialStep - 1]?.targetId === 'assessment-progress' &&
@@ -3377,7 +3397,19 @@ function RestorativeRecordBuilderForm() {
           setExpandedTimeline(prev => ({ ...prev, [firstAdminId]: true }));
         }
       }
-      return;
+    } else if (
+      tutorialStep &&
+      tutorialSteps[tutorialStep - 1]?.targetId === 'grant-access'
+    ) {
+      let skip_grant_access = true
+      for ( let admin of allHRAdmins ) {
+        if ( !admin.hasAccess ) {
+          skip_grant_access = false
+        }
+      }
+      if (skip_grant_access) {
+        setTutorialStep(tutorialStep + 1)
+      }
     }
   }, [tutorialStep, connectedHRAdmins]);
 
