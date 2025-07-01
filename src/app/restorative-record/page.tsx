@@ -140,6 +140,24 @@ function RestorativeRecordBuilderForm() {
       dashboardSection: 'status',
     },
     {
+      targetId: "admin-details-btn",
+      title: "Show Details",
+      description: "Show specific HR admin's progress.",
+      dashboardSection: 'status',
+    },
+    {
+      targetId: "assessment-progress",
+      title: "Assesment Progress",
+      description: "See where you are in the process.",
+      dashboardSection: 'status',
+    },
+    {
+      targetId: "deadline-dropdown",
+      title: "Time Sensitive (IMPORTANT)",
+      description: "This is where you see who is waiting on who, and how much time each side has to submit documents.",
+      dashboardSection: 'status',
+    },
+    {
       targetId: "notifications",
       title: "Notifications",
       description: "View important notifications and HR admin access requests.",
@@ -162,13 +180,41 @@ function RestorativeRecordBuilderForm() {
       if (target && ref.current) {
         const rect = target.getBoundingClientRect();
         ref.current.style.position = "fixed";
-        // Try to position below, fallback to above if not enough space
+        
+        // Calculate tooltip dimensions
         const tooltipHeight = ref.current.offsetHeight || 180;
+        const tooltipWidth = ref.current.offsetWidth || 320;
+        
+        // Vertical positioning: try to position below, fallback to above if not enough space
         const top = rect.bottom + 12 + tooltipHeight < window.innerHeight
           ? rect.bottom + 12
           : Math.max(rect.top - tooltipHeight - 12, 12);
+        
+        // Horizontal positioning: try to align with target, adjust if tooltip would overflow
+        let left;
+        if (step.targetId === "assessment-progress" || step.targetId === "deadline-dropdown") {
+          // Center horizontally relative to the target
+          left = rect.left + rect.width / 2 - tooltipWidth / 2;
+          // Clamp to viewport
+          if (left + tooltipWidth > window.innerWidth) {
+            left = window.innerWidth - tooltipWidth - 12;
+          }
+          if (left < 12) {
+            left = 12;
+          }
+        } else {
+          // Default horizontal positioning
+          left = rect.left;
+          if (left + tooltipWidth > window.innerWidth) {
+            left = Math.max(rect.right - tooltipWidth, 12);
+          }
+          if (left < 12) {
+            left = 12;
+          }
+        }
+        
         ref.current.style.top = `${top}px`;
-        ref.current.style.left = `${rect.left}px`;
+        ref.current.style.left = `${left}px`;
         ref.current.style.zIndex = "9999";
         ref.current.style.maxWidth = "320px";
       }
@@ -2289,6 +2335,7 @@ function RestorativeRecordBuilderForm() {
                             </div>
                             <button
                               onClick={() => toggleHRAdminDetails(admin.id)}
+                              id="admin-details-btn"
                               className="p-2 rounded-lg transition-all duration-200 hover:bg-gray-50"
                               style={{ border: '1px solid #E5E5E5' }}
                             >
@@ -2305,7 +2352,7 @@ function RestorativeRecordBuilderForm() {
                             {/* Assessment Progress Bar */}
                             <div className="p-4 rounded-lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E5E5' }}>
                               <h6 className="font-semibold text-black mb-3">Assessment Progress</h6>
-                              <div className="space-y-3">
+                              <div id="assessment-progress" className="space-y-3">
                                 <div className="flex items-center justify-between text-sm">
                                   <span className="font-medium text-black">Step {admin.currentStep} of {admin.totalSteps}: {admin.stepName}</span>
                                   <span className="font-medium" style={{ color: '#F59E0B' }}>{admin.progress}% Complete</span>
@@ -2597,7 +2644,7 @@ function RestorativeRecordBuilderForm() {
                             </div>
 
                             {/* Estimated Timeline & Important Deadlines - Collapsible */}
-                            <div className="border rounded-lg" style={{ borderColor: '#E5E5E5', backgroundColor: '#FFFFFF' }}>
+                            <div id="deadline-dropdown" className="border rounded-lg" style={{ borderColor: '#E5E5E5', backgroundColor: '#FFFFFF' }}>
                               <div 
                                 className="flex items-center justify-between cursor-pointer p-4 hover:bg-gray-50 transition-all duration-200"
                                 onClick={() => toggleTimeline(admin.id)}
@@ -3300,6 +3347,39 @@ function RestorativeRecordBuilderForm() {
       // Add any other fetch/refresh functions you have
     }
   }, [activeDashboardSection, user]);
+
+  // Automatically open first HR admin details when tutorial step is 'admin-details-btn'
+  useEffect(() => {
+    if (
+      tutorialStep &&
+      tutorialSteps[tutorialStep - 1]?.targetId === 'assessment-progress' &&
+      connectedHRAdmins.length > 0
+    ) {
+      const firstAdminId = connectedHRAdmins[0]?.id;
+      if (firstAdminId && !expandedHRAdmins[firstAdminId]) {
+        toggleHRAdminDetails(firstAdminId);
+      }
+    } else if (
+      tutorialStep &&
+      tutorialSteps[tutorialStep - 1]?.targetId === 'admin-details-btn' &&
+      connectedHRAdmins.length === 0
+    ) {
+      {/* CURRENTLY SKIPS HR PORTION IF 0 CONNECTED (HARD CODED) */}
+      setTutorialStep(9)
+    } else if (
+      tutorialStep &&
+      tutorialSteps[tutorialStep - 1]?.targetId === 'deadline-dropdown'
+    ) {
+      // Expand the timeline for the first HR admin
+      if (connectedHRAdmins.length > 0) {
+        const firstAdminId = connectedHRAdmins[0]?.id;
+        if (firstAdminId && !expandedTimeline[firstAdminId]) {
+          setExpandedTimeline(prev => ({ ...prev, [firstAdminId]: true }));
+        }
+      }
+      return;
+    }
+  }, [tutorialStep, connectedHRAdmins]);
 
   
   return (
