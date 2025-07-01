@@ -1,13 +1,13 @@
 export const categories = [
   "introduction",
-  "personal-achievements",
-  "skills",
   "community-engagement",
   "rehabilitative-programs",
-  "microcredentials",
-  "mentors",
   "education",
   "employment-history",
+  "skills",
+  "microcredentials",
+  "mentors",
+  "personal-achievements",
   "hobbies",
 ];
 
