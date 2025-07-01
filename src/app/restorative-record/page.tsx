@@ -3533,34 +3533,74 @@ function RestorativeRecordBuilderForm() {
           {/* Builder Sections */}
           <div>
             <h3 className="text-sm font-semibold text-black mb-3 uppercase tracking-wider">Record Builder</h3>
-            <ul className="space-y-1">
-              {categories.map((cat, idx) => (
-                <li key={cat}>
-                  <button
-                    className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${currentView === 'builder' && idx === currentCategory
-                      ? "bg-red-50 font-medium border"
-                      : "hover:bg-gray-50"
-                      }`}
-                    style={{
-                      color: currentView === 'builder' && idx === currentCategory ? '#E54747' : '#000000',
-                      borderColor: currentView === 'builder' && idx === currentCategory ? '#E54747' : 'transparent'
-                    }}
-                    onClick={() => handleBuilderNavigation(idx)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span>
-                        {cat
-                          .replace(/-/g, " ")
-                          .replace(/\b\w/g, (l) => l.toUpperCase())}
-                      </span>
-                      {sectionCompletion[cat] && (
-                        <span className="text-green-600 text-sm" style={{ color: '#16A34A' }}>✓</span>
-                      )}
-                    </div>
-                  </button>
-                </li>
-              ))}
-            </ul>
+            {/* Required Sections */}
+            <div className="mb-2">
+              <div className="text-xs font-semibold text-gray-500 mb-1 pl-1 tracking-wider">Required</div>
+              <ul className="space-y-1">
+                {categories.map((cat, idx) => (
+                  ["introduction", "community-engagement", "rehabilitative-programs"].includes(cat) ? (
+                    <li key={cat}>
+                      <button
+                        className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${currentView === 'builder' && idx === currentCategory
+                          ? "bg-red-50 font-medium border"
+                          : "hover:bg-gray-50"
+                          }`}
+                        style={{
+                          color: currentView === 'builder' && idx === currentCategory ? '#E54747' : '#000000',
+                          borderColor: currentView === 'builder' && idx === currentCategory ? '#E54747' : 'transparent'
+                        }}
+                        onClick={() => handleBuilderNavigation(idx)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span>
+                            {cat
+                              .replace(/-/g, " ")
+                              .replace(/\b\w/g, (l) => l.toUpperCase())}
+                          </span>
+                          {sectionCompletion[cat] && (
+                            <span className="text-green-600 text-sm" style={{ color: '#16A34A' }}>✓</span>
+                          )}
+                        </div>
+                      </button>
+                    </li>
+                  ) : null
+                ))}
+              </ul>
+            </div>
+            {/* Recommended Sections */}
+            <div>
+              <div className="text-xs font-semibold text-gray-500 mb-1 pl-1 tracking-wider">Recommended</div>
+              <ul className="space-y-1">
+                {categories.map((cat, idx) => (
+                  !["introduction", "community-engagement", "rehabilitative-programs"].includes(cat) ? (
+                    <li key={cat}>
+                      <button
+                        className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${currentView === 'builder' && idx === currentCategory
+                          ? "bg-red-50 font-medium border"
+                          : "hover:bg-gray-50"
+                          }`}
+                        style={{
+                          color: currentView === 'builder' && idx === currentCategory ? '#E54747' : '#000000',
+                          borderColor: currentView === 'builder' && idx === currentCategory ? '#E54747' : 'transparent'
+                        }}
+                        onClick={() => handleBuilderNavigation(idx)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span>
+                            {cat
+                              .replace(/-/g, " ")
+                              .replace(/\b\w/g, (l) => l.toUpperCase())}
+                          </span>
+                          {sectionCompletion[cat] && (
+                            <span className="text-green-600 text-sm" style={{ color: '#16A34A' }}>✓</span>
+                          )}
+                        </div>
+                      </button>
+                    </li>
+                  ) : null
+                ))}
+              </ul>
+            </div>
           </div>
         </nav>
 
