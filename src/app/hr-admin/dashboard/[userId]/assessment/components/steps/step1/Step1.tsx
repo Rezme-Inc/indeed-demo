@@ -7,6 +7,7 @@ import FileUploadSection from "./FileUploadSection";
 import TemplateModal from "./TemplateModal";
 import { CONDITIONAL_OFFER_TEMPLATE } from "./templateContent";
 import { AssessmentDatabaseService } from "@/lib/services/assessmentDatabase";
+import { initializeCSRFProtection, secureFetch } from "@/lib/csrf";
 
 interface UploadedFiles {
   jobDescription: File | null;
@@ -42,7 +43,7 @@ const extractTextFromPDF = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch('/api/extract-pdf-text', {
+    const response = await secureFetch('/api/extract-pdf-text', {
       method: 'POST',
       body: formData,
     });
@@ -67,11 +68,8 @@ const extractTextFromPDF = async (file: File): Promise<string> => {
 // Helper function to extract job duties using AI
 const extractJobDuties = async (pdfText: string): Promise<JobDescriptionResults> => {
   try {
-    const response = await fetch('/api/autofill-duties', {
+    const response = await secureFetch('/api/autofill-duties', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({
         pdfText,
         context: 'job_description'
@@ -101,11 +99,8 @@ const extractJobDuties = async (pdfText: string): Promise<JobDescriptionResults>
 // Helper function to extract offer date using AI
 const extractOfferDate = async (pdfText: string): Promise<OfferLetterResults> => {
   try {
-    const response = await fetch('/api/autofill-date', {
+    const response = await secureFetch('/api/autofill-date', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({
         pdfText,
         context: 'offer_letter'
@@ -472,7 +467,10 @@ const Step1: React.FC = () => {
     saveManualOfferDataToLocalStorage(updatedManualData);
   };
 
-
+  // Initialize CSRF protection for secure API calls
+  useEffect(() => {
+    initializeCSRFProtection();
+  }, []);
 
   // Check if all required fields are completed (from AI results OR manual input)
   const hasJobDescription = (

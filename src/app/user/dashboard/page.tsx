@@ -67,11 +67,11 @@ export default function UserDashboard() {
   }, []);
 
   async function checkUser() {
-      try {
-        const {
-          data: { user },
+    try {
+      const {
+        data: { user },
         error: authError,
-        } = await supabase.auth.getUser();
+      } = await supabase.auth.getUser();
       if (authError || !user) {
         router.push("/auth/user/login");
         return;
@@ -80,10 +80,10 @@ export default function UserDashboard() {
       setUser(user);
 
       const { data: profileData, error: profileError } = await supabase
-            .from("user_profiles")
-            .select("*")
-            .eq("id", user.id)
-            .single();
+        .from("user_profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
 
       if (profileError && profileError.code !== "PGRST116") {
         console.error("Error fetching profile:", profileError);
@@ -111,14 +111,14 @@ export default function UserDashboard() {
         if (profileData.avatar_url) {
           setAvatarPreview(profileData.avatar_url);
         }
-        }
-      } catch (error) {
+      }
+    } catch (error) {
       console.error("Error checking user:", error);
       router.push("/auth/user/login");
-      } finally {
-        setLoading(false);
-      }
+    } finally {
+      setLoading(false);
     }
+  }
 
   async function handleSaveProfile() {
     if (!user) return;
@@ -183,8 +183,26 @@ export default function UserDashboard() {
   }
 
   async function handleSignOut() {
-    await supabase.auth.signOut();
-    router.push("/");
+    try {
+      const { secureLogout } = await import("@/lib/secureAuth");
+      const result = await secureLogout({
+        auditReason: "user_action",
+        redirectTo: "/",
+        clearLocalData: true,
+      });
+
+      if (!result.success) {
+        console.error("Secure logout failed:", result.error);
+        // Fallback to basic logout
+        await supabase.auth.signOut();
+        router.push("/");
+      }
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // Fallback to basic logout
+      await supabase.auth.signOut();
+      router.push("/");
+    }
   }
 
   function handleInputChange(
@@ -264,10 +282,47 @@ export default function UserDashboard() {
     const { name, value, type } = e.target;
     const newValue =
       type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
-    setWotcData((prev) => ({
-      ...prev,
-      [name]: newValue,
-    }));
+    
+    // Define parent-child relationships
+    const parentChildMap: { [key: string]: string[] } = {
+      voc_rehab: ["ticket_work", "va"],
+      snap_6mo: ["snap_3of5"],
+      vet_disab_discharged: ["vet_disab_unemp", "tanf_18mo"],
+    };
+
+    // Define child-parent relationships (reverse mapping)
+    const childParentMap: { [key: string]: string } = {
+      ticket_work: "voc_rehab",
+      va: "voc_rehab",
+      snap_3of5: "snap_6mo",
+      vet_disab_unemp: "vet_disab_discharged",
+      tanf_18mo: "vet_disab_discharged",
+    };
+
+    let updatedWotcData = { ...wotcData };
+
+    // Update the current field
+    (updatedWotcData as any)[name] = newValue;
+
+    // Handle parent-child logic for checkboxes
+    if (type === "checkbox") {
+      const isChecked = newValue as boolean;
+
+      // If this is a parent checkbox being unchecked, uncheck all its children
+      if (!isChecked && parentChildMap[name]) {
+        parentChildMap[name].forEach(child => {
+          (updatedWotcData as any)[child] = false;
+        });
+      }
+
+      // If this is a child checkbox being checked, check its parent
+      if (isChecked && childParentMap[name]) {
+        const parentName = childParentMap[name];
+        (updatedWotcData as any)[parentName] = true;
+      }
+    }
+
+    setWotcData(updatedWotcData);
   }
 
   // Fetch HR permissions
@@ -470,6 +525,7 @@ export default function UserDashboard() {
                       name="first_name"
                       value={profileData.first_name}
                       onChange={handleInputChange}
+                      maxLength={20}
                       className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     />
                   </div>
@@ -482,6 +538,7 @@ export default function UserDashboard() {
                       name="last_name"
                       value={profileData.last_name}
                       onChange={handleInputChange}
+                      maxLength={20}
                       className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     />
                   </div>
@@ -494,6 +551,7 @@ export default function UserDashboard() {
                       name="date_of_birth"
                       value={profileData.date_of_birth}
                       onChange={handleInputChange}
+                      max={new Date().toISOString().split('T')[0]}
                       className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     />
                   </div>
@@ -525,11 +583,31 @@ export default function UserDashboard() {
                       type="tel"
                       name="phone"
                       value={profileData.phone}
-                      onChange={handleInputChange}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, ''); // Only allow digits
+                        if (value.length <= 10) {
+                          const syntheticEvent = {
+                            target: {
+                              name: 'phone',
+                              value: value,
+                              type: 'tel'
+                            }
+                          } as React.ChangeEvent<HTMLInputElement>;
+                          handleInputChange(syntheticEvent);
+                        }
+                      }}
+                      maxLength={10}
                       className="w-full px-4 py-2 border border-gray-100 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                      placeholder="(000) 000-0000"
+                      placeholder="10 digits only"
+                      pattern="[0-9]{10}"
+                      title="Must be exactly 10 digits"
                       required
                     />
+                    {profileData.phone && profileData.phone.length > 0 && profileData.phone.length < 10 && (
+                      <p className="text-red-500 text-xs mt-1">
+                        Phone number must be exactly 10 digits ({profileData.phone.length}/10)
+                      </p>
+                    )}
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-black mb-2">
@@ -580,14 +658,60 @@ export default function UserDashboard() {
                       name="state"
                       value={profileData.state}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-100 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-4 py-1 border border-gray-100 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       required
                     >
                       <option value="">Select...</option>
+                      <option value="AL">Alabama</option>
+                      <option value="AK">Alaska</option>
+                      <option value="AZ">Arizona</option>
+                      <option value="AR">Arkansas</option>
                       <option value="CA">California</option>
+                      <option value="CO">Colorado</option>
+                      <option value="CT">Connecticut</option>
+                      <option value="DE">Delaware</option>
+                      <option value="FL">Florida</option>
+                      <option value="GA">Georgia</option>
+                      <option value="HI">Hawaii</option>
+                      <option value="ID">Idaho</option>
+                      <option value="IL">Illinois</option>
+                      <option value="IN">Indiana</option>
+                      <option value="IA">Iowa</option>
+                      <option value="KS">Kansas</option>
+                      <option value="KY">Kentucky</option>
+                      <option value="LA">Louisiana</option>
+                      <option value="ME">Maine</option>
+                      <option value="MD">Maryland</option>
+                      <option value="MA">Massachusetts</option>
+                      <option value="MI">Michigan</option>
+                      <option value="MN">Minnesota</option>
+                      <option value="MS">Mississippi</option>
+                      <option value="MO">Missouri</option>
+                      <option value="MT">Montana</option>
+                      <option value="NE">Nebraska</option>
+                      <option value="NV">Nevada</option>
+                      <option value="NH">New Hampshire</option>
+                      <option value="NJ">New Jersey</option>
+                      <option value="NM">New Mexico</option>
                       <option value="NY">New York</option>
+                      <option value="NC">North Carolina</option>
+                      <option value="ND">North Dakota</option>
+                      <option value="OH">Ohio</option>
+                      <option value="OK">Oklahoma</option>
+                      <option value="OR">Oregon</option>
+                      <option value="PA">Pennsylvania</option>
+                      <option value="RI">Rhode Island</option>
+                      <option value="SC">South Carolina</option>
+                      <option value="SD">South Dakota</option>
+                      <option value="TN">Tennessee</option>
                       <option value="TX">Texas</option>
-                      {/* Add all states as needed */}
+                      <option value="UT">Utah</option>
+                      <option value="VT">Vermont</option>
+                      <option value="VA">Virginia</option>
+                      <option value="WA">Washington</option>
+                      <option value="WV">West Virginia</option>
+                      <option value="WI">Wisconsin</option>
+                      <option value="WY">Wyoming</option>
                     </select>
                   </div>
                   <div>
@@ -598,11 +722,31 @@ export default function UserDashboard() {
                       type="text"
                       name="zip_code"
                       value={profileData.zip_code}
-                      onChange={handleInputChange}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, ''); // Only allow digits
+                        if (value.length <= 9) {
+                          const syntheticEvent = {
+                            target: {
+                              name: 'zip_code',
+                              value: value,
+                              type: 'text'
+                            }
+                          } as React.ChangeEvent<HTMLInputElement>;
+                          handleInputChange(syntheticEvent);
+                        }
+                      }}
                       className="w-full px-4 py-2 border border-gray-100 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                      placeholder="Zip code"
+                      placeholder="Numbers only, max 9 digits"
+                      maxLength={9}
+                      pattern="[0-9]{1,9}"
+                      title="Must be numbers only, maximum 9 digits"
                       required
                     />
+                    {profileData.zip_code && profileData.zip_code.length > 0 && profileData.zip_code.length < 5 && (
+                      <p className="text-red-500 text-xs mt-1">
+                        ZIP code should be at least 5 digits ({profileData.zip_code.length}/5)
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -640,10 +784,43 @@ export default function UserDashboard() {
                         type="text"
                         name="ssn"
                         value={wotcData.ssn}
-                        onChange={handleWotcInputChange}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, ''); // Only allow digits
+                          if (value.length <= 9) {
+                            const syntheticEvent = {
+                              target: {
+                                name: 'ssn',
+                                value: value,
+                                type: 'text'
+                              }
+                            } as React.ChangeEvent<HTMLInputElement>;
+                            handleWotcInputChange(syntheticEvent);
+                          }
+                        }}
+                        onBlur={(e) => {
+                          // Mask with dots when field loses focus if SSN has been saved
+                          if (wotcData.ssn && wotcData.ssn.length === 9) {
+                            e.target.value = '•••-••-••••';
+                          }
+                        }}
+                        onFocus={(e) => {
+                          // Show actual digits when focused for editing
+                          if (wotcData.ssn && wotcData.ssn.length === 9) {
+                            e.target.value = wotcData.ssn;
+                          }
+                        }}
                         className="w-full px-4 py-2 border border-gray-200 rounded-lg"
+                        placeholder="9 digits required"
+                        maxLength={9}
+                        pattern="[0-9]{9}"
+                        title="Must be exactly 9 digits"
                         required
                       />
+                      {wotcData.ssn && wotcData.ssn.length > 0 && wotcData.ssn.length < 9 && (
+                        <p className="text-red-500 text-xs mt-1">
+                          SSN must be exactly 9 digits ({wotcData.ssn.length}/9)
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-black mb-1">
@@ -955,7 +1132,7 @@ export default function UserDashboard() {
                         />
                       </div>
                     </div>
-            </div>
+                  </div>
                   <div className="mt-8 flex justify-end">
                     <button
                       type="submit"
@@ -1011,9 +1188,9 @@ export default function UserDashboard() {
                 >
                   {saving ? "Saving..." : "Save Changes"}
                 </button>
-            </div>
+              </div>
             )}
-            </div>
+          </div>
         </div>
       </main>
     </div>

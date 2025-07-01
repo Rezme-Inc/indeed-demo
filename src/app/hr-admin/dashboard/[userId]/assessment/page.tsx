@@ -2,40 +2,40 @@
 // put comment here
 import AssessmentProgressBar from "./components/layout/AssessmentProgressBar";
 
-import { safeAssessmentTracking } from "@/lib/services/safeAssessmentTracking";
-import { useHRAdminProfile } from "@/hooks/useHRAdminProfile";
-import { useEffect, useState } from "react";
 import { AssessmentProvider } from "@/context/AssessmentProvider";
-import { useAssessmentStorage } from "@/hooks/useAssessmentStorage";
 import { useCandidateData } from "@/context/useCandidateData";
 import { useDocumentUploads } from "@/context/useDocumentUploads";
-import { useDocumentHandlers } from "@/hooks/useDocumentHandlers";
+import { useAssessmentStorage } from "@/hooks/useAssessmentStorage";
 import { useCandidateDataFetchers } from "@/hooks/useCandidateDataFetchers";
-import CriticalInfoSection from "./components/critical/CriticalInfoSection";
-import CandidateResponseModal from "./components/candidate/CandidateResponseModal";
-import DocumentUploadPanel from "./components/documents/DocumentUploadPanel";
-import DocumentViewer from "./components/documents/DocumentViewer";
+import { useDocumentHandlers } from "@/hooks/useDocumentHandlers";
+import { useHRAdminProfile } from "@/hooks/useHRAdminProfile";
+import { safeAssessmentTracking } from "@/lib/services/safeAssessmentTracking";
+import { useEffect, useState } from "react";
 import CandidateInfoBox from "./components/candidate/CandidateInfoBox";
+import CandidateResponseModal from "./components/candidate/CandidateResponseModal";
 import FairChanceOverviewBox from "./components/candidate/FairChanceOverviewBox";
 import OrdinanceSummary from "./components/common/OrdinanceSummary";
+import DocumentUploadPanel from "./components/documents/DocumentUploadPanel";
+import DocumentViewer from "./components/documents/DocumentViewer";
 import AssessmentHeader from "./components/layout/AssessmentHeader";
 import Footer from "./components/layout/Footer";
+import Step1 from "./components/steps/step1/Step1";
 import OfferLetterViewModal from "./components/steps/step1/view/OfferLetterViewModal";
+import Step2 from "./components/steps/step2/Step2";
 import AssessmentViewModal from "./components/steps/step2/view/AssessmentViewModal";
+import Step3 from "./components/steps/step3/Step3";
 import RevocationNoticeViewModal from "./components/steps/step3/view/RevocationNoticeViewModal";
 import ReassessmentViewModal from "./components/steps/step4/view/ReassessmentViewModal";
 import FinalRevocationViewModal from "./components/steps/step5/view/FinalRevocationViewModal";
-import Step1 from "./components/steps/step1/Step1";
-import Step2 from "./components/steps/step2/Step2";
-import Step3 from "./components/steps/step3/Step3";
 // TODO: Enable when tracking is implemented properly
 // import { assessmentTracking } from "@/lib/services/assessmentTracking";
 
+import { useSecureSession } from "@/hooks/useSecureSession";
+import { supabase } from "@/lib/supabase";
+import TimelinePanel from "./components/layout/TimelinePanel";
 import Step4 from "./components/steps/step4/Step4";
 import Step5 from "./components/steps/step5/Step5";
 import Step6 from "./components/steps/step6/Step6";
-import TimelinePanel from "./components/layout/TimelinePanel";
-import { supabase } from "@/lib/supabase";
 import { AssessmentDatabaseService } from "@/lib/services/assessmentDatabase";
 /**
  * HR Admin Assessment Page with Form Persistence
@@ -59,6 +59,9 @@ import { AssessmentDatabaseService } from "@/lib/services/assessmentDatabase";
  */
 
 function AssessmentContent({ params }: { params: { userId: string } }) {
+  // Enable secure session monitoring for HR admin
+  useSecureSession();
+
   const [isLoading, setIsLoading] = useState(true);
   const {
     currentStep,
@@ -118,18 +121,16 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
   const [showFinalRevocationViewModal, setShowFinalRevocationViewModal] =
     useState(false);
 
-
   // HR Admin profile
   const { hrAdmin: hrAdminProfile, loading: headerLoading } =
     useHRAdminProfile();
 
   // Assessment tracking state
   const [assessmentSessionId, setAssessmentSessionId] = useState<string | null>(
-    null,
+    null
   );
   const hrAdminId = hrAdminProfile?.id || null;
   const [trackingActive, setTrackingActive] = useState(false);
-
 
   // Document Upload Panel State
   const {
@@ -203,7 +204,7 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
 
       if (!isAvailable) {
         console.log(
-          "[Assessment Tracking] Not available - using localStorage only",
+          "[Assessment Tracking] Not available - using localStorage only"
         );
         return;
       }
@@ -211,7 +212,7 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
       console.log("[Assessment Tracking] Available! Initializing session...");
       const sessionId = await safeAssessmentTracking.initializeSession(
         hrAdminId,
-        params.userId,
+        params.userId
       );
 
       if (sessionId) {
@@ -223,7 +224,7 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
         await safeAssessmentTracking.logAction(
           hrAdminId,
           "assessment_page_viewed",
-          { candidate_id: params.userId },
+          { candidate_id: params.userId }
         );
       } else {
         console.log("[Assessment Tracking] Failed to initialize session");
@@ -285,8 +286,6 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
 
   // utility functions are imported from @/lib/dateUtils
 
-
-
   const handleViewCandidateResponse = () => {
     setShowCandidateResponseModal(true);
     fetchCandidateShareToken();
@@ -304,7 +303,6 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
 
   const { viewDocument, downloadDocument, getFilePreviewUrl } =
     useDocumentHandlers();
-
 
   // Modify your render logic to handle loading state
   if (isLoading) {
@@ -384,7 +382,7 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
               console.log(`Steps (${stepsData?.length || 0}):`, stepsData);
               console.log(
                 `Documents (${documentsData?.length || 0}):`,
-                documentsData,
+                documentsData
               );
               console.log(`Audit Log (last 20):`, auditLogData);
 
@@ -398,13 +396,22 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
               }
 
               console.log("=== LOCALSTORAGE DATA ===");
-              console.log("Saved Offer Letter:", savedOfferLetter ? "YES" : "NO");
+              console.log(
+                "Saved Offer Letter:",
+                savedOfferLetter ? "YES" : "NO"
+              );
               console.log("Saved Assessment:", savedAssessment ? "YES" : "NO");
-              console.log("Saved Revocation:", savedRevocationNotice ? "YES" : "NO");
-              console.log("Saved Reassessment:", savedReassessment ? "YES" : "NO");
+              console.log(
+                "Saved Revocation:",
+                savedRevocationNotice ? "YES" : "NO"
+              );
+              console.log(
+                "Saved Reassessment:",
+                savedReassessment ? "YES" : "NO"
+              );
               console.log(
                 "Saved Final Revocation:",
-                savedFinalRevocationNotice ? "YES" : "NO",
+                savedFinalRevocationNotice ? "YES" : "NO"
               );
             }}
             className="ml-2 px-3 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded"
@@ -459,7 +466,6 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
       </div>
 
       <Footer />
-
 
       <CandidateResponseModal
         open={showCandidateResponseModal}

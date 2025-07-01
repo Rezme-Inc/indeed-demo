@@ -1,18 +1,23 @@
 "use client";
 
+import {
+  sendInvitationEmail,
+  sendReinvitationEmail,
+} from "@/app/restorative-record/utils/sendEmail";
+import { useHRAdminProfile } from "@/hooks/useHRAdminProfile";
+import { useHrInvites } from "@/hooks/useHrInvites";
+import { usePermittedUsers } from "@/hooks/usePermittedUsers";
+import { useSecureSession } from "@/hooks/useSecureSession";
+import { initializeCSRFProtection } from "@/lib/csrf";
 import { supabase } from "@/lib/supabase";
+import { generateSecureCode } from "@/utils/invitation";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useHRAdminProfile } from '@/hooks/useHRAdminProfile';
-import { usePermittedUsers } from '@/hooks/usePermittedUsers';
-import { useHrInvites } from '@/hooks/useHrInvites';
 import AssessmentMetrics from "./components/AssessmentMetrics";
 import CandidateTable from "./components/CandidateTable";
-import InviteCandidateModal from "./components/InviteCandidateModal";
 import InvitationCodeCard from "./components/InvitationCodeCard";
+import InviteCandidateModal from "./components/InviteCandidateModal";
 import ToolkitResourcesCard from "./components/ToolkitResourcesCard";
-import { generateSecureCode } from '@/utils/invitation';
-import { sendInvitationEmail, sendReinvitationEmail } from '@/app/restorative-record/utils/sendEmail';
 
 interface User {
   id: string;
@@ -39,7 +44,6 @@ interface User {
   final_decision?: string;
 }
 
-
 export default function HRAdminDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -48,12 +52,12 @@ export default function HRAdminDashboard() {
 
   // Add state for invite candidate modal
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [originalMessageTemplate, setOriginalMessageTemplate] = useState('');
+  const [originalMessageTemplate, setOriginalMessageTemplate] = useState("");
   const [inviteForm, setInviteForm] = useState({
-    candidateName: '',
-    candidateEmail: '',
-    candidatePhone: '',
-    customMessage: ''
+    candidateName: "",
+    candidateEmail: "",
+    candidatePhone: "",
+    customMessage: "",
   });
   const [sendingInvite, setSendingInvite] = useState(false);
 
@@ -70,6 +74,8 @@ export default function HRAdminDashboard() {
     refresh: refreshPermittedUsers,
   } = usePermittedUsers(hrAdmin?.id);
 
+  // Enable secure session monitoring for HR admin
+  useSecureSession();
 
   // Generate a new invitation code for the HR admin
   const generateInvitationCode = async () => {
@@ -118,24 +124,28 @@ I hope this message finds you well. As part of our hiring process, we would like
 Your Restorative Record is an opportunity to share your story, highlight your growth, and demonstrate the positive changes you've made. This process is designed to ensure fair consideration of all candidates while meeting our compliance requirements.
 
 To get started, please:
-1. Visit our platform using your invitation code: ${hrAdmin?.invitation_code || '[CODE]'}
+1. Visit our platform using your invitation code: ${
+      hrAdmin?.invitation_code || "[CODE]"
+    }
 2. Create your account and complete your Restorative Record
 3. Share your record with us when you're ready
 
 If you have any questions about this process, please don't hesitate to reach out to me directly.
 
 Best regards,
-${hrAdmin?.first_name || ''} ${hrAdmin?.last_name || ''}
-${hrAdmin?.company || ''}
+${hrAdmin?.first_name || ""} ${hrAdmin?.last_name || ""}
+${hrAdmin?.company || ""}
 
-This invitation code will allow you to connect with our HR team: ${hrAdmin?.invitation_code || '[CODE]'}`;
+This invitation code will allow you to connect with our HR team: ${
+      hrAdmin?.invitation_code || "[CODE]"
+    }`;
 
     setOriginalMessageTemplate(template);
     setInviteForm({
-      candidateName: '',
-      candidateEmail: '',
-      candidatePhone: '',
-      customMessage: template
+      candidateName: "",
+      candidateEmail: "",
+      candidatePhone: "",
+      customMessage: template,
     });
     setShowInviteModal(true);
   };
@@ -149,16 +159,21 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
       const invitationData = {
         candidateName: inviteForm.candidateName,
         customMessage: inviteForm.customMessage,
-        hrAdminName: hrAdmin ? `${hrAdmin.first_name} ${hrAdmin.last_name}` : '',
-        company: hrAdmin?.company || '',
-        invitationCode: hrAdmin?.invitation_code || ''
+        hrAdminName: hrAdmin
+          ? `${hrAdmin.first_name} ${hrAdmin.last_name}`
+          : "",
+        company: hrAdmin?.company || "",
+        invitationCode: hrAdmin?.invitation_code || "",
       };
 
       // Send the invitation email
-      const emailResult = await sendInvitationEmail(invitationData, inviteForm.candidateEmail);
+      const emailResult = await sendInvitationEmail(
+        invitationData,
+        inviteForm.candidateEmail
+      );
 
       if (!emailResult.success) {
-        throw new Error(String(emailResult.error) || 'Failed to send email');
+        throw new Error(String(emailResult.error) || "Failed to send email");
       }
 
       // Create invite record for tracking
@@ -168,24 +183,26 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
         email: inviteForm.candidateEmail,
         phone: inviteForm.candidatePhone,
         dateSent: new Date().toISOString(),
-        message: inviteForm.customMessage
+        message: inviteForm.customMessage,
       };
 
       // Add to sent invites
-      setSentInvites(prev => [...prev, newInvite]);
+      setSentInvites((prev) => [...prev, newInvite]);
 
-      setSuccess(`Invitation sent successfully to ${inviteForm.candidateEmail}`);
+      setSuccess(
+        `Invitation sent successfully to ${inviteForm.candidateEmail}`
+      );
       setShowInviteModal(false);
       setInviteForm({
-        candidateName: '',
-        candidateEmail: '',
-        candidatePhone: '',
-        customMessage: ''
+        candidateName: "",
+        candidateEmail: "",
+        candidatePhone: "",
+        customMessage: "",
       });
       setTimeout(() => setSuccess(null), 5000);
     } catch (err) {
-      console.error('Error sending invite:', err);
-      setError('Failed to send invitation. Please try again.');
+      console.error("Error sending invite:", err);
+      setError("Failed to send invitation. Please try again.");
       setTimeout(() => setError(null), 5000);
     } finally {
       setSendingInvite(false);
@@ -195,16 +212,18 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
   const handleReinviteCandidate = async (candidateId: string) => {
     try {
       // Find the original invite by ID
-      const originalInvite = sentInvites.find(invite => invite.id === candidateId);
+      const originalInvite = sentInvites.find(
+        (invite) => invite.id === candidateId
+      );
 
       if (!originalInvite) {
-        setError('Original invitation not found. Cannot send reinvite.');
+        setError("Original invitation not found. Cannot send reinvite.");
         setTimeout(() => setError(null), 5000);
         return;
       }
 
       if (!hrAdmin) {
-        setError('HR admin profile not loaded. Please refresh and try again.');
+        setError("HR admin profile not loaded. Please refresh and try again.");
         setTimeout(() => setError(null), 5000);
         return;
       }
@@ -216,46 +235,89 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
         hrAdminName: `${hrAdmin.first_name} ${hrAdmin.last_name}`,
         company: hrAdmin.company,
         invitationCode: hrAdmin.invitation_code,
-        originalDateSent: originalInvite.dateSent
+        originalDateSent: originalInvite.dateSent,
       };
 
       // Send the reinvitation email
-      const emailResult = await sendReinvitationEmail(reinvitationData, originalInvite.email);
+      const emailResult = await sendReinvitationEmail(
+        reinvitationData,
+        originalInvite.email
+      );
 
       if (!emailResult.success) {
-        throw new Error(String(emailResult.error) || 'Failed to send reinvitation email');
+        throw new Error(
+          String(emailResult.error) || "Failed to send reinvitation email"
+        );
       }
 
       // Update the original invite record with reinvite information
-      setSentInvites(prev => prev.map(invite =>
-        invite.id === candidateId
-          ? {
-            ...invite,
-            lastReinviteDate: new Date().toISOString(),
-            reinviteCount: (invite.reinviteCount || 0) + 1
-          }
-          : invite
-      ));
+      setSentInvites((prev) =>
+        prev.map((invite) =>
+          invite.id === candidateId
+            ? {
+                ...invite,
+                lastReinviteDate: new Date().toISOString(),
+                reinviteCount: (invite.reinviteCount || 0) + 1,
+              }
+            : invite
+        )
+      );
 
       setSuccess(`Reinvitation sent successfully to ${originalInvite.email}`);
       setTimeout(() => setSuccess(null), 5000);
     } catch (err) {
-      console.error('Error sending reinvite:', err);
-      setError('Failed to send reinvitation. Please try again.');
+      console.error("Error sending reinvite:", err);
+      setError("Failed to send reinvitation. Please try again.");
       setTimeout(() => setError(null), 5000);
     }
   };
 
+  const handleSecureLogout = async () => {
+    try {
+      const { secureLogout } = await import("@/lib/secureAuth");
+      const result = await secureLogout({
+        auditReason: "hr_admin_user_action",
+        redirectTo: "/",
+        clearLocalData: true,
+      });
+
+      if (!result.success) {
+        console.error("Secure logout failed:", result.error);
+        // Fallback to basic logout
+        await supabase.auth.signOut();
+        router.push("/");
+      }
+    } catch (error) {
+      console.error("Error during secure logout:", error);
+      // Fallback to basic logout
+      try {
+        await supabase.auth.signOut();
+        router.push("/");
+      } catch (fallbackError) {
+        console.error("Fallback logout also failed:", fallbackError);
+        // Force redirect as last resort
+        window.location.href = "/";
+      }
+    }
+  };
+
+  useEffect(() => {
+    initializeCSRFProtection();
+  }, []);
 
   return (
     <div
       className="min-h-screen bg-white p-6 space-y-8"
-      style={{ fontFamily: 'Poppins, sans-serif' }}
+      style={{ fontFamily: "Poppins, sans-serif" }}
     >
       {error && (
         <div
           className="fixed top-4 left-1/2 -translate-x-1/2 px-4 py-3 rounded-xl border z-50"
-          style={{ backgroundColor: '#FEF2F2', borderColor: '#FECACA', color: '#E54747' }}
+          style={{
+            backgroundColor: "#FEF2F2",
+            borderColor: "#FECACA",
+            color: "#E54747",
+          }}
           role="alert"
         >
           <span className="block sm:inline font-medium">{error}</span>
@@ -265,7 +327,11 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
       {success && (
         <div
           className="fixed top-4 left-1/2 -translate-x-1/2 px-4 py-3 rounded-xl border z-50"
-          style={{ backgroundColor: '#F0FDF4', borderColor: '#BBF7D0', color: '#166534' }}
+          style={{
+            backgroundColor: "#F0FDF4",
+            borderColor: "#BBF7D0",
+            color: "#166534",
+          }}
           role="alert"
         >
           <span className="block sm:inline font-medium">{success}</span>
@@ -282,9 +348,9 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
             onClick={refreshData}
             className="px-4 py-2 border text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90"
             style={{
-              color: '#595959',
-              borderColor: '#E5E5E5',
-              backgroundColor: 'transparent'
+              color: "#595959",
+              borderColor: "#E5E5E5",
+              backgroundColor: "transparent",
             }}
           >
             Refresh Data
@@ -292,11 +358,22 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
           {hrAdmin && (
             <div className="text-right">
               <p className="font-semibold text-black">{hrAdmin.company}</p>
-              <p className="text-sm" style={{ color: '#595959' }}>
+              <p className="text-sm" style={{ color: "#595959" }}>
                 {hrAdmin.first_name} {hrAdmin.last_name}
               </p>
             </div>
           )}
+          <button
+            onClick={handleSecureLogout}
+            className="px-4 py-2 text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90"
+            style={{
+              color: "#FFFFFF",
+              backgroundColor: "#E54747",
+              border: "none",
+            }}
+          >
+            Sign Out
+          </button>
         </div>
       </div>
       {/* Invitation Code and Toolkit Section - Positioned side by side */}
@@ -309,16 +386,15 @@ This invitation code will allow you to connect with our HR team: ${hrAdmin?.invi
         <ToolkitResourcesCard />
       </div>
 
-
-
       {/* Assessment Metrics */}
       <AssessmentMetrics
         users={permittedUsers}
         sentInvites={sentInvites}
-        onViewAssessment={(candidateId) => router.push(`/hr-admin/dashboard/${candidateId}/assessment`)}
+        onViewAssessment={(candidateId) =>
+          router.push(`/hr-admin/dashboard/${candidateId}/assessment`)
+        }
         onReinviteCandidate={handleReinviteCandidate}
       />
-
 
       {/* Users Table */}
       <CandidateTable

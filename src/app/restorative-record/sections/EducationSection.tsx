@@ -231,6 +231,8 @@ export function EducationSection({
           error={educationFileError}
           onChange={handleEducationFileChange}
           onError={setEducationFileError}
+          fileName={educationHook.form.fileName}
+          fileSize={educationHook.form.fileSize}
         />
       </FormDialog>
     </div>

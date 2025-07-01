@@ -1,8 +1,10 @@
 "use client";
 
+import { secureLogout } from "@/lib/secureAuth";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function DashboardLayout({
   children,
@@ -13,13 +15,38 @@ export default function DashboardLayout({
   const router = useRouter();
   const role = pathname.split("/")[1];
 
+  // Initialize session monitoring
+  useEffect(() => {
+    import("@/lib/secureAuth").then(({ initializeSessionMonitoring }) => {
+      initializeSessionMonitoring();
+    });
+  }, []);
+
   const handleLogout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      router.push("/");
+      const result = await secureLogout({
+        auditReason: "user_action",
+        redirectTo: "/",
+        clearLocalData: true,
+      });
+
+      if (!result.success) {
+        console.error("Logout error:", result.error);
+        // Fallback to basic logout if secure logout fails
+        await supabase.auth.signOut();
+        router.push("/");
+      }
     } catch (error) {
-      console.error("Error logging out:", error);
+      console.error("Error during secure logout:", error);
+      // Fallback to basic logout
+      try {
+        await supabase.auth.signOut();
+        router.push("/");
+      } catch (fallbackError) {
+        console.error("Fallback logout also failed:", fallbackError);
+        // Force redirect as last resort
+        window.location.href = "/";
+      }
     }
   };
 
