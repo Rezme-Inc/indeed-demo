@@ -35,6 +35,7 @@ export const englishOptions = [
 ];
 
 export const otherLanguages = [
+  "None",
   "Spanish",
   "French",
   "German",

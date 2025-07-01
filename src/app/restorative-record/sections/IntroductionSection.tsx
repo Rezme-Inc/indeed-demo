@@ -386,9 +386,9 @@ export const IntroductionSection: React.FC<IntroductionSectionProps> = ({
                 .filter(Boolean);
               setLocalForm((prev) => ({ ...prev, otherLanguages: languages }));
             }}
-            className="border border-gray-200 px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            className={`border border-gray-200 px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all ${localForm.otherLanguages.length === 0 ? 'text-gray-400' : 'text-black'}`}
           >
-            <option value="">Select a language...</option>
+            <option value="" disabled className="text-gray-400">Select a language...</option>
             {otherLanguages.map((lang) => (
               <option key={lang} value={lang}>
                 {lang}
