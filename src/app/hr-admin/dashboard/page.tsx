@@ -344,6 +344,20 @@ This invitation code will allow you to connect with our HR team: ${
           HR Admin Dashboard
         </h1>
         <div className="flex items-center space-x-4">
+          {hrAdmin && (
+            <div className="text-right">
+              <p className="font-semibold text-black">
+                {hrAdmin.company.length > 25
+                  ? hrAdmin.company.slice(0, 22) + '...'
+                  : hrAdmin.company}
+              </p>
+              <p className="text-sm" style={{ color: "#595959" }}>
+                {`${hrAdmin.last_name} ${hrAdmin.first_name}`.length > 25
+                  ? `${hrAdmin.last_name} ${hrAdmin.first_name}`.slice(0, 22) + '...'
+                  : `${hrAdmin.last_name} ${hrAdmin.first_name}`}
+              </p>
+            </div>
+          )}
           <button
             onClick={refreshData}
             className="px-4 py-2 border text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90"
@@ -355,14 +369,6 @@ This invitation code will allow you to connect with our HR team: ${
           >
             Refresh Data
           </button>
-          {hrAdmin && (
-            <div className="text-right">
-              <p className="font-semibold text-black">{hrAdmin.company}</p>
-              <p className="text-sm" style={{ color: "#595959" }}>
-                {hrAdmin.first_name} {hrAdmin.last_name}
-              </p>
-            </div>
-          )}
           <button
             onClick={handleSecureLogout}
             className="px-4 py-2 text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90"
@@ -376,6 +382,7 @@ This invitation code will allow you to connect with our HR team: ${
           </button>
         </div>
       </div>
+
       {/* Invitation Code and Toolkit Section - Positioned side by side */}
       <div className="flex justify-start gap-6">
         <InvitationCodeCard
