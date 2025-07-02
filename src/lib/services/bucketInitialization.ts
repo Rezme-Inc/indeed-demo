@@ -40,8 +40,7 @@ export class BucketInitializationService {
         console.error('[BucketInit] Error listing buckets:', listError);
         console.error('[BucketInit] List error details:', {
           message: listError.message,
-          statusCode: listError.statusCode,
-          error: listError.error
+          cause: listError.cause
         });
         return false;
       }
@@ -77,8 +76,7 @@ export class BucketInitializationService {
         console.error('[BucketInit] Error creating bucket:', createError);
         console.error('[BucketInit] Create error details:', {
           message: createError.message,
-          statusCode: createError.statusCode,
-          error: createError.error,
+          cause: createError.cause,
           bucketName: 'assessment-files'
         });
         return false;
