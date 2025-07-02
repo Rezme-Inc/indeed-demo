@@ -11,6 +11,11 @@ interface User {
   interests: string[];
   rr_completed: boolean;
   granted_at?: string;
+  assessment_status?: {
+    current_step: number;
+    status: string;
+    completed_at_step?: number;
+  };
   compliance_steps?: {
     conditional_job_offer: boolean;
     individualized_assessment: boolean;
@@ -29,7 +34,10 @@ interface CandidateRowProps {
 }
 
 export default function CandidateRow({ user, onViewProfile, onStartAssessment }: CandidateRowProps) {
-  const currentStepIdx = getCurrentAssessmentStep(user);
+  // Use database assessment status if available, otherwise fall back to localStorage
+  const currentStepIdx = user.assessment_status?.current_step
+    ? user.assessment_status.current_step - 1  // Convert to 0-based index
+    : getCurrentAssessmentStep(user);
 
   const renderActionButton = () => {
     if (user.final_decision) {

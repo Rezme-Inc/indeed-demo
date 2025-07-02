@@ -1,4 +1,7 @@
 import { useDocumentUploads } from "@/context/useDocumentUploads";
+import { DocumentAvailability } from "@/hooks/useDocumentAvailability";
+import { FileStorageService, UploadedFile } from "@/lib/services/fileStorageService";
+import StoredDocumentViewer from "@/app/hr-admin/dashboard/[userId]/assessment/components/documents/StoredDocumentViewer";
 import {
   AlertCircle,
   AlertTriangle,
@@ -12,20 +15,16 @@ import {
   Mail,
   RotateCcw,
   StickyNote,
+  Download,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 
 interface AssessmentHeaderProps {
-  savedOfferLetter: any;
-  savedAssessment: any;
-  savedRevocationNotice: any;
-  savedReassessment: any;
-  savedFinalRevocationNotice: any;
+  documentAvailability: DocumentAvailability;
   trackingActive: boolean;
   hrAdminProfile: any;
   headerLoading: boolean;
-  handleViewOfferLetter: () => void;
   handleViewDocument: (
     file: File,
     type:
@@ -44,15 +43,10 @@ interface AssessmentHeaderProps {
 }
 
 const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
-  savedOfferLetter,
-  savedAssessment,
-  savedRevocationNotice,
-  savedReassessment,
-  savedFinalRevocationNotice,
+  documentAvailability,
   trackingActive,
   hrAdminProfile,
   headerLoading,
-  handleViewOfferLetter,
   handleViewDocument,
   setShowAssessmentViewModal,
   setShowRevocationViewModal,
@@ -72,6 +66,11 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
     companyPolicyFile,
     setShowDocumentPanel,
   } = useDocumentUploads();
+
+  // State for stored document viewer
+  const [showStoredDocumentViewer, setShowStoredDocumentViewer] = useState(false);
+  const [viewingStoredFile, setViewingStoredFile] = useState<UploadedFile | null>(null);
+  const [viewingStoredFileUrl, setViewingStoredFileUrl] = useState<string | null>(null);
 
   const handleSecureLogout = async () => {
     try {
@@ -104,6 +103,33 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
     }
   };
 
+  const handleViewUploadedFile = async (file: UploadedFile) => {
+    try {
+      console.log('[AssessmentHeader] Viewing stored file:', { file });
+
+      // Get signed URL for the file
+      const fileUrl = await FileStorageService.getFileUrl(file.bucket_path);
+      if (!fileUrl) {
+        alert('Failed to get file URL. Please try again.');
+        return;
+      }
+
+      // Set up the modal viewer
+      setViewingStoredFile(file);
+      setViewingStoredFileUrl(fileUrl);
+      setShowStoredDocumentViewer(true);
+    } catch (error) {
+      console.error('[AssessmentHeader] Error viewing uploaded file:', error);
+      alert('Failed to view file. Please try again.');
+    }
+  };
+
+  const handleCloseStoredDocumentViewer = () => {
+    setShowStoredDocumentViewer(false);
+    setViewingStoredFile(null);
+    setViewingStoredFileUrl(null);
+  };
+
   return (
     <header className="w-full bg-white shadow-sm flex items-center justify-between px-8 py-4 mb-8 sticky top-0 z-30 border-b border-gray-200">
       <div className="flex items-center gap-3">
@@ -131,28 +157,15 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
             <FileText className="h-4 w-4" />
             View Documents
             <ChevronDown
-              className={`h-4 w-4 transition-transform duration-200 ${
-                showDocumentsDropdown ? "rotate-180" : ""
-              }`}
+              className={`h-4 w-4 transition-transform duration-200 ${showDocumentsDropdown ? "rotate-180" : ""
+                }`}
             />
           </button>
 
           {showDocumentsDropdown && (
             <div className="absolute top-full mt-2 right-0 bg-white border border-gray-200 rounded-xl shadow-lg py-2 min-w-64 z-50">
-              {savedOfferLetter && (
-                <button
-                  onClick={() => {
-                    handleViewOfferLetter();
-                    setShowDocumentsDropdown(false);
-                  }}
-                  className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-all duration-200"
-                  style={{ fontFamily: "Poppins, sans-serif" }}
-                >
-                  <FileText className="h-4 w-4" />
-                  View Conditional Job Offer
-                </button>
-              )}
-              {savedAssessment && (
+
+              {documentAvailability.hasAssessment && (
                 <button
                   onClick={() => {
                     setShowAssessmentViewModal(true);
@@ -165,7 +178,7 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
                   View Assessment
                 </button>
               )}
-              {savedRevocationNotice && (
+              {documentAvailability.hasRevocationNotice && (
                 <button
                   onClick={() => {
                     setShowRevocationViewModal(true);
@@ -178,7 +191,7 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
                   View Revocation Notice
                 </button>
               )}
-              {savedReassessment && (
+              {documentAvailability.hasReassessment && (
                 <button
                   onClick={() => {
                     setShowReassessmentViewModal(true);
@@ -191,7 +204,7 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
                   View Reassessment
                 </button>
               )}
-              {savedFinalRevocationNotice && (
+              {documentAvailability.hasFinalRevocationNotice && (
                 <button
                   onClick={() => {
                     setShowFinalRevocationViewModal(true);
@@ -204,6 +217,23 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
                   View Final Revocation
                 </button>
               )}
+
+              {/* Show uploaded files from Step 1 */}
+              {documentAvailability.uploadedFiles.map((file) => (
+                <button
+                  key={file.id}
+                  onClick={() => {
+                    handleViewUploadedFile(file);
+                    setShowDocumentsDropdown(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-all duration-200"
+                  style={{ fontFamily: "Poppins, sans-serif" }}
+                >
+                  <FileText className="h-4 w-4" />
+                  View {file.file_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </button>
+              ))}
+
               {backgroundCheckFile && (
                 <button
                   onClick={() => {
@@ -282,11 +312,11 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
                   View Company Policy
                 </button>
               )}
-              {!savedOfferLetter &&
-                !savedAssessment &&
-                !savedRevocationNotice &&
-                !savedReassessment &&
-                !savedFinalRevocationNotice &&
+              {!documentAvailability.hasAssessment &&
+                !documentAvailability.hasRevocationNotice &&
+                !documentAvailability.hasReassessment &&
+                !documentAvailability.hasFinalRevocationNotice &&
+                documentAvailability.uploadedFiles.length === 0 &&
                 !backgroundCheckFile &&
                 !jobDescriptionFile &&
                 !jobPostingFile &&
@@ -392,6 +422,14 @@ const AssessmentHeader: React.FC<AssessmentHeaderProps> = ({
           </>
         ) : null}
       </div>
+
+      {/* Stored Document Viewer Modal */}
+      <StoredDocumentViewer
+        isOpen={showStoredDocumentViewer}
+        onClose={handleCloseStoredDocumentViewer}
+        file={viewingStoredFile}
+        fileUrl={viewingStoredFileUrl}
+      />
     </header>
   );
 };

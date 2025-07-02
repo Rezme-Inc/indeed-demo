@@ -12,6 +12,11 @@ interface User {
   interests: string[];
   rr_completed: boolean;
   granted_at?: string;
+  assessment_status?: {
+    current_step: number;
+    status: string;
+    completed_at_step?: number;
+  };
   compliance_steps?: {
     conditional_job_offer: boolean;
     individualized_assessment: boolean;
@@ -39,8 +44,14 @@ interface AssessmentMetricsProps {
   onReinviteCandidate?: (candidateId: string) => void;
 }
 
-// Helper to get current assessment step index (0-based) - copied from main dashboard
-function getCurrentAssessmentStep(user: any): number {
+// Helper to get current assessment step index (0-based) from database
+function getCurrentAssessmentStep(user: User): number {
+  // Use assessment_status from database if available
+  if (user.assessment_status?.current_step) {
+    return user.assessment_status.current_step - 1; // Convert to 0-based index
+  }
+
+  // Fallback to localStorage for backward compatibility
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem(`assessmentCurrentStep_${user.id}`);
     if (saved && !isNaN(Number(saved))) {

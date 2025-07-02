@@ -3,6 +3,8 @@ import { getCandidateEmail, sendAssessmentEmail } from "@/app/restorative-record
 import { safeAssessmentTracking } from "@/lib/services/safeAssessmentTracking";
 import { HRAdminProfile } from "@/lib/services/hrAdmin";
 import { useStep2Storage } from "./useStep2Storage";
+import { AssessmentDatabaseService } from "@/lib/services/assessmentDatabase";
+import { useDocumentRefresh } from "@/context/DocumentRefreshContext";
 
 interface Step2ActionOptions {
   hrAdminProfile: HRAdminProfile | null;
@@ -23,6 +25,7 @@ export function useStep2Actions(
     assessmentForm,
     setShowAssessmentModal,
     setAssessmentPreview,
+    setCurrentModalStep,
   } = storage;
   const {
     hrAdminProfile,
@@ -33,6 +36,8 @@ export function useStep2Actions(
     setInitialAssessmentResults,
     setCurrentStep,
   } = options;
+
+  const { refreshDocuments } = useDocumentRefresh();
 
   const sendAssessment = useCallback(async () => {
     const assessmentData = {
@@ -47,6 +52,8 @@ export function useStep2Actions(
     };
 
     try {
+      console.log('[Step2Actions] Starting to send assessment and save to database...');
+
       const candidateEmail = await getCandidateEmail(candidateId);
       if (!candidateEmail) {
         console.error("Error fetching candidate email");
@@ -56,6 +63,21 @@ export function useStep2Actions(
       await sendAssessmentEmail(assessmentData, candidateEmail);
 
       setSavedAssessment(assessmentData);
+
+      // Save Step 2 data to database and update current step to 3
+      console.log('[Step2Actions] Completing Step 2 and updating to Step 3...');
+      if (assessmentForm) {
+        await AssessmentDatabaseService.completeStep(candidateId, 2, assessmentForm, 3);
+      }
+
+      // Clear localStorage for Step 2
+      console.log('[Step2Actions] Clearing Step 2 localStorage...');
+      localStorage.removeItem(`assessmentForm_${candidateId}`);
+      localStorage.removeItem(`assessmentModalStep_${candidateId}`);
+      localStorage.removeItem(`assessment_${candidateId}`);
+
+      // Wait for React state updates to complete
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       if (trackingActive && assessmentSessionId) {
         console.log("[Assessment Tracking] Saving individual assessment...");
@@ -82,11 +104,17 @@ export function useStep2Actions(
       setShowAssessmentModal(false);
       setAssessmentPreview(false);
       setInitialAssessmentResults({ ...assessmentForm });
-      setCurrentStep((prev) => prev + 1);
+      setCurrentStep(3);
+      
+      // Refresh document availability to show the new assessment
+      console.log('[Step2Actions] Refreshing document availability...');
+      await refreshDocuments();
+      
+      console.log('[Step2Actions] Step 2 completed successfully');
     } catch (error) {
       console.error("Error in sendAssessment:", error);
     }
-  }, [assessmentForm, candidateId, hrAdminProfile, hrAdminId, trackingActive, assessmentSessionId, setSavedAssessment, setShowAssessmentModal, setAssessmentPreview, setInitialAssessmentResults, setCurrentStep]);
+  }, [assessmentForm, candidateId, hrAdminProfile, hrAdminId, trackingActive, assessmentSessionId, setSavedAssessment, setShowAssessmentModal, setAssessmentPreview, setInitialAssessmentResults, setCurrentStep, refreshDocuments]);
 
   return { sendAssessment };
 }

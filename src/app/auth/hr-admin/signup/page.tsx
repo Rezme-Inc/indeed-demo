@@ -12,6 +12,8 @@ export default function HrAdminSignup() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [company, setCompany] = useState("");
+  const [phone, setPhone] = useState("");
+  const [companyAddress, setCompanyAddress] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -43,6 +45,8 @@ export default function HrAdminSignup() {
               first_name: firstName,
               last_name: lastName,
               company,
+              phone,
+              company_address: companyAddress,
               connected_users: [], // Initialize empty array
             },
           ]);
@@ -85,7 +89,7 @@ export default function HrAdminSignup() {
                 type="text"
                 required
                 className="relative block w-full px-4 py-3 border border-gray-300 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:border-transparent sm:text-sm"
-                style={{ 
+                style={{
                   fontFamily: 'Poppins, sans-serif',
                   color: '#000000',
                   backgroundColor: '#FFFFFF'
@@ -113,7 +117,7 @@ export default function HrAdminSignup() {
                 type="text"
                 required
                 className="relative block w-full px-4 py-3 border border-gray-300 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:border-transparent sm:text-sm"
-                style={{ 
+                style={{
                   fontFamily: 'Poppins, sans-serif',
                   color: '#000000',
                   backgroundColor: '#FFFFFF'
@@ -121,34 +125,6 @@ export default function HrAdminSignup() {
                 placeholder="Last Name"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#E54747';
-                  e.target.style.boxShadow = '0 0 0 2px rgba(229, 71, 71, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#D1D5DB';
-                  e.target.style.boxShadow = 'none';
-                }}
-              />
-            </div>
-            <div>
-              <label htmlFor="company" className="sr-only">
-                Company Name
-              </label>
-              <input
-                id="company"
-                name="company"
-                type="text"
-                required
-                className="relative block w-full px-4 py-3 border border-gray-300 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:border-transparent sm:text-sm"
-                style={{ 
-                  fontFamily: 'Poppins, sans-serif',
-                  color: '#000000',
-                  backgroundColor: '#FFFFFF'
-                }}
-                placeholder="Company Name"
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
                 onFocus={(e) => {
                   e.target.style.borderColor = '#E54747';
                   e.target.style.boxShadow = '0 0 0 2px rgba(229, 71, 71, 0.1)';
@@ -170,7 +146,7 @@ export default function HrAdminSignup() {
                 autoComplete="email"
                 required
                 className="relative block w-full px-4 py-3 border border-gray-300 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:border-transparent sm:text-sm"
-                style={{ 
+                style={{
                   fontFamily: 'Poppins, sans-serif',
                   color: '#000000',
                   backgroundColor: '#FFFFFF'
@@ -178,6 +154,94 @@ export default function HrAdminSignup() {
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#E54747';
+                  e.target.style.boxShadow = '0 0 0 2px rgba(229, 71, 71, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#D1D5DB';
+                  e.target.style.boxShadow = 'none';
+                }}
+              />
+            </div>
+            <div>
+              <label htmlFor="company" className="sr-only">
+                Company Name
+              </label>
+              <input
+                id="company"
+                name="company"
+                type="text"
+                required
+                className="relative block w-full px-4 py-3 border border-gray-300 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:border-transparent sm:text-sm"
+                style={{
+                  fontFamily: 'Poppins, sans-serif',
+                  color: '#000000',
+                  backgroundColor: '#FFFFFF'
+                }}
+                placeholder="Company Name"
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#E54747';
+                  e.target.style.boxShadow = '0 0 0 2px rgba(229, 71, 71, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#D1D5DB';
+                  e.target.style.boxShadow = 'none';
+                }}
+              />
+            </div>
+            <div>
+              <label htmlFor="phone" className="sr-only">
+                Phone Number
+              </label>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                required
+                className="relative block w-full px-4 py-3 border border-gray-300 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:border-transparent sm:text-sm"
+                style={{
+                  fontFamily: 'Poppins, sans-serif',
+                  color: '#000000',
+                  backgroundColor: '#FFFFFF'
+                }}
+                placeholder="Work phone number or company phone number"
+                value={phone}
+                onChange={(e) => {
+                  // Only allow numbers, spaces, hyphens, parentheses, and plus sign
+                  const value = e.target.value.replace(/[^0-9\s\-\(\)\+]/g, '');
+                  setPhone(value);
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#E54747';
+                  e.target.style.boxShadow = '0 0 0 2px rgba(229, 71, 71, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#D1D5DB';
+                  e.target.style.boxShadow = 'none';
+                }}
+              />
+            </div>
+            <div>
+              <label htmlFor="company-address" className="sr-only">
+                Company Address
+              </label>
+              <input
+                id="company-address"
+                name="companyAddress"
+                type="text"
+                required
+                className="relative block w-full px-4 py-3 border border-gray-300 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:border-transparent sm:text-sm"
+                style={{
+                  fontFamily: 'Poppins, sans-serif',
+                  color: '#000000',
+                  backgroundColor: '#FFFFFF'
+                }}
+                placeholder="Company address"
+                value={companyAddress}
+                onChange={(e) => setCompanyAddress(e.target.value)}
                 onFocus={(e) => {
                   e.target.style.borderColor = '#E54747';
                   e.target.style.boxShadow = '0 0 0 2px rgba(229, 71, 71, 0.1)';
@@ -199,7 +263,7 @@ export default function HrAdminSignup() {
                 autoComplete="new-password"
                 required
                 className="relative block w-full px-4 py-3 border border-gray-300 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:border-transparent sm:text-sm"
-                style={{ 
+                style={{
                   fontFamily: 'Poppins, sans-serif',
                   color: '#000000',
                   backgroundColor: '#FFFFFF'
@@ -230,7 +294,7 @@ export default function HrAdminSignup() {
               type="submit"
               disabled={loading}
               className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
-              style={{ 
+              style={{
                 fontFamily: 'Poppins, sans-serif',
                 backgroundColor: '#E54747',
                 color: '#FFFFFF'
@@ -250,7 +314,7 @@ export default function HrAdminSignup() {
           <Link
             href="/auth/hr-admin/login"
             className="text-sm font-medium transition-all duration-200 hover:underline"
-            style={{ 
+            style={{
               fontFamily: 'Poppins, sans-serif',
               color: '#E54747'
             }}

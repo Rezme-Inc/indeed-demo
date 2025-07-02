@@ -11,6 +11,11 @@ interface User {
   interests: string[];
   rr_completed: boolean;
   granted_at?: string;
+  assessment_status?: {
+    current_step: number;
+    status: string;
+    completed_at_step?: number;
+  };
   compliance_steps?: {
     conditional_job_offer: boolean;
     individualized_assessment: boolean;

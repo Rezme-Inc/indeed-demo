@@ -35,6 +35,12 @@ export function useStep2Storage(candidateId: string) {
     }
   );
 
+  // Track current modal step for resuming assessment
+  const [currentModalStep, setCurrentModalStep] = useLocalStorageState<1 | 2 | 3 | 4 | 5 | 'preview' | null>(
+    `assessmentModalStep_${candidateId}`,
+    null
+  );
+
   const [showAssessmentModal, setShowAssessmentModal] = useState(false);
   const [assessmentPreview, setAssessmentPreview] = useState(false);
 
@@ -63,6 +69,8 @@ export function useStep2Storage(candidateId: string) {
   return {
     assessmentForm,
     setAssessmentForm,
+    currentModalStep,
+    setCurrentModalStep,
     showAssessmentModal,
     setShowAssessmentModal,
     assessmentPreview,
