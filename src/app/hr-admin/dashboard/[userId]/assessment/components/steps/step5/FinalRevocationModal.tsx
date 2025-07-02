@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Sparkles } from 'lucide-react';
 import PrintPreviewButton from "../../documents/PrintButton";
+import SmartSuggestionField from "@/components/assessment/SmartSuggestionField";
+import { getStep5Suggestions } from "@/utils/assessmentDataAggregator";
 
 interface FinalRevocationModalProps {
   show: boolean;
@@ -12,6 +15,9 @@ interface FinalRevocationModalProps {
   handleArrayChange: (field: 'convictions' | 'jobDuties', idx: number, value: string) => void;
   setPreview: (val: boolean) => void;
   setForm: (val: any) => void;
+  candidateProfile?: any;
+  hrAdmin?: any;
+  candidateId: string;
 }
 
 const FinalRevocationModal: React.FC<FinalRevocationModalProps> = ({
@@ -25,27 +31,133 @@ const FinalRevocationModal: React.FC<FinalRevocationModalProps> = ({
   handleArrayChange,
   setPreview,
   setForm,
+  candidateProfile,
+  hrAdmin,
+  candidateId,
 }) => {
+  const [isAutofilling, setIsAutofilling] = useState(false);
+
+  const handleAutofill = async () => {
+    setIsAutofilling(true);
+    try {
+      console.log('Step5 - Autofill triggered');
+      console.log('Step5 - Candidate profile:', candidateProfile);
+      console.log('Step5 - HR admin:', hrAdmin);
+
+      if (!candidateProfile || !hrAdmin) {
+        console.warn('Step5 - Missing candidateProfile or hrAdmin data');
+        return;
+      }
+
+      const suggestions = await getStep5Suggestions(candidateId, candidateProfile, hrAdmin);
+
+      console.log('Step5 - Generated suggestions:', suggestions);
+
+      // Apply suggestions to form, but only for empty fields
+      const updatedForm = { ...form };
+
+      // Basic information
+      if (!updatedForm.date || updatedForm.date.trim() === '') {
+        updatedForm.date = suggestions.date;
+      }
+      if (!updatedForm.applicant || updatedForm.applicant.trim() === '') {
+        updatedForm.applicant = suggestions.applicant;
+      }
+      if (!updatedForm.dateOfNotice || updatedForm.dateOfNotice.trim() === '') {
+        updatedForm.dateOfNotice = suggestions.dateOfNotice;
+      }
+      if (!updatedForm.position || updatedForm.position.trim() === '') {
+        updatedForm.position = suggestions.position;
+      }
+
+      // Job duties - only fill if current array is empty or has only empty strings
+      const currentJobDuties = updatedForm.jobDuties || [];
+      const hasJobDuties = currentJobDuties.some((duty: string) => duty && duty.trim() !== '');
+      if (!hasJobDuties && suggestions.jobDuties && suggestions.jobDuties.length > 0) {
+        updatedForm.jobDuties = suggestions.jobDuties.slice(0, 4); // Limit to 4 duties
+      }
+
+      // Assessment reasoning
+      if (!updatedForm.timeSinceConduct || updatedForm.timeSinceConduct.trim() === '') {
+        updatedForm.timeSinceConduct = suggestions.timeSinceConduct;
+      }
+      if (!updatedForm.fitnessReason || updatedForm.fitnessReason.trim() === '') {
+        updatedForm.fitnessReason = suggestions.fitnessReason;
+      }
+
+      // Contact information
+      if (!updatedForm.contactName || updatedForm.contactName.trim() === '') {
+        updatedForm.contactName = suggestions.contactName;
+      }
+      if (!updatedForm.companyName || updatedForm.companyName.trim() === '') {
+        updatedForm.companyName = suggestions.companyName;
+      }
+      if (!updatedForm.address || updatedForm.address.trim() === '') {
+        updatedForm.address = suggestions.address;
+      }
+      if (!updatedForm.phone || updatedForm.phone.trim() === '') {
+        updatedForm.phone = suggestions.phone;
+      }
+
+      console.log('Step5 - Updated form:', updatedForm);
+      setForm(updatedForm);
+    } catch (error) {
+      console.error('Error during autofill:', error);
+    } finally {
+      setIsAutofilling(false);
+    }
+  };
+
   if (!show) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
       <div className="bg-white rounded-xl shadow-lg max-w-6xl w-full p-16 relative max-h-screen overflow-y-auto border border-gray-200">
-        <h2 className="text-2xl font-bold mb-6 text-center text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Notice of Final Decision to Revoke Job Offer Because of Conviction History</h2>
+        <div className="flex justify-between items-start mb-6">
+          <h2 className="text-2xl font-bold text-black flex-1 text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            Notice of Final Decision to Revoke Job Offer Because of Conviction History
+          </h2>
+          {!preview && (
+            <button
+              onClick={handleAutofill}
+              disabled={isAutofilling}
+              className="ml-4 flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              style={{ fontFamily: 'Poppins, sans-serif' }}
+            >
+              <Sparkles className="h-4 w-4" />
+              {isAutofilling ? 'Autofilling...' : 'AI Autofill'}
+            </button>
+          )}
+        </div>
         {!preview ? (
           <form className="space-y-10" style={{ fontFamily: 'Poppins, sans-serif' }}>
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold mb-1 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Date</label>
-                <input type="date" name="date" value={form.date} onChange={handleFormChange} className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500" style={{ fontFamily: 'Poppins, sans-serif' }} />
+                <SmartSuggestionField
+                  label="Date"
+                  type="date"
+                  value={form.date}
+                  onChange={(value) => setForm((prev: any) => ({ ...prev, date: value }))}
+                  suggestionsEnabled={false}
+                />
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-1 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Applicant Name</label>
-                <input type="text" name="applicant" value={form.applicant} onChange={handleFormChange} className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500" style={{ fontFamily: 'Poppins, sans-serif' }} />
+                <SmartSuggestionField
+                  label="Applicant Name"
+                  type="text"
+                  value={form.applicant}
+                  onChange={(value) => setForm((prev: any) => ({ ...prev, applicant: value }))}
+                  suggestionsEnabled={false}
+                />
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-1 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Date of Notice</label>
-                <input type="date" name="dateOfNotice" value={form.dateOfNotice} onChange={handleFormChange} className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500" style={{ fontFamily: 'Poppins, sans-serif' }} />
+                <SmartSuggestionField
+                  label="Date of Notice"
+                  type="date"
+                  value={form.dateOfNotice}
+                  onChange={(value) => setForm((prev: any) => ({ ...prev, dateOfNotice: value }))}
+                  suggestionsEnabled={false}
+                />
               </div>
             </div>
             <div className="mb-6 font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Re: Final Decision to Revoke Job Offer Because of Conviction History</div>
@@ -90,8 +202,27 @@ const FinalRevocationModal: React.FC<FinalRevocationModalProps> = ({
             <div className="mb-6 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>We have individually assessed whether your conviction history is directly related to the duties of the job we offered you. We considered the following:</div>
             <ol className="list-decimal ml-8 mb-8 space-y-4 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
               <li>The nature and seriousness of the conduct that led to your conviction(s), which we assessed as follows: <input type="text" name="seriousReason" value={form.seriousReason} onChange={handleFormChange} className="border border-gray-300 rounded-xl px-2 py-1 w-2/3 inline-block focus:ring-2 focus:ring-red-500 focus:border-red-500" style={{ fontFamily: 'Poppins, sans-serif' }} /></li>
-              <li>How long ago the conduct occurred that led to your conviction, which was: <input type="text" name="timeSinceConduct" value={form.timeSinceConduct} onChange={handleFormChange} className="border border-gray-300 rounded-xl px-2 py-1 w-1/3 inline-block focus:ring-2 focus:ring-red-500 focus:border-red-500" style={{ fontFamily: 'Poppins, sans-serif' }} /> and how long ago you completed your sentence, which was: <input type="text" name="timeSinceSentence" value={form.timeSinceSentence} onChange={handleFormChange} className="border border-gray-300 rounded-xl px-2 py-1 w-1/3 inline-block focus:ring-2 focus:ring-red-500 focus:border-red-500" style={{ fontFamily: 'Poppins, sans-serif' }} />.</li>
-              <li>The specific duties and responsibilities of the position of <input type="text" name="position" value={form.position} onChange={handleFormChange} className="border border-gray-300 rounded-xl px-2 py-1 w-1/2 inline-block mx-2 focus:ring-2 focus:ring-red-500 focus:border-red-500" placeholder="[INSERT POSITION]" style={{ fontFamily: 'Poppins, sans-serif' }} />, which are:
+              <li>How long ago the conduct occurred that led to your conviction, which was: <SmartSuggestionField
+                label=""
+                type="text"
+                value={form.timeSinceConduct}
+                onChange={(value) => setForm((prev: any) => ({ ...prev, timeSinceConduct: value }))}
+                suggestionsEnabled={false}
+              /> and how long ago you completed your sentence, which was: <SmartSuggestionField
+                  label=""
+                  type="text"
+                  value={form.timeSinceSentence}
+                  onChange={(value) => setForm((prev: any) => ({ ...prev, timeSinceSentence: value }))}
+                  suggestionsEnabled={false}
+                />.</li>
+              <li>The specific duties and responsibilities of the position of <SmartSuggestionField
+                label=""
+                type="text"
+                value={form.position}
+                onChange={(value) => setForm((prev: any) => ({ ...prev, position: value }))}
+                placeholder="[INSERT POSITION]"
+                suggestionsEnabled={false}
+              />, which are:
                 <div className="flex flex-col gap-2 mt-2">
                   {[0, 1, 2, 3].map((idx) => (
                     <input
@@ -146,20 +277,40 @@ const FinalRevocationModal: React.FC<FinalRevocationModalProps> = ({
             </div>
             <div className="grid grid-cols-2 gap-10 mb-8">
               <div>
-                <label className="block text-sm font-semibold mb-1 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Employer contact person name</label>
-                <input type="text" name="contactName" value={form.contactName} onChange={handleFormChange} className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500" style={{ fontFamily: 'Poppins, sans-serif' }} />
+                <SmartSuggestionField
+                  label="Employer contact person name"
+                  type="text"
+                  value={form.contactName}
+                  onChange={(value) => setForm((prev: any) => ({ ...prev, contactName: value }))}
+                  suggestionsEnabled={false}
+                />
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-1 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Employer company name</label>
-                <input type="text" name="companyName" value={form.companyName} onChange={handleFormChange} className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500" style={{ fontFamily: 'Poppins, sans-serif' }} />
+                <SmartSuggestionField
+                  label="Employer company name"
+                  type="text"
+                  value={form.companyName}
+                  onChange={(value) => setForm((prev: any) => ({ ...prev, companyName: value }))}
+                  suggestionsEnabled={false}
+                />
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-1 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Employer address</label>
-                <input type="text" name="address" value={form.address} onChange={handleFormChange} className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500" style={{ fontFamily: 'Poppins, sans-serif' }} />
+                <SmartSuggestionField
+                  label="Employer address"
+                  type="text"
+                  value={form.address}
+                  onChange={(value) => setForm((prev: any) => ({ ...prev, address: value }))}
+                  suggestionsEnabled={false}
+                />
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-1 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>Employer contact phone number</label>
-                <input type="text" name="phone" value={form.phone} onChange={handleFormChange} className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500" style={{ fontFamily: 'Poppins, sans-serif' }} />
+                <SmartSuggestionField
+                  label="Employer contact phone number"
+                  type="text"
+                  value={form.phone}
+                  onChange={(value) => setForm((prev: any) => ({ ...prev, phone: value }))}
+                  suggestionsEnabled={false}
+                />
               </div>
             </div>
             <div className="flex justify-end mt-12 gap-6">

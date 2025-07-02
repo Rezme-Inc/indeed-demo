@@ -58,6 +58,9 @@ export function useStep1Actions(
 
       setSavedOfferLetter(offerLetterData);
 
+      // Wait for React state updates to complete
+      await new Promise(resolve => setTimeout(resolve, 200));
+
       if (trackingActive && assessmentSessionId) {
         console.log("[Assessment Tracking] Saving offer letter...");
 

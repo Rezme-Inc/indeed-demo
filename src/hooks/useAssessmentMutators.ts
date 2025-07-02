@@ -25,5 +25,19 @@ export function useAssessmentMutators(
     }));
   }, [setRevocationForm]);
 
-  return { addDuty, addActivity, addConviction };
+  const removeDuty = useCallback((index: number) => {
+    setAssessmentForm((prev: any) => ({
+      ...prev,
+      duties: prev.duties.filter((_: any, i: number) => i !== index),
+    }));
+  }, [setAssessmentForm]);
+
+  const removeActivity = useCallback((index: number) => {
+    setAssessmentForm((prev: any) => ({
+      ...prev,
+      activities: prev.activities.filter((_: any, i: number) => i !== index),
+    }));
+  }, [setAssessmentForm]);
+
+  return { addDuty, addActivity, addConviction, removeDuty, removeActivity };
 }

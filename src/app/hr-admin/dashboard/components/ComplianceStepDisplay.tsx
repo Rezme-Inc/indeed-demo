@@ -12,9 +12,34 @@ const ASSESSMENT_STEPS = [
 
 export default function ComplianceStepDisplay({ user }: { user: any }) {
   const [expanded, setExpanded] = useState(false);
-  const currentStepIdx = getCurrentAssessmentStep(user);
-  const completedSteps = ASSESSMENT_STEPS.slice(0, currentStepIdx);
-  const currentStep = ASSESSMENT_STEPS[currentStepIdx];
+
+  // Use database compliance_steps if available, otherwise fall back to localStorage
+  let currentStepIdx = 0;
+  let completedSteps: any[] = [];
+  let currentStep = null;
+
+  if (user.compliance_steps) {
+    // Use database-driven compliance steps
+    const steps = user.compliance_steps;
+    const completedStepKeys = Object.entries(steps)
+      .filter(([key, completed]) => completed && key !== 'decision')
+      .map(([key]) => key);
+
+    completedSteps = ASSESSMENT_STEPS.filter(step => completedStepKeys.includes(step.key));
+    currentStepIdx = completedSteps.length;
+
+    // Determine current step
+    if (steps.decision) {
+      currentStepIdx = 5; // All steps completed
+    } else if (!steps.final_revocation_notice) {
+      currentStep = ASSESSMENT_STEPS.find(step => !completedStepKeys.includes(step.key));
+    }
+  } else {
+    // Fallback to localStorage method
+    currentStepIdx = getCurrentAssessmentStep(user);
+    completedSteps = ASSESSMENT_STEPS.slice(0, currentStepIdx);
+    currentStep = ASSESSMENT_STEPS[currentStepIdx];
+  }
 
   if (currentStepIdx === 5) {
     return (

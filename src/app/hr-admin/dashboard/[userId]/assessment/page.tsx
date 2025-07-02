@@ -5,8 +5,10 @@ import AssessmentProgressBar from "./components/layout/AssessmentProgressBar";
 import { AssessmentProvider } from "@/context/AssessmentProvider";
 import { useCandidateData } from "@/context/useCandidateData";
 import { useDocumentUploads } from "@/context/useDocumentUploads";
+import { DocumentRefreshProvider } from "@/context/DocumentRefreshContext";
 import { useAssessmentStorage } from "@/hooks/useAssessmentStorage";
 import { useCandidateDataFetchers } from "@/hooks/useCandidateDataFetchers";
+import { useDocumentAvailability } from "@/hooks/useDocumentAvailability";
 import { useDocumentHandlers } from "@/hooks/useDocumentHandlers";
 import { useHRAdminProfile } from "@/hooks/useHRAdminProfile";
 import { safeAssessmentTracking } from "@/lib/services/safeAssessmentTracking";
@@ -36,6 +38,7 @@ import TimelinePanel from "./components/layout/TimelinePanel";
 import Step4 from "./components/steps/step4/Step4";
 import Step5 from "./components/steps/step5/Step5";
 import Step6 from "./components/steps/step6/Step6";
+import { AssessmentDatabaseService } from "@/lib/services/assessmentDatabase";
 /**
  * HR Admin Assessment Page with Form Persistence
  *
@@ -106,6 +109,11 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
   const { fetchCandidateShareToken, fetchTimelineData } =
     useCandidateDataFetchers(params.userId, setLoadingCandidateData);
 
+  // Auto-fetch candidate data on component mount
+  useEffect(() => {
+    fetchCandidateShareToken();
+  }, [fetchCandidateShareToken]);
+
   // Conditional Offer Letter State
   const [showOfferLetterModal, setShowOfferLetterModal] = useState(false);
   const [showAssessmentViewModal, setShowAssessmentViewModal] = useState(false);
@@ -118,6 +126,9 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
   // HR Admin profile
   const { hrAdmin: hrAdminProfile, loading: headerLoading } =
     useHRAdminProfile();
+
+  // Database-driven document availability (replaces localStorage-based saved document states)
+  const documentAvailability = useDocumentAvailability(params.userId);
 
   // Assessment tracking state
   const [assessmentSessionId, setAssessmentSessionId] = useState<string | null>(
@@ -228,6 +239,40 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
     initializeTracking();
   }, [hrAdminId, params.userId]);
 
+  // Initialize assessment database record (ensure assessment exists)
+  useEffect(() => {
+    async function initializeAssessmentDatabase() {
+      if (!params.userId) {
+        console.log("[Assessment DB] No candidate ID available");
+        return;
+      }
+
+      try {
+        console.log("[Assessment DB] Checking if assessment exists for candidate:", params.userId);
+
+        // Check if assessment already exists
+        const assessmentExists = await AssessmentDatabaseService.assessmentExists(params.userId);
+
+        if (!assessmentExists) {
+          console.log("[Assessment DB] Assessment doesn't exist, creating new assessment record...");
+          const success = await AssessmentDatabaseService.initializeAssessment(params.userId);
+
+          if (success) {
+            console.log("[Assessment DB] Assessment initialized successfully");
+          } else {
+            console.error("[Assessment DB] Failed to initialize assessment");
+          }
+        } else {
+          console.log("[Assessment DB] Assessment already exists");
+        }
+      } catch (error) {
+        console.error("[Assessment DB] Error during assessment initialization:", error);
+      }
+    }
+
+    initializeAssessmentDatabase();
+  }, [params.userId]);
+
   // Load timeline data on mount
   useEffect(() => {
     fetchTimelineData().then((data) => {
@@ -283,15 +328,10 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
     >
       {/* Sleek Sticky Header */}
       <AssessmentHeader
-        savedOfferLetter={savedOfferLetter}
-        savedAssessment={savedAssessment}
-        savedRevocationNotice={savedRevocationNotice}
-        savedReassessment={savedReassessment}
-        savedFinalRevocationNotice={savedFinalRevocationNotice}
+        documentAvailability={documentAvailability}
         trackingActive={trackingActive}
         hrAdminProfile={hrAdminProfile}
         headerLoading={headerLoading}
-        handleViewOfferLetter={handleViewOfferLetter}
         handleViewDocument={viewDocument}
         setShowAssessmentViewModal={setShowAssessmentViewModal}
         setShowRevocationViewModal={setShowRevocationViewModal}
@@ -350,9 +390,7 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
                 console.log("=== DOCUMENT SUMMARY ===");
                 documentsData.forEach((doc) => {
                   console.log(
-                    `- ${doc.document_type}: ${
-                      doc.sent_at ? "SENT" : "DRAFT"
-                    } (Created: ${new Date(doc.created_at).toLocaleString()})`
+                    `- ${doc.document_type}: ${doc.sent_at ? "SENT" : "DRAFT"} (Created: ${new Date(doc.created_at).toLocaleString()})`,
                   );
                 });
               }
@@ -412,17 +450,19 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
           {/* Right Column: Main Content */}
           <div className="lg:col-span-5 space-y-8">
             {/* Main Question Card Placeholder */}
-            {currentStep === 1 && <Step1 />}
-            {currentStep === 2 && <Step2 />}
-            {currentStep === 3 && <Step3 />}
-            {currentStep === 4 && <Step4 />}
-            {currentStep === 5 && <Step5 />}
-            {currentStep === 6 && (
-              <Step6
-                onViewCandidateResponse={handleViewCandidateResponse}
-                currentStep={currentStep}
-              />
-            )}
+            <DocumentRefreshProvider refreshDocuments={documentAvailability.refresh}>
+              {currentStep === 1 && <Step1 />}
+              {currentStep === 2 && <Step2 />}
+              {currentStep === 3 && <Step3 />}
+              {currentStep === 4 && <Step4 />}
+              {currentStep === 5 && <Step5 />}
+              {currentStep === 6 && (
+                <Step6
+                  onViewCandidateResponse={handleViewCandidateResponse}
+                  currentStep={currentStep}
+                />
+              )}
+            </DocumentRefreshProvider>
           </div>
         </div>
       </div>
@@ -439,31 +479,31 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
 
       <OfferLetterViewModal
         open={showOfferLetterModal}
-        offerLetter={savedOfferLetter}
+        candidateId={params.userId}
         onClose={() => setShowOfferLetterModal(false)}
       />
 
       <AssessmentViewModal
         open={showAssessmentViewModal}
-        assessment={savedAssessment}
+        candidateId={params.userId}
         onClose={() => setShowAssessmentViewModal(false)}
       />
 
       <RevocationNoticeViewModal
         open={showRevocationViewModal}
-        notice={savedRevocationNotice}
+        candidateId={params.userId}
         onClose={() => setShowRevocationViewModal(false)}
       />
 
       <ReassessmentViewModal
         open={showReassessmentViewModal}
-        reassessment={savedReassessment}
+        candidateId={params.userId}
         onClose={() => setShowReassessmentViewModal(false)}
       />
 
       <FinalRevocationViewModal
         open={showFinalRevocationViewModal}
-        notice={savedFinalRevocationNotice}
+        candidateId={params.userId}
         onClose={() => setShowFinalRevocationViewModal(false)}
       />
 

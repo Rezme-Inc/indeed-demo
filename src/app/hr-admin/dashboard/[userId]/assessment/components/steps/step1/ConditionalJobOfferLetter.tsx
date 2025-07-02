@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { AlertTriangle, Mail } from "lucide-react";
 
 interface ConditionalJobOfferLetterProps {
@@ -26,8 +26,17 @@ const ConditionalJobOfferLetter: React.FC<ConditionalJobOfferLetterProps> = ({
   allFieldsFilled,
   handleSendOffer,
 }) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const editableSpanClass =
     "font-semibold cursor-pointer inline-flex items-center gap-1 px-1 rounded border border-yellow-400 bg-yellow-100 hover:bg-yellow-200 transition";
+
+  // Auto-focus the input when editing starts
+  useEffect(() => {
+    if (editingField && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [editingField]);
 
   return !showOfferModal ? null : (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -68,6 +77,7 @@ const ConditionalJobOfferLetter: React.FC<ConditionalJobOfferLetterProps> = ({
           <div className="mb-2">
             {editingField === "date" ? (
               <input
+                ref={inputRef}
                 type="date"
                 name="date"
                 value={offerForm.date}
@@ -84,6 +94,7 @@ const ConditionalJobOfferLetter: React.FC<ConditionalJobOfferLetterProps> = ({
           <div className="mb-2">
             Dear {editingField === "applicant" ? (
               <input
+                ref={inputRef}
                 type="text"
                 name="applicant"
                 value={offerForm.applicant}
@@ -99,6 +110,7 @@ const ConditionalJobOfferLetter: React.FC<ConditionalJobOfferLetterProps> = ({
           <div className="mb-2">
             We are writing to make you a conditional offer of employment for the position of {editingField === "position" ? (
               <input
+                ref={inputRef}
                 type="text"
                 name="position"
                 value={offerForm.position}
@@ -135,6 +147,7 @@ const ConditionalJobOfferLetter: React.FC<ConditionalJobOfferLetterProps> = ({
             Sincerely,<br />
             {editingField === "employer" ? (
               <input
+                ref={inputRef}
                 type="text"
                 name="employer"
                 value={offerForm.employer}
