@@ -41,9 +41,7 @@ export const uploadFileToSupabase = async (
   
   const { error: uploadError } = await supabase.storage
     .from(bucketName)
-    .upload(filePath, file, {
-      upsert: true // This allows overwriting existing files
-    });
+    .upload(filePath, file);
 
   if (uploadError) {
     console.error(`Error uploading file to ${bucketName}:`, uploadError);

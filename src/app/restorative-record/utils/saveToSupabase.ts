@@ -316,7 +316,7 @@ export async function saveToSupabase({
     // Upload file if it exists
     if (engagement.file) {
       const fileData = await uploadFileToSupabase(
-        "community-engagement-files",
+        "engagement-files",
         user.id,
         engagement.id,
         engagement.file
@@ -578,13 +578,6 @@ export async function saveToSupabase({
       });
     }
   }
-
-  // Notify profile page to refresh data
-  localStorage.setItem('restorative-record-updated', Date.now().toString());
-  window.dispatchEvent(new StorageEvent('storage', {
-    key: 'restorative-record-updated',
-    newValue: Date.now().toString()
-  }));
 }
 
 export async function deleteFromSupabase(
