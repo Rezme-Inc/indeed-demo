@@ -6,7 +6,7 @@ import { useEffect, useState, Suspense, useRef } from "react";
 import "react-day-picker/dist/style.css";
 import { toast } from "react-hot-toast";
 import { ChevronDown, ChevronRight, Info } from "lucide-react";
-import { UserDashboardContent } from "../user/dashboard/page"
+import UserDashboardContent from "../user/dashboard/page"
 
 // Import types
 import {
@@ -65,9 +65,9 @@ function RestorativeRecordBuilderForm() {
   const [currentCategory, setCurrentCategory] = useState(0);
   const [currentView, setCurrentView] = useState<'dashboard' | 'builder'>('dashboard');
   const [activeDashboardSection, setActiveDashboardSection] = useState('progress');
-  const [expandedHRAdmins, setExpandedHRAdmins] = useState<{[key: string]: boolean}>({});
-  const [expandedStatusUpdates, setExpandedStatusUpdates] = useState<{[key: string]: boolean}>({});
-  const [expandedTimeline, setExpandedTimeline] = useState<{[key: string]: boolean}>({});
+  const [expandedHRAdmins, setExpandedHRAdmins] = useState<{ [key: string]: boolean }>({});
+  const [expandedStatusUpdates, setExpandedStatusUpdates] = useState<{ [key: string]: boolean }>({});
+  const [expandedTimeline, setExpandedTimeline] = useState<{ [key: string]: boolean }>({});
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
   const [connectedHRAdmins, setConnectedHRAdmins] = useState<any[]>([]);
   const [allHRAdmins, setAllHRAdmins] = useState<any[]>([]);
@@ -202,16 +202,16 @@ function RestorativeRecordBuilderForm() {
       if (target && ref.current) {
         const rect = target.getBoundingClientRect();
         ref.current.style.position = "fixed";
-        
+
         // Calculate tooltip dimensions
         const tooltipHeight = ref.current.offsetHeight || 180;
         const tooltipWidth = ref.current.offsetWidth || 320;
-        
+
         // Vertical positioning: try to position below, fallback to above if not enough space
         const top = rect.bottom + 12 + tooltipHeight < window.innerHeight
           ? rect.bottom + 12
           : Math.max(rect.top - tooltipHeight - 12, 12);
-        
+
         // Horizontal positioning: try to align with target, adjust if tooltip would overflow
         let left;
         if (step.targetId === "assessment-progress" || step.targetId === "deadline-dropdown") {
@@ -234,7 +234,7 @@ function RestorativeRecordBuilderForm() {
             left = 12;
           }
         }
-        
+
         ref.current.style.top = `${top}px`;
         ref.current.style.left = `${left}px`;
         ref.current.style.zIndex = "9999";
@@ -2030,9 +2030,9 @@ function RestorativeRecordBuilderForm() {
 
   // Dashboard functions
   const dashboardSections = [
-    { id: 'progress', label: 'Progress Tracking', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'progress' ? "dashboard_icons/progress-white.svg" : "dashboard_icons/progress.svg"} alt="Status Updates" className="w-5 h-5" />},
-    { id: 'status', label: 'Status Updates', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'status' ? "dashboard_icons/status-updates-white.svg" : "dashboard_icons/status-updates.svg"} alt="Status Updates" className="w-5 h-5" />},
-    { id: 'notifications', label: 'Notifications', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'notifications' ? "dashboard_icons/notifications-white.svg" : "dashboard_icons/notifications.svg"} alt="Notifications" className="w-5 h-5" />},
+    { id: 'progress', label: 'Progress Tracking', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'progress' ? "dashboard_icons/progress-white.svg" : "dashboard_icons/progress.svg"} alt="Status Updates" className="w-5 h-5" /> },
+    { id: 'status', label: 'Status Updates', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'status' ? "dashboard_icons/status-updates-white.svg" : "dashboard_icons/status-updates.svg"} alt="Status Updates" className="w-5 h-5" /> },
+    { id: 'notifications', label: 'Notifications', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'notifications' ? "dashboard_icons/notifications-white.svg" : "dashboard_icons/notifications.svg"} alt="Notifications" className="w-5 h-5" /> },
     { id: 'legal-resources', label: 'Legal Resources', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'legal-resources' ? "dashboard_icons/legal-resources-white.svg" : "dashboard_icons/legal-resources.svg"} alt="Legal Resources" className="w-5 h-5" />, alt: "Legal Resources" },
     { id: 'settings', label: 'Settings', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'settings' ? "dashboard_icons/settings-white.svg" : "dashboard_icons/settings.svg"} alt="Settings" className="w-5 h-5" />, alt: "Settings" }
   ];
@@ -2313,9 +2313,9 @@ function RestorativeRecordBuilderForm() {
                                   <span className="font-medium" style={{ color: '#F59E0B' }}>{admin.progress}% Complete</span>
                                 </div>
                                 <div className="w-full bg-gray-200 rounded-full h-2">
-                                  <div 
+                                  <div
                                     className="h-2 rounded-full transition-all duration-300"
-                                    style={{ 
+                                    style={{
                                       backgroundColor: '#F59E0B',
                                       width: `${admin.progress}%`
                                     }}
@@ -2329,8 +2329,8 @@ function RestorativeRecordBuilderForm() {
                                         <span className="text-green-600">✓</span>
                                       </div>
                                       <div className="flex items-center">
-                                      <p style={{ color: '#10B981' }}>Conditional Job Offer</p>
-                                      <button
+                                        <p style={{ color: '#10B981' }}>Conditional Job Offer</p>
+                                        <button
                                           onClick={() => handleTooltipToggle('step1')}
                                           className="p-1 hover:bg-gray-100 rounded-full transition-colors"
                                           title="Learn more about this step"
@@ -2553,7 +2553,7 @@ function RestorativeRecordBuilderForm() {
 
                             {/* Detailed Status Updates - Collapsible with new design */}
                             <div className="border rounded-lg" style={{ borderColor: '#E5E5E5', backgroundColor: '#FFFFFF' }}>
-                              <div 
+                              <div
                                 className="flex items-center justify-between cursor-pointer p-4 hover:bg-gray-50 transition-all duration-200"
                                 onClick={() => toggleStatusUpdates(admin.id)}
                               >
@@ -2600,7 +2600,7 @@ function RestorativeRecordBuilderForm() {
 
                             {/* Estimated Timeline & Important Deadlines - Collapsible */}
                             <div id="deadline-dropdown" className="border rounded-lg" style={{ borderColor: '#E5E5E5', backgroundColor: '#FFFFFF' }}>
-                              <div 
+                              <div
                                 className="flex items-center justify-between cursor-pointer p-4 hover:bg-gray-50 transition-all duration-200"
                                 onClick={() => toggleTimeline(admin.id)}
                               >
@@ -2974,7 +2974,7 @@ function RestorativeRecordBuilderForm() {
           </div>
         );
 
-      {/* Legal Assistance Modal */}
+        {/* Legal Assistance Modal */ }
       case 'legal-resources':
         return (
           <div className="space-y-6">
@@ -3352,7 +3352,7 @@ function RestorativeRecordBuilderForm() {
       tutorialSteps[tutorialStep - 1]?.targetId === 'admin-details-btn' &&
       connectedHRAdmins.length === 0
     ) {
-      {/* CURRENTLY SKIPS HR PORTION IF 0 CONNECTED (HARD CODED) */}
+      {/* CURRENTLY SKIPS HR PORTION IF 0 CONNECTED (HARD CODED) */ }
       setTutorialStep(9)
     } else if (
       tutorialStep &&
@@ -3370,8 +3370,8 @@ function RestorativeRecordBuilderForm() {
       tutorialSteps[tutorialStep - 1]?.targetId === 'grant-access'
     ) {
       let skip_grant_access = true
-      for ( let admin of allHRAdmins ) {
-        if ( !admin.hasAccess ) {
+      for (let admin of allHRAdmins) {
+        if (!admin.hasAccess) {
           skip_grant_access = false
         }
       }
@@ -3405,18 +3405,20 @@ function RestorativeRecordBuilderForm() {
   }, [hoverTutorialActive, tutorialSteps]);
 
   // Render the hover tutorial tooltip if active
-  {hoverTutorialActive && hoverTutorialStep !== null && (
-    <TutorialTooltip
-      step={tutorialSteps[hoverTutorialStep]}
-      onNext={() => setHoverTutorialStep(null)}
-      onBack={() => setHoverTutorialStep(null)}
-      onClose={() => setHoverTutorialStep(null)}
-      showBack={false}
-      isLastStep={false}
-      hideControls={true}
-    />
-  )}
-  
+  {
+    hoverTutorialActive && hoverTutorialStep !== null && (
+      <TutorialTooltip
+        step={tutorialSteps[hoverTutorialStep]}
+        onNext={() => setHoverTutorialStep(null)}
+        onBack={() => setHoverTutorialStep(null)}
+        onClose={() => setHoverTutorialStep(null)}
+        showBack={false}
+        isLastStep={false}
+        hideControls={true}
+      />
+    )
+  }
+
   return (
     <div className="min-h-screen bg-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
       <div className="flex">
@@ -3438,11 +3440,10 @@ function RestorativeRecordBuilderForm() {
                 <li key={section.id}>
                   <button
                     id={section.id}
-                    className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center gap-3 ${
-                      currentView === 'dashboard' && activeDashboardSection === section.id
-                        ? "text-white font-medium"
-                        : "text-black hover:bg-gray-50"
-                    }`}
+                    className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center gap-3 ${currentView === 'dashboard' && activeDashboardSection === section.id
+                      ? "text-white font-medium"
+                      : "text-black hover:bg-gray-50"
+                      }`}
                     style={{
                       backgroundColor: currentView === 'dashboard' && activeDashboardSection === section.id ? '#E54747' : 'transparent'
                     }}
@@ -3552,43 +3553,43 @@ function RestorativeRecordBuilderForm() {
               </>
             ) : (
               <>
-            <div className="flex items-center justify-between mb-8">
-              <h1 className="text-3xl font-semibold text-black">
-                Restorative Record Builder
-              </h1>
-              {ButtonGroup}
-            </div>
-            <div className="mb-8">{renderSection()}</div>
-            <div className="flex justify-between">
-              <button
-                onClick={handlePrevious}
-                disabled={currentCategory === 0}
-                className="px-6 py-3 border text-base font-medium rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{
-                  color: '#595959',
-                  borderColor: '#E5E5E5',
-                  backgroundColor: 'transparent'
-                }}
-              >
-                Previous
-              </button>
-              {currentCategory === categories.length - 1 ? (
-                <button
-                  onClick={handleSubmit}
-                  className="px-6 py-3 text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90 text-white"
-                  style={{ backgroundColor: '#E54747' }}
-                >
-                  Submit
-                </button>
-              ) : (
-                <button
-                  onClick={handleNext}
-                  className="px-6 py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-800 transition-all duration-200"
-                >
-                  Save
-                </button>
-              )}
-            </div>
+                <div className="flex items-center justify-between mb-8">
+                  <h1 className="text-3xl font-semibold text-black">
+                    Restorative Record Builder
+                  </h1>
+                  {ButtonGroup}
+                </div>
+                <div className="mb-8">{renderSection()}</div>
+                <div className="flex justify-between">
+                  <button
+                    onClick={handlePrevious}
+                    disabled={currentCategory === 0}
+                    className="px-6 py-3 border text-base font-medium rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{
+                      color: '#595959',
+                      borderColor: '#E5E5E5',
+                      backgroundColor: 'transparent'
+                    }}
+                  >
+                    Previous
+                  </button>
+                  {currentCategory === categories.length - 1 ? (
+                    <button
+                      onClick={handleSubmit}
+                      className="px-6 py-3 text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90 text-white"
+                      style={{ backgroundColor: '#E54747' }}
+                    >
+                      Submit
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleNext}
+                      className="px-6 py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-800 transition-all duration-200"
+                    >
+                      Save
+                    </button>
+                  )}
+                </div>
               </>
             )}
           </div>
