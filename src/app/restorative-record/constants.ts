@@ -1,28 +1,28 @@
 export const categories = [
   "introduction",
-  "personal-achievements",
-  "skills",
   "community-engagement",
   "rehabilitative-programs",
-  "microcredentials",
-  "mentors",
   "education",
   "employment-history",
+  "skills",
+  "microcredentials",
+  "mentors",
+  "personal-achievements",
   "hobbies",
 ];
 
 export const socialFields = [
-  { name: "facebookUrl", label: "Enter your Facebook URL" },
-  { name: "linkedinUrl", label: "Enter your LinkedIn URL" },
-  { name: "redditUrl", label: "Enter your Reddit URL" },
-  { name: "digitalPortfolioUrl", label: "Enter your Digital Portfolio Link URL" },
-  { name: "instagramUrl", label: "Enter your Instagram URL" },
-  { name: "githubUrl", label: "Enter your GitHub URL" },
-  { name: "tiktokUrl", label: "Enter your TikTok URL" },
-  { name: "pinterestUrl", label: "Enter your Pinterest URL" },
-  { name: "twitterUrl", label: "Enter your X (Twitter) URL" },
-  { name: "personalWebsiteUrl", label: "Enter your Personal Website URL" },
-  { name: "handshakeUrl", label: "Enter your Handshake URL" },
+  { name: "facebookUrl", label: "Facebook", text: "Enter your Facebook URL" },
+  { name: "linkedinUrl", label: "LinkedIn", text: "Enter your LinkedIn URL" },
+  { name: "redditUrl", label: "Reddit", text: "Enter your Reddit URL" },
+  { name: "digitalPortfolioUrl", label: "Digital Portfolio", text: "Enter your Digital Portfolio Link URL" },
+  { name: "instagramUrl", label: "Instagram", text: "Enter your Instagram URL" },
+  { name: "githubUrl", label: "Github", text: "Enter your GitHub URL" },
+  { name: "tiktokUrl", label: "TikTok", text: "Enter your TikTok URL" },
+  { name: "pinterestUrl", label: "Pinterest", text: "Enter your Pinterest URL" },
+  { name: "twitterUrl", label: "X (Twitter)", text: "Enter your X (Twitter) URL" },
+  { name: "personalWebsiteUrl", label: "Personal Website", text: "Enter your Personal Website URL" },
+  { name: "handshakeUrl", label: "Handshake", text: "Enter your Handshake URL" },
 ];
 
 export const englishOptions = [
@@ -35,6 +35,7 @@ export const englishOptions = [
 ];
 
 export const otherLanguages = [
+  "None",
   "Spanish",
   "French",
   "German",

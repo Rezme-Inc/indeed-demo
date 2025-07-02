@@ -5,7 +5,8 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export default function UserDashboard() {
+// Main dashboard content component that can be exported
+export function UserDashboardContent() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
@@ -67,11 +68,11 @@ export default function UserDashboard() {
   }, []);
 
   async function checkUser() {
-    try {
-      const {
-        data: { user },
+      try {
+        const {
+          data: { user },
         error: authError,
-      } = await supabase.auth.getUser();
+        } = await supabase.auth.getUser();
       if (authError || !user) {
         router.push("/auth/user/login");
         return;
@@ -80,10 +81,10 @@ export default function UserDashboard() {
       setUser(user);
 
       const { data: profileData, error: profileError } = await supabase
-        .from("user_profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
+            .from("user_profiles")
+            .select("*")
+            .eq("id", user.id)
+            .single();
 
       if (profileError && profileError.code !== "PGRST116") {
         console.error("Error fetching profile:", profileError);
@@ -111,14 +112,14 @@ export default function UserDashboard() {
         if (profileData.avatar_url) {
           setAvatarPreview(profileData.avatar_url);
         }
-      }
-    } catch (error) {
+        }
+      } catch (error) {
       console.error("Error checking user:", error);
       router.push("/auth/user/login");
-    } finally {
-      setLoading(false);
+      } finally {
+        setLoading(false);
+      }
     }
-  }
 
   async function handleSaveProfile() {
     if (!user) return;
@@ -183,26 +184,8 @@ export default function UserDashboard() {
   }
 
   async function handleSignOut() {
-    try {
-      const { secureLogout } = await import("@/lib/secureAuth");
-      const result = await secureLogout({
-        auditReason: "user_action",
-        redirectTo: "/",
-        clearLocalData: true,
-      });
-
-      if (!result.success) {
-        console.error("Secure logout failed:", result.error);
-        // Fallback to basic logout
-        await supabase.auth.signOut();
-        router.push("/");
-      }
-    } catch (error) {
-      console.error("Error during logout:", error);
-      // Fallback to basic logout
-      await supabase.auth.signOut();
-      router.push("/");
-    }
+    await supabase.auth.signOut();
+    router.push("/");
   }
 
   function handleInputChange(
@@ -423,63 +406,47 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <h1 className="text-2xl font-semibold text-black">Dashboard</h1>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push("/restorative-record")}
-                className="px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-red-600 transition-colors duration-200"
-              >
-                To Restorative Record
-              </button>
-              <button
-                onClick={handleSignOut}
-                className="px-4 py-2 text-secondary hover:text-black font-medium transition-colors duration-200"
-              >
-                Sign Out
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg border border-gray-200">
           {/* Profile Header */}
           <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <img
-                  src={
-                    avatarPreview ||
-                    `https://ui-avatars.com/api/?name=${profileData.first_name}+${profileData.last_name}&background=E54747&color=fff`
-                  }
-                  alt="Avatar"
-                  className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
-                />
-                <label className="absolute bottom-0 right-0 bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors">
-                  <span className="text-sm">+</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarChange}
-                    className="hidden"
+            <div className="flex justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="relative">
+                  <img
+                    src={
+                      avatarPreview ||
+                      `https://ui-avatars.com/api/?name=${profileData.first_name}+${profileData.last_name}&background=E54747&color=fff`
+                    }
+                    alt="Avatar"
+                    className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
                   />
-                </label>
+                  <label className="absolute bottom-0 right-0 bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors">
+                    <span className="text-sm">+</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarChange}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-black">
+                    {profileData.first_name || profileData.last_name
+                      ? `${profileData.first_name} ${profileData.last_name}`
+                      : "Welcome!"}
+                  </h2>
+                  <p className="text-secondary">{user?.email}</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-semibold text-black">
-                  {profileData.first_name || profileData.last_name
-                    ? `${profileData.first_name} ${profileData.last_name}`
-                    : "Welcome!"}
-                </h2>
-                <p className="text-secondary">{user?.email}</p>
-              </div>
+              <button
+                onClick={handleSignOut}
+                className="px-5 py-2 text-base font-medium rounded-xl shadow hover:opacity-90 border ml-auto"
+                style={{ color: '#E54747', backgroundColor: '#FFFFFF', borderColor: '#E54747' }}
+              >
+                Sign Out
+              </button>
             </div>
           </div>
 
@@ -1193,6 +1160,39 @@ export default function UserDashboard() {
           </div>
         </div>
       </main>
+  );
+}
+
+// Main page component with header
+export default function UserDashboard() {
+  const router = useRouter();
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    router.push("/");
+  }
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <h1 className="text-2xl font-semibold text-black">Dashboard</h1>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => router.push("/restorative-record")}
+                className="px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-red-600 transition-colors duration-200"
+              >
+                To Restorative Record
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <UserDashboardContent />
     </div>
   );
 }
