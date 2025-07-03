@@ -93,7 +93,6 @@ export async function saveToSupabase({
       const fileData = await uploadFileToSupabase(
         "education-files",
         user.id,
-        "education",
         education.id,
         education.file
       );
@@ -228,7 +227,6 @@ export async function saveToSupabase({
       const fileData = await uploadFileToSupabase(
         "rehab-program-files",
         user.id,
-        "rehab",
         rehabProgram.id,
         rehabProgram.file
       );
@@ -300,7 +298,6 @@ export async function saveToSupabase({
       const fileData = await uploadFileToSupabase(
         "skill-files",
         user.id,
-        "skills",
         skill.id,
         skill.file
       );
@@ -368,7 +365,6 @@ export async function saveToSupabase({
       const fileData = await uploadFileToSupabase(
         "community-engagement-files",
         user.id,
-        "engagement",
         engagement.id,
         engagement.file
       );
@@ -439,7 +435,6 @@ export async function saveToSupabase({
       const fileData = await uploadFileToSupabase(
         "microcredential-files",
         user.id,
-        "microcredentials",
         micro.id,
         micro.file
       );
@@ -512,7 +507,6 @@ export async function saveToSupabase({
       const fileData = await uploadFileToSupabase(
         "hobby-files",
         user.id,
-        "hobbies",
         hobby.id,
         hobby.file
       );
@@ -611,7 +605,6 @@ export async function saveToSupabase({
       const fileData = await uploadFileToSupabase(
         "award-files",
         user.id,
-        "awards",
         award.id,
         award.file
       );
