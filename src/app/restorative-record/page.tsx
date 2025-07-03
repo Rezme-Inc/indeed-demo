@@ -11,13 +11,17 @@ import UserDashboardContent from "../user/dashboard/page"
 // Import types
 import {
   Award,
+  ConnectedHRAdmin,
   Education,
   Employment,
   Engagement,
   Hobby,
+  HRAdminProfile,
+  HRAdminWithAccess,
   Introduction,
   Mentor,
   Microcredential,
+  Permission,
   RehabProgram,
   RehabProgramDetailsKey,
   RehabProgramKey,
@@ -69,8 +73,8 @@ function RestorativeRecordBuilderForm() {
   const [expandedStatusUpdates, setExpandedStatusUpdates] = useState<{ [key: string]: boolean }>({});
   const [expandedTimeline, setExpandedTimeline] = useState<{ [key: string]: boolean }>({});
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
-  const [connectedHRAdmins, setConnectedHRAdmins] = useState<any[]>([]);
-  const [allHRAdmins, setAllHRAdmins] = useState<any[]>([]);
+  const [connectedHRAdmins, setConnectedHRAdmins] = useState<ConnectedHRAdmin[]>([]);
+  const [allHRAdmins, setAllHRAdmins] = useState<HRAdminWithAccess[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [processingPermission, setProcessingPermission] = useState<string | null>(null);
   const [expandedSummaryView, setExpandedSummaryView] = useState<'connected' | 'pending' | null>(null);
@@ -486,7 +490,7 @@ function RestorativeRecordBuilderForm() {
       }
 
       // Get HR admin profiles
-      const hrAdminIds = permissions.map(p => p.hr_admin_id);
+      const hrAdminIds = permissions.map((p: Permission) => p.hr_admin_id);
       const { data: hrProfiles, error: profileError } = await supabase
         .from("hr_admin_profiles")
         .select("id, first_name, last_name, company, email")
@@ -495,8 +499,8 @@ function RestorativeRecordBuilderForm() {
       if (profileError) throw profileError;
 
       // Combine permission and profile data
-      const connectedAdmins = hrProfiles?.map(profile => {
-        const permission = permissions.find(p => p.hr_admin_id === profile.id);
+      const connectedAdmins = hrProfiles?.map((profile: HRAdminProfile) => {
+        const permission = permissions.find((p: Permission) => p.hr_admin_id === profile.id);
         const currentStep = getCurrentAssessmentStep(user.id);
         const stepName = getCurrentStepName(user.id);
         const progress = getProgressPercentage(user.id);
@@ -554,8 +558,8 @@ function RestorativeRecordBuilderForm() {
       if (permError) throw permError;
 
       // Combine HR admin data with permission status
-      const allAdmins = hrProfiles?.map(profile => {
-        const permission = permissions?.find(p => p.hr_admin_id === profile.id);
+      const allAdmins = hrProfiles?.map((profile: HRAdminProfile) => {
+        const permission = permissions?.find((p: Permission) => p.hr_admin_id === profile.id);
         return {
           ...profile,
           hasAccess: permission?.is_active || false,

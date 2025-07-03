@@ -1,5 +1,39 @@
 export type FileWithPreview = File & { preview?: string };
 
+export interface Permission {
+  id: string;
+  user_id: string;
+  hr_admin_id: string;
+  granted_at: string;
+  revoked_at?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface HRAdminProfile {
+  id: string;
+  first_name: string;
+  last_name: string;
+  company: string;
+  email: string;
+  created_at: string;
+}
+
+export interface HRAdminWithAccess extends HRAdminProfile {
+  hasAccess: boolean;
+  granted_at?: string;
+}
+
+export interface ConnectedHRAdmin extends HRAdminProfile {
+  granted_at?: string;
+  currentStep: number;
+  totalSteps: number;
+  stepName: string;
+  status: string;
+  progress: number;
+}
+
 export interface Award {
   id: string;
   type: string;
