@@ -39,6 +39,22 @@ import Step4 from "./components/steps/step4/Step4";
 import Step5 from "./components/steps/step5/Step5";
 import Step6 from "./components/steps/step6/Step6";
 import { AssessmentDatabaseService } from "@/lib/services/assessmentDatabase";
+
+// Add interface for document data
+interface AssessmentDocument {
+  id: string;
+  document_type: string;
+  sent_at: string | null;
+  created_at: string;
+  session_id: string;
+  file_path?: string;
+  file_name?: string;
+  file_size?: number;
+  file_type?: string;
+  status?: string;
+  metadata?: Record<string, any>;
+}
+
 /**
  * HR Admin Assessment Page with Form Persistence
  *
@@ -388,7 +404,7 @@ function AssessmentContent({ params }: { params: { userId: string } }) {
 
               if (documentsData && documentsData.length > 0) {
                 console.log("=== DOCUMENT SUMMARY ===");
-                documentsData.forEach((doc) => {
+                documentsData.forEach((doc: AssessmentDocument) => {
                   console.log(
                     `- ${doc.document_type}: ${doc.sent_at ? "SENT" : "DRAFT"} (Created: ${new Date(doc.created_at).toLocaleString()})`,
                   );
