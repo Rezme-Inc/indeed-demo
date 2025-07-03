@@ -2,6 +2,7 @@
 base = ".."
 command = "npm ci && npm run build"
 publish = "../.next"
+main
 
 [build.environment]
 NODE_VERSION = "18"
