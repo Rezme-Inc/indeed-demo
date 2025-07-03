@@ -463,13 +463,14 @@ function UserDashboardContent() {
                       : "border-transparent text-secondary hover:text-black hover:border-gray-300"
                     }`}
                 >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}{" "}
                   {tab === "personal"
-                    ? "Personal Info"
+                    ? "Info"
                     : tab === "contact"
-                    ? "Contact Info"
-                    : tab === "privacy"
-                    ? "WOTC Certification"
-                    : "Hr-permissions HR Access"}
+                      ? "Info"
+                      : tab === "privacy"
+                        ? "Settings"
+                        : "HR Access"}
                 </button>
               )
             )}

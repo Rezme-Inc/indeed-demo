@@ -1,7 +1,8 @@
 [build]
-base = "selfservice-1"
+base = ".."
 command = "npm ci && npm run build"
-publish = "selfservice-1/.next"
+publish = "../.next"
+main
 
 [build.environment]
 NODE_VERSION = "18"
