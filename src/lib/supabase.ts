@@ -3,38 +3,48 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Missing Supabase environment variables");
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+// Create a dummy client for build time
+const dummyClient = {
   auth: {
-    // Auto refresh tokens
-    autoRefreshToken: true,
-    // Persist session in local storage (more secure than cookies for JWT)
-    persistSession: true,
-    // Detect session in URL
-    detectSessionInUrl: true,
-    // Flow type for better security
-    flowType: 'pkce'
+    getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
   },
-  // Database configuration
-  db: {
-    // Use prepared statements for better security
-    schema: 'public'
-  },
-  // Global configuration
-  global: {
-    headers: {
-      'x-application-name': 'rezme-v2'
-    }
-  }
-});
+  from: () => ({
+    select: () => Promise.resolve({ data: null, error: null }),
+  }),
+} as any;
+
+// Only create the real client if we have the required environment variables
+export const supabase = (!supabaseUrl || !supabaseAnonKey)
+  ? dummyClient
+  : createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        // Auto refresh tokens
+        autoRefreshToken: true,
+        // Persist session in local storage (more secure than cookies for JWT)
+        persistSession: true,
+        // Detect session in URL
+        detectSessionInUrl: true,
+        // Flow type for better security
+        flowType: 'pkce'
+      },
+      // Database configuration
+      db: {
+        // Use prepared statements for better security
+        schema: 'public'
+      },
+      // Global configuration
+      global: {
+        headers: {
+          'x-application-name': 'rezme-v2'
+        }
+      }
+    });
 
 // Enhanced security function to create a client 
 export function createSecureSupabaseClient(accessToken?: string) {
   if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error("Missing Supabase environment variables");
+    return dummyClient;
   }
   
   return createClient(supabaseUrl, supabaseAnonKey, {
