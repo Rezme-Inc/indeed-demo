@@ -129,13 +129,11 @@ export default function HRAdminSelector({
         </div>
       ) : (
         <>
-          {/* Selected Admins Count */}
-          <div className="mb-4 text-sm text-gray-600">
+          {/* Selected Admins Count and List are hidden for users */}
+          {/* <div className="mb-4 text-sm text-gray-600">
             {selectedAdmins.length} HR admin
             {selectedAdmins.length !== 1 ? "s" : ""} selected
           </div>
-
-          {/* HR Admins List */}
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {filteredAdmins.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
@@ -146,53 +144,11 @@ export default function HRAdminSelector({
             ) : (
               filteredAdmins.map((admin) => {
                 const isSelected = selectedAdmins.includes(admin.id);
-                return (
-                  <div
-                    key={admin.id}
-                    onClick={() => handleAdminToggle(admin)}
-                    className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                      isSelected
-                        ? "border-primary bg-primary/5"
-                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-gray-900">
-                            {admin.first_name} {admin.last_name}
-                          </h4>
-                          {isSelected && (
-                            <Check className="h-5 w-5 text-primary" />
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-600">{admin.email}</p>
-                        <div className="flex items-center gap-1 mt-1">
-                          <Building className="h-4 w-4 text-gray-400" />
-                          <p className="text-sm text-gray-500">
-                            {admin.company}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="ml-4">
-                        <div
-                          className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                            isSelected
-                              ? "bg-primary border-primary"
-                              : "border-gray-300"
-                          }`}
-                        >
-                          {isSelected && (
-                            <Check className="h-3 w-3 text-white" />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
+                // ...existing code for rendering each admin...
               })
             )}
-          </div>
+          </div> */}
+          {/* Only show search and selection UI */}
         </>
       )}
     </div>
