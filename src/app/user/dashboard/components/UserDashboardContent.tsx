@@ -286,7 +286,7 @@ export function UserDashboardContent() {
         return;
       }
 
-      const adminIds = permissions.map((p) => p.hr_admin_id);
+      const adminIds = permissions.map((p: { hr_admin_id: string }) => p.hr_admin_id);
       setSelectedHRAdmins(adminIds);
       setCurrentHRPermissions(adminIds);
     } catch (error) {
