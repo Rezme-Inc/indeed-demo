@@ -83,15 +83,17 @@ export async function saveToSupabase({
 
   // Save education information
   for (const education of educationHook.items) {
-    let fileUrl = null;
-    let fileName = null;
-    let fileSize = null;
+    // Always preserve existing file fields unless a new file is uploaded or user deletes the file
+    let fileUrl = education.filePreview || null;
+    let fileName = education.fileName || null;
+    let fileSize = education.fileSize || null;
 
-    // Upload file if it exists
+    // Upload file if it exists (new upload)
     if (education.file) {
       const fileData = await uploadFileToSupabase(
         "education-files",
         user.id,
+        "education",
         education.id,
         education.file
       );
@@ -109,27 +111,40 @@ export async function saveToSupabase({
       }
     }
 
+    // Validation: ensure all required fields are present
+    if (!education.id || !user.id || !education.school || !education.location || !education.degree || !education.field || !education.startDate) {
+      console.error("Skipping upsert: missing required fields for education", { education, userId: user.id });
+      toast({
+        title: "Error",
+        description: "Missing required fields for education. Not saved.",
+        variant: "destructive",
+      });
+      continue;
+    }
+
+    // Log the payload
+    const educationPayload = {
+      user_id: user.id,
+      id: education.id,
+      school_name: education.school,
+      school_location: education.location,
+      degree: education.degree,
+      field_of_study: education.field,
+      currently_enrolled: education.currentlyEnrolled,
+      start_date: education.startDate || null,
+      end_date: education.currentlyEnrolled ? null : education.endDate || null,
+      grade: education.grade || null,
+      description: education.description || null,
+      file_url: fileUrl,
+      file_name: fileName,
+      file_size: fileSize,
+    };
+    console.log("Upserting education with payload:", educationPayload);
+
     // Save education data
     const { error: educationError } = await supabase
       .from("education")
-      .upsert({
-        user_id: user.id,
-        id: education.id,
-        school_name: education.school,
-        school_location: education.location,
-        degree: education.degree,
-        field_of_study: education.field,
-        currently_enrolled: education.currentlyEnrolled,
-        start_date: education.startDate || null,
-        end_date: education.currentlyEnrolled
-          ? null
-          : education.endDate || null,
-        grade: education.grade || null,
-        description: education.description || null,
-        file_url: fileUrl,
-        file_name: fileName,
-        file_size: fileSize,
-      });
+      .upsert(educationPayload);
 
     if (educationError) {
       console.error("Error saving education:", educationError);
@@ -203,15 +218,17 @@ export async function saveToSupabase({
 
   // Save new rehab programs (CRUD format)
   for (const rehabProgram of rehabHook.items) {
-    let fileUrl = null;
-    let fileName = null;
-    let fileSize = null;
+    // Always preserve existing file fields unless a new file is uploaded or user deletes the file
+    let fileUrl = rehabProgram.filePreview || null;
+    let fileName = rehabProgram.fileName || null;
+    let fileSize = rehabProgram.fileSize || null;
 
-    // Upload file if it exists
+    // Upload file if it exists (new upload)
     if (rehabProgram.file) {
       const fileData = await uploadFileToSupabase(
         "rehab-program-files",
         user.id,
+        "rehab",
         rehabProgram.id,
         rehabProgram.file
       );
@@ -229,22 +246,37 @@ export async function saveToSupabase({
       }
     }
 
+    // Validation: ensure all required fields are present
+    if (!rehabProgram.id || !user.id || !rehabProgram.program || !rehabProgram.programType) {
+      console.error("Skipping upsert: missing required fields for rehab program", { rehabProgram, userId: user.id });
+      toast({
+        title: "Error",
+        description: "Missing required fields for rehab program. Not saved.",
+        variant: "destructive",
+      });
+      continue;
+    }
+
+    // Log the payload
+    const rehabPayload = {
+      user_id: user.id,
+      id: rehabProgram.id,
+      program: rehabProgram.program,
+      program_type: rehabProgram.programType,
+      start_date: rehabProgram.startDate || null,
+      end_date: rehabProgram.endDate || null,
+      details: rehabProgram.details || null,
+      narrative: rehabProgram.narrative || null,
+      file_url: fileUrl,
+      file_name: fileName,
+      file_size: fileSize,
+    };
+    console.log("Upserting rehab program with payload:", rehabPayload);
+
     // Save rehab program data
     const { error: rehabProgramError } = await supabase
       .from("rehab_programs")
-      .upsert({
-        user_id: user.id,
-        id: rehabProgram.id,
-        program: rehabProgram.program,
-        program_type: rehabProgram.programType,
-        start_date: rehabProgram.startDate || null,
-        end_date: rehabProgram.endDate || null,
-        details: rehabProgram.details || null,
-        narrative: rehabProgram.narrative || null,
-        file_url: fileUrl,
-        file_name: fileName,
-        file_size: fileSize,
-      });
+      .upsert(rehabPayload);
 
     if (rehabProgramError) {
       console.error("Error saving rehab program:", rehabProgramError);
@@ -258,15 +290,17 @@ export async function saveToSupabase({
 
   // Save skills
   for (const skill of skillsHook.items) {
-    let fileUrl = null;
-    let fileName = null;
-    let fileSize = null;
+    // Always preserve existing file fields unless a new file is uploaded or user deletes the file
+    let fileUrl = skill.filePreview || null;
+    let fileName = skill.fileName || null;
+    let fileSize = skill.fileSize || null;
 
-    // Upload file if it exists
+    // Upload file if it exists (new upload)
     if (skill.file) {
       const fileData = await uploadFileToSupabase(
         "skill-files",
         user.id,
+        "skills",
         skill.id,
         skill.file
       );
@@ -284,8 +318,19 @@ export async function saveToSupabase({
       }
     }
 
-    // Save skill data
-    const { error: skillError } = await supabase.from("skills").upsert({
+    // Validation: ensure all required fields are present
+    if (!skill.id || !user.id || !skill.softSkills || !skill.hardSkills) {
+      console.error("Skipping upsert: missing required fields for skill", { skill, userId: user.id });
+      toast({
+        title: "Error",
+        description: "Missing required fields for skill. Not saved.",
+        variant: "destructive",
+      });
+      continue;
+    }
+
+    // Log the payload
+    const skillPayload = {
       user_id: user.id,
       id: skill.id,
       soft_skills: [skill.softSkills], // Convert to array
@@ -295,7 +340,11 @@ export async function saveToSupabase({
       file_url: fileUrl,
       file_name: fileName,
       file_size: fileSize,
-    });
+    };
+    console.log("Upserting skill with payload:", skillPayload);
+
+    // Save skill data
+    const { error: skillError } = await supabase.from("skills").upsert(skillPayload);
 
     if (skillError) {
       console.error("Error saving skill:", skillError);
@@ -309,15 +358,17 @@ export async function saveToSupabase({
 
   // Save community engagement
   for (const engagement of engagementHook.items) {
-    let fileUrl = null;
-    let fileName = null;
-    let fileSize = null;
+    // Always preserve existing file fields unless a new file is uploaded or user deletes the file
+    let fileUrl = engagement.filePreview || null;
+    let fileName = engagement.fileName || null;
+    let fileSize = engagement.fileSize || null;
 
-    // Upload file if it exists
+    // Upload file if it exists (new upload)
     if (engagement.file) {
       const fileData = await uploadFileToSupabase(
-        "engagement-files",
+        "community-engagement-files",
         user.id,
+        "engagement",
         engagement.id,
         engagement.file
       );
@@ -335,21 +386,36 @@ export async function saveToSupabase({
       }
     }
 
+    // Validation: ensure all required fields are present
+    if (!engagement.id || !user.id || !engagement.type || !engagement.role || !engagement.orgName || !engagement.details) {
+      console.error("Skipping upsert: missing required fields for engagement", { engagement, userId: user.id });
+      toast({
+        title: "Error",
+        description: "Missing required fields for community engagement. Not saved.",
+        variant: "destructive",
+      });
+      continue;
+    }
+
+    // Log the payload
+    const engagementPayload = {
+      user_id: user.id,
+      id: engagement.id,
+      type: engagement.type,
+      role: engagement.role,
+      organization_name: engagement.orgName,
+      organization_website: engagement.orgWebsite || null,
+      details: engagement.details,
+      file_url: fileUrl,
+      file_name: fileName,
+      file_size: fileSize,
+    };
+    console.log("Upserting engagement with payload:", engagementPayload);
+
     // Save engagement data
     const { error: engagementError } = await supabase
       .from("community_engagements")
-      .upsert({
-        user_id: user.id,
-        id: engagement.id,
-        type: engagement.type,
-        role: engagement.role,
-        organization_name: engagement.orgName,
-        organization_website: engagement.orgWebsite || null,
-        details: engagement.details,
-        file_url: fileUrl,
-        file_name: fileName,
-        file_size: fileSize,
-      });
+      .upsert(engagementPayload);
 
     if (engagementError) {
       console.error("Error saving engagement:", engagementError);
@@ -363,15 +429,17 @@ export async function saveToSupabase({
 
   // Save microcredentials
   for (const micro of microHook.items) {
-    let fileUrl = null;
-    let fileName = null;
-    let fileSize = null;
+    // Always preserve existing file fields unless a new file is uploaded or user deletes the file
+    let fileUrl = micro.filePreview || null;
+    let fileName = micro.fileName || null;
+    let fileSize = micro.fileSize || null;
 
-    // Upload file if it exists
+    // Upload file if it exists (new upload)
     if (micro.file) {
       const fileData = await uploadFileToSupabase(
         "microcredential-files",
         user.id,
+        "microcredentials",
         micro.id,
         micro.file
       );
@@ -389,23 +457,38 @@ export async function saveToSupabase({
       }
     }
 
+    // Validation: ensure all required fields are present
+    if (!micro.id || !user.id || !micro.name || !micro.org || !micro.issueDate) {
+      console.error("Skipping upsert: missing required fields for microcredential", { micro, userId: user.id });
+      toast({
+        title: "Error",
+        description: "Missing required fields for microcredential. Not saved.",
+        variant: "destructive",
+      });
+      continue;
+    }
+
+    // Log the payload
+    const microPayload = {
+      user_id: user.id,
+      id: micro.id,
+      name: micro.name,
+      issuing_organization: micro.org,
+      issue_date: micro.issueDate || null,
+      expiry_date: micro.expiryDate || null,
+      credential_id: micro.credentialId || null,
+      credential_url: micro.credentialUrl || null,
+      narrative: micro.narrative || null,
+      file_url: fileUrl,
+      file_name: fileName,
+      file_size: fileSize,
+    };
+    console.log("Upserting microcredential with payload:", microPayload);
+
     // Save microcredential data
     const { error: microError } = await supabase
       .from("micro_credentials")
-      .upsert({
-        user_id: user.id,
-        id: micro.id,
-        name: micro.name,
-        issuing_organization: micro.org,
-        issue_date: micro.issueDate || null,
-        expiry_date: micro.expiryDate || null,
-        credential_id: micro.credentialId || null,
-        credential_url: micro.credentialUrl || null,
-        narrative: micro.narrative || null,
-        file_url: fileUrl,
-        file_name: fileName,
-        file_size: fileSize,
-      });
+      .upsert(microPayload);
 
     if (microError) {
       console.error("Error saving microcredential:", microError);
@@ -419,15 +502,17 @@ export async function saveToSupabase({
 
   // Save hobbies
   for (const hobby of hobbiesHook.items) {
-    let fileUrl = null;
-    let fileName = null;
-    let fileSize = null;
+    // Always preserve existing file fields unless a new file is uploaded or user deletes the file
+    let fileUrl = hobby.filePreview || null;
+    let fileName = hobby.fileName || null;
+    let fileSize = hobby.fileSize || null;
 
-    // Upload file if it exists
+    // Upload file if it exists (new upload)
     if (hobby.file) {
       const fileData = await uploadFileToSupabase(
         "hobby-files",
         user.id,
+        "hobbies",
         hobby.id,
         hobby.file
       );
@@ -445,8 +530,19 @@ export async function saveToSupabase({
       }
     }
 
-    // Save hobby data
-    const { error: hobbyError } = await supabase.from("hobbies").upsert({
+    // Validation: ensure all required fields are present
+    if (!hobby.id || !user.id || (!hobby.general && !hobby.sports && !hobby.other)) {
+      console.error("Skipping upsert: missing required fields for hobby", { hobby, userId: user.id });
+      toast({
+        title: "Error",
+        description: "Missing required fields for hobby. Not saved.",
+        variant: "destructive",
+      });
+      continue;
+    }
+
+    // Log the payload
+    const hobbyPayload = {
       user_id: user.id,
       id: hobby.id,
       general_hobby: hobby.general || null,
@@ -456,7 +552,11 @@ export async function saveToSupabase({
       file_url: fileUrl,
       file_name: fileName,
       file_size: fileSize,
-    });
+    };
+    console.log("Upserting hobby with payload:", hobbyPayload);
+
+    // Save hobby data
+    const { error: hobbyError } = await supabase.from("hobbies").upsert(hobbyPayload);
 
     if (hobbyError) {
       console.error("Error saving hobby:", hobbyError);
@@ -501,15 +601,17 @@ export async function saveToSupabase({
 
   // Save awards
   for (const award of awardsHook.items) {
-    let fileUrl = null;
-    let fileName = null;
-    let fileSize = null;
+    // Always preserve existing file fields unless a new file is uploaded or user deletes the file
+    let fileUrl = award.filePreview || null;
+    let fileName = award.fileName || null;
+    let fileSize = award.fileSize || null;
 
-    // Upload file if it exists
+    // Upload file if it exists (new upload)
     if (award.file) {
       const fileData = await uploadFileToSupabase(
         "award-files",
         user.id,
+        "awards",
         award.id,
         award.file
       );
@@ -527,11 +629,22 @@ export async function saveToSupabase({
       }
     }
 
+    // Validation: ensure all required fields are present
+    if (!award.id || !user.id || !award.type || !award.name || !award.organization || !award.date) {
+      console.error("Skipping upsert: missing required fields for award", { award, userId: user.id });
+      toast({
+        title: "Error",
+        description: "Missing required fields for award. Not saved.",
+        variant: "destructive",
+      });
+      continue;
+    }
+
     // Format the date to ensure it's in the correct timezone
     const awardDate = award.date ? new Date(award.date + "T00:00:00") : null;
 
-    // Save award data
-    const { error: awardError } = await supabase.from("awards").upsert({
+    // Log the payload
+    const awardPayload = {
       user_id: user.id,
       id: award.id,
       type: award.type,
@@ -542,7 +655,11 @@ export async function saveToSupabase({
       file_url: fileUrl,
       file_name: fileName,
       file_size: fileSize,
-    });
+    };
+    console.log("Upserting award with payload:", awardPayload);
+
+    // Save award data
+    const { error: awardError } = await supabase.from("awards").upsert(awardPayload);
 
     if (awardError) {
       console.error("Error saving award:", awardError);
