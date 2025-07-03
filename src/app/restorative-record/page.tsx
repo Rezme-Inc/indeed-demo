@@ -44,7 +44,7 @@ interface Notification {
   message: string;
   timestamp: string;
   adminId: string;
-  admin: any;
+  admin: HRAdminWithAccess;
 }
 
 // Import section components
@@ -575,7 +575,7 @@ function RestorativeRecordBuilderForm() {
   };
 
   // Generate notifications based on HR admin data
-  const generateNotifications = (admins: any[]) => {
+  const generateNotifications = (admins: HRAdminWithAccess[]) => {
     const notifs: Notification[] = [];
 
     // Recent new connections
@@ -590,7 +590,7 @@ function RestorativeRecordBuilderForm() {
         type: 'connection',
         title: 'HR Admin Access Granted',
         message: `${admin.first_name} ${admin.last_name} (${admin.company}) now has access to your Restorative Record.`,
-        timestamp: admin.granted_at,
+        timestamp: admin.granted_at || new Date().toISOString(),
         adminId: admin.id,
         admin: admin
       });
