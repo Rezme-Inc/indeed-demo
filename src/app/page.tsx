@@ -20,30 +20,34 @@ export default function Home() {
             {/* Navigation Menu */}
             <nav className="hidden md:flex items-center space-x-8">
               <Link 
-                href="#home" 
+                href="https://www.rezme.app/" 
                 className="text-base font-medium transition-all duration-200 hover:opacity-70"
                 style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}
+                target="_blank" rel="noopener noreferrer"
               >
                 Home
               </Link>
               <Link 
-                href="#about" 
+                href="https://www.rezme.app/about" 
                 className="text-base font-medium transition-all duration-200 hover:opacity-70"
                 style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}
+                target="_blank" rel="noopener noreferrer"
               >
                 About
               </Link>
               <Link 
-                href="#product" 
+                href="https://www.rezme.app/product" 
                 className="text-base font-medium transition-all duration-200 hover:opacity-70"
                 style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}
+                target="_blank" rel="noopener noreferrer"
               >
                 Product
               </Link>
               <Link 
-                href="#resources" 
+                href="https://www.rezme.app/resources" 
                 className="text-base font-medium transition-all duration-200 hover:opacity-70"
                 style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}
+                target="_blank" rel="noopener noreferrer"
               >
                 Resources
               </Link>
@@ -87,7 +91,7 @@ export default function Home() {
           </div>
           
           <div className="space-y-4">
-            {/* Primary Registration Buttons */}
+            {/* Primary Registration Button */}
             <Link
               href="/auth/user/signup"
               className="group relative w-full flex justify-center py-4 px-6 border border-gray-200 text-base font-medium rounded-xl text-black bg-white hover:bg-gray-50 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md"
@@ -96,35 +100,7 @@ export default function Home() {
               I am a User
             </Link>
             
-            <Link
-              href="/auth/hr-admin/signup"
-              className="group relative w-full flex justify-center py-4 px-6 border border-gray-200 text-base font-medium rounded-xl text-black bg-white hover:bg-gray-50 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md"
-              style={{borderColor: '#E5E5E5'}}
-            >
-              I am an HR Admin
-            </Link>
-            
-            <Link
-              href="/auth/rezme-admin/signup"
-              className="group relative w-full flex justify-center py-4 px-6 border border-gray-200 text-base font-medium rounded-xl text-black bg-white hover:bg-gray-50 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md"
-              style={{borderColor: '#E5E5E5'}}
-            >
-              I am a Rezme Admin
-            </Link>
-            
-            {/* Divider */}
-            <div className="relative my-8">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t" style={{borderColor: '#E5E5E5'}} />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white font-medium" style={{color: '#595959'}}>
-                  Or
-                </span>
-              </div>
-            </div>
-            
-            {/* Login Buttons */}
+            {/* Login Button */}
             <Link
               href="/auth/user/login"
               className="group relative w-full flex justify-center py-3 px-6 border text-base font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 hover:bg-gray-50 hover:opacity-90"
@@ -135,30 +111,6 @@ export default function Home() {
               }}
             >
               Login as User
-            </Link>
-            
-            <Link
-              href="/auth/hr-admin/login"
-              className="group relative w-full flex justify-center py-3 px-6 border text-base font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 hover:bg-gray-50 hover:opacity-90"
-              style={{
-                color: '#595959',
-                borderColor: '#E5E5E5',
-                backgroundColor: 'transparent'
-              }}
-            >
-              Login as HR Admin
-            </Link>
-            
-            <Link
-              href="/auth/rezme-admin/login"
-              className="group relative w-full flex justify-center py-3 px-6 border text-base font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 hover:bg-gray-50 hover:opacity-90"
-              style={{
-                color: '#595959',
-                borderColor: '#E5E5E5',
-                backgroundColor: 'transparent'
-              }}
-            >
-              Login as Rezme Admin
             </Link>
           </div>
         </div>
@@ -188,30 +140,34 @@ export default function Home() {
               </h3>
               <nav className="space-y-3">
                 <Link 
-                  href="#home" 
+                  href="https://www.rezme.app/" 
                   className="block text-sm transition-all duration-200 hover:opacity-70"
                   style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}
+                  target="_blank" rel="noopener noreferrer"
                 >
                   Home
                 </Link>
                 <Link 
-                  href="#about" 
+                  href="https://www.rezme.app/about" 
                   className="block text-sm transition-all duration-200 hover:opacity-70"
                   style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}
+                  target="_blank" rel="noopener noreferrer"
                 >
                   About
                 </Link>
                 <Link 
-                  href="#product" 
+                  href="https://www.rezme.app/product" 
                   className="block text-sm transition-all duration-200 hover:opacity-70"
                   style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}
+                  target="_blank" rel="noopener noreferrer"
                 >
                   Product
                 </Link>
                 <Link 
-                  href="#resources" 
+                  href="https://www.rezme.app/resources" 
                   className="block text-sm transition-all duration-200 hover:opacity-70"
                   style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}
+                  target="_blank" rel="noopener noreferrer"
                 >
                   Resources
                 </Link>
@@ -232,51 +188,58 @@ export default function Home() {
               </h3>
               <nav className="space-y-3">
                 <Link 
-                  href="#privacy-policy" 
+                  href="https://app.termly.io/policy-viewer/policy.html?policyUUID=e05577fe-11ce-47d5-9a97-c994b0ee6acf" 
                   className="block text-sm transition-all duration-200 hover:opacity-70"
                   style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}
+                  target="_blank" rel="noopener noreferrer"
                 >
                   Privacy Policy
                 </Link>
                 <Link 
-                  href="#cookie-policy" 
+                  href="https://app.termly.io/policy-viewer/policy.html?policyUUID=6947f494-a92e-419a-82df-ddc2ec5a1743" 
                   className="block text-sm transition-all duration-200 hover:opacity-70"
                   style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}
+                  target="_blank" rel="noopener noreferrer"
                 >
                   Cookie Policy
                 </Link>
                 <Link 
-                  href="#terms-conditions" 
+                  href="https://app.termly.io/policy-viewer/policy.html?policyUUID=40404d5f-9640-47ad-bab0-8f2bb32aabc8" 
                   className="block text-sm transition-all duration-200 hover:opacity-70"
                   style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}
+                  target="_blank" rel="noopener noreferrer"
                 >
                   Terms & Conditions
                 </Link>
                 <Link 
-                  href="#disclaimer" 
+                  href="https://app.termly.io/policy-viewer/policy.html?policyUUID=2dee6321-2901-4da4-a2e6-d31333c34462" 
                   className="block text-sm transition-all duration-200 hover:opacity-70"
                   style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}
+                  target="_blank" rel="noopener noreferrer"
                 >
                   Disclaimer
                 </Link>
                 <Link 
-                  href="#branding-guidelines" 
+                  href="https://www.canva.com/design/DAGbAYTxAqQ/7VXnGimgiKAWzBXfJBfbVQ/edit" 
                   className="block text-sm transition-all duration-200 hover:opacity-70"
                   style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}
+                  target="_blank" rel="noopener noreferrer"
                 >
                   Branding Guidelines
                 </Link>
                 <Link 
-                  href="#openai-data-processing" 
+                  href="https://app.pactsafe.com/sign?r=656335a17c5752be211f42bb&s=656335a17c5752be211f42bd&signature=mmgK3G~HAApM5Xp-bZmWlgO~3DQka7e6OqzsCyEpDIs8Zu8uJzmbCAbS7-89E~L0ZHCSQ6kytTBr7FSbyyX7o4AHaqssthcwwdXE7Njy1jo~w9z3bFUHh5ThLRfplS~VaSSCygyKw2cQ-dOm23rVhjJHS2Twn4JH9K4i5uo-Ihawo8NnVls~s~wzitNBCfJL5hBzarsxGYbgW-nN8pVMFKfslOzJWQrnNoogynAaEToOjkaraNcyPgmVaY8l4iYvZJxzmVR1rxwDDJH8gghYZmYjk0Oqn-r4glbTauhuqiwo391PrnsXA6KTZdZ2ovSo8o-egdfyXtOuGIHqIJqVSQ__" 
                   className="block text-sm transition-all duration-200 hover:opacity-70"
                   style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}
+                  target="_blank" rel="noopener noreferrer"
                 >
                   Open AI Data Processing Agreement
                 </Link>
                 <Link 
-                  href="#trust-center" 
+                  href="https://app.vanta.com/rezme.app/trust/kbynv6xr5c2g82tzmhq3qz/controls" 
                   className="block text-sm transition-all duration-200 hover:opacity-70"
                   style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}
+                  target="_blank" rel="noopener noreferrer"
                 >
                   Trust Center
                 </Link>
