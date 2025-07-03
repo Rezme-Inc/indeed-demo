@@ -2990,61 +2990,7 @@ function RestorativeRecordBuilderForm() {
                       <li>You have the right to know if an employer has run a background check on you.</li>
                       <li>Legal teams can help you understand your rights and options if you believe you have been treated unfairly.</li>
                     </ul>
-                    <div className="border-l-4 p-4 my-4 rounded-lg" style={{ borderColor: '#E54747', backgroundColor: '#fef7f7' }}>
-                      <div className="font-semibold mb-2 text-sm" style={{ color: '#E54747', fontFamily: 'Poppins, sans-serif' }}>
-                        San Diego Applicants
-                      </div>
-                      <p className="mb-2 text-black leading-relaxed text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                        If you would like to file a fair chance complaint, please complete the{' '}
-                        <a
-                          href="https://forms.office.com/Pages/ResponsePage.aspx?id=E69jRSnAs0G3TJZejuyPlqdlrWcla0pGkN2zYgm3FclUMUVUMDdGOFZDWlNJSlRDODBNMDNRWVNHOCQlQCN0PWcu"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-medium underline transition-colors duration-200 hover:opacity-80"
-                          style={{ color: '#E54747' }}
-                        >
-                          official fair chance complaint inquiry form
-                        </a>
-                        .
-                      </p>
-                      <p className="mb-2 text-black text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                        If you are unable to fill out the form, contact us via:
-                      </p>
-                      <ul className="text-black text-xs mb-2 space-y-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                        <li>
-                          <span className="font-medium">Email:</span>{' '}
-                          <a
-                            href="mailto:olse@sdcounty.ca.gov"
-                            className="font-medium underline transition-colors duration-200 hover:opacity-80"
-                            style={{ color: '#E54747' }}
-                          >
-                            olse@sdcounty.ca.gov
-                          </a>
-                        </li>
-                        <li>
-                          <span className="font-medium">Office:</span>{' '}
-                          <a
-                            href="tel:6195315129"
-                            className="font-medium underline transition-colors duration-200 hover:opacity-80"
-                            style={{ color: '#E54747' }}
-                          >
-                            619-531-5129
-                          </a>
-                        </li>
-                        <li>We are open Monday-Friday 8:00 am-5:00 pm</li>
-                      </ul>
-                      <p className="text-black text-xs" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                        If your question is not related to fair chance hiring, please call{' '}
-                        <a
-                          href="tel:8586943900"
-                          className="font-medium underline transition-colors duration-200 hover:opacity-80"
-                          style={{ color: '#E54747' }}
-                        >
-                          858-694-3900
-                        </a>
-                        .
-                      </p>
-                    </div>
+                    
                   </div>
                   {legalSubmitted ? (
                     <div className="text-center py-8 px-4 rounded-lg" style={{ backgroundColor: '#f0f9ff', color: '#059669', fontFamily: 'Poppins, sans-serif' }}>
