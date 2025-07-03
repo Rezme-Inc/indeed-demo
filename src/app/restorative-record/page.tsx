@@ -191,6 +191,72 @@ function RestorativeRecordBuilderForm() {
       description: "Preview your completed restorative record at any time.",
       dashboardSection: null,
     },
+    {
+      targetId: "record-builder-section",
+      title: "Record Builder Sidebar",
+      description: "This is the Record Builder. Here you can see all the sections you need to complete for your restorative record. Required sections are at the top, recommended sections below.",
+      dashboardSection: null,
+    },
+    {
+      targetId: "record-builder-introduction",
+      title: "Introduction (Required)",
+      description: "Start by telling your story in the Introduction section. Click here to begin.",
+      dashboardSection: null,
+    },
+    {
+      targetId: "record-builder-community-engagement",
+      title: "Community Engagement (Required)",
+      description: "Share your community involvement and contributions.",
+      dashboardSection: null,
+    },
+    {
+      targetId: "record-builder-rehabilitative-programs",
+      title: "Rehabilitative Programs (Required)",
+      description: "List any rehabilitative or educational programs you've completed.",
+      dashboardSection: null,
+    },
+    {
+      targetId: "record-builder-education",
+      title: "Education (Recommended)",
+      description: "Add your educational background.",
+      dashboardSection: null,
+    },
+    {
+      targetId: "record-builder-employment-history",
+      title: "Employment History (Recommended)",
+      description: "Document your work experience.",
+      dashboardSection: null,
+    },
+    {
+      targetId: "record-builder-skills",
+      title: "Skills (Recommended)",
+      description: "Highlight your skills and certifications.",
+      dashboardSection: null,
+    },
+    {
+      targetId: "record-builder-microcredentials",
+      title: "Microcredentials (Recommended)",
+      description: "Showcase any microcredentials or badges earned.",
+      dashboardSection: null,
+    },
+    {
+      targetId: "record-builder-mentors",
+      title: "Mentors (Recommended)",
+      description: "List mentors who have supported your journey.",
+      dashboardSection: null,
+    },
+    {
+      targetId: "record-builder-personal-achievements",
+      title: "Personal Achievements (Recommended)",
+      description: "Share your awards and personal achievements.",
+      dashboardSection: null,
+    },
+    {
+      targetId: "record-builder-hobbies",
+      title: "Hobbies (Recommended)",
+      description: "Add your hobbies and interests.",
+      dashboardSection: null,
+    },
   ];
 
   function TutorialTooltip({ step, onNext, onBack, onClose, showBack, isLastStep, hideControls = false }: { step: any; onNext: () => void; onBack: () => void; onClose: () => void; showBack: boolean; isLastStep: boolean; hideControls?: boolean }) {
@@ -3103,6 +3169,19 @@ function RestorativeRecordBuilderForm() {
         setActiveDashboardSection(step.dashboardSection);
       }
     }
+    // NEW: If the tutorial step targets a Record Builder category, switch to builder view and set the correct category
+    if (tutorialStep) {
+      const step = tutorialSteps[tutorialStep - 1];
+      if (step.targetId && step.targetId.startsWith('record-builder-')) {
+        // Extract the category name from the targetId
+        const cat = step.targetId.replace('record-builder-', '');
+        const idx = categories.findIndex(c => c === cat);
+        if (idx !== -1) {
+          setCurrentView('builder');
+          setCurrentCategory(idx);
+        }
+      }
+    }
     // Only restore if not dismissed by overlay
     if (!tutorialStep && currentView === 'dashboard' && !tutorialDismissedByOverlay) {
       if (originalView.current === 'dashboard' && originalDashboardSection.current) {
@@ -3409,7 +3488,7 @@ function RestorativeRecordBuilderForm() {
           </div>
 
           {/* Builder Sections */}
-          <div>
+          <div id="record-builder-section">
             <h3 className="text-sm font-semibold text-black mb-3 uppercase tracking-wider">Record Builder</h3>
             {/* Required Sections */}
             <div className="mb-2">
@@ -3419,6 +3498,7 @@ function RestorativeRecordBuilderForm() {
                   ["introduction", "community-engagement", "rehabilitative-programs"].includes(cat) ? (
                     <li key={cat}>
                       <button
+                        id={`record-builder-${cat}`}
                         className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${currentView === 'builder' && idx === currentCategory
                           ? "bg-red-50 font-medium border"
                           : "hover:bg-gray-50"
@@ -3453,6 +3533,7 @@ function RestorativeRecordBuilderForm() {
                   !["introduction", "community-engagement", "rehabilitative-programs"].includes(cat) ? (
                     <li key={cat}>
                       <button
+                        id={`record-builder-${cat}`}
                         className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${currentView === 'builder' && idx === currentCategory
                           ? "bg-red-50 font-medium border"
                           : "hover:bg-gray-50"
