@@ -287,7 +287,7 @@ export class AssessmentDatabaseService {
 
       // Process found assessments
       if (data) {
-        data.forEach(assessment => {
+        data.forEach((assessment: { candidate_id: string; current_step: number; status: string; completed_at_step?: number }) => {
           statusMap.set(assessment.candidate_id, {
             current_step: assessment.current_step,
             status: assessment.status,

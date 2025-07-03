@@ -45,10 +45,10 @@ export class BucketInitializationService {
         return false;
       }
 
-      console.log('[BucketInit] Found buckets:', buckets?.map(b => ({ name: b.name, id: b.id, public: b.public })));
+      console.log('[BucketInit] Found buckets:', buckets?.map((b: { name: string; id: string; public: boolean }) => ({ name: b.name, id: b.id, public: b.public })));
 
       // Check if our bucket already exists
-      const bucketExists = buckets?.some(bucket => bucket.name === 'assessment-files');
+      const bucketExists = buckets?.some((bucket: { name: string; id: string; public: boolean }) => bucket.name === 'assessment-files');
 
       if (bucketExists) {
         console.log('[BucketInit] assessment-files bucket already exists');

@@ -41,6 +41,35 @@ interface HRAdmin {
   payment_plan: "Pro" | "Premium" | "Free" | null;
 }
 
+interface WOTCSurvey {
+  id: string;
+  user_id: string;
+  ssn: string;
+  county: string;
+  conditional_cert: boolean;
+  tanf_9mo: boolean;
+  vet_snap_3mo: boolean;
+  voc_rehab: boolean;
+  ticket_work: boolean;
+  va: boolean;
+  snap_6mo: boolean;
+  snap_3of5: boolean;
+  felony: boolean;
+  ssi: boolean;
+  vet_unemp_4_6: boolean;
+  vet_unemp_6: boolean;
+  vet_disab_discharged: boolean;
+  vet_disab_unemp: boolean;
+  tanf_18mo: boolean;
+  tanf_18mo_since97: boolean;
+  tanf_limit: boolean;
+  unemp_27wks: boolean;
+  signature: string;
+  signature_date: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export default function RezmeAdminDashboard() {
   const router = useRouter();
 
@@ -104,14 +133,14 @@ export default function RezmeAdminDashboard() {
       // Create a map of user_id to WOTC signature_date for quick lookup
       const wotcMap = new Map();
       if (wotcSurveys) {
-        wotcSurveys.forEach((survey) => {
+        wotcSurveys.forEach((survey: WOTCSurvey) => {
           wotcMap.set(survey.user_id, survey.signature_date);
         });
       }
 
       // Transform the data to include WOTC signature_date
       const transformedUsers =
-        userProfiles?.map((user) => ({
+        userProfiles?.map((user: User) => ({
           ...user,
           wotc_signature_date: wotcMap.get(user.id) || null,
         })) || [];
@@ -142,7 +171,7 @@ export default function RezmeAdminDashboard() {
       // Get connected users count for each HR admin from user_hr_permissions table
       if (data && data.length > 0) {
         const hrAdminsWithConnections = await Promise.all(
-          data.map(async (admin) => {
+          data.map(async (admin: HRAdmin) => {
             const { data: permissions, error: permError } = await supabase
               .from("user_hr_permissions")
               .select("user_id")
@@ -163,7 +192,7 @@ export default function RezmeAdminDashboard() {
               };
             }
 
-            const connectedUserIds = permissions?.map((p) => p.user_id) || [];
+            const connectedUserIds = permissions?.map((p: { user_id: string }) => p.user_id) || [];
 
             // Calculate assessments completed by checking users with final decisions
             let assessmentsCompleted = 0;
@@ -223,7 +252,7 @@ export default function RezmeAdminDashboard() {
         setHRAdmins(hrAdminsWithConnections);
       } else {
         setHRAdmins(
-          data?.map((admin) => {
+          data?.map((admin: HRAdmin) => {
             // Add placeholder data for company address and phone number
             const placeholderAddresses = [
               "123 Business Ave, Suite 100, New York, NY 10001",

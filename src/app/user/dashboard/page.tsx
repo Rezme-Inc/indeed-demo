@@ -324,7 +324,7 @@ function UserDashboardContent() {
         return;
       }
 
-      const adminIds = data?.map((p) => p.hr_admin_id) || [];
+      const adminIds = data?.map((p: { hr_admin_id: string }) => p.hr_admin_id) || [];
       setSelectedHRAdmins(adminIds);
       setCurrentHRPermissions(adminIds);
     } catch (error) {

@@ -18,6 +18,10 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ["pdf-parse"],
   },
+  // Vercel optimizations
+  images: {
+    domains: ['localhost'],
+  },
 
   async headers() {
     return [
@@ -33,6 +37,20 @@ const nextConfig = {
             key: "Cache-Control",
             value: "no-cache, no-store, must-revalidate",
           },
+        ],
+      },
+      // Add security headers for all routes
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on'
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains'
+          }
         ],
       },
     ];
