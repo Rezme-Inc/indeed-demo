@@ -42,9 +42,17 @@ import { AssessmentDatabaseService } from "@/lib/services/assessmentDatabase";
 
 // Add interface for document data
 interface AssessmentDocument {
+  id: string;
   document_type: string;
   sent_at: string | null;
   created_at: string;
+  session_id: string;
+  file_path?: string;
+  file_name?: string;
+  file_size?: number;
+  file_type?: string;
+  status?: string;
+  metadata?: Record<string, any>;
 }
 
 /**
