@@ -1,4 +1,0 @@
-[build]
-base = "selfservice-1"
-command = "npm run build"
-publish = "selfservice-1/.next" 
