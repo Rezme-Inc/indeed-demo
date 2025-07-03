@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { socialFields } from "@/app/restorative-record/constants";
+import { Info } from "lucide-react";
 
 function formatFileSize(bytes: number) {
   if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + " MB";
@@ -57,6 +58,38 @@ export default function MyRestorativeRecordProfile() {
   const [mentors, setMentors] = useState<any[]>([]);
   const [employments, setEmployments] = useState<any[]>([]);
   const [education, setEducation] = useState<any[]>([]);
+
+  const useCaseDetails = [
+    {
+      label: "Employment applications",
+      description: "Share your restorative record with potential employers to demonstrate your rehabilitation, skills, and character during the hiring process."
+    },
+    {
+      label: "Housing applications",
+      description: "Provide your restorative record to landlords or housing authorities to support your application and show your commitment to positive change."
+    },
+    {
+      label: "Volunteering opportunities",
+      description: "Use your restorative record to apply for volunteer positions, especially those that require background checks or character references."
+    },
+    {
+      label: "Character references",
+      description: "Share your record with individuals or organizations who need to verify your character, such as for court, school, or community purposes."
+    },
+    {
+      label: "Licensing & certifications",
+      description: "Submit your restorative record when applying for professional licenses or certifications that require background or moral fitness evaluations."
+    },
+    {
+      label: "Moral or character fitness evaluations",
+      description: "Support applications for roles or credentials that require a demonstration of moral character, such as legal, medical, or government positions."
+    },
+    {
+      label: "Other situations where you want to demonstrate your rehabilitation, skills, or character",
+      description: "Share your restorative record in any context where you want to provide evidence of your growth, achievements, and positive contributions."
+    },
+  ];
+  const [openUseCase, setOpenUseCase] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -418,6 +451,39 @@ export default function MyRestorativeRecordProfile() {
                       />
                     </svg>
                   </button>
+                </div>
+                {/* Use Cases Section */}
+                <div className="mb-8">
+                  <h3 className="text-lg font-medium text-black mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    Common Use Cases
+                  </h3>
+                  <ul className="list-disc pl-6 text-sm space-y-1" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>
+                    {useCaseDetails.map((uc, idx) => (
+                      <li key={uc.label} className="relative flex items-start gap-2">
+                        <span>{uc.label}</span>
+                        <button
+                          type="button"
+                          aria-label={`More info about ${uc.label}`}
+                          className="ml-1 text-gray-400 hover:text-red-500 focus:outline-none"
+                          onClick={() => setOpenUseCase(openUseCase === idx ? null : idx)}
+                          tabIndex={0}
+                        >
+                          <Info className="w-4 h-4" />
+                        </button>
+                        {openUseCase === idx && (
+                          <div className="absolute left-6 top-6 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-3 w-72 text-xs text-black animate-fade-in" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                            {uc.description}
+                            <button
+                              className="block mt-2 ml-auto text-xs text-red-500 hover:underline focus:outline-none"
+                              onClick={() => setOpenUseCase(null)}
+                            >
+                              Close
+                            </button>
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
                 {/* Share with specific people */}
@@ -1783,6 +1849,50 @@ export default function MyRestorativeRecordProfile() {
           )}
         </section>
       </div>
+      <style jsx global>{`
+        @media print {
+          header, .print-hide, .platform-header, .print-share-btn, .dashboard-btn {
+            display: none !important;
+          }
+          body {
+            background: white !important;
+          }
+          .max-w-5xl, .mx-auto, .py-8, .px-4, .md\:px-6 {
+            max-width: 100% !important;
+            padding: 0 !important;
+          }
+          a[href^="http"], a[href^="/uploads"], a[href*="file"] {
+            color: #0645AD !important;
+            text-decoration: underline !important;
+            border: none !important;
+            background: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            display: inline !important;
+          }
+          /* Hide browser print headers/footers and page URL if possible */
+          @page {
+            margin: 1in;
+            size: auto;
+          }
+          /* Hide elements that may contain the date/time, title, or URL */
+          body > div[style*="position: fixed"],
+          body > div[style*="position: absolute"],
+          body > header,
+          body > footer,
+          body > #__next > header,
+          body > #__next > footer,
+          body > #__next > .print-header,
+          body > #__next > .print-footer {
+            display: none !important;
+          }
+          /* Hide any element containing 'Rezme - Professional Profile Management' or the URL */
+          *:contains('Rezme - Professional Profile Management'),
+          *:contains('localhost:6787/restorative-record/profile') {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
