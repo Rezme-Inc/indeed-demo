@@ -3266,7 +3266,15 @@ function RestorativeRecordBuilderForm() {
       </button>
       <div className="relative">
         <button
-          onClick={() => setHelpMenuOpen((v) => !v)}
+          onClick={() => {
+            // On mobile, directly start tutorial. On desktop, toggle dropdown
+            if (window.innerWidth < 1024) {
+              setTutorialStep(1);
+              setHoverTutorialActive(false);
+            } else {
+              setHelpMenuOpen((v) => !v);
+            }
+          }}
           className="px-4 lg:px-5 py-2 text-sm lg:text-base font-medium rounded-xl shadow hover:opacity-90 border w-full sm:w-auto text-center"
           style={{ color: '#E54747', backgroundColor: '#FFFFFF', borderColor: '#E54747', fontFamily: 'Poppins, sans-serif' }}
           title="Help & Hints"
@@ -3274,10 +3282,10 @@ function RestorativeRecordBuilderForm() {
           Help
         </button>
         {helpMenuOpen && (
-          <div className="absolute right-0 mt-2 w-56 bg-white border rounded-xl shadow-xl z-50 sm:right-0 sm:left-auto left-0 sm:w-56 w-full" style={{ borderColor: '#E5E5E5', fontFamily: 'Poppins, sans-serif' }}>
+          <div className="hidden lg:block absolute right-0 mt-2 w-56 bg-white border rounded-xl shadow-xl z-50" style={{ borderColor: '#E5E5E5', fontFamily: 'Poppins, sans-serif' }}>
             {/* Caret/triangle */}
-            <div className="hidden sm:block" style={{ position: 'absolute', top: '-10px', right: '16px', width: 0, height: 0, borderLeft: '8px solid transparent', borderRight: '8px solid transparent', borderBottom: '10px solid #E5E5E5' }} />
-            <div className="hidden sm:block" style={{ position: 'absolute', top: '-8px', right: '17px', width: 0, height: 0, borderLeft: '7px solid transparent', borderRight: '7px solid transparent', borderBottom: '9px solid #fff' }} />
+            <div style={{ position: 'absolute', top: '-10px', right: '16px', width: 0, height: 0, borderLeft: '8px solid transparent', borderRight: '8px solid transparent', borderBottom: '10px solid #E5E5E5' }} />
+            <div style={{ position: 'absolute', top: '-8px', right: '17px', width: 0, height: 0, borderLeft: '7px solid transparent', borderRight: '7px solid transparent', borderBottom: '9px solid #fff' }} />
             <button
               className="block w-full text-left px-5 py-3 rounded-xl transition-all duration-150 hover:bg-red-50 text-black font-medium"
               style={{ fontFamily: 'Poppins, sans-serif', color: '#E54747', borderBottom: '1px solid #F3F4F6' }}
