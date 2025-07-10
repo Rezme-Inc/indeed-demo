@@ -3627,7 +3627,7 @@ function RestorativeRecordBuilderForm() {
                                   .replace(/\b\w/g, (l) => l.toUpperCase())}
                               </span>
                               {sectionCompletion[cat] && (
-                                <span className="text-green-600 text-sm" style={{ color: '#16A34A' }}>✓</span>
+                                <span className="text-green-600 text-sm ml-3" style={{ color: '#16A34A' }}>✓</span>
                               )}
                             </div>
                           </button>
@@ -3665,7 +3665,7 @@ function RestorativeRecordBuilderForm() {
                                   .replace(/\b\w/g, (l) => l.toUpperCase())}
                               </span>
                               {sectionCompletion[cat] && (
-                                <span className="text-green-600 text-sm" style={{ color: '#16A34A' }}>✓</span>
+                                <span className="text-green-600 text-sm ml-3" style={{ color: '#16A34A' }}>✓</span>
                               )}
                             </div>
                           </button>
