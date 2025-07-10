@@ -3564,7 +3564,7 @@ function RestorativeRecordBuilderForm() {
       <div className="flex">
         {/* Sidebar Navigation */}
         <nav className={`${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 right-0 z-40 w-80 bg-white border-l min-h-screen p-6 transition-transform duration-300 ease-in-out lg:transition-none overflow-y-auto`} style={{ borderColor: '#E5E5E5' }}>
-          <div className={`flex flex-col ${mobileMenuOpen ? 'pb-16' : 'pb-0'}`}> {/* Add extra bottom padding only when mobile menu is open */}
+          <div className="flex">
             <div>
               {/* Dashboard Header */}
               <div className="mb-6 hidden lg:block">
@@ -3639,7 +3639,7 @@ function RestorativeRecordBuilderForm() {
                                   .replace(/\b\w/g, (l) => l.toUpperCase())}
                               </span>
                               {sectionCompletion[cat] && (
-                                <span className="text-green-600 text-sm ml-3" style={{ color: '#16A34A' }}>✓</span>
+                                <span className="text-green-600 text-sm" style={{ color: '#16A34A' }}>✓</span>
                               )}
                             </div>
                           </button>
@@ -3677,7 +3677,7 @@ function RestorativeRecordBuilderForm() {
                                   .replace(/\b\w/g, (l) => l.toUpperCase())}
                               </span>
                               {sectionCompletion[cat] && (
-                                <span className="text-green-600 text-sm ml-3" style={{ color: '#16A34A' }}>✓</span>
+                                <span className="text-green-600 text-sm" style={{ color: '#16A34A' }}>✓</span>
                               )}
                             </div>
                           </button>
@@ -3688,17 +3688,6 @@ function RestorativeRecordBuilderForm() {
                 </div>
               </div>
             </div>
-            {/* Mobile Menu Close X (top right) */}
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(false)}
-              className="lg:hidden absolute top-3 right-3 p-2 rounded-full hover:bg-gray-100 transition-colors z-50"
-              aria-label="Close menu"
-            >
-              <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
           </div>
         </nav>
 
