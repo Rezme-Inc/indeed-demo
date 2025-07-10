@@ -2138,11 +2138,11 @@ function RestorativeRecordBuilderForm() {
 
   // Dashboard functions
   const dashboardSections = [
-    { id: 'progress', label: 'Progress Tracking', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'progress' ? "dashboard_icons/progress-white.svg" : "dashboard_icons/progress.svg"} alt="Status Updates" className="w-5 h-5" /> },
-    { id: 'status', label: 'Status Updates', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'status' ? "dashboard_icons/status-updates-white.svg" : "dashboard_icons/status-updates.svg"} alt="Status Updates" className="w-5 h-5" /> },
-    { id: 'notifications', label: 'Notifications', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'notifications' ? "dashboard_icons/notifications-white.svg" : "dashboard_icons/notifications.svg"} alt="Notifications" className="w-5 h-5" /> },
-    { id: 'legal-resources', label: 'Legal Resources', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'legal-resources' ? "dashboard_icons/legal-resources-white.svg" : "dashboard_icons/legal-resources.svg"} alt="Legal Resources" className="w-5 h-5" />, alt: "Legal Resources" },
-    { id: 'settings', label: 'Settings', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'settings' ? "dashboard_icons/settings-white.svg" : "dashboard_icons/settings.svg"} alt="Settings" className="w-5 h-5" />, alt: "Settings" }
+    { id: 'progress', label: 'Progress Tracking', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'progress' ? "/dashboard_icons/progress-white.svg" : "/dashboard_icons/progress.svg"} alt="Status Updates" className="w-5 h-5" /> },
+    { id: 'status', label: 'Status Updates', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'status' ? "/dashboard_icons/status-updates-white.svg" : "/dashboard_icons/status-updates.svg"} alt="Status Updates" className="w-5 h-5" /> },
+    { id: 'notifications', label: 'Notifications', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'notifications' ? "/dashboard_icons/notifications-white.svg" : "/dashboard_icons/notifications.svg"} alt="Notifications" className="w-5 h-5" /> },
+    { id: 'legal-resources', label: 'Legal Resources', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'legal-resources' ? "/dashboard_icons/legal-resources-white.svg" : "/dashboard_icons/legal-resources.svg"} alt="Legal Resources" className="w-5 h-5" />, alt: "Legal Resources" },
+    { id: 'settings', label: 'Settings', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'settings' ? "/dashboard_icons/settings-white.svg" : "/dashboard_icons/settings.svg"} alt="Settings" className="w-5 h-5" />, alt: "Settings" }
   ];
 
   const handleDashboardNavigation = (section: string) => {
@@ -2278,11 +2278,10 @@ function RestorativeRecordBuilderForm() {
                   style={{ borderColor: '#E5E5E5' }}
                 >
                   <span className="flex justify-center items-center mb-2">
-                    <img src="dashboard_icons/continue-building.svg" alt="Progress" className="w-10 h-10" />
+                    <img src="/dashboard_icons/continue-building.svg" alt="Progress" className="w-10 h-10" />
                   </span>
                   <span className="font-medium text-black">Continue Building</span>
                 </button>
-                
                 {/* Preview Record and Check Status - Two Columns */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <button
@@ -2303,7 +2302,7 @@ function RestorativeRecordBuilderForm() {
                     style={{ borderColor: '#E5E5E5' }}
                   >
                     <span className="flex justify-center items-center mb-2">
-                      <img src="dashboard_icons/check-status.svg" alt="Check Status" className="w-10 h-10" />
+                      <img src="/dashboard_icons/check-status.svg" alt="Check Status" className="w-10 h-10" />
                     </span>
                     <span className="font-medium text-black">Check Status</span>
                   </button>
