@@ -36,6 +36,21 @@ export function MentorsSection({ mentorHook, onChange }: MentorsSectionProps) {
     mentorHook.handleEdit(id);
   };
 
+  // Handle ADD MORE button with scroll functionality
+  const handleAddMore = () => {
+    mentorHook.handleFormOpen();
+    // Scroll to the form after a small delay to ensure it's rendered
+    setTimeout(() => {
+      const formDialog = document.querySelector('.border.border-gray-200.rounded-lg.p-4.bg-gray-50');
+      if (formDialog) {
+        formDialog.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }
+    }, 100);
+  };
+
   return (
     <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
       <div className="flex justify-between items-center mb-2">
@@ -45,7 +60,7 @@ export function MentorsSection({ mentorHook, onChange }: MentorsSectionProps) {
         <button
           type="button"
           className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
-          onClick={mentorHook.handleFormOpen}
+          onClick={handleAddMore}
         >
           ADD MORE
         </button>

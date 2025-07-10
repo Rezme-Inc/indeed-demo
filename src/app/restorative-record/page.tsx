@@ -3553,7 +3553,7 @@ function RestorativeRecordBuilderForm() {
       <div className="flex">
         {/* Sidebar Navigation */}
         <nav className={`${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 right-0 z-40 w-80 bg-white border-l min-h-screen p-6 transition-transform duration-300 ease-in-out lg:transition-none overflow-y-auto`} style={{ borderColor: '#E5E5E5' }}>
-          <div className="flex">
+          <div className={`flex flex-col ${mobileMenuOpen ? 'pb-16' : 'pb-0'}`}> {/* Add extra bottom padding only when mobile menu is open */}
             <div>
               {/* Dashboard Header */}
               <div className="mb-6 hidden lg:block">
