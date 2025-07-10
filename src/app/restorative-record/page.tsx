@@ -3487,6 +3487,29 @@ function RestorativeRecordBuilderForm() {
     )
   }
 
+  // Fix: Restore body scroll if resizing to desktop while menu is open
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        // Always unlock scroll on desktop
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+      } else if (mobileMenuOpen) {
+        // If menu is open and we're on mobile, lock scroll
+        const scrollY = window.scrollY;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollY}px`;
+        document.body.style.width = '100%';
+        document.body.style.overflow = 'hidden';
+        document.body.dataset.scrollY = scrollY.toString();
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [mobileMenuOpen]);
+
   return (
     <div className="min-h-screen bg-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
       {/* Mobile Header */}
@@ -3517,125 +3540,129 @@ function RestorativeRecordBuilderForm() {
       <div className="flex">
         {/* Sidebar Navigation */}
         <nav className={`${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 right-0 z-40 w-80 bg-white border-l min-h-screen p-6 transition-transform duration-300 ease-in-out lg:transition-none overflow-y-auto`} style={{ borderColor: '#E5E5E5' }}>
-          {/* Dashboard Header */}
-          <div className="mb-6 hidden lg:block">
-            <h1 className="text-xl font-semibold text-black mb-2">My Rézme Dashboard</h1>
-            <p className="text-sm" style={{ color: '#595959' }}>
-              Track your progress and manage your restorative record
-            </p>
-          </div>
-
-          {/* Dashboard Sections */}
-          <div className="mb-8">
-            <h3 className="text-sm font-semibold text-black mb-3 uppercase tracking-wider">Dashboard</h3>
-            <ul className="space-y-1">
-              {dashboardSections.map((section) => (
-                <li key={section.id}>
-                  <button
-                    id={section.id}
-                    className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center gap-3 ${currentView === 'dashboard' && activeDashboardSection === section.id
-                      ? "text-white font-medium"
-                      : "text-black hover:bg-gray-50"
-                      }`}
-                    style={{
-                      backgroundColor: currentView === 'dashboard' && activeDashboardSection === section.id ? '#E54747' : 'transparent'
-                    }}
-                    onClick={() => {
-                      handleDashboardNavigation(section.id);
-                      setMobileMenuOpen(false);
-                    }}
-                  >
-                    <span className="text-lg">{section.icon}</span>
-                    <span className="font-medium">{section.label}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Visual Divider */}
-          <div className="mb-8">
-            <div className="border-t" style={{ borderColor: '#E5E5E5' }}></div>
-          </div>
-
-          {/* Builder Sections */}
-          <div id="record-builder-section">
-            <h3 className="text-sm font-semibold text-black mb-3 uppercase tracking-wider">Record Builder</h3>
-            {/* Required Sections */}
-            <div className="mb-2">
-              <div className="text-xs font-semibold text-gray-500 mb-1 pl-1 tracking-wider">Required</div>
-              <ul className="space-y-1">
-                {categories.map((cat, idx) => (
-                  ["introduction", "community-engagement", "rehabilitative-programs"].includes(cat) ? (
-                    <li key={cat}>
-                      <button
-                        id={`record-builder-${cat}`}
-                        className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${currentView === 'builder' && idx === currentCategory
-                          ? "bg-red-50 font-medium border"
-                          : "hover:bg-gray-50"
-                          }`}
-                        style={{
-                          color: currentView === 'builder' && idx === currentCategory ? '#E54747' : '#000000',
-                          borderColor: currentView === 'builder' && idx === currentCategory ? '#E54747' : 'transparent'
-                        }}
-                        onClick={() => {
-                          handleBuilderNavigation(idx);
-                          setMobileMenuOpen(false);
-                        }}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span>
-                            {cat
-                              .replace(/-/g, " ")
-                              .replace(/\b\w/g, (l) => l.toUpperCase())}
-                          </span>
-                          {sectionCompletion[cat] && (
-                            <span className="text-green-600 text-sm" style={{ color: '#16A34A' }}>✓</span>
-                          )}
-                        </div>
-                      </button>
-                    </li>
-                  ) : null
-                ))}
-              </ul>
-            </div>
-            {/* Recommended Sections */}
+          <div className="flex">
             <div>
-              <div className="text-xs font-semibold text-gray-500 mb-1 pl-1 tracking-wider">Recommended</div>
-              <ul className="space-y-1">
-                {categories.map((cat, idx) => (
-                  !["introduction", "community-engagement", "rehabilitative-programs"].includes(cat) ? (
-                    <li key={cat}>
+              {/* Dashboard Header */}
+              <div className="mb-6 hidden lg:block">
+                <h1 className="text-xl font-semibold text-black mb-2">My Rézme Dashboard</h1>
+                <p className="text-sm" style={{ color: '#595959' }}>
+                  Track your progress and manage your restorative record
+                </p>
+              </div>
+
+              {/* Dashboard Sections */}
+              <div className="mb-8">
+                <h3 className="text-sm font-semibold text-black mb-3 uppercase tracking-wider">Dashboard</h3>
+                <ul className="space-y-1">
+                  {dashboardSections.map((section) => (
+                    <li key={section.id}>
                       <button
-                        id={`record-builder-${cat}`}
-                        className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${currentView === 'builder' && idx === currentCategory
-                          ? "bg-red-50 font-medium border"
-                          : "hover:bg-gray-50"
+                        id={section.id}
+                        className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center gap-3 ${currentView === 'dashboard' && activeDashboardSection === section.id
+                          ? "text-white font-medium"
+                          : "text-black hover:bg-gray-50"
                           }`}
                         style={{
-                          color: currentView === 'builder' && idx === currentCategory ? '#E54747' : '#000000',
-                          borderColor: currentView === 'builder' && idx === currentCategory ? '#E54747' : 'transparent'
+                          backgroundColor: currentView === 'dashboard' && activeDashboardSection === section.id ? '#E54747' : 'transparent'
                         }}
                         onClick={() => {
-                          handleBuilderNavigation(idx);
+                          handleDashboardNavigation(section.id);
                           setMobileMenuOpen(false);
                         }}
                       >
-                        <div className="flex items-center justify-between">
-                          <span>
-                            {cat
-                              .replace(/-/g, " ")
-                              .replace(/\b\w/g, (l) => l.toUpperCase())}
-                          </span>
-                          {sectionCompletion[cat] && (
-                            <span className="text-green-600 text-sm" style={{ color: '#16A34A' }}>✓</span>
-                          )}
-                        </div>
+                        <span className="text-lg">{section.icon}</span>
+                        <span className="font-medium">{section.label}</span>
                       </button>
                     </li>
-                  ) : null
-                ))}
-              </ul>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Visual Divider */}
+              <div className="mb-8">
+                <div className="border-t" style={{ borderColor: '#E5E5E5' }}></div>
+              </div>
+
+              {/* Builder Sections */}
+              <div id="record-builder-section">
+                <h3 className="text-sm font-semibold text-black mb-3 uppercase tracking-wider">Record Builder</h3>
+                {/* Required Sections */}
+                <div className="mb-2">
+                  <div className="text-xs font-semibold text-gray-500 mb-1 pl-1 tracking-wider">Required</div>
+                  <ul className="space-y-1">
+                    {categories.map((cat, idx) => (
+                      ["introduction", "community-engagement", "rehabilitative-programs"].includes(cat) ? (
+                        <li key={cat}>
+                          <button
+                            id={`record-builder-${cat}`}
+                            className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${currentView === 'builder' && idx === currentCategory
+                              ? "bg-red-50 font-medium border"
+                              : "hover:bg-gray-50"
+                              }`}
+                            style={{
+                              color: currentView === 'builder' && idx === currentCategory ? '#E54747' : '#000000',
+                              borderColor: currentView === 'builder' && idx === currentCategory ? '#E54747' : 'transparent'
+                            }}
+                            onClick={() => {
+                              handleBuilderNavigation(idx);
+                              setMobileMenuOpen(false);
+                            }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span>
+                                {cat
+                                  .replace(/-/g, " ")
+                                  .replace(/\b\w/g, (l) => l.toUpperCase())}
+                              </span>
+                              {sectionCompletion[cat] && (
+                                <span className="text-green-600 text-sm" style={{ color: '#16A34A' }}>✓</span>
+                              )}
+                            </div>
+                          </button>
+                        </li>
+                      ) : null
+                    ))}
+                  </ul>
+                </div>
+                {/* Recommended Sections */}
+                <div>
+                  <div className="text-xs font-semibold text-gray-500 mb-1 pl-1 tracking-wider">Recommended</div>
+                  <ul className="space-y-1">
+                    {categories.map((cat, idx) => (
+                      !["introduction", "community-engagement", "rehabilitative-programs"].includes(cat) ? (
+                        <li key={cat}>
+                          <button
+                            id={`record-builder-${cat}`}
+                            className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${currentView === 'builder' && idx === currentCategory
+                              ? "bg-red-50 font-medium border"
+                              : "hover:bg-gray-50"
+                              }`}
+                            style={{
+                              color: currentView === 'builder' && idx === currentCategory ? '#E54747' : '#000000',
+                              borderColor: currentView === 'builder' && idx === currentCategory ? '#E54747' : 'transparent'
+                            }}
+                            onClick={() => {
+                              handleBuilderNavigation(idx);
+                              setMobileMenuOpen(false);
+                            }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span>
+                                {cat
+                                  .replace(/-/g, " ")
+                                  .replace(/\b\w/g, (l) => l.toUpperCase())}
+                              </span>
+                              {sectionCompletion[cat] && (
+                                <span className="text-green-600 text-sm" style={{ color: '#16A34A' }}>✓</span>
+                              )}
+                            </div>
+                          </button>
+                        </li>
+                      ) : null
+                    ))}
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         </nav>
