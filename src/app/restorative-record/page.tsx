@@ -2261,7 +2261,8 @@ function RestorativeRecordBuilderForm() {
             {/* Quick Actions */}
             <div className="bg-white border rounded-xl p-4 lg:p-6" style={{ borderColor: '#E5E5E5' }}>
               <h3 className="text-lg font-semibold text-black mb-4">Quick Actions</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-4">
+                {/* Continue Building - Full Width */}
                 <button
                   id="continue-building-btn"
                   onClick={() => {
@@ -2273,7 +2274,7 @@ function RestorativeRecordBuilderForm() {
                       handleBuilderNavigation(currentCategory);
                     }
                   }}
-                  className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
+                  className="w-full p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
                   style={{ borderColor: '#E5E5E5' }}
                 >
                   <span className="flex justify-center items-center mb-2">
@@ -2281,28 +2282,32 @@ function RestorativeRecordBuilderForm() {
                   </span>
                   <span className="font-medium text-black">Continue Building</span>
                 </button>
-                <button
-                  id="preview-record-btn"
-                  onClick={handleViewProfile}
-                  className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
-                  style={{ borderColor: '#E5E5E5' }}
-                >
-                  <span className="flex justify-center items-center mb-2">
-                    <img src="dashboard_icons/preview.svg" alt="Preview" className="w-10 h-10" />
-                  </span>
-                  <span className="font-medium text-black">Preview Record</span>
-                </button>
-                <button
-                  id="check-status-btn"
-                  onClick={() => handleDashboardNavigation('status')}
-                  className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
-                  style={{ borderColor: '#E5E5E5' }}
-                >
-                  <span className="flex justify-center items-center mb-2">
-                    <img src="dashboard_icons/check-status.svg" alt="Check Status" className="w-10 h-10" />
-                  </span>
-                  <span className="font-medium text-black">Check Status</span>
-                </button>
+                
+                {/* Preview Record and Check Status - Two Columns */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <button
+                    id="preview-record-btn"
+                    onClick={handleViewProfile}
+                    className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
+                    style={{ borderColor: '#E5E5E5' }}
+                  >
+                    <span className="flex justify-center items-center mb-2">
+                      <img src="dashboard_icons/preview.svg" alt="Preview" className="w-10 h-10" />
+                    </span>
+                    <span className="font-medium text-black">Preview Record</span>
+                  </button>
+                  <button
+                    id="check-status-btn"
+                    onClick={() => handleDashboardNavigation('status')}
+                    className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
+                    style={{ borderColor: '#E5E5E5' }}
+                  >
+                    <span className="flex justify-center items-center mb-2">
+                      <img src="dashboard_icons/check-status.svg" alt="Check Status" className="w-10 h-10" />
+                    </span>
+                    <span className="font-medium text-black">Check Status</span>
+                  </button>
+                </div>
               </div>
             </div>
             <div className="bg-white border rounded-xl p-4 lg:p-6" style={{ borderColor: '#E5E5E5' }}>
