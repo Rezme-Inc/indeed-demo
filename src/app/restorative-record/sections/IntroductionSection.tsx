@@ -254,7 +254,7 @@ export const IntroductionSection: React.FC<IntroductionSectionProps> = ({
         {/* Social Media Profiles */}
         <div className="mb-6">
           <h3 className="font-medium text-black mb-3">Social Media Profiles</h3>
-          <div className="flex gap-2 mb-4">
+          <div className="flex flex-col [@media(min-width:425px)]:flex-row gap-2 mb-4">
             <select
               value={selectedPlatform}
               onChange={e => setSelectedPlatform(e.target.value)}
