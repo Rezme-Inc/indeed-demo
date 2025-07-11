@@ -3,7 +3,7 @@
 import HRAdminSelector from "@/components/HRAdminSelector";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 // Main dashboard content component that can be exported
 function UserDashboardContent() {
@@ -62,6 +62,23 @@ function UserDashboardContent() {
     signature: "",
     signature_date: "",
   });
+
+  const tabList = ["personal", "contact", "privacy", "hr-permissions"];
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  useEffect(() => {
+    const activeTabIndex = tabList.indexOf(activeTab);
+    if (!scrollContainerRef.current || !tabRefs.current[activeTabIndex]) return;
+    const container = scrollContainerRef.current;
+    const tab = tabRefs.current[activeTabIndex];
+    const scrollLeft =
+      tab.offsetLeft -
+      container.offsetLeft -
+      container.clientWidth / 2 +
+      tab.clientWidth / 2;
+    container.scrollTo({ left: scrollLeft, behavior: "smooth" });
+  }, [activeTab]);
 
   useEffect(() => {
     checkUser();
@@ -451,14 +468,15 @@ function UserDashboardContent() {
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6" aria-label="Tabs">
-            {["personal", "contact", "privacy", "hr-permissions"].map(
-              (tab) => (
+        <div className="border-b border-gray-200 relative">
+          <div className="overflow-x-auto hide-scrollbar" ref={scrollContainerRef}>
+            <nav className="flex space-x-4 sm:space-x-8 px-2 sm:px-6 whitespace-nowrap min-w-max" aria-label="Tabs">
+              {tabList.map((tab, idx) => (
                 <button
                   key={tab}
+                  ref={el => { tabRefs.current[idx] = el; }}
                   onClick={() => setActiveTab(tab)}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab
+                  className={`flex-shrink-0 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab
                       ? "border-primary text-primary"
                       : "border-transparent text-secondary hover:text-black hover:border-gray-300"
                     }`}
@@ -472,9 +490,9 @@ function UserDashboardContent() {
                         ? "Settings"
                         : "HR Access"}
                 </button>
-              )
-            )}
-          </nav>
+              ))}
+            </nav>
+          </div>
         </div>
 
         {/* Tab Content */}
@@ -1173,7 +1191,7 @@ export default function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
+      {/* Header
       <header className="border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -1188,7 +1206,7 @@ export default function UserDashboard() {
             </div>
           </div>
         </div>
-      </header>
+      </header> */}
 
       {/* Main Content */}
       <UserDashboardContent />
