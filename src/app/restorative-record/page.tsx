@@ -2375,11 +2375,15 @@ function RestorativeRecordBuilderForm() {
                     connectedHRAdmins.map((admin) => (
                       <div key={admin.id} className="border rounded-lg" style={{ borderColor: '#E5E5E5' }}>
                         {/* Always Visible Header */}
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4">
+                        <div className="flex items-center justify-between gap-3 p-4">
                           <div className="flex items-center gap-3">
                             <div>
-                              <h4 className="font-medium text-black">{admin.company}</h4>
-                              <p className="text-sm" style={{ color: '#595959' }}>
+                              {/* Company Name */}
+                              <h5 className="font-medium text-black truncate max-w-[140px] block sm:hidden" title={admin.company}>{admin.company}</h5>
+                              <h5 className="font-medium text-black hidden sm:block">{admin.company}</h5>
+                              {/* HR Admin Name */}
+                              <p className="text-sm truncate max-w-[140px] block sm:hidden" style={{ color: '#595959' }} title={`${admin.first_name} ${admin.last_name}`}>{admin.first_name} {admin.last_name}</p>
+                              <p className="text-sm hidden sm:block" style={{ color: '#595959' }}>
                                 {admin.first_name} {admin.last_name}
                               </p>
                               <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>
@@ -2985,8 +2989,12 @@ function RestorativeRecordBuilderForm() {
                         {allHRAdmins.filter(admin => admin.hasAccess).map((admin) => (
                           <div key={admin.id} className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: '#F8F9FA', border: '1px solid #E5E5E5' }}>
                             <div className="flex-1">
-                              <h5 className="font-medium text-black">{admin.company}</h5>
-                              <p className="text-sm" style={{ color: '#595959' }}>
+                              {/* Company Name */}
+                              <h5 className="font-medium text-black truncate max-w-[140px] block sm:hidden" title={admin.company}>{admin.company}</h5>
+                              <h5 className="font-medium text-black hidden sm:block">{admin.company}</h5>
+                              {/* HR Admin Name and Email */}
+                              <p className="text-sm truncate max-w-[140px] block sm:hidden" style={{ color: '#595959' }} title={`${admin.first_name} ${admin.last_name} • ${admin.email}`}>{admin.first_name} {admin.last_name} • {admin.email}</p>
+                              <p className="text-sm hidden sm:block" style={{ color: '#595959' }}>
                                 {admin.first_name} {admin.last_name} • {admin.email}
                               </p>
                               <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>
@@ -3035,8 +3043,12 @@ function RestorativeRecordBuilderForm() {
                         {notifications.filter(n => n.type === 'request').map((notification) => (
                           <div key={notification.id} className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: '#F8F9FA', border: '1px solid #E5E5E5' }}>
                             <div className="flex-1">
-                              <h5 className="font-medium text-black">{notification.admin.company}</h5>
-                              <p className="text-sm" style={{ color: '#595959' }}>
+                              {/* Company Name */}
+                              <h5 className="font-medium text-black truncate max-w-[140px] block sm:hidden" title={notification.admin.company}>{notification.admin.company}</h5>
+                              <h5 className="font-medium text-black hidden sm:block">{notification.admin.company}</h5>
+                              {/* HR Admin Name and Email */}
+                              <p className="text-sm truncate max-w-[140px] block sm:hidden" style={{ color: '#595959' }} title={`${notification.admin.first_name} ${notification.admin.last_name} • ${notification.admin.email}`}>{notification.admin.first_name} {notification.admin.last_name} • {notification.admin.email}</p>
+                              <p className="text-sm hidden sm:block" style={{ color: '#595959' }}>
                                 {notification.admin.first_name} {notification.admin.last_name} • {notification.admin.email}
                               </p>
                               <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>
