@@ -427,7 +427,7 @@ function UserDashboardContent() {
       <div className="bg-white rounded-lg border border-gray-200">
         {/* Profile Header */}
         <div className="p-6 border-b border-gray-200">
-          <div className="flex justify-between">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
             <div className="flex items-center space-x-4">
               <div className="relative">
                 <img
@@ -459,7 +459,7 @@ function UserDashboardContent() {
             </div>
             <button
               onClick={handleSignOut}
-              className="px-5 py-2 text-base font-medium rounded-xl shadow hover:opacity-90 border ml-auto"
+              className="px-5 py-2 text-base font-medium rounded-xl shadow hover:opacity-90 border md:ml-auto"
               style={{ color: '#E54747', backgroundColor: '#FFFFFF', borderColor: '#E54747' }}
             >
               Sign Out
