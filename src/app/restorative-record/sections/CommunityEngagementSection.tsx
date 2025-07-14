@@ -67,7 +67,7 @@ export function CommunityEngagementSection({
 
   return (
     <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
-      <div className="flex justify-between items-center mb-2">
+      <div className="flex flex-col items-start mb-2 md:flex-row md:justify-between md:items-center md:justify-center">
         <h2 className="text-2xl font-semibold text-black">
           Community Engagement
         </h2>
