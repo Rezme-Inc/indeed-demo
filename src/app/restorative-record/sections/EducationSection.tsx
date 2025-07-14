@@ -66,7 +66,7 @@ export function EducationSection({
   return (
     <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
       <div className="flex flex-col items-start mb-2 md:flex-row md:justify-between md:items-center md:justify-center">
-        <h2 className="text-2xl font-semibold text-black">Education</h2>
+        <h2 className="text-2xl font-semibold text-black mb-2 md:mb-0">Education</h2>
         <button
           type="button"
           className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"

@@ -202,7 +202,7 @@ export const IntroductionSection: React.FC<IntroductionSectionProps> = ({
   return (
     <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
       <div className="flex flex-col items-start mb-2 md:flex-row md:justify-between md:items-center md:justify-center">
-        <h2 className="text-2xl font-semibold text-black">Introduction</h2>
+        <h2 className="text-2xl font-semibold text-black mb-2 md:mb-0">Introduction</h2>
         {hasIntroductionContent(formData) || showForm ? (
           <div className="px-4 py-5" style={{ minWidth: 92 }} aria-hidden="true" />
         ) : (

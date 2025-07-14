@@ -54,7 +54,7 @@ export function MentorsSection({ mentorHook, onChange }: MentorsSectionProps) {
   return (
     <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
       <div className="flex flex-col items-start mb-2 md:flex-row md:justify-between md:items-center md:justify-center">
-        <h2 className="text-2xl font-semibold text-black">
+        <h2 className="text-2xl font-semibold text-black mb-2 md:mb-0">
           Mentors & Recommendations
         </h2>
         <button
