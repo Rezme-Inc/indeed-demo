@@ -2339,7 +2339,7 @@ function RestorativeRecordBuilderForm() {
                       </h3>
                       <div className="flex items-center gap-2">
                         {sectionCompletion[cat] && (
-                          <span className="text-green-600 text-sm" style={{ color: '#16A34A' }}>✓</span>
+                          <span className="text-green-600 text-sm ml-3" style={{ color: '#16A34A' }}>✓</span>
                         )}
                         <button
                           onClick={() => handleBuilderNavigation(idx)}
