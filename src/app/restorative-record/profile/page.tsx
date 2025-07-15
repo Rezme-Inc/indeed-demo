@@ -440,15 +440,10 @@ export default function MyRestorativeRecordProfile() {
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-6 w-6"
                       fill="none"
-                      viewBox="0 0 24 24"
+                      viewBox="0 0 512 512"
                       stroke="currentColor"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
+                      <path d="m130.91 327.37l145.57-165.37c12.389-14.074 52.926-3.3688 67 9.0206 13.37 11.77 29.832 51.242 17.442 65.316l-207.52 235.74c-24.778 28.148-86.5 23.773-109.37 3.6403s-35.034-80.802-10.256-108.95l297.34-337.77c18.584-21.111 82.907-1.9558 114.57 25.92s58.821 89.252 40.237 110.36l-235.4 267.4"/>
                     </svg>
                   </button>
                 </div>
@@ -882,14 +877,14 @@ export default function MyRestorativeRecordProfile() {
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
                   fill="none"
-                  viewBox="0 0 24 24"
+                  viewBox="0 0 512 512"
                   stroke="currentColor"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                    strokeWidth={40}
+                    d="m 130.91 327.37 l 145.57 -165.37 c 12.389 -14.074 52.926 -3.3688 67 9.0206 c 13.37 11.77 29.832 51.242 17.442 65.316 l -207.52 235.74 c -24.778 28.148 -86.5 23.773 -109.37 3.6403 s -35.034 -80.802 -10.256 -108.95 l 297.34 -337.77 c 18.584 -21.111 82.907 -1.9558 114.57 25.92 s 58.821 89.252 40.237 110.36 l -235.4 267.4"
                   />
                 </svg>
               </a>
@@ -980,14 +975,14 @@ export default function MyRestorativeRecordProfile() {
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
                   fill="none"
-                  viewBox="0 0 24 24"
+                  viewBox="0 0 512 512"
                   stroke="currentColor"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                    strokeWidth={40}
+                    d="m 130.91 327.37 l 145.57 -165.37 c 12.389 -14.074 52.926 -3.3688 67 9.0206 c 13.37 11.77 29.832 51.242 17.442 65.316 l -207.52 235.74 c -24.778 28.148 -86.5 23.773 -109.37 3.6403 s -35.034 -80.802 -10.256 -108.95 l 297.34 -337.77 c 18.584 -21.111 82.907 -1.9558 114.57 25.92 s 58.821 89.252 40.237 110.36 l -235.4 267.4"
                   />
                 </svg>
               </a>
@@ -1063,14 +1058,14 @@ export default function MyRestorativeRecordProfile() {
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
                   fill="none"
-                  viewBox="0 0 24 24"
+                  viewBox="0 0 512 512"
                   stroke="currentColor"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                    strokeWidth={40}
+                    d="m 130.91 327.37 l 145.57 -165.37 c 12.389 -14.074 52.926 -3.3688 67 9.0206 c 13.37 11.77 29.832 51.242 17.442 65.316 l -207.52 235.74 c -24.778 28.148 -86.5 23.773 -109.37 3.6403 s -35.034 -80.802 -10.256 -108.95 l 297.34 -337.77 c 18.584 -21.111 82.907 -1.9558 114.57 25.92 s 58.821 89.252 40.237 110.36 l -235.4 267.4"
                   />
                 </svg>
               </a>
@@ -1153,14 +1148,14 @@ export default function MyRestorativeRecordProfile() {
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
                   fill="none"
-                  viewBox="0 0 24 24"
+                  viewBox="0 0 512 512"
                   stroke="currentColor"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                    strokeWidth={40}
+                    d="m 130.91 327.37 l 145.57 -165.37 c 12.389 -14.074 52.926 -3.3688 67 9.0206 c 13.37 11.77 29.832 51.242 17.442 65.316 l -207.52 235.74 c -24.778 28.148 -86.5 23.773 -109.37 3.6403 s -35.034 -80.802 -10.256 -108.95 l 297.34 -337.77 c 18.584 -21.111 82.907 -1.9558 114.57 25.92 s 58.821 89.252 40.237 110.36 l -235.4 267.4"
                   />
                 </svg>
               </a>
@@ -1253,14 +1248,14 @@ export default function MyRestorativeRecordProfile() {
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
                   fill="none"
-                  viewBox="0 0 24 24"
+                  viewBox="0 0 512 512"
                   stroke="currentColor"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                    strokeWidth={40}
+                    d="m 130.91 327.37 l 145.57 -165.37 c 12.389 -14.074 52.926 -3.3688 67 9.0206 c 13.37 11.77 29.832 51.242 17.442 65.316 l -207.52 235.74 c -24.778 28.148 -86.5 23.773 -109.37 3.6403 s -35.034 -80.802 -10.256 -108.95 l 297.34 -337.77 c 18.584 -21.111 82.907 -1.9558 114.57 25.92 s 58.821 89.252 40.237 110.36 l -235.4 267.4"
                   />
                 </svg>
               </a>
@@ -1354,14 +1349,14 @@ export default function MyRestorativeRecordProfile() {
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
                   fill="none"
-                  viewBox="0 0 24 24"
+                  viewBox="0 0 512 512"
                   stroke="currentColor"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                    strokeWidth={40}
+                    d="m 130.91 327.37 l 145.57 -165.37 c 12.389 -14.074 52.926 -3.3688 67 9.0206 c 13.37 11.77 29.832 51.242 17.442 65.316 l -207.52 235.74 c -24.778 28.148 -86.5 23.773 -109.37 3.6403 s -35.034 -80.802 -10.256 -108.95 l 297.34 -337.77 c 18.584 -21.111 82.907 -1.9558 114.57 25.92 s 58.821 89.252 40.237 110.36 l -235.4 267.4"
                   />
                 </svg>
               </a>
@@ -1444,14 +1439,14 @@ export default function MyRestorativeRecordProfile() {
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
                   fill="none"
-                  viewBox="0 0 24 24"
+                  viewBox="0 0 512 512"
                   stroke="currentColor"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                    strokeWidth={40}
+                    d="m 130.91 327.37 l 145.57 -165.37 c 12.389 -14.074 52.926 -3.3688 67 9.0206 c 13.37 11.77 29.832 51.242 17.442 65.316 l -207.52 235.74 c -24.778 28.148 -86.5 23.773 -109.37 3.6403 s -35.034 -80.802 -10.256 -108.95 l 297.34 -337.77 c 18.584 -21.111 82.907 -1.9558 114.57 25.92 s 58.821 89.252 40.237 110.36 l -235.4 267.4"
                   />
                 </svg>
               </a>
@@ -1561,14 +1556,14 @@ export default function MyRestorativeRecordProfile() {
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
                   fill="none"
-                  viewBox="0 0 24 24"
+                  viewBox="0 0 512 512"
                   stroke="currentColor"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                    strokeWidth={40}
+                    d="m 130.91 327.37 l 145.57 -165.37 c 12.389 -14.074 52.926 -3.3688 67 9.0206 c 13.37 11.77 29.832 51.242 17.442 65.316 l -207.52 235.74 c -24.778 28.148 -86.5 23.773 -109.37 3.6403 s -35.034 -80.802 -10.256 -108.95 l 297.34 -337.77 c 18.584 -21.111 82.907 -1.9558 114.57 25.92 s 58.821 89.252 40.237 110.36 l -235.4 267.4"
                   />
                 </svg>
               </a>
@@ -1674,14 +1669,14 @@ export default function MyRestorativeRecordProfile() {
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
                   fill="none"
-                  viewBox="0 0 24 24"
+                  viewBox="0 0 512 512"
                   stroke="currentColor"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                    strokeWidth={40}
+                    d="m 130.91 327.37 l 145.57 -165.37 c 12.389 -14.074 52.926 -3.3688 67 9.0206 c 13.37 11.77 29.832 51.242 17.442 65.316 l -207.52 235.74 c -24.778 28.148 -86.5 23.773 -109.37 3.6403 s -35.034 -80.802 -10.256 -108.95 l 297.34 -337.77 c 18.584 -21.111 82.907 -1.9558 114.57 25.92 s 58.821 89.252 40.237 110.36 l -235.4 267.4"
                   />
                 </svg>
               </a>
@@ -1766,14 +1761,14 @@ export default function MyRestorativeRecordProfile() {
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
                   fill="none"
-                  viewBox="0 0 24 24"
+                  viewBox="0 0 512 512"
                   stroke="currentColor"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                    strokeWidth={40}
+                    d="m 130.91 327.37 l 145.57 -165.37 c 12.389 -14.074 52.926 -3.3688 67 9.0206 c 13.37 11.77 29.832 51.242 17.442 65.316 l -207.52 235.74 c -24.778 28.148 -86.5 23.773 -109.37 3.6403 s -35.034 -80.802 -10.256 -108.95 l 297.34 -337.77 c 18.584 -21.111 82.907 -1.9558 114.57 25.92 s 58.821 89.252 40.237 110.36 l -235.4 267.4"
                   />
                 </svg>
               </a>
