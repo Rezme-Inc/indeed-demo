@@ -11,7 +11,7 @@ export function UserDashboardContent() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState("wotc");
+  const [activeTab, setActiveTab] = useState("personal");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [selectedHRAdmins, setSelectedHRAdmins] = useState<string[]>([]);
@@ -352,8 +352,48 @@ export function UserDashboardContent() {
   }
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-white rounded-lg shadow-sm border border-gray-200">
+        {/* Profile Header */}
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <img
+                  src={
+                    avatarPreview ||
+                    `https://ui-avatars.com/api/?name=${profileData.first_name}+${profileData.last_name}&background=E54747&color=fff`
+                  }
+                  alt="Avatar"
+                  className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+                />
+                <label className="absolute bottom-0 right-0 bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors">
+                  <span className="text-sm">+</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-black">
+                  {profileData.first_name || profileData.last_name
+                    ? `${profileData.first_name} ${profileData.last_name}`
+                    : "Welcome!"}
+                </h2>
+                <p className="text-secondary">{user?.email}</p>
+              </div>
+            </div>
+            <button
+              onClick={handleSignOut}
+              className="px-5 py-2 text-base font-medium rounded-xl shadow hover:opacity-90 border md:ml-auto"
+              style={{ color: '#E54747', backgroundColor: '#FFFFFF', borderColor: '#E54747' }}
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
         {/* Tabs */}
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8 px-6">
@@ -979,7 +1019,6 @@ export function UserDashboardContent() {
             </div>
           )}
         </div>
-      </div>
     </main>
   );
 } 
