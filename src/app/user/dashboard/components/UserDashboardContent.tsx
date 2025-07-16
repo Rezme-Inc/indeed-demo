@@ -3,7 +3,7 @@
 import HRAdminSelector from "@/components/HRAdminSelector";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 export function UserDashboardContent() {
   const router = useRouter();
@@ -61,6 +61,23 @@ export function UserDashboardContent() {
     signature: "",
     signature_date: "",
   });
+
+  const tabList = ["personal", "contact", "wotc", "hr-permissions"];
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  useEffect(() => {
+    const activeTabIndex = tabList.indexOf(activeTab);
+    if (!scrollContainerRef.current || !tabRefs.current[activeTabIndex]) return;
+    const container = scrollContainerRef.current;
+    const tab = tabRefs.current[activeTabIndex];
+    const scrollLeft =
+      tab.offsetLeft -
+      container.offsetLeft -
+      container.clientWidth / 2 +
+      tab.clientWidth / 2;
+    container.scrollTo({ left: scrollLeft, behavior: "smooth" });
+  }, [activeTab]);
 
   useEffect(() => {
     checkUser();
@@ -395,49 +412,38 @@ export function UserDashboardContent() {
           </div>
         </div>
         {/* Tabs */}
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8 px-6">
-            <button
-              onClick={() => setActiveTab("personal")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "personal"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-secondary hover:text-black hover:border-gray-300"
-              }`}
+        <div className="border-b border-gray-200 relative">
+          <div
+            className="w-full overflow-x-auto hide-scrollbar"
+            ref={scrollContainerRef}
+            style={{ WebkitOverflowScrolling: "touch" }}
+          >
+            <nav
+              className="flex w-max space-x-4 sm:space-x-8 px-2 sm:px-6 whitespace-nowrap"
+              aria-label="Tabs"
             >
-              Personal Information
-            </button>
-            <button
-              onClick={() => setActiveTab("contact")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "contact"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-secondary hover:text-black hover:border-gray-300"
-              }`}
-            >
-              Contact Information
-            </button>
-            <button
-              onClick={() => setActiveTab("wotc")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "wotc"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-secondary hover:text-black hover:border-gray-300"
-              }`}
-            >
-              WOTC Survey
-            </button>
-            <button
-              onClick={() => setActiveTab("hr-permissions")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "hr-permissions"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-secondary hover:text-black hover:border-gray-300"
-              }`}
-            >
-              HR Permissions
-            </button>
-          </nav>
+              {tabList.map((tab, idx) => (
+                <button
+                  key={tab}
+                  ref={el => { tabRefs.current[idx] = el; }}
+                  onClick={() => setActiveTab(tab)}
+                  className={`flex-shrink-0 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab
+                      ? "border-primary text-primary"
+                      : "border-transparent text-secondary hover:text-black hover:border-gray-300"
+                    }`}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}{" "}
+                  {tab === "personal"
+                    ? "Info"
+                    : tab === "contact"
+                      ? "Info"
+                      : tab === "privacy"
+                        ? "Settings"
+                        : "HR Access"}
+                </button>
+              ))}
+            </nav>
+          </div>
         </div>
 
         {/* Tab Content */}
