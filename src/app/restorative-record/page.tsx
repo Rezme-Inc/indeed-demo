@@ -64,6 +64,15 @@ import {
 // Import hooks
 import { useFormCRUD } from "./hooks/useFormCRUD";
 
+// Add types for tutorial steps
+type TutorialStep = {
+  targetId: string;
+  title: string;
+  description: string;
+  dashboardSection: string | null;
+  requiresSidebar: boolean;
+};
+
 function RestorativeRecordBuilderForm() {
   const router = useRouter();
   const [currentCategory, setCurrentCategory] = useState(0);
@@ -116,6 +125,7 @@ function RestorativeRecordBuilderForm() {
   const [hoverTutorialActive, setHoverTutorialActive] = useState(false);
   const [helpMenuOpen, setHelpMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [tooltipReady, setTooltipReady] = useState(false);
 
   // Disable body scroll when mobile menu is open
   useEffect(() => {
@@ -154,150 +164,174 @@ function RestorativeRecordBuilderForm() {
     };
   }, [mobileMenuOpen]);
 
-  const tutorialSteps = [
+  const tutorialSteps: TutorialStep[] = [
     {
       targetId: "progress",
       title: "Progress Tracking",
       description: "See your overall progress as you build your restorative record.",
       dashboardSection: 'progress',
+      requiresSidebar: true,
     },
     {
       targetId: "continue-building-btn",
       title: "Continue Building",
       description: "Continue building your restorative record.",
       dashboardSection: 'progress',
+      requiresSidebar: false,
     },
     {
       targetId: "preview-record-btn",
       title: "Preview Record",
       description: "Preview what your restorative record will look like.",
       dashboardSection: 'progress',
+      requiresSidebar: false,
     },
     {
       targetId: "check-status-btn",
       title: "Status Updates",
       description: "Check who can see your restorative record and where you're at in the hiring process.",
       dashboardSection: 'progress',
+      requiresSidebar: false,
     },
     {
       targetId: "status",
       title: "Status Updates",
       description: "Also moves you to the Status Updates page.",
       dashboardSection: 'status',
+      requiresSidebar: true,
     },
     {
       targetId: "admin-details-btn",
       title: "Show Details",
       description: "Show specific HR admin's progress.",
       dashboardSection: 'status',
+      requiresSidebar: false,
     },
     {
       targetId: "assessment-progress",
       title: "Assesment Progress",
       description: "See where you are in the process.",
       dashboardSection: 'status',
+      requiresSidebar: false,
     },
     {
       targetId: "deadline-dropdown",
       title: "Estamated Timeline (IMPORTANT)",
       description: "This is where you see who is waiting on who, and how much time each side has to submit documents.",
       dashboardSection: 'status',
+      requiresSidebar: false,
     },
     {
       targetId: "notifications",
       title: "Notifications",
       description: "View important notifications and HR admin access requests.",
       dashboardSection: 'notifications',
+      requiresSidebar: true,
     },
     {
       targetId: "grant-access",
       title: "Grant Access",
       description: "You must accept an HR admin's access request to give them your restorative record.",
       dashboardSection: 'notifications',
+      requiresSidebar: false,
     },
     {
       targetId: "legal-resources",
       title: "Legal Resources",
       description: "Access information about your rights in fair chance hiring or file a complaint.",
-      dashboardSection: "legal-resources"
+      dashboardSection: "legal-resources",
+      requiresSidebar: true,
     },
     {
       targetId: "settings",
       title: "Settings",
       description: "Make changes to your profile",
-      dashboardSection: "settings"
+      dashboardSection: "settings",
+      requiresSidebar: true,
     },
     {
       targetId: "my-restorative-record-btn",
       title: "My Restorative Record",
       description: "Preview your completed restorative record at any time.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
     {
       targetId: "record-builder-section",
       title: "Record Builder Sidebar",
       description: "This is the Record Builder. Here you can see all the sections you need to complete for your restorative record. Required sections are at the top, recommended sections below.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
     {
       targetId: "record-builder-introduction",
       title: "Introduction (Required)",
       description: "Start by telling your story in the Introduction section. Click here to begin.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
     {
       targetId: "record-builder-community-engagement",
       title: "Community Engagement (Required)",
       description: "Share your community involvement and contributions.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
     {
       targetId: "record-builder-rehabilitative-programs",
       title: "Rehabilitative Programs (Required)",
       description: "List any rehabilitative or educational programs you've completed.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
     {
       targetId: "record-builder-education",
       title: "Education (Recommended)",
       description: "Add your educational background.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
     {
       targetId: "record-builder-employment-history",
       title: "Employment History (Recommended)",
       description: "Document your work experience.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
     {
       targetId: "record-builder-skills",
       title: "Skills (Recommended)",
       description: "Highlight your skills and certifications.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
     {
       targetId: "record-builder-microcredentials",
       title: "Microcredentials (Recommended)",
       description: "Showcase any microcredentials or badges earned.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
     {
       targetId: "record-builder-mentors",
       title: "Mentors (Recommended)",
       description: "List mentors who have supported your journey.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
     {
       targetId: "record-builder-personal-achievements",
       title: "Personal Achievements (Recommended)",
       description: "Share your awards and personal achievements.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
     {
       targetId: "record-builder-hobbies",
       title: "Hobbies (Recommended)",
       description: "Add your hobbies and interests.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
   ];
 
@@ -3532,6 +3566,86 @@ function RestorativeRecordBuilderForm() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [mobileMenuOpen]);
+
+  // --- MOBILE TUTORIAL LOGIC (REDONE FOR RELIABILITY) ---
+  // Effect 1: Open/close the sidebar as needed for the current tutorial step
+  useEffect(() => {
+    if (!tutorialStep) return;
+    const step = tutorialSteps[tutorialStep - 1];
+    if (!step) return;
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      if (step.requiresSidebar && !mobileMenuOpen) {
+        setMobileMenuOpen(true);
+      } else if (!step.requiresSidebar && mobileMenuOpen) {
+        setMobileMenuOpen(false);
+      }
+    }
+  }, [tutorialStep]);
+
+  // Effect 2: Only after the sidebar is open (if needed), search for the target element and set tooltipReady
+  useEffect(() => {
+    setTooltipReady(false);
+    if (!tutorialStep) return;
+    const step = tutorialSteps[tutorialStep - 1];
+    if (!step) return;
+
+    // Helper to search for the element and set tooltipReady
+    function searchForTargetElement() {
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      let observer: MutationObserver | undefined;
+      let attempts = 0;
+      const maxAttempts = 20;
+      function tryFind() {
+        const el = document.getElementById(step.targetId);
+        if (el) {
+          // Scroll into view on mobile
+          if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+            el.scrollIntoView({ behavior: 'auto', block: 'center' });
+          }
+          setTimeout(() => setTooltipReady(true), 80); // Give a paint frame
+          if (observer) observer.disconnect();
+          return;
+        }
+        if (attempts < maxAttempts) {
+          attempts++;
+          timeoutId = setTimeout(tryFind, 120);
+        } else if (observer) {
+          observer.disconnect();
+        }
+      }
+      observer = new MutationObserver(() => {
+        const el = document.getElementById(step.targetId);
+        if (el) {
+          if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+            el.scrollIntoView({ behavior: 'auto', block: 'center' });
+          }
+          setTimeout(() => setTooltipReady(true), 80);
+          if (observer) observer.disconnect();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+      tryFind();
+      return () => {
+        if (timeoutId) clearTimeout(timeoutId);
+        if (observer) observer.disconnect();
+      };
+    }
+
+    // If step requires sidebar on mobile, only search after menu is open
+    if (step.requiresSidebar && typeof window !== 'undefined' && window.innerWidth < 1024) {
+      if (!mobileMenuOpen) return; // Wait for menu to open
+      // Add a short delay to ensure sidebar is painted
+      const delay = setTimeout(() => {
+        const cleanup = searchForTargetElement();
+        // Clean up function
+        return cleanup;
+      }, 180);
+      return () => clearTimeout(delay);
+    } else {
+      // For non-sidebar steps or desktop, search immediately
+      return searchForTargetElement();
+    }
+  }, [tutorialStep, mobileMenuOpen]);
 
   return (
     <div className="min-h-screen bg-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
