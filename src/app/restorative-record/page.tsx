@@ -254,7 +254,7 @@ function RestorativeRecordBuilderForm() {
       title: "My Restorative Record",
       description: "Preview your completed restorative record at any time.",
       dashboardSection: null,
-      requiresSidebar: true,
+      requiresSidebar: false,
     },
     {
       targetId: "record-builder-section",
@@ -3313,7 +3313,7 @@ function RestorativeRecordBuilderForm() {
           onClick={() => {
             // On mobile, directly start tutorial. On desktop, toggle dropdown
             if (window.innerWidth < 1024) {
-              setTutorialStep(1);
+              startTutorial();
               setHoverTutorialActive(false);
             } else {
               setHelpMenuOpen((v) => !v);
@@ -3335,7 +3335,7 @@ function RestorativeRecordBuilderForm() {
               style={{ fontFamily: 'Poppins, sans-serif', color: '#E54747', borderBottom: '1px solid #F3F4F6' }}
               onClick={() => {
                 setHelpMenuOpen(false);
-                setTutorialStep(1); // or 0 if you use 0-based
+                startTutorial();
                 setHoverTutorialActive(false);
               }}
             >
@@ -3600,7 +3600,7 @@ function RestorativeRecordBuilderForm() {
         if (el) {
           // Scroll into view on mobile
           if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-            el.scrollIntoView({ behavior: 'auto', block: 'center' });
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
           setTimeout(() => setTooltipReady(true), 80); // Give a paint frame
           if (observer) observer.disconnect();
@@ -3617,7 +3617,7 @@ function RestorativeRecordBuilderForm() {
         const el = document.getElementById(step.targetId);
         if (el) {
           if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-            el.scrollIntoView({ behavior: 'auto', block: 'center' });
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
           setTimeout(() => setTooltipReady(true), 80);
           if (observer) observer.disconnect();
@@ -3721,8 +3721,8 @@ function RestorativeRecordBuilderForm() {
               </div>
 
               {/* Builder Sections */}
-              <div id="record-builder-section">
-                <h3 className="text-sm font-semibold text-black mb-3 uppercase tracking-wider">Record Builder</h3>
+              <div>
+                <h3 id="record-builder-section" className="text-sm font-semibold text-black mb-3 uppercase tracking-wider">Record Builder</h3>
                 {/* Required Sections */}
                 <div className="mb-2">
                   <div className="text-xs font-semibold text-gray-500 mb-1 pl-1 tracking-wider">Required</div>
