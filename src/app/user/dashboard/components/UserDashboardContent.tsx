@@ -3,7 +3,7 @@
 import HRAdminSelector from "@/components/HRAdminSelector";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 export function UserDashboardContent() {
   const router = useRouter();
@@ -11,7 +11,7 @@ export function UserDashboardContent() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState("wotc");
+  const [activeTab, setActiveTab] = useState("personal");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [selectedHRAdmins, setSelectedHRAdmins] = useState<string[]>([]);
@@ -61,6 +61,23 @@ export function UserDashboardContent() {
     signature: "",
     signature_date: "",
   });
+
+  const tabList = ["personal", "contact", "wotc", "hr-permissions"];
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  useEffect(() => {
+    const activeTabIndex = tabList.indexOf(activeTab);
+    if (!scrollContainerRef.current || !tabRefs.current[activeTabIndex]) return;
+    const container = scrollContainerRef.current;
+    const tab = tabRefs.current[activeTabIndex];
+    const scrollLeft =
+      tab.offsetLeft -
+      container.offsetLeft -
+      container.clientWidth / 2 +
+      tab.clientWidth / 2;
+    container.scrollTo({ left: scrollLeft, behavior: "smooth" });
+  }, [activeTab]);
 
   useEffect(() => {
     checkUser();
@@ -352,52 +369,81 @@ export function UserDashboardContent() {
   }
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-white rounded-lg shadow-sm border border-gray-200">
+        {/* Profile Header */}
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <img
+                  src={
+                    avatarPreview ||
+                    `https://ui-avatars.com/api/?name=${profileData.first_name}+${profileData.last_name}&background=E54747&color=fff`
+                  }
+                  alt="Avatar"
+                  className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+                />
+                <label className="absolute bottom-0 right-0 bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors">
+                  <span className="text-sm">+</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-black">
+                  {profileData.first_name || profileData.last_name
+                    ? `${profileData.first_name} ${profileData.last_name}`
+                    : "Welcome!"}
+                </h2>
+                <p className="text-secondary">{user?.email}</p>
+              </div>
+            </div>
+            <button
+              onClick={handleSignOut}
+              className="px-5 py-2 text-base font-medium rounded-xl shadow hover:opacity-90 border md:ml-auto"
+              style={{ color: '#E54747', backgroundColor: '#FFFFFF', borderColor: '#E54747' }}
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
         {/* Tabs */}
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8 px-6">
-            <button
-              onClick={() => setActiveTab("personal")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "personal"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-secondary hover:text-black hover:border-gray-300"
-              }`}
+        <div className="border-b border-gray-200 relative">
+          <div
+            className="w-full overflow-x-auto hide-scrollbar"
+            ref={scrollContainerRef}
+            style={{ WebkitOverflowScrolling: "touch" }}
+          >
+            <nav
+              className="flex w-max space-x-4 sm:space-x-8 px-2 sm:px-6 whitespace-nowrap"
+              aria-label="Tabs"
             >
-              Personal Information
-            </button>
-            <button
-              onClick={() => setActiveTab("contact")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "contact"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-secondary hover:text-black hover:border-gray-300"
-              }`}
-            >
-              Contact Information
-            </button>
-            <button
-              onClick={() => setActiveTab("wotc")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "wotc"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-secondary hover:text-black hover:border-gray-300"
-              }`}
-            >
-              WOTC Survey
-            </button>
-            <button
-              onClick={() => setActiveTab("hr-permissions")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "hr-permissions"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-secondary hover:text-black hover:border-gray-300"
-              }`}
-            >
-              HR Permissions
-            </button>
-          </nav>
+              {tabList.map((tab, idx) => (
+                <button
+                  key={tab}
+                  ref={el => { tabRefs.current[idx] = el; }}
+                  onClick={() => setActiveTab(tab)}
+                  className={`flex-shrink-0 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab
+                      ? "border-primary text-primary"
+                      : "border-transparent text-secondary hover:text-black hover:border-gray-300"
+                    }`}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}{" "}
+                  {tab === "personal"
+                    ? "Info"
+                    : tab === "contact"
+                      ? "Info"
+                      : tab === "privacy"
+                        ? "Settings"
+                        : "HR Access"}
+                </button>
+              ))}
+            </nav>
+          </div>
         </div>
 
         {/* Tab Content */}
@@ -979,7 +1025,6 @@ export function UserDashboardContent() {
             </div>
           )}
         </div>
-      </div>
     </main>
   );
 } 

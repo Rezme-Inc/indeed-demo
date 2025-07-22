@@ -6,7 +6,7 @@ import { useEffect, useState, Suspense, useRef } from "react";
 import "react-day-picker/dist/style.css";
 import { toast } from "react-hot-toast";
 import { ChevronDown, ChevronRight, Info } from "lucide-react";
-import UserDashboardContent from "../user/dashboard/page"
+import { UserDashboardContent } from "../user/dashboard/components/UserDashboardContent"
 
 // Import types
 import {
@@ -64,6 +64,15 @@ import {
 // Import hooks
 import { useFormCRUD } from "./hooks/useFormCRUD";
 
+// Add types for tutorial steps
+type TutorialStep = {
+  targetId: string;
+  title: string;
+  description: string;
+  dashboardSection: string | null;
+  requiresSidebar: boolean;
+};
+
 function RestorativeRecordBuilderForm() {
   const router = useRouter();
   const [currentCategory, setCurrentCategory] = useState(0);
@@ -115,151 +124,214 @@ function RestorativeRecordBuilderForm() {
   const [hoverTutorialStep, setHoverTutorialStep] = useState<number | null>(null);
   const [hoverTutorialActive, setHoverTutorialActive] = useState(false);
   const [helpMenuOpen, setHelpMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [tooltipReady, setTooltipReady] = useState(false);
 
-  const tutorialSteps = [
+  // Disable body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      // Store current scroll position
+      const scrollY = window.scrollY;
+      
+      // Apply styles to prevent scrolling
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      
+      // Store scroll position for restoration
+      document.body.dataset.scrollY = scrollY.toString();
+    } else {
+      // Restore scroll position and remove styles
+      const scrollY = parseInt(document.body.dataset.scrollY || '0', 10);
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      
+      // Restore scroll position
+      window.scrollTo(0, scrollY);
+    }
+
+    // Cleanup function to re-enable scrolling when component unmounts
+    return () => {
+      const scrollY = parseInt(document.body.dataset.scrollY || '0', 10);
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      window.scrollTo(0, scrollY);
+    };
+  }, [mobileMenuOpen]);
+
+  const tutorialSteps: TutorialStep[] = [
     {
       targetId: "progress",
       title: "Progress Tracking",
       description: "See your overall progress as you build your restorative record.",
       dashboardSection: 'progress',
+      requiresSidebar: true,
     },
     {
       targetId: "continue-building-btn",
       title: "Continue Building",
       description: "Continue building your restorative record.",
       dashboardSection: 'progress',
+      requiresSidebar: false,
     },
     {
       targetId: "preview-record-btn",
       title: "Preview Record",
       description: "Preview what your restorative record will look like.",
       dashboardSection: 'progress',
+      requiresSidebar: false,
     },
     {
       targetId: "check-status-btn",
       title: "Status Updates",
       description: "Check who can see your restorative record and where you're at in the hiring process.",
       dashboardSection: 'progress',
+      requiresSidebar: false,
     },
     {
       targetId: "status",
       title: "Status Updates",
       description: "Also moves you to the Status Updates page.",
       dashboardSection: 'status',
+      requiresSidebar: true,
     },
     {
       targetId: "admin-details-btn",
       title: "Show Details",
       description: "Show specific HR admin's progress.",
       dashboardSection: 'status',
+      requiresSidebar: false,
     },
     {
       targetId: "assessment-progress",
       title: "Assesment Progress",
       description: "See where you are in the process.",
       dashboardSection: 'status',
+      requiresSidebar: false,
     },
     {
       targetId: "deadline-dropdown",
       title: "Estamated Timeline (IMPORTANT)",
       description: "This is where you see who is waiting on who, and how much time each side has to submit documents.",
       dashboardSection: 'status',
+      requiresSidebar: false,
     },
     {
       targetId: "notifications",
       title: "Notifications",
       description: "View important notifications and HR admin access requests.",
       dashboardSection: 'notifications',
+      requiresSidebar: true,
     },
     {
       targetId: "grant-access",
       title: "Grant Access",
       description: "You must accept an HR admin's access request to give them your restorative record.",
       dashboardSection: 'notifications',
+      requiresSidebar: false,
     },
     {
       targetId: "legal-resources",
       title: "Legal Resources",
       description: "Access information about your rights in fair chance hiring or file a complaint.",
-      dashboardSection: "legal-resources"
+      dashboardSection: "legal-resources",
+      requiresSidebar: true,
     },
     {
       targetId: "settings",
       title: "Settings",
       description: "Make changes to your profile",
-      dashboardSection: "settings"
+      dashboardSection: "settings",
+      requiresSidebar: true,
     },
     {
       targetId: "my-restorative-record-btn",
       title: "My Restorative Record",
       description: "Preview your completed restorative record at any time.",
       dashboardSection: null,
+      requiresSidebar: false,
     },
     {
       targetId: "record-builder-section",
       title: "Record Builder Sidebar",
       description: "This is the Record Builder. Here you can see all the sections you need to complete for your restorative record. Required sections are at the top, recommended sections below.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
     {
       targetId: "record-builder-introduction",
       title: "Introduction (Required)",
       description: "Start by telling your story in the Introduction section. Click here to begin.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
     {
       targetId: "record-builder-community-engagement",
       title: "Community Engagement (Required)",
       description: "Share your community involvement and contributions.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
     {
       targetId: "record-builder-rehabilitative-programs",
       title: "Rehabilitative Programs (Required)",
       description: "List any rehabilitative or educational programs you've completed.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
     {
       targetId: "record-builder-education",
       title: "Education (Recommended)",
       description: "Add your educational background.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
     {
       targetId: "record-builder-employment-history",
       title: "Employment History (Recommended)",
       description: "Document your work experience.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
     {
       targetId: "record-builder-skills",
       title: "Skills (Recommended)",
       description: "Highlight your skills and certifications.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
     {
       targetId: "record-builder-microcredentials",
       title: "Microcredentials (Recommended)",
       description: "Showcase any microcredentials or badges earned.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
     {
       targetId: "record-builder-mentors",
       title: "Mentors (Recommended)",
       description: "List mentors who have supported your journey.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
     {
       targetId: "record-builder-personal-achievements",
       title: "Personal Achievements (Recommended)",
       description: "Share your awards and personal achievements.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
     {
       targetId: "record-builder-hobbies",
       title: "Hobbies (Recommended)",
       description: "Add your hobbies and interests.",
       dashboardSection: null,
+      requiresSidebar: true,
     },
   ];
 
@@ -2100,11 +2172,11 @@ function RestorativeRecordBuilderForm() {
 
   // Dashboard functions
   const dashboardSections = [
-    { id: 'progress', label: 'Progress Tracking', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'progress' ? "dashboard_icons/progress-white.svg" : "dashboard_icons/progress.svg"} alt="Status Updates" className="w-5 h-5" /> },
-    { id: 'status', label: 'Status Updates', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'status' ? "dashboard_icons/status-updates-white.svg" : "dashboard_icons/status-updates.svg"} alt="Status Updates" className="w-5 h-5" /> },
-    { id: 'notifications', label: 'Notifications', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'notifications' ? "dashboard_icons/notifications-white.svg" : "dashboard_icons/notifications.svg"} alt="Notifications" className="w-5 h-5" /> },
-    { id: 'legal-resources', label: 'Legal Resources', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'legal-resources' ? "dashboard_icons/legal-resources-white.svg" : "dashboard_icons/legal-resources.svg"} alt="Legal Resources" className="w-5 h-5" />, alt: "Legal Resources" },
-    { id: 'settings', label: 'Settings', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'settings' ? "dashboard_icons/settings-white.svg" : "dashboard_icons/settings.svg"} alt="Settings" className="w-5 h-5" />, alt: "Settings" }
+    { id: 'progress', label: 'Progress Tracking', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'progress' ? "/dashboard_icons/progress-white.svg" : "/dashboard_icons/progress.svg"} alt="Status Updates" className="w-5 h-5" /> },
+    { id: 'status', label: 'Status Updates', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'status' ? "/dashboard_icons/status-updates-white.svg" : "/dashboard_icons/status-updates.svg"} alt="Status Updates" className="w-5 h-5" /> },
+    { id: 'notifications', label: 'Notifications', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'notifications' ? "/dashboard_icons/notifications-white.svg" : "/dashboard_icons/notifications.svg"} alt="Notifications" className="w-5 h-5" /> },
+    { id: 'legal-resources', label: 'Legal Resources', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'legal-resources' ? "/dashboard_icons/legal-resources-white.svg" : "/dashboard_icons/legal-resources.svg"} alt="Legal Resources" className="w-5 h-5" />, alt: "Legal Resources" },
+    { id: 'settings', label: 'Settings', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'settings' ? "/dashboard_icons/settings-white.svg" : "/dashboard_icons/settings.svg"} alt="Settings" className="w-5 h-5" />, alt: "Settings" }
   ];
 
   const handleDashboardNavigation = (section: string) => {
@@ -2221,9 +2293,10 @@ function RestorativeRecordBuilderForm() {
         return (
           <div className="space-y-6">
             {/* Quick Actions */}
-            <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
+            <div className="bg-white border rounded-xl p-4 lg:p-6" style={{ borderColor: '#E5E5E5' }}>
               <h3 className="text-lg font-semibold text-black mb-4">Quick Actions</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {/* Continue Building */}
                 <button
                   id="continue-building-btn"
                   onClick={() => {
@@ -2235,18 +2308,19 @@ function RestorativeRecordBuilderForm() {
                       handleBuilderNavigation(currentCategory);
                     }
                   }}
-                  className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
+                  className="w-full p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg sm:col-span-2 md:col-span-1"
                   style={{ borderColor: '#E5E5E5' }}
                 >
                   <span className="flex justify-center items-center mb-2">
-                    <img src="dashboard_icons/continue-building.svg" alt="Progress" className="w-10 h-10" />
+                    <img src="/dashboard_icons/continue-building.svg" alt="Progress" className="w-10 h-10" />
                   </span>
                   <span className="font-medium text-black">Continue Building</span>
                 </button>
+                {/* Preview Record */}
                 <button
                   id="preview-record-btn"
                   onClick={handleViewProfile}
-                  className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
+                  className="w-full p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
                   style={{ borderColor: '#E5E5E5' }}
                 >
                   <span className="flex justify-center items-center mb-2">
@@ -2254,21 +2328,22 @@ function RestorativeRecordBuilderForm() {
                   </span>
                   <span className="font-medium text-black">Preview Record</span>
                 </button>
+                {/* Check Status */}
                 <button
                   id="check-status-btn"
                   onClick={() => handleDashboardNavigation('status')}
-                  className="p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
+                  className="w-full p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
                   style={{ borderColor: '#E5E5E5' }}
                 >
                   <span className="flex justify-center items-center mb-2">
-                    <img src="dashboard_icons/check-status.svg" alt="Check Status" className="w-10 h-10" />
+                    <img src="/dashboard_icons/check-status.svg" alt="Check Status" className="w-10 h-10" />
                   </span>
                   <span className="font-medium text-black">Check Status</span>
                 </button>
               </div>
             </div>
-            <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
-              <h2 className="text-2xl font-semibold text-black mb-4">Your Restorative Record Progress</h2>
+            <div className="bg-white border rounded-xl p-4 lg:p-6" style={{ borderColor: '#E5E5E5' }}>
+              <h2 className="text-xl lg:text-2xl font-semibold text-black mb-4">Your Restorative Record Progress</h2>
 
               {/* Progress Overview */}
               <div className="mb-6">
@@ -2288,7 +2363,7 @@ function RestorativeRecordBuilderForm() {
               </div>
 
               {/* Section Progress */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {categories.map((cat, idx) => (
                   <div key={cat} className="border rounded-lg p-4" style={{ borderColor: '#E5E5E5' }}>
                     <div className="flex items-center justify-between">
@@ -2297,7 +2372,7 @@ function RestorativeRecordBuilderForm() {
                       </h3>
                       <div className="flex items-center gap-2">
                         {sectionCompletion[cat] && (
-                          <span className="text-green-600 text-sm" style={{ color: '#16A34A' }}>✓</span>
+                          <span className="text-green-600 text-sm ml-3" style={{ color: '#16A34A' }}>✓</span>
                         )}
                         <button
                           onClick={() => handleBuilderNavigation(idx)}
@@ -2322,8 +2397,8 @@ function RestorativeRecordBuilderForm() {
       case 'status':
         return (
           <div className="space-y-6">
-            <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
-              <h2 className="text-2xl font-semibold text-black mb-4">HR Admin Status Updates</h2>
+            <div className="bg-white border rounded-xl p-4 lg:p-6" style={{ borderColor: '#E5E5E5' }}>
+              <h2 className="text-xl lg:text-2xl font-semibold text-black mb-4">HR Admin Status Updates</h2>
 
               {/* Connected HR Admins */}
               <div className="mb-8">
@@ -2333,11 +2408,15 @@ function RestorativeRecordBuilderForm() {
                     connectedHRAdmins.map((admin) => (
                       <div key={admin.id} className="border rounded-lg" style={{ borderColor: '#E5E5E5' }}>
                         {/* Always Visible Header */}
-                        <div className="flex items-center justify-between p-4">
+                        <div className="flex items-center justify-between gap-3 p-4">
                           <div className="flex items-center gap-3">
                             <div>
-                              <h4 className="font-medium text-black">{admin.company}</h4>
-                              <p className="text-sm" style={{ color: '#595959' }}>
+                              {/* Company Name */}
+                              <h5 className="font-medium text-black truncate max-w-[140px] block sm:hidden" title={admin.company}>{admin.company}</h5>
+                              <h5 className="font-medium text-black hidden sm:block">{admin.company}</h5>
+                              {/* HR Admin Name */}
+                              <p className="text-sm truncate max-w-[140px] block sm:hidden" style={{ color: '#595959' }} title={`${admin.first_name} ${admin.last_name}`}>{admin.first_name} {admin.last_name}</p>
+                              <p className="text-sm hidden sm:block" style={{ color: '#595959' }}>
                                 {admin.first_name} {admin.last_name}
                               </p>
                               <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>
@@ -2391,7 +2470,7 @@ function RestorativeRecordBuilderForm() {
                                     }}
                                   />
                                 </div>
-                                <div className="grid grid-cols-5 gap-1 text-xs relative">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-1 text-xs relative">
                                   {/* Step 1: Conditional Job Offer */}
                                   <div className="text-center relative">
                                     <div className="flex flex-col items-center">
@@ -2760,9 +2839,9 @@ function RestorativeRecordBuilderForm() {
       case 'notifications':
         return (
           <div className="space-y-6">
-            <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-semibold text-black">Notifications</h2>
+            <div className="bg-white border rounded-xl p-4 lg:p-6" style={{ borderColor: '#E5E5E5' }}>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <h2 className="text-xl lg:text-2xl font-semibold text-black">Notifications</h2>
                 <button
                   onClick={() => fetchAllHRAdmins()}
                   className="text-sm px-3 py-1 rounded-lg transition-all duration-200 hover:opacity-90"
@@ -2789,13 +2868,13 @@ function RestorativeRecordBuilderForm() {
                           notification.type === 'connection' ? '#10B981' : '#F59E0B'
                       }}
                     >
-                      <div className="flex items-start justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-black mb-1">{notification.title}</h3>
                           <p className="text-sm mb-2" style={{ color: '#595959' }}>
                             {notification.message}
                           </p>
-                          <div className="flex items-center gap-4 text-xs" style={{ color: '#9CA3AF' }}>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs" style={{ color: '#9CA3AF' }}>
                             <span>
                               {new Date(notification.timestamp).toLocaleDateString('en-US', {
                                 month: 'short',
@@ -2805,7 +2884,7 @@ function RestorativeRecordBuilderForm() {
                                 minute: '2-digit'
                               })}
                             </span>
-                            <span>•</span>
+                            <span className="hidden sm:inline">•</span>
                             <span>
                               {notification.admin.email}
                             </span>
@@ -2813,43 +2892,43 @@ function RestorativeRecordBuilderForm() {
                         </div>
 
                         {notification.type === 'request' && (
-                          <div className="flex items-center gap-2 ml-4">
-                            <button
-                              id="grant-access"
-                              onClick={() => handleHRAdminPermission(notification.adminId, true)}
-                              disabled={processingPermission === notification.adminId}
-                              className="px-3 py-1 text-xs font-medium rounded-lg transition-all duration-200 hover:opacity-90 disabled:opacity-50"
-                              style={{
-                                backgroundColor: '#10B981',
-                                color: '#FFFFFF'
-                              }}
-                            >
-                              {processingPermission === notification.adminId ? 'Processing...' : 'Grant Access'}
-                            </button>
-                            <button
-                              onClick={() => {
-                                // Remove the notification without granting access
-                                setNotifications(prev => prev.filter(n => n.id !== notification.id));
-                              }}
-                              disabled={processingPermission === notification.adminId}
-                              className="px-3 py-1 text-xs font-medium rounded-lg border transition-all duration-200 hover:opacity-90 disabled:opacity-50"
-                              style={{
-                                borderColor: '#E5E5E5',
-                                color: '#595959',
-                                backgroundColor: '#FFFFFF'
-                              }}
-                            >
-                              Dismiss
-                            </button>
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:ml-4">
+                                                          <button
+                                id="grant-access"
+                                onClick={() => handleHRAdminPermission(notification.adminId, true)}
+                                disabled={processingPermission === notification.adminId}
+                                className="px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 hover:opacity-90 disabled:opacity-50 w-full sm:w-auto"
+                                style={{
+                                  backgroundColor: '#10B981',
+                                  color: '#FFFFFF'
+                                }}
+                              >
+                                {processingPermission === notification.adminId ? 'Processing...' : 'Grant Access'}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  // Remove the notification without granting access
+                                  setNotifications(prev => prev.filter(n => n.id !== notification.id));
+                                }}
+                                disabled={processingPermission === notification.adminId}
+                                className="px-3 py-2 text-xs font-medium rounded-lg border transition-all duration-200 hover:opacity-90 disabled:opacity-50 w-full sm:w-auto"
+                                style={{
+                                  borderColor: '#E5E5E5',
+                                  color: '#595959',
+                                  backgroundColor: '#FFFFFF'
+                                }}
+                              >
+                                Dismiss
+                              </button>
                           </div>
                         )}
 
                         {notification.type === 'connection' && (
-                          <div className="flex items-center gap-2 ml-4">
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:ml-4">
                             <button
                               onClick={() => handleHRAdminPermission(notification.adminId, false)}
                               disabled={processingPermission === notification.adminId}
-                              className="px-3 py-1 text-xs font-medium rounded-lg border transition-all duration-200 hover:opacity-90 disabled:opacity-50"
+                              className="px-3 py-2 text-xs font-medium rounded-lg border transition-all duration-200 hover:opacity-90 disabled:opacity-50 w-full sm:w-auto"
                               style={{
                                 borderColor: '#E54747',
                                 color: '#E54747',
@@ -2860,7 +2939,7 @@ function RestorativeRecordBuilderForm() {
                             </button>
                             <button
                               onClick={() => handleDashboardNavigation('status')}
-                              className="px-3 py-1 text-xs font-medium rounded-lg transition-all duration-200 hover:opacity-90"
+                              className="px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 hover:opacity-90 w-full sm:w-auto"
                               style={{
                                 backgroundColor: '#3B82F6',
                                 color: '#FFFFFF'
@@ -2902,7 +2981,7 @@ function RestorativeRecordBuilderForm() {
               {allHRAdmins.length > 0 && (
                 <div className="mt-8 p-4 rounded-lg" style={{ backgroundColor: '#F8F9FA', border: '1px solid #E5E5E5' }}>
                   <h3 className="font-semibold text-black mb-3">HR Admin Access Summary</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     <button
                       onClick={() => setExpandedSummaryView(expandedSummaryView === 'connected' ? null : 'connected')}
                       className="text-center p-3 rounded-lg transition-all duration-200 hover:shadow-md"
@@ -2943,8 +3022,12 @@ function RestorativeRecordBuilderForm() {
                         {allHRAdmins.filter(admin => admin.hasAccess).map((admin) => (
                           <div key={admin.id} className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: '#F8F9FA', border: '1px solid #E5E5E5' }}>
                             <div className="flex-1">
-                              <h5 className="font-medium text-black">{admin.company}</h5>
-                              <p className="text-sm" style={{ color: '#595959' }}>
+                              {/* Company Name */}
+                              <h5 className="font-medium text-black truncate max-w-[140px] block sm:hidden" title={admin.company}>{admin.company}</h5>
+                              <h5 className="font-medium text-black hidden sm:block">{admin.company}</h5>
+                              {/* HR Admin Name and Email */}
+                              <p className="text-sm truncate max-w-[140px] block sm:hidden" style={{ color: '#595959' }} title={`${admin.first_name} ${admin.last_name} • ${admin.email}`}>{admin.first_name} {admin.last_name} • {admin.email}</p>
+                              <p className="text-sm hidden sm:block" style={{ color: '#595959' }}>
                                 {admin.first_name} {admin.last_name} • {admin.email}
                               </p>
                               <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>
@@ -2993,8 +3076,12 @@ function RestorativeRecordBuilderForm() {
                         {notifications.filter(n => n.type === 'request').map((notification) => (
                           <div key={notification.id} className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: '#F8F9FA', border: '1px solid #E5E5E5' }}>
                             <div className="flex-1">
-                              <h5 className="font-medium text-black">{notification.admin.company}</h5>
-                              <p className="text-sm" style={{ color: '#595959' }}>
+                              {/* Company Name */}
+                              <h5 className="font-medium text-black truncate max-w-[140px] block sm:hidden" title={notification.admin.company}>{notification.admin.company}</h5>
+                              <h5 className="font-medium text-black hidden sm:block">{notification.admin.company}</h5>
+                              {/* HR Admin Name and Email */}
+                              <p className="text-sm truncate max-w-[140px] block sm:hidden" style={{ color: '#595959' }} title={`${notification.admin.first_name} ${notification.admin.last_name} • ${notification.admin.email}`}>{notification.admin.first_name} {notification.admin.last_name} • {notification.admin.email}</p>
+                              <p className="text-sm hidden sm:block" style={{ color: '#595959' }}>
                                 {notification.admin.first_name} {notification.admin.last_name} • {notification.admin.email}
                               </p>
                               <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>
@@ -3048,9 +3135,9 @@ function RestorativeRecordBuilderForm() {
       case 'legal-resources':
         return (
           <div className="space-y-6">
-            <div className="bg-white border rounded-xl p-6" style={{ borderColor: '#E5E5E5' }}>
+            <div className="bg-white border rounded-xl p-4 lg:p-6" style={{ borderColor: '#E5E5E5' }}>
               <div className="w-full">
-                <div className="p-6">
+                <div className="p-4 lg:p-6">
                   <div className="mb-4 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
                     <p className="mb-3 leading-relaxed text-sm">
                       If you believe you have experienced employment discrimination or have questions about your rights under Fair Chance Hiring laws, you can contact a legal team for assistance. Your inquiry will be sent to the appropriate legal professionals in your jurisdiction.
@@ -3211,26 +3298,34 @@ function RestorativeRecordBuilderForm() {
 
   // Create a shared button group for MY RESTORATIVE RECORD and Help
   const ButtonGroup = (
-    <div className="flex items-center gap-3 relative">
+    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 relative w-full sm:w-auto">
       <button
         id="my-restorative-record-btn"
         onClick={handleViewProfile}
-        className="px-5 py-2 text-base font-medium rounded-xl shadow hover:opacity-90 text-white"
+        className="px-4 lg:px-5 py-2 text-sm lg:text-base font-medium rounded-xl shadow hover:opacity-90 text-white text-center"
         style={{ backgroundColor: '#E54747' }}
       >
-        MY RESTORATIVE RECORD
+        <span className="inline">MY RESTORATIVE RECORD</span>
       </button>
       <div className="relative">
         <button
-          onClick={() => setHelpMenuOpen((v) => !v)}
-          className="px-5 py-2 text-base font-medium rounded-xl shadow hover:opacity-90 border ml-2"
+          onClick={() => {
+            // On mobile, directly start tutorial. On desktop, toggle dropdown
+            if (window.innerWidth < 1024) {
+              startTutorial();
+              setHoverTutorialActive(false);
+            } else {
+              setHelpMenuOpen((v) => !v);
+            }
+          }}
+          className="px-4 lg:px-5 py-2 text-sm lg:text-base font-medium rounded-xl shadow hover:opacity-90 border w-full sm:w-auto text-center"
           style={{ color: '#E54747', backgroundColor: '#FFFFFF', borderColor: '#E54747', fontFamily: 'Poppins, sans-serif' }}
           title="Help & Hints"
         >
           Help
         </button>
         {helpMenuOpen && (
-          <div className="absolute right-0 mt-2 w-56 bg-white border rounded-xl shadow-xl z-50" style={{ borderColor: '#E5E5E5', fontFamily: 'Poppins, sans-serif' }}>
+          <div className="hidden lg:block absolute right-0 mt-2 w-56 bg-white border rounded-xl shadow-xl z-50" style={{ borderColor: '#E5E5E5', fontFamily: 'Poppins, sans-serif' }}>
             {/* Caret/triangle */}
             <div style={{ position: 'absolute', top: '-10px', right: '16px', width: 0, height: 0, borderLeft: '8px solid transparent', borderRight: '8px solid transparent', borderBottom: '10px solid #E5E5E5' }} />
             <div style={{ position: 'absolute', top: '-8px', right: '17px', width: 0, height: 0, borderLeft: '7px solid transparent', borderRight: '7px solid transparent', borderBottom: '9px solid #fff' }} />
@@ -3239,7 +3334,7 @@ function RestorativeRecordBuilderForm() {
               style={{ fontFamily: 'Poppins, sans-serif', color: '#E54747', borderBottom: '1px solid #F3F4F6' }}
               onClick={() => {
                 setHelpMenuOpen(false);
-                setTutorialStep(1); // or 0 if you use 0-based
+                startTutorial();
                 setHoverTutorialActive(false);
               }}
             >
@@ -3448,154 +3543,318 @@ function RestorativeRecordBuilderForm() {
     )
   }
 
+  // Fix: Restore body scroll if resizing to desktop while menu is open
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        // Always unlock scroll on desktop
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+      } else if (mobileMenuOpen) {
+        // If menu is open and we're on mobile, lock scroll
+        const scrollY = window.scrollY;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollY}px`;
+        document.body.style.width = '100%';
+        document.body.style.overflow = 'hidden';
+        document.body.dataset.scrollY = scrollY.toString();
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [mobileMenuOpen]);
+
+  // --- MOBILE TUTORIAL LOGIC (REDONE FOR RELIABILITY) ---
+  // Effect 1: Open/close the sidebar as needed for the current tutorial step
+  useEffect(() => {
+    if (!tutorialStep) return;
+    const step = tutorialSteps[tutorialStep - 1];
+    if (!step) return;
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      if (step.requiresSidebar && !mobileMenuOpen) {
+        setMobileMenuOpen(true);
+      } else if (!step.requiresSidebar && mobileMenuOpen) {
+        setMobileMenuOpen(false);
+      }
+    }
+  }, [tutorialStep]);
+
+  // Effect 2: Only after the sidebar is open (if needed), search for the target element and set tooltipReady
+  useEffect(() => {
+    setTooltipReady(false);
+    if (!tutorialStep) return;
+    const step = tutorialSteps[tutorialStep - 1];
+    if (!step) return;
+
+    // Helper to search for the element and set tooltipReady
+    function searchForTargetElement() {
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      let observer: MutationObserver | undefined;
+      let attempts = 0;
+      const maxAttempts = 20;
+      function tryFind() {
+        const el = document.getElementById(step.targetId);
+        if (el) {
+          // Scroll into view on mobile
+          if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          setTimeout(() => setTooltipReady(true), 80); // Give a paint frame
+          if (observer) observer.disconnect();
+          return;
+        }
+        if (attempts < maxAttempts) {
+          attempts++;
+          timeoutId = setTimeout(tryFind, 120);
+        } else if (observer) {
+          observer.disconnect();
+        }
+      }
+      observer = new MutationObserver(() => {
+        const el = document.getElementById(step.targetId);
+        if (el) {
+          if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          setTimeout(() => setTooltipReady(true), 80);
+          if (observer) observer.disconnect();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+      tryFind();
+      return () => {
+        if (timeoutId) clearTimeout(timeoutId);
+        if (observer) observer.disconnect();
+      };
+    }
+
+    // If step requires sidebar on mobile, only search after menu is open
+    if (step.requiresSidebar && typeof window !== 'undefined' && window.innerWidth < 1024) {
+      if (!mobileMenuOpen) return; // Wait for menu to open
+      // Add a short delay to ensure sidebar is painted
+      const delay = setTimeout(() => {
+        const cleanup = searchForTargetElement();
+        // Clean up function
+        return cleanup;
+      }, 180);
+      return () => clearTimeout(delay);
+    } else {
+      // For non-sidebar steps or desktop, search immediately
+      return searchForTargetElement();
+    }
+  }, [tutorialStep, mobileMenuOpen]);
+
   return (
     <div className="min-h-screen bg-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
-      <div className="flex">
-        {/* Sidebar Navigation */}
-        <nav className="w-80 bg-white border-r min-h-screen p-6" style={{ borderColor: '#E5E5E5' }}>
-          {/* Dashboard Header */}
-          <div className="mb-6">
-            <h1 className="text-xl font-semibold text-black mb-2">My Rézme Dashboard</h1>
-            <p className="text-sm" style={{ color: '#595959' }}>
+      {/* Mobile Header */}
+      <div className="lg:hidden bg-white border-b p-4" style={{ borderColor: '#E5E5E5' }}>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-semibold text-black">My Rézme Dashboard</h1>
+            <p className="text-xs" style={{ color: '#595959' }}>
               Track your progress and manage your restorative record
             </p>
           </div>
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 rounded-lg hover:bg-gray-50"
+            style={{ border: '1px solid #E5E5E5' }}
+          >
+            <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {mobileMenuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
+        </div>
+      </div>
 
-          {/* Dashboard Sections */}
-          <div className="mb-8">
-            <h3 className="text-sm font-semibold text-black mb-3 uppercase tracking-wider">Dashboard</h3>
-            <ul className="space-y-1">
-              {dashboardSections.map((section) => (
-                <li key={section.id}>
-                  <button
-                    id={section.id}
-                    className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center gap-3 ${currentView === 'dashboard' && activeDashboardSection === section.id
-                      ? "text-white font-medium"
-                      : "text-black hover:bg-gray-50"
-                      }`}
-                    style={{
-                      backgroundColor: currentView === 'dashboard' && activeDashboardSection === section.id ? '#E54747' : 'transparent'
-                    }}
-                    onClick={() => handleDashboardNavigation(section.id)}
-                  >
-                    <span className="text-lg">{section.icon}</span>
-                    <span className="font-medium">{section.label}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Visual Divider */}
-          <div className="mb-8">
-            <div className="border-t" style={{ borderColor: '#E5E5E5' }}></div>
-          </div>
-
-          {/* Builder Sections */}
-          <div id="record-builder-section">
-            <h3 className="text-sm font-semibold text-black mb-3 uppercase tracking-wider">Record Builder</h3>
-            {/* Required Sections */}
-            <div className="mb-2">
-              <div className="text-xs font-semibold text-gray-500 mb-1 pl-1 tracking-wider">Required</div>
-              <ul className="space-y-1">
-                {categories.map((cat, idx) => (
-                  ["introduction", "community-engagement", "rehabilitative-programs"].includes(cat) ? (
-                    <li key={cat}>
-                      <button
-                        id={`record-builder-${cat}`}
-                        className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${currentView === 'builder' && idx === currentCategory
-                          ? "bg-red-50 font-medium border"
-                          : "hover:bg-gray-50"
-                          }`}
-                        style={{
-                          color: currentView === 'builder' && idx === currentCategory ? '#E54747' : '#000000',
-                          borderColor: currentView === 'builder' && idx === currentCategory ? '#E54747' : 'transparent'
-                        }}
-                        onClick={() => handleBuilderNavigation(idx)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span>
-                            {cat
-                              .replace(/-/g, " ")
-                              .replace(/\b\w/g, (l) => l.toUpperCase())}
-                          </span>
-                          {sectionCompletion[cat] && (
-                            <span className="text-green-600 text-sm" style={{ color: '#16A34A' }}>✓</span>
-                          )}
-                        </div>
-                      </button>
-                    </li>
-                  ) : null
-                ))}
-              </ul>
-            </div>
-            {/* Recommended Sections */}
+      <div className="flex">
+        {/* Sidebar Navigation */}
+        <nav className={`${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 right-0 z-40 w-80 bg-white border-l min-h-screen p-6 transition-transform duration-300 ease-in-out lg:transition-none overflow-y-auto`} style={{ borderColor: '#E5E5E5' }}>
+          <div className={`flex flex-col ${mobileMenuOpen ? 'pb-16' : 'pb-0'}`}> {/* Add extra bottom padding only when mobile menu is open */}
             <div>
-              <div className="text-xs font-semibold text-gray-500 mb-1 pl-1 tracking-wider">Recommended</div>
-              <ul className="space-y-1">
-                {categories.map((cat, idx) => (
-                  !["introduction", "community-engagement", "rehabilitative-programs"].includes(cat) ? (
-                    <li key={cat}>
+              {/* Dashboard Header */}
+              <div className="mb-6 hidden lg:block">
+                <h1 className="text-xl font-semibold text-black mb-2">My Rézme Dashboard</h1>
+                <p className="text-sm" style={{ color: '#595959' }}>
+                  Track your progress and manage your restorative record
+                </p>
+              </div>
+
+              {/* Dashboard Sections */}
+              <div className="mb-8">
+                <h3 className="text-sm font-semibold text-black mb-3 uppercase tracking-wider">Dashboard</h3>
+                <ul className="space-y-1">
+                  {dashboardSections.map((section) => (
+                    <li key={section.id}>
                       <button
-                        id={`record-builder-${cat}`}
-                        className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${currentView === 'builder' && idx === currentCategory
-                          ? "bg-red-50 font-medium border"
-                          : "hover:bg-gray-50"
+                        id={section.id}
+                        className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center gap-3 ${currentView === 'dashboard' && activeDashboardSection === section.id
+                          ? "text-white font-medium"
+                          : "text-black hover:bg-gray-50"
                           }`}
                         style={{
-                          color: currentView === 'builder' && idx === currentCategory ? '#E54747' : '#000000',
-                          borderColor: currentView === 'builder' && idx === currentCategory ? '#E54747' : 'transparent'
+                          backgroundColor: currentView === 'dashboard' && activeDashboardSection === section.id ? '#E54747' : 'transparent'
                         }}
-                        onClick={() => handleBuilderNavigation(idx)}
+                        onClick={() => {
+                          handleDashboardNavigation(section.id);
+                          setMobileMenuOpen(false);
+                        }}
                       >
-                        <div className="flex items-center justify-between">
-                          <span>
-                            {cat
-                              .replace(/-/g, " ")
-                              .replace(/\b\w/g, (l) => l.toUpperCase())}
-                          </span>
-                          {sectionCompletion[cat] && (
-                            <span className="text-green-600 text-sm" style={{ color: '#16A34A' }}>✓</span>
-                          )}
-                        </div>
+                        <span className="text-lg">{section.icon}</span>
+                        <span className="font-medium">{section.label}</span>
                       </button>
                     </li>
-                  ) : null
-                ))}
-              </ul>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Visual Divider */}
+              <div className="mb-8">
+                <div className="border-t" style={{ borderColor: '#E5E5E5' }}></div>
+              </div>
+
+              {/* Builder Sections */}
+              <div>
+                <h3 id="record-builder-section" className="text-sm font-semibold text-black mb-3 uppercase tracking-wider">Record Builder</h3>
+                {/* Required Sections */}
+                <div className="mb-2">
+                  <div className="text-xs font-semibold text-gray-500 mb-1 pl-1 tracking-wider">Required</div>
+                  <ul className="space-y-1">
+                    {categories.map((cat, idx) => (
+                      ["introduction", "community-engagement", "rehabilitative-programs"].includes(cat) ? (
+                        <li key={cat}>
+                          <button
+                            id={`record-builder-${cat}`}
+                            className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${currentView === 'builder' && idx === currentCategory
+                              ? "bg-red-50 font-medium border"
+                              : "hover:bg-gray-50"
+                              }`}
+                            style={{
+                              color: currentView === 'builder' && idx === currentCategory ? '#E54747' : '#000000',
+                              borderColor: currentView === 'builder' && idx === currentCategory ? '#E54747' : 'transparent'
+                            }}
+                            onClick={() => {
+                              handleBuilderNavigation(idx);
+                              setMobileMenuOpen(false);
+                            }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span>
+                                {cat
+                                  .replace(/-/g, " ")
+                                  .replace(/\b\w/g, (l) => l.toUpperCase())}
+                              </span>
+                              {sectionCompletion[cat] && (
+                                <span className="text-green-600 text-sm ml-3" style={{ color: '#16A34A' }}>✓</span>
+                              )}
+                            </div>
+                          </button>
+                        </li>
+                      ) : null
+                    ))}
+                  </ul>
+                </div>
+                {/* Recommended Sections */}
+                <div>
+                  <div className="text-xs font-semibold text-gray-500 mb-1 pl-1 tracking-wider">Recommended</div>
+                  <ul className="space-y-1">
+                    {categories.map((cat, idx) => (
+                      !["introduction", "community-engagement", "rehabilitative-programs"].includes(cat) ? (
+                        <li key={cat}>
+                          <button
+                            id={`record-builder-${cat}`}
+                            className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${currentView === 'builder' && idx === currentCategory
+                              ? "bg-red-50 font-medium border"
+                              : "hover:bg-gray-50"
+                              }`}
+                            style={{
+                              color: currentView === 'builder' && idx === currentCategory ? '#E54747' : '#000000',
+                              borderColor: currentView === 'builder' && idx === currentCategory ? '#E54747' : 'transparent'
+                            }}
+                            onClick={() => {
+                              handleBuilderNavigation(idx);
+                              setMobileMenuOpen(false);
+                            }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span>
+                                {cat
+                                  .replace(/-/g, " ")
+                                  .replace(/\b\w/g, (l) => l.toUpperCase())}
+                              </span>
+                              {sectionCompletion[cat] && (
+                                <span className="text-green-600 text-sm ml-3" style={{ color: '#16A34A' }}>✓</span>
+                              )}
+                            </div>
+                          </button>
+                        </li>
+                      ) : null
+                    ))}
+                  </ul>
+                </div>
+              </div>
             </div>
+            {/* Mobile Menu Close X (top right) */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(false)}
+              className="lg:hidden absolute top-3 right-3 p-2 rounded-full hover:bg-gray-100 transition-colors z-50"
+              aria-label="Close menu"
+            >
+              <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </nav>
 
+        {/* Mobile Overlay */}
+        {mobileMenuOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )}
+
         {/* Main Content */}
-        <main className="flex-1 p-8">
+        <main className="flex-1 p-4 lg:p-8 w-full">
           <div className="max-w-6xl mx-auto">
             {currentView === 'dashboard' ? (
               <>
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 lg:mb-8">
                   <div>
-                    <h1 className="text-3xl font-semibold text-black">
+                    <h1 className="text-2xl lg:text-3xl font-semibold text-black">
                       {dashboardSections.find(s => s.id === activeDashboardSection)?.label}
                     </h1>
                   </div>
-                  {ButtonGroup}
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    {ButtonGroup}
+                  </div>
                 </div>
                 {renderDashboardContent()}
               </>
             ) : (
               <>
-                <div className="flex items-center justify-between mb-8">
-                  <h1 className="text-3xl font-semibold text-black">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 lg:mb-8">
+                  <h1 className="text-2xl lg:text-3xl font-semibold text-black">
                     Restorative Record Builder
                   </h1>
-                  {ButtonGroup}
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    {ButtonGroup}
+                  </div>
                 </div>
                 <div className="mb-8">{renderSection()}</div>
-                <div className="flex justify-between">
+                <div className="flex flex-col sm:flex-row justify-between gap-3">
                   <button
                     onClick={handlePrevious}
                     disabled={currentCategory === 0}
-                    className="px-6 py-3 border text-base font-medium rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 lg:px-6 py-3 border text-sm lg:text-base font-medium rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                     style={{
                       color: '#595959',
                       borderColor: '#E5E5E5',
@@ -3607,7 +3866,7 @@ function RestorativeRecordBuilderForm() {
                   {currentCategory === categories.length - 1 ? (
                     <button
                       onClick={handleSubmit}
-                      className="px-6 py-3 text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90 text-white"
+                      className="px-4 lg:px-6 py-3 text-sm lg:text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90 text-white w-full sm:w-auto"
                       style={{ backgroundColor: '#E54747' }}
                     >
                       Submit
@@ -3615,7 +3874,7 @@ function RestorativeRecordBuilderForm() {
                   ) : (
                     <button
                       onClick={handleNext}
-                      className="px-6 py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-800 transition-all duration-200"
+                      className="px-4 lg:px-6 py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-800 transition-all duration-200 w-full sm:w-auto"
                     >
                       Save
                     </button>
@@ -3629,19 +3888,19 @@ function RestorativeRecordBuilderForm() {
 
       {/* Incomplete Record Modal */}
       {showIncompleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-md mx-4">
-            <h3 className="text-xl font-semibold mb-3 text-black">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-4 lg:p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg lg:text-xl font-semibold mb-3 text-black">
               Complete Your Restorative Record
             </h3>
-            <p className="mb-6" style={{ color: '#595959' }}>
+            <p className="mb-6 text-sm lg:text-base" style={{ color: '#595959' }}>
               Please complete the Restorative Record to use this feature. You
               must go through all sections and submit your record before viewing
               your profile.
             </p>
             <button
               onClick={() => setShowIncompleteModal(false)}
-              className="w-full px-4 py-2 text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90 text-white"
+              className="w-full px-4 py-2 text-sm lg:text-base font-medium rounded-xl transition-all duration-200 hover:opacity-90 text-white"
               style={{ backgroundColor: '#E54747' }}
             >
               Continue Building Your Restorative Record
@@ -3692,10 +3951,12 @@ function RestorativeRecordBuilderForm() {
       {hoverTutorialActive && (
         <div
           onClick={() => setHoverTutorialActive(false)}
-          className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[9999] px-6 py-3 rounded-xl shadow-lg cursor-pointer"
-          style={{ backgroundColor: '#E54747', color: 'white', fontFamily: 'Poppins, sans-serif', fontWeight: 500 }}
+          className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[9999] px-4 lg:px-6 py-3 rounded-xl shadow-lg cursor-pointer text-sm lg:text-base"
+          style={{ backgroundColor: '#E54747', color: 'white', fontFamily: 'Poppins, sans-serif', fontWeight: 500, maxWidth: '90vw' }}
         >
-          Hover hints are enabled. <span className="underline">Click here to disable</span>.
+          <span className="hidden sm:inline">Hover hints are enabled.</span>
+          <span className="sm:hidden">Hints enabled.</span>
+          <span className="underline"> Click here to disable</span>.
         </div>
       )}
     </div>

@@ -35,7 +35,7 @@ export const FormDialog: React.FC<FormDialogProps> = ({
       </div>
       <form className="space-y-4" onSubmit={onSubmit}>
         {children}
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 md:flex-row">
           <button
             type="submit"
             className="px-4 py-2 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"

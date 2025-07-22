@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { socialFields } from "@/app/restorative-record/constants";
-import { Info } from "lucide-react";
+import { Info, Menu, X } from "lucide-react";
 
 function formatFileSize(bytes: number) {
   if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + " MB";
@@ -90,6 +90,7 @@ export default function MyRestorativeRecordProfile() {
     },
   ];
   const [openUseCase, setOpenUseCase] = useState<number | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -290,6 +291,41 @@ export default function MyRestorativeRecordProfile() {
     }
   };
 
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.classList.add('overflow-hidden');
+    } else {
+      document.body.classList.remove('overflow-hidden');
+    }
+  
+    // Optional cleanup if component unmounts while menu is open
+    return () => document.body.classList.remove('overflow-hidden');
+  }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+  
+    const handleBreakpointChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      if (e.matches) {
+        setMobileMenuOpen(false); // Close the menu
+        document.body.classList.remove("overflow-hidden"); // Ensure scroll is restored
+      }
+    };
+  
+    handleBreakpointChange(mediaQuery); // run on mount
+  
+    mediaQuery.addEventListener("change", handleBreakpointChange);
+    return () => mediaQuery.removeEventListener("change", handleBreakpointChange);
+  }, []);
+
+  useEffect(() => {
+    if (mobileMenuOpen && window.innerWidth < 1024) {
+      document.body.classList.add("overflow-hidden");
+    } else {
+      document.body.classList.remove("overflow-hidden");
+    }
+  }, [mobileMenuOpen]);
+
   const removeEmail = (emailToRemove: string) => {
     setAddedEmails(addedEmails.filter((email) => email !== emailToRemove));
   };
@@ -318,103 +354,120 @@ export default function MyRestorativeRecordProfile() {
     <div className="min-h-screen bg-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
       {/* Full-width Header */}
       <header className="sticky top-0 z-50 w-full bg-white shadow-sm border-b border-gray-200">
-        <div className="w-full px-6 py-4">
-          <div className="flex items-center justify-between w-full">
-            {/* Left: Rézme Logo */}
-            <div className="flex items-center">
-              <div className="text-2xl font-bold" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                <span style={{ color: '#000000' }}>réz</span>
-                <span style={{ color: '#E54747' }}>me.</span>
+        <div className="w-full px-4 py-4 lg:px-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between w-full gap-2 lg:gap-0">
+            {/* Flexbox row for logo, print, share, dashboard button */}
+            <div className="flex flex-col lg:flex-row justify-between gap-3 w-full">
+              {/* Logo */}
+              <div className="flex justify-between items-center">
+                <div className="text-2xl font-bold" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  <span style={{ color: '#000000' }}>réz</span>
+                  <span style={{ color: '#E54747' }}>me.</span>
+                </div>
+                {/* Hamburger menu for lg and below */}
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="p-2 rounded-lg hover:bg-gray-50 lg:hidden"
+                  style={{ border: '1px solid #E5E5E5' }}
+                >
+                  <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {mobileMenuOpen ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    )}
+                  </svg>
+                </button>
               </div>
-            </div>
-
-            {/* Center: Navigation Buttons */}
-            <div className="flex items-center space-x-6">
+              {/* Print button (desktop only) */}
+              <button
+                className="hidden lg:inline-flex px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-lg hover:bg-gray-50"
+                style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}
+                onClick={() => window.print()}
+              >
+                Print
+              </button>
+              {/* Share button (desktop only) */}
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="hidden lg:inline-flex px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-lg hover:bg-gray-50"
+                style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}
+              >
+                Share
+              </button>
+              {/* Dashboard button: visible in header on desktop, in menu on mobile */}
               <Link href="/restorative-record" passHref legacyBehavior>
-                <a className="px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-md" 
-                   style={{ 
-                     backgroundColor: '#E54747', 
+                <a className="hidden lg:inline-flex w-auto px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-lg text-center"
+                   style={{
+                     backgroundColor: '#E54747',
                      color: 'white',
-                     fontFamily: 'Poppins, sans-serif'
+                     fontFamily: 'Poppins, sans-serif',
                    }}>
                   My Rézme Dashboard
                 </a>
               </Link>
-              {/* Removes legal assistance from preview */}
-              {/* <button
-                className="px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-md hover:bg-gray-50"
-                style={{ 
-                  color: '#595959',
-                  fontFamily: 'Poppins, sans-serif'
-                }}
-                onClick={() => setShowLegalModal(true)}>
-                Legal Assistance
-              </button> */}
-              <button
-                className="px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-md hover:bg-gray-50"
-                style={{ 
-                  color: '#595959',
-                  fontFamily: 'Poppins, sans-serif'
-                }}
-                onClick={() => window.print()}>
-                Print
-              </button>
-              <button
-                onClick={() => setShowShareModal(true)}
-                className="px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-md hover:bg-gray-50"
-                style={{ 
-                  color: '#595959',
-                  fontFamily: 'Poppins, sans-serif'
-                }}>
-                Share
-              </button>
-              {/* Removes settings from preview */}
-              {/* <Link href="/user/dashboard" passHref legacyBehavior>
-                <a className="px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-md hover:bg-gray-50"
-                   style={{ 
-                     color: '#595959',
-                     fontFamily: 'Poppins, sans-serif'
-                   }}>
-                  Settings
-                </a>
-              </Link> */}
+            </div>
+          </div>
+        </div>
+        {/* Hamburger Slide-out Menu (mobile/medium) */}
+        <div 
+          className={`fixed inset-0 bg-black z-30 transition-bg-opacity duration-300 lg:hidden 
+            ${mobileMenuOpen ? 'bg-opacity-50 pointer-events-auto' : 'bg-opacity-0 pointer-events-none'}
+          `}
+          onClick={() => setMobileMenuOpen(false)}
+        />
+        <div className={`fixed top-0 right-0 h-full w-80 bg-white shadow-lg z-50 
+        transform transition-transform duration-300 ease-in-out ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'} lg:hidden`}>
+          <button 
+            className="fixed top-0 right-0 p-4"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          
+          <div className="m-8 pt-4 space-y-4">
+            <Link href="/restorative-record" passHref legacyBehavior>
+              <a className="w-full px-4 py-3 rounded-xl flex items-center gap-3 hover:opacity-90 text-white text-center"
+                style={{ backgroundColor: '#E54747' }}>
+                <span className="font-medium">My Rézme Dashboard</span>
+              </a>
+            </Link>
+
+            <div>
+              <h3 className="text-sm font-semibold text-black mb-3 uppercase">Restorative Record Options</h3>
             </div>
 
-            {/* Right: User Profile */}
-            <div className="flex items-center space-x-3">
-              <div className="text-right">
-                <div className="font-medium text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                  {profile?.first_name || ""} {profile?.last_name || ""}
-                </div>
-                <div className="text-sm" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>
-                  Candidate
-                </div>
-              </div>
-              {profile?.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt="Avatar"
-                  className="w-10 h-10 rounded-full object-cover"
-                  style={{ border: '2px solid #f0f0f0' }}
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-semibold"
-                     style={{ 
-                       backgroundColor: '#f8f9fa', 
-                       color: '#595959',
-                       border: '2px solid #f0f0f0',
-                       fontFamily: 'Poppins, sans-serif'
-                     }}>
-                  {profile?.first_name?.[0] || "U"}
-                </div>
-              )}
+            <div>
+              <button
+                className="w-full px-4 py-3 rounded-xl flex items-center gap-3 text-black bg-gray-50 hover:bg-gray-50"
+                onClick={() => {
+                  window.print();
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <span className="font-medium">Print</span>
+              </button>
+            </div>
+
+            <div>
+              <button
+                className="w-full px-4 py-3 rounded-xl flex items-center gap-3 text-black bg-gray-50 hover:bg-gray-50"
+                onClick={() => {
+                  setShowShareModal(true)
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <span className="font-medium">Share</span>
+              </button>
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="max-w-5xl mx-auto py-8 px-4 md:px-6">
+      <div className="max-w-5xl mx-auto py-8 px-4 lg:px-6">
         {/* Page Title */}
         <div className="mb-8">
           <h1 className="text-3xl font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -440,15 +493,10 @@ export default function MyRestorativeRecordProfile() {
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-6 w-6"
                       fill="none"
-                      viewBox="0 0 24 24"
+                      viewBox="0 0 512 512"
                       stroke="currentColor"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
+                      <path d="m130.91 327.37l145.57-165.37c12.389-14.074 52.926-3.3688 67 9.0206 13.37 11.77 29.832 51.242 17.442 65.316l-207.52 235.74c-24.778 28.148-86.5 23.773-109.37 3.6403s-35.034-80.802-10.256-108.95l297.34-337.77c18.584-21.111 82.907-1.9558 114.57 25.92s58.821 89.252 40.237 110.36l-235.4 267.4"/>
                     </svg>
                   </button>
                 </div>
@@ -504,7 +552,7 @@ export default function MyRestorativeRecordProfile() {
                     />
                     <button
                       onClick={() => handleShare("email")}
-                      className="px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-md"
+                      className="px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg"
                       style={{ 
                         backgroundColor: '#E54747', 
                         color: 'white',
@@ -618,7 +666,7 @@ export default function MyRestorativeRecordProfile() {
                 <div className="mb-8">
                   <button
                     onClick={() => handleShare("copy")}
-                    className="w-full px-6 py-3 border border-gray-200 rounded-lg font-medium transition-all duration-200 hover:bg-gray-50 hover:shadow-md flex items-center justify-center gap-3"
+                    className="w-full px-6 py-3 border border-gray-200 rounded-lg font-medium transition-all duration-200 hover:bg-gray-50 hover:shadow-lg flex items-center justify-center gap-3"
                     style={{ 
                       color: '#000000',
                       fontFamily: 'Poppins, sans-serif'
@@ -648,7 +696,7 @@ export default function MyRestorativeRecordProfile() {
                 {/* Done button */}
                 <button
                   onClick={() => setShowShareModal(false)}
-                  className="w-full px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-md"
+                  className="w-full px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg"
                   style={{ 
                     backgroundColor: '#E54747', 
                     color: 'white',
@@ -726,7 +774,7 @@ export default function MyRestorativeRecordProfile() {
                       If you would like to file a fair chance complaint, please
                       complete the{" "}
                       <a
-                        href="https://forms.office.com/Pages/ResponsePage.aspx?id=E69jRSnAs0G3TJZejuyPlqdlrWcla0pGkN2zYgm3FclUMUVUMDdGOFZDWlNJSlRDODBNMDNRWVNHOCQlQCN0PWcu"
+                        href="https://forms.office.com/Pages/ResponsePage.aspx?id=E69jRSnAs0G3TJZejuyPlqdlrWcla0pGkN2zYgm3FclUMUVUlgdGOFZDWlNJSlRDODBNlgNRWVNHOCQlQCN0PWcu"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-medium underline transition-colors duration-200 hover:opacity-80"
@@ -850,7 +898,7 @@ export default function MyRestorativeRecordProfile() {
                     </div>
                     <button
                       type="submit"
-                      className="w-full px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-md text-sm"
+                      className="w-full px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-lg text-sm"
                       style={{ 
                         backgroundColor: '#E54747', 
                         color: 'white',
@@ -875,36 +923,36 @@ export default function MyRestorativeRecordProfile() {
               passHref
               legacyBehavior
             >
-              <a className="p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
+              <a className="block ml-4 p-3 rounded-lg transition-all duration-200 hover:shadow-lg hover:bg-gray-800" 
                  style={{ backgroundColor: '#000000', color: 'white' }}
                  title="Edit">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
                   fill="none"
-                  viewBox="0 0 24 24"
+                  viewBox="0 0 512 512"
                   stroke="currentColor"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                    strokeWidth={40}
+                    d="m 130.91 327.37 l 145.57 -165.37 c 12.389 -14.074 52.926 -3.3688 67 9.0206 c 13.37 11.77 29.832 51.242 17.442 65.316 l -207.52 235.74 c -24.778 28.148 -86.5 23.773 -109.37 3.6403 s -35.034 -80.802 -10.256 -108.95 l 297.34 -337.77 c 18.584 -21.111 82.907 -1.9558 114.57 25.92 s 58.821 89.252 40.237 110.36 l -235.4 267.4"
                   />
                 </svg>
               </a>
             </Link>
           </div>
-          <div className="flex flex-col lg:flex-row gap-8 items-center lg:items-start">
+          <div className="flex flex-col lg:flex-row gap-8 items-center md:items-start">
             {profile?.avatar_url ? (
               <img
                 src={profile.avatar_url}
                 alt="Avatar"
-                className="w-28 h-28 rounded-full object-cover shadow-md"
+                className="w-28 h-28 rounded-full object-cover shadow-lg"
                 style={{ border: '3px solid #f0f0f0' }}
               />
             ) : (
-              <div className="w-28 h-28 rounded-full flex items-center justify-center text-3xl font-semibold shadow-md"
+              <div className="w-28 h-28 rounded-full flex items-center justify-center text-3xl font-semibold shadow-lg"
                    style={{ 
                      backgroundColor: '#f8f9fa', 
                      color: '#595959',
@@ -914,7 +962,7 @@ export default function MyRestorativeRecordProfile() {
                 {profile?.first_name?.[0] || "U"}
               </div>
             )}
-            <div className="flex-1 text-center lg:text-left">
+            <div className="flex-1 text-center md:text-left">
               <div className="font-semibold text-2xl mb-3 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
                 {profile?.first_name || ""} {profile?.last_name || ""}
               </div>
@@ -941,7 +989,7 @@ export default function MyRestorativeRecordProfile() {
                         <a
                           key={field.name}
                           href={url}
-                          className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md hover:bg-red-500 hover:text-white"
+                          className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-lg hover:bg-red-500 hover:text-white"
                           style={{ 
                             color: '#E54747', 
                             backgroundColor: '#fef7f7',
@@ -973,21 +1021,21 @@ export default function MyRestorativeRecordProfile() {
               passHref
               legacyBehavior
             >
-              <a className="p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
+              <a className="block ml-4 p-3 rounded-lg transition-all duration-200 hover:shadow-lg hover:bg-gray-800" 
                  style={{ backgroundColor: '#000000', color: 'white' }}
                  title="Edit">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
                   fill="none"
-                  viewBox="0 0 24 24"
+                  viewBox="0 0 512 512"
                   stroke="currentColor"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                    strokeWidth={40}
+                    d="m 130.91 327.37 l 145.57 -165.37 c 12.389 -14.074 52.926 -3.3688 67 9.0206 c 13.37 11.77 29.832 51.242 17.442 65.316 l -207.52 235.74 c -24.778 28.148 -86.5 23.773 -109.37 3.6403 s -35.034 -80.802 -10.256 -108.95 l 297.34 -337.77 c 18.584 -21.111 82.907 -1.9558 114.57 25.92 s 58.821 89.252 40.237 110.36 l -235.4 267.4"
                   />
                 </svg>
               </a>
@@ -996,7 +1044,7 @@ export default function MyRestorativeRecordProfile() {
           {achievements.map((award: any, idx: number) => (
             <div
               key={idx}
-              className="p-6 mb-4 bg-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
+              className="p-6 mb-4 bg-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-lg"
               style={{ border: '1px solid #f0f0f0' }}
             >
               <div className="font-semibold text-lg text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>{award.name}</div>
@@ -1019,7 +1067,7 @@ export default function MyRestorativeRecordProfile() {
                 <div className="text-sm mt-4 pt-3 border-t border-gray-100">
                   <a
                     href={award.file_url}
-                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-lg"
                     style={{ 
                       color: '#E54747', 
                       backgroundColor: '#fef7f7',
@@ -1056,21 +1104,21 @@ export default function MyRestorativeRecordProfile() {
               passHref
               legacyBehavior
             >
-              <a className="p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
+              <a className="block ml-4 p-3 rounded-lg transition-all duration-200 hover:shadow-lg hover:bg-gray-800" 
                  style={{ backgroundColor: '#000000', color: 'white' }}
                  title="Edit">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
                   fill="none"
-                  viewBox="0 0 24 24"
+                  viewBox="0 0 512 512"
                   stroke="currentColor"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                    strokeWidth={40}
+                    d="m 130.91 327.37 l 145.57 -165.37 c 12.389 -14.074 52.926 -3.3688 67 9.0206 c 13.37 11.77 29.832 51.242 17.442 65.316 l -207.52 235.74 c -24.778 28.148 -86.5 23.773 -109.37 3.6403 s -35.034 -80.802 -10.256 -108.95 l 297.34 -337.77 c 18.584 -21.111 82.907 -1.9558 114.57 25.92 s 58.821 89.252 40.237 110.36 l -235.4 267.4"
                   />
                 </svg>
               </a>
@@ -1079,7 +1127,7 @@ export default function MyRestorativeRecordProfile() {
           {skills.map((skill: any, idx: number) => (
             <div
               key={idx}
-              className="p-6 mb-4 bg-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
+              className="p-6 mb-4 bg-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-lg"
               style={{ border: '1px solid #f0f0f0' }}
             >
               {skill.soft_skills && skill.soft_skills.length > 0 && (
@@ -1107,7 +1155,7 @@ export default function MyRestorativeRecordProfile() {
                 <div className="text-sm mt-4 pt-3 border-t border-gray-100">
                   <a
                     href={skill.file_url}
-                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-lg"
                     style={{ 
                       color: '#E54747', 
                       backgroundColor: '#fef7f7',
@@ -1146,21 +1194,21 @@ export default function MyRestorativeRecordProfile() {
               passHref
               legacyBehavior
             >
-              <a className="p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
+              <a className="block ml-4 p-3 rounded-lg transition-all duration-200 hover:shadow-lg hover:bg-gray-800" 
                  style={{ backgroundColor: '#000000', color: 'white' }}
                  title="Edit">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
                   fill="none"
-                  viewBox="0 0 24 24"
+                  viewBox="0 0 512 512"
                   stroke="currentColor"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                    strokeWidth={40}
+                    d="m 130.91 327.37 l 145.57 -165.37 c 12.389 -14.074 52.926 -3.3688 67 9.0206 c 13.37 11.77 29.832 51.242 17.442 65.316 l -207.52 235.74 c -24.778 28.148 -86.5 23.773 -109.37 3.6403 s -35.034 -80.802 -10.256 -108.95 l 297.34 -337.77 c 18.584 -21.111 82.907 -1.9558 114.57 25.92 s 58.821 89.252 40.237 110.36 l -235.4 267.4"
                   />
                 </svg>
               </a>
@@ -1169,7 +1217,7 @@ export default function MyRestorativeRecordProfile() {
           {communityEngagements.map((eng: any, idx: number) => (
             <div
               key={idx}
-              className="p-6 mb-4 bg-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
+              className="p-6 mb-4 bg-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-lg"
               style={{ border: '1px solid #f0f0f0' }}
             >
               <div className="font-semibold text-lg text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>{eng.role}</div>
@@ -1188,7 +1236,7 @@ export default function MyRestorativeRecordProfile() {
                   <div className="text-sm">
                     <a
                       href={eng.orgWebsite}
-                      className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md mr-3"
+                      className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-lg mr-3"
                       style={{ 
                         color: '#E54747', 
                         backgroundColor: '#fef7f7',
@@ -1206,7 +1254,7 @@ export default function MyRestorativeRecordProfile() {
                   <div className="text-sm">
                     <a
                       href={eng.file_url}
-                      className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+                      className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-lg"
                       style={{ 
                         color: '#E54747', 
                         backgroundColor: '#fef7f7',
@@ -1246,21 +1294,21 @@ export default function MyRestorativeRecordProfile() {
               passHref
               legacyBehavior
             >
-              <a className="p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
+              <a className="block ml-4 p-3 rounded-lg transition-all duration-200 hover:shadow-lg hover:bg-gray-800" 
                  style={{ backgroundColor: '#000000', color: 'white' }}
                  title="Edit">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
                   fill="none"
-                  viewBox="0 0 24 24"
+                  viewBox="0 0 512 512"
                   stroke="currentColor"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                    strokeWidth={40}
+                    d="m 130.91 327.37 l 145.57 -165.37 c 12.389 -14.074 52.926 -3.3688 67 9.0206 c 13.37 11.77 29.832 51.242 17.442 65.316 l -207.52 235.74 c -24.778 28.148 -86.5 23.773 -109.37 3.6403 s -35.034 -80.802 -10.256 -108.95 l 297.34 -337.77 c 18.584 -21.111 82.907 -1.9558 114.57 25.92 s 58.821 89.252 40.237 110.36 l -235.4 267.4"
                   />
                 </svg>
               </a>
@@ -1271,7 +1319,7 @@ export default function MyRestorativeRecordProfile() {
           {newRehabPrograms.map((program: any, idx: number) => (
             <div
               key={idx}
-              className="p-6 mb-4 bg-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
+              className="p-6 mb-4 bg-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-lg"
               style={{ border: '1px solid #f0f0f0' }}
             >
               <div className="font-semibold text-lg text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>{program.program}</div>
@@ -1305,7 +1353,7 @@ export default function MyRestorativeRecordProfile() {
                 <div className="text-sm mt-4 pt-3 border-t border-gray-100">
                   <a
                     href={program.file_url}
-                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-lg"
                     style={{ 
                       color: '#E54747', 
                       backgroundColor: '#fef7f7',
@@ -1347,21 +1395,21 @@ export default function MyRestorativeRecordProfile() {
               passHref
               legacyBehavior
             >
-              <a className="p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
+              <a className="block ml-4 p-3 rounded-lg transition-all duration-200 hover:shadow-lg hover:bg-gray-800" 
                  style={{ backgroundColor: '#000000', color: 'white' }}
                  title="Edit">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
                   fill="none"
-                  viewBox="0 0 24 24"
+                  viewBox="0 0 512 512"
                   stroke="currentColor"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                    strokeWidth={40}
+                    d="m 130.91 327.37 l 145.57 -165.37 c 12.389 -14.074 52.926 -3.3688 67 9.0206 c 13.37 11.77 29.832 51.242 17.442 65.316 l -207.52 235.74 c -24.778 28.148 -86.5 23.773 -109.37 3.6403 s -35.034 -80.802 -10.256 -108.95 l 297.34 -337.77 c 18.584 -21.111 82.907 -1.9558 114.57 25.92 s 58.821 89.252 40.237 110.36 l -235.4 267.4"
                   />
                 </svg>
               </a>
@@ -1370,7 +1418,7 @@ export default function MyRestorativeRecordProfile() {
           {hobbies.map((hobby: any, idx: number) => (
             <div
               key={idx}
-              className="p-6 mb-4 bg-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
+              className="p-6 mb-4 bg-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-lg"
               style={{ border: '1px solid #f0f0f0' }}
             >
               {hobby.general_hobby && (
@@ -1398,7 +1446,7 @@ export default function MyRestorativeRecordProfile() {
                 <div className="text-sm mt-4 pt-3 border-t border-gray-100">
                   <a
                     href={hobby.file_url}
-                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-lg"
                     style={{ 
                       color: '#E54747', 
                       backgroundColor: '#fef7f7',
@@ -1437,21 +1485,21 @@ export default function MyRestorativeRecordProfile() {
               passHref
               legacyBehavior
             >
-              <a className="p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
+              <a className="block ml-4 p-3 rounded-lg transition-all duration-200 hover:shadow-lg hover:bg-gray-800" 
                  style={{ backgroundColor: '#000000', color: 'white' }}
                  title="Edit">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
                   fill="none"
-                  viewBox="0 0 24 24"
+                  viewBox="0 0 512 512"
                   stroke="currentColor"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                    strokeWidth={40}
+                    d="m 130.91 327.37 l 145.57 -165.37 c 12.389 -14.074 52.926 -3.3688 67 9.0206 c 13.37 11.77 29.832 51.242 17.442 65.316 l -207.52 235.74 c -24.778 28.148 -86.5 23.773 -109.37 3.6403 s -35.034 -80.802 -10.256 -108.95 l 297.34 -337.77 c 18.584 -21.111 82.907 -1.9558 114.57 25.92 s 58.821 89.252 40.237 110.36 l -235.4 267.4"
                   />
                 </svg>
               </a>
@@ -1460,7 +1508,7 @@ export default function MyRestorativeRecordProfile() {
           {certifications.map((cert: any, idx: number) => (
             <div
               key={idx}
-              className="p-6 mb-4 bg-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
+              className="p-6 mb-4 bg-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-lg"
               style={{ border: '1px solid #f0f0f0' }}
             >
               <div className="font-semibold text-lg text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>{cert.name}</div>
@@ -1497,7 +1545,7 @@ export default function MyRestorativeRecordProfile() {
                         href={cert.credential_url.startsWith("http://") || cert.credential_url.startsWith("https://") 
                           ? cert.credential_url 
                           : `https://${cert.credential_url}`}
-                        className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md mr-3"
+                        className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-lg mr-3"
                         style={{ 
                           color: '#E54747', 
                           backgroundColor: '#fef7f7',
@@ -1515,7 +1563,7 @@ export default function MyRestorativeRecordProfile() {
                     <div className="text-sm">
                       <a
                         href={cert.file_url}
-                        className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+                        className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-lg"
                         style={{ 
                           color: '#E54747', 
                           backgroundColor: '#fef7f7',
@@ -1554,21 +1602,21 @@ export default function MyRestorativeRecordProfile() {
               passHref
               legacyBehavior
             >
-              <a className="p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
+              <a className="block ml-4 p-3 rounded-lg transition-all duration-200 hover:shadow-lg hover:bg-gray-800" 
                  style={{ backgroundColor: '#000000', color: 'white' }}
                  title="Edit">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
                   fill="none"
-                  viewBox="0 0 24 24"
+                  viewBox="0 0 512 512"
                   stroke="currentColor"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                    strokeWidth={40}
+                    d="m 130.91 327.37 l 145.57 -165.37 c 12.389 -14.074 52.926 -3.3688 67 9.0206 c 13.37 11.77 29.832 51.242 17.442 65.316 l -207.52 235.74 c -24.778 28.148 -86.5 23.773 -109.37 3.6403 s -35.034 -80.802 -10.256 -108.95 l 297.34 -337.77 c 18.584 -21.111 82.907 -1.9558 114.57 25.92 s 58.821 89.252 40.237 110.36 l -235.4 267.4"
                   />
                 </svg>
               </a>
@@ -1577,7 +1625,7 @@ export default function MyRestorativeRecordProfile() {
           {mentors.map((mentor: any, idx: number) => (
             <div
               key={idx}
-              className="p-6 mb-4 bg-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
+              className="p-6 mb-4 bg-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-lg"
               style={{ border: '1px solid #f0f0f0' }}
             >
               <div className="font-semibold text-lg text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>{mentor.name}</div>
@@ -1613,7 +1661,7 @@ export default function MyRestorativeRecordProfile() {
                     <div className="text-sm">
                       <a
                         href={mentor.linkedin_profile}
-                        className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md mr-3"
+                        className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-lg mr-3"
                         style={{ 
                           color: '#E54747', 
                           backgroundColor: '#fef7f7',
@@ -1631,7 +1679,7 @@ export default function MyRestorativeRecordProfile() {
                     <div className="text-sm">
                       <a
                         href={mentor.website}
-                        className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+                        className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-lg"
                         style={{ 
                           color: '#E54747', 
                           backgroundColor: '#fef7f7',
@@ -1667,21 +1715,21 @@ export default function MyRestorativeRecordProfile() {
               passHref
               legacyBehavior
             >
-              <a className="p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
+              <a className="block ml-4 p-3 rounded-lg transition-all duration-200 hover:shadow-lg hover:bg-gray-800" 
                  style={{ backgroundColor: '#000000', color: 'white' }}
                  title="Edit">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
                   fill="none"
-                  viewBox="0 0 24 24"
+                  viewBox="0 0 512 512"
                   stroke="currentColor"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                    strokeWidth={40}
+                    d="m 130.91 327.37 l 145.57 -165.37 c 12.389 -14.074 52.926 -3.3688 67 9.0206 c 13.37 11.77 29.832 51.242 17.442 65.316 l -207.52 235.74 c -24.778 28.148 -86.5 23.773 -109.37 3.6403 s -35.034 -80.802 -10.256 -108.95 l 297.34 -337.77 c 18.584 -21.111 82.907 -1.9558 114.57 25.92 s 58.821 89.252 40.237 110.36 l -235.4 267.4"
                   />
                 </svg>
               </a>
@@ -1690,7 +1738,7 @@ export default function MyRestorativeRecordProfile() {
           {employments.map((job: any, idx: number) => (
             <div
               key={idx}
-              className="p-6 mb-4 bg-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
+              className="p-6 mb-4 bg-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-lg"
               style={{ border: '1px solid #f0f0f0' }}
             >
               <div className="font-semibold text-lg text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>{job.title}</div>
@@ -1727,7 +1775,7 @@ export default function MyRestorativeRecordProfile() {
                     href={job.company_url.startsWith("http://") || job.company_url.startsWith("https://") 
                       ? job.company_url 
                       : `https://${job.company_url}`}
-                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-lg"
                     style={{ 
                       color: '#E54747', 
                       backgroundColor: '#fef7f7',
@@ -1759,21 +1807,21 @@ export default function MyRestorativeRecordProfile() {
               passHref
               legacyBehavior
             >
-              <a className="p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
+              <a className="block ml-4 p-3 rounded-lg transition-all duration-200 hover:shadow-lg hover:bg-gray-800" 
                  style={{ backgroundColor: '#000000', color: 'white' }}
                  title="Edit">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
                   fill="none"
-                  viewBox="0 0 24 24"
+                  viewBox="0 0 512 512"
                   stroke="currentColor"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 00-4-4l-8 8v3z"
+                    strokeWidth={40}
+                    d="m 130.91 327.37 l 145.57 -165.37 c 12.389 -14.074 52.926 -3.3688 67 9.0206 c 13.37 11.77 29.832 51.242 17.442 65.316 l -207.52 235.74 c -24.778 28.148 -86.5 23.773 -109.37 3.6403 s -35.034 -80.802 -10.256 -108.95 l 297.34 -337.77 c 18.584 -21.111 82.907 -1.9558 114.57 25.92 s 58.821 89.252 40.237 110.36 l -235.4 267.4"
                   />
                 </svg>
               </a>
@@ -1782,7 +1830,7 @@ export default function MyRestorativeRecordProfile() {
           {education.map((edu: any, idx: number) => (
             <div
               key={idx}
-              className="p-6 mb-4 bg-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
+              className="p-6 mb-4 bg-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-lg"
               style={{ border: '1px solid #f0f0f0' }}
             >
               <div className="font-semibold text-lg text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -1821,7 +1869,7 @@ export default function MyRestorativeRecordProfile() {
                 <div className="text-sm mt-4 pt-3 border-t border-gray-100">
                   <a
                     href={edu.file_url}
-                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+                    className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-lg"
                     style={{ 
                       color: '#E54747', 
                       backgroundColor: '#fef7f7',
@@ -1857,7 +1905,7 @@ export default function MyRestorativeRecordProfile() {
           body {
             background: white !important;
           }
-          .max-w-5xl, .mx-auto, .py-8, .px-4, .md\:px-6 {
+          .max-w-5xl, .mx-auto, .py-8, .px-4, .lg\:px-6 {
             max-width: 100% !important;
             padding: 0 !important;
           }

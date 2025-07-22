@@ -201,8 +201,8 @@ export const IntroductionSection: React.FC<IntroductionSectionProps> = ({
 
   return (
     <div className="p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
-      <div className="flex justify-between items-center mb-2">
-        <h2 className="text-2xl font-semibold text-black">Introduction</h2>
+      <div className="flex flex-col items-start mb-2 md:flex-row md:justify-between md:items-center md:justify-center">
+        <h2 className="text-2xl font-semibold text-black mb-2 md:mb-0">Introduction</h2>
         {hasIntroductionContent(formData) || showForm ? (
           <div className="px-4 py-5" style={{ minWidth: 92 }} aria-hidden="true" />
         ) : (
@@ -254,7 +254,7 @@ export const IntroductionSection: React.FC<IntroductionSectionProps> = ({
         {/* Social Media Profiles */}
         <div className="mb-6">
           <h3 className="font-medium text-black mb-3">Social Media Profiles</h3>
-          <div className="flex gap-2 mb-4">
+          <div className="flex flex-col [@media(min-width:425px)]:flex-row gap-2 mb-4">
             <select
               value={selectedPlatform}
               onChange={e => setSelectedPlatform(e.target.value)}

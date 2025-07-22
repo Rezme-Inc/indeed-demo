@@ -17,6 +17,21 @@ export const RecordItem: React.FC<RecordItemProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const handleEdit = () => {
+    onEdit();
+    // Scroll to the form after a small delay to ensure it's rendered
+    setTimeout(() => {
+      // Find the form dialog in the current section and scroll to it
+      const formDialog = document.querySelector('.border.border-gray-200.rounded-lg.p-4.bg-gray-50');
+      if (formDialog) {
+        formDialog.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }
+    }, 100);
+  };
+
   return (
     <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
       <div className="flex justify-between items-start">
@@ -56,7 +71,7 @@ export const RecordItem: React.FC<RecordItemProps> = ({
         <div className="flex gap-2 ml-4">
           <button
             type="button"
-            onClick={onEdit}
+            onClick={handleEdit}
             className="text-primary hover:text-red-600 font-medium text-sm transition-colors"
           >
             Edit
