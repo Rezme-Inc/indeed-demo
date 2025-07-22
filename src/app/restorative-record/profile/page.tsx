@@ -888,7 +888,7 @@ export default function MyRestorativeRecordProfile() {
               passHref
               legacyBehavior
             >
-              <a className="p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
+              <a className="block ml-4 p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
                  style={{ backgroundColor: '#000000', color: 'white' }}
                  title="Edit">
                 <svg
@@ -986,7 +986,7 @@ export default function MyRestorativeRecordProfile() {
               passHref
               legacyBehavior
             >
-              <a className="p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
+              <a className="block ml-4 p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
                  style={{ backgroundColor: '#000000', color: 'white' }}
                  title="Edit">
                 <svg
@@ -1069,7 +1069,7 @@ export default function MyRestorativeRecordProfile() {
               passHref
               legacyBehavior
             >
-              <a className="p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
+              <a className="block ml-4 p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
                  style={{ backgroundColor: '#000000', color: 'white' }}
                  title="Edit">
                 <svg
@@ -1159,7 +1159,7 @@ export default function MyRestorativeRecordProfile() {
               passHref
               legacyBehavior
             >
-              <a className="p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
+              <a className="block ml-4 p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
                  style={{ backgroundColor: '#000000', color: 'white' }}
                  title="Edit">
                 <svg
@@ -1259,7 +1259,7 @@ export default function MyRestorativeRecordProfile() {
               passHref
               legacyBehavior
             >
-              <a className="p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
+              <a className="block ml-4 p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
                  style={{ backgroundColor: '#000000', color: 'white' }}
                  title="Edit">
                 <svg
@@ -1360,7 +1360,7 @@ export default function MyRestorativeRecordProfile() {
               passHref
               legacyBehavior
             >
-              <a className="p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
+              <a className="block ml-4 p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
                  style={{ backgroundColor: '#000000', color: 'white' }}
                  title="Edit">
                 <svg
@@ -1450,7 +1450,7 @@ export default function MyRestorativeRecordProfile() {
               passHref
               legacyBehavior
             >
-              <a className="p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
+              <a className="block ml-4 p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
                  style={{ backgroundColor: '#000000', color: 'white' }}
                  title="Edit">
                 <svg
@@ -1567,7 +1567,7 @@ export default function MyRestorativeRecordProfile() {
               passHref
               legacyBehavior
             >
-              <a className="p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
+              <a className="block ml-4 p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
                  style={{ backgroundColor: '#000000', color: 'white' }}
                  title="Edit">
                 <svg
@@ -1680,7 +1680,7 @@ export default function MyRestorativeRecordProfile() {
               passHref
               legacyBehavior
             >
-              <a className="p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
+              <a className="block ml-4 p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
                  style={{ backgroundColor: '#000000', color: 'white' }}
                  title="Edit">
                 <svg
@@ -1772,7 +1772,7 @@ export default function MyRestorativeRecordProfile() {
               passHref
               legacyBehavior
             >
-              <a className="p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
+              <a className="block ml-4 p-3 rounded-lg transition-all duration-200 hover:shadow-md hover:bg-gray-800" 
                  style={{ backgroundColor: '#000000', color: 'white' }}
                  title="Edit">
                 <svg
