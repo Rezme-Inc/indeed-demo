@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { socialFields } from "@/app/restorative-record/constants";
-import { Info } from "lucide-react";
+import { Info, Menu, X } from "lucide-react";
 
 function formatFileSize(bytes: number) {
   if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + " MB";
@@ -90,6 +90,7 @@ export default function MyRestorativeRecordProfile() {
     },
   ];
   const [openUseCase, setOpenUseCase] = useState<number | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -318,96 +319,113 @@ export default function MyRestorativeRecordProfile() {
     <div className="min-h-screen bg-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
       {/* Full-width Header */}
       <header className="sticky top-0 z-50 w-full bg-white shadow-sm border-b border-gray-200">
-        <div className="w-full px-6 py-4">
-          <div className="flex items-center justify-between w-full">
-            {/* Left: Rézme Logo */}
-            <div className="flex items-center">
-              <div className="text-2xl font-bold" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                <span style={{ color: '#000000' }}>réz</span>
-                <span style={{ color: '#E54747' }}>me.</span>
+        <div className="w-full px-4 py-4 md:px-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full gap-2 md:gap-0">
+            {/* Flexbox row for logo, print, share, dashboard button */}
+            <div className="flex flex-col md:flex-row justify-between gap-3 w-full">
+              {/* Logo */}
+              <div className="flex justify-between items-center">
+                <div className="text-2xl font-bold" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  <span style={{ color: '#000000' }}>réz</span>
+                  <span style={{ color: '#E54747' }}>me.</span>
+                </div>
+                {/* Hamburger menu for md and below */}
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="p-2 rounded-lg hover:bg-gray-50 md:hidden"
+                  style={{ border: '1px solid #E5E5E5' }}
+                >
+                  <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {mobileMenuOpen ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    )}
+                  </svg>
+                </button>
               </div>
-            </div>
-
-            {/* Center: Navigation Buttons */}
-            <div className="flex items-center space-x-6">
+              {/* Print button (desktop only) */}
+              <button
+                className="hidden md:inline-flex px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-md hover:bg-gray-50"
+                style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}
+                onClick={() => window.print()}
+              >
+                Print
+              </button>
+              {/* Share button (desktop only) */}
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="hidden md:inline-flex px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-md hover:bg-gray-50"
+                style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}
+              >
+                Share
+              </button>
+              {/* Dashboard button: visible in header on desktop, in menu on mobile */}
               <Link href="/restorative-record" passHref legacyBehavior>
-                <a className="px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-md" 
-                   style={{ 
-                     backgroundColor: '#E54747', 
+                <a className="hidden md:inline-flex w-auto px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-md text-center"
+                   style={{
+                     backgroundColor: '#E54747',
                      color: 'white',
-                     fontFamily: 'Poppins, sans-serif'
+                     fontFamily: 'Poppins, sans-serif',
                    }}>
                   My Rézme Dashboard
                 </a>
               </Link>
-              {/* Removes legal assistance from preview */}
-              {/* <button
-                className="px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-md hover:bg-gray-50"
-                style={{ 
-                  color: '#595959',
-                  fontFamily: 'Poppins, sans-serif'
-                }}
-                onClick={() => setShowLegalModal(true)}>
-                Legal Assistance
-              </button> */}
-              <button
-                className="px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-md hover:bg-gray-50"
-                style={{ 
-                  color: '#595959',
-                  fontFamily: 'Poppins, sans-serif'
-                }}
-                onClick={() => window.print()}>
-                Print
-              </button>
-              <button
-                onClick={() => setShowShareModal(true)}
-                className="px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-md hover:bg-gray-50"
-                style={{ 
-                  color: '#595959',
-                  fontFamily: 'Poppins, sans-serif'
-                }}>
-                Share
-              </button>
-              {/* Removes settings from preview */}
-              {/* <Link href="/user/dashboard" passHref legacyBehavior>
-                <a className="px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:shadow-md hover:bg-gray-50"
-                   style={{ 
-                     color: '#595959',
-                     fontFamily: 'Poppins, sans-serif'
-                   }}>
-                  Settings
-                </a>
-              </Link> */}
+            </div>
+          </div>
+        </div>
+        {/* Hamburger Slide-out Menu (mobile/medium) */}
+        <div 
+          className={`fixed inset-0 bg-black z-30 transition-bg-opacity duration-300 md:hidden 
+            ${mobileMenuOpen ? 'bg-opacity-50 pointer-events-auto' : 'bg-opacity-0 pointer-events-none'}
+          `}
+          onClick={() => setMobileMenuOpen(false)}
+        />
+        <div className={`fixed top-0 right-0 h-full w-80 bg-white shadow-lg z-50 
+        transform transition-transform duration-300 ease-in-out ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'} md:hidden`}>
+          <button 
+            className="fixed top-0 right-0 p-4"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          
+          <div className="m-8 pt-4 space-y-4">
+            <Link href="/restorative-record" passHref legacyBehavior>
+              <a className="w-full px-4 py-3 rounded-xl flex items-center gap-3 hover:opacity-90 text-white text-center"
+                style={{ backgroundColor: '#E54747' }}>
+                <span className="font-medium">My Rézme Dashboard</span>
+              </a>
+            </Link>
+
+            <div>
+              <h3 className="text-sm font-semibold text-black mb-3 uppercase">Restorative Record Options</h3>
             </div>
 
-            {/* Right: User Profile */}
-            <div className="flex items-center space-x-3">
-              <div className="text-right">
-                <div className="font-medium text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                  {profile?.first_name || ""} {profile?.last_name || ""}
-                </div>
-                <div className="text-sm" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>
-                  Candidate
-                </div>
-              </div>
-              {profile?.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt="Avatar"
-                  className="w-10 h-10 rounded-full object-cover"
-                  style={{ border: '2px solid #f0f0f0' }}
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-semibold"
-                     style={{ 
-                       backgroundColor: '#f8f9fa', 
-                       color: '#595959',
-                       border: '2px solid #f0f0f0',
-                       fontFamily: 'Poppins, sans-serif'
-                     }}>
-                  {profile?.first_name?.[0] || "U"}
-                </div>
-              )}
+            <div>
+              <button
+                className="w-full px-4 py-3 rounded-xl flex items-center gap-3 text-black bg-gray-50 hover:bg-gray-50"
+                onClick={() => {
+                  window.print();
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <span className="font-medium">Print</span>
+              </button>
+            </div>
+
+            <div>
+              <button
+                className="w-full px-4 py-3 rounded-xl flex items-center gap-3 text-black bg-gray-50 hover:bg-gray-50"
+                onClick={() => {
+                  setShowShareModal(true)
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <span className="font-medium">Share</span>
+              </button>
             </div>
           </div>
         </div>
@@ -890,7 +908,7 @@ export default function MyRestorativeRecordProfile() {
               </a>
             </Link>
           </div>
-          <div className="flex flex-col lg:flex-row gap-8 items-center lg:items-start">
+          <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
             {profile?.avatar_url ? (
               <img
                 src={profile.avatar_url}
@@ -909,7 +927,7 @@ export default function MyRestorativeRecordProfile() {
                 {profile?.first_name?.[0] || "U"}
               </div>
             )}
-            <div className="flex-1 text-center lg:text-left">
+            <div className="flex-1 text-center md:text-left">
               <div className="font-semibold text-2xl mb-3 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
                 {profile?.first_name || ""} {profile?.last_name || ""}
               </div>

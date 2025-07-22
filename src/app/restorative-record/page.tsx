@@ -3305,8 +3305,7 @@ function RestorativeRecordBuilderForm() {
         className="px-4 lg:px-5 py-2 text-sm lg:text-base font-medium rounded-xl shadow hover:opacity-90 text-white text-center"
         style={{ backgroundColor: '#E54747' }}
       >
-        <span className="hidden sm:inline">MY RESTORATIVE RECORD</span>
-        <span className="sm:hidden">MY RECORD</span>
+        <span className="inline">MY RESTORATIVE RECORD</span>
       </button>
       <div className="relative">
         <button
