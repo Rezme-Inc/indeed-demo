@@ -2455,9 +2455,9 @@ function RestorativeRecordBuilderForm() {
                           <div className="border-t p-4 space-y-4" style={{ borderColor: '#E5E5E5', backgroundColor: '#F8F9FA' }}>
                             {/* Assessment Progress Bar */}
                             <div className="p-4 rounded-lg" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E5E5' }}>
-                              <h6 className="font-semibold text-black mb-3">Assessment Progress</h6>
+                              <h6 className="font-semibold text-black mb-1">Assessment Progress</h6>
                               <div id="assessment-progress" className="space-y-3">
-                                <div className="flex items-center justify-between text-sm">
+                                <div className="flex flex-col items-right sm:flex-row sm:items-center justify-between text-sm">
                                   <span className="font-medium text-black">Step {admin.currentStep} of {admin.totalSteps}: {admin.stepName}</span>
                                   <span className="font-medium" style={{ color: '#F59E0B' }}>{admin.progress}% Complete</span>
                                 </div>
@@ -2470,7 +2470,7 @@ function RestorativeRecordBuilderForm() {
                                     }}
                                   />
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-1 text-xs relative">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-1 text-xs relative">
                                   {/* Step 1: Conditional Job Offer */}
                                   <div className="text-center relative">
                                     <div className="flex flex-col items-center">
