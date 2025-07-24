@@ -2426,7 +2426,7 @@ function RestorativeRecordBuilderForm() {
                           </div>
                           <div className="flex items-center gap-3">
                             <div className="text-right">
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium" style={{
+                              <span className="inline-flex text-center items-center px-2 py-1 rounded-full text-xs font-medium" style={{
                                 backgroundColor: admin.status === 'In Progress' ? '#FFF3CD' : '#F0FDF4',
                                 color: admin.status === 'In Progress' ? '#856404' : '#166534',
                                 border: admin.status === 'In Progress' ? '1px solid #FFEAA7' : '1px solid #BBF7D0'
