@@ -7,6 +7,8 @@ import "react-day-picker/dist/style.css";
 import { toast } from "react-hot-toast";
 import { ChevronDown, ChevronRight, Info } from "lucide-react";
 import { UserDashboardContent } from "../user/dashboard/components/UserDashboardContent"
+import LegalResourcesDisplay from "@/components/LegalResourcesDisplay";
+import { getLegalResourcesByJurisdiction } from "@/data/legalResources";
 
 // Import types
 import {
@@ -89,6 +91,7 @@ function RestorativeRecordBuilderForm() {
   const [expandedSummaryView, setExpandedSummaryView] = useState<'connected' | 'pending' | null>(null);
   const searchParams = useSearchParams();
   const [user, setUser] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [formData, setFormData] = useState<Introduction>({
     facebookUrl: "",
     linkedinUrl: "",
@@ -533,11 +536,24 @@ function RestorativeRecordBuilderForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentCategory]);
 
-  // Get user on mount
+  // Get user and profile on mount
   useEffect(() => {
     async function getUser() {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
+      
+      // Fetch user profile to get location data
+      if (user) {
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('city, state')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile) {
+          setUserProfile(profile);
+        }
+      }
     }
     getUser();
   }, []);
@@ -3131,28 +3147,44 @@ function RestorativeRecordBuilderForm() {
           </div>
         );
 
-        {/* Legal Assistance Modal */ }
+        {/* Legal Resources Section */ }
       case 'legal-resources':
+        const legalResources = getLegalResourcesByJurisdiction(
+          userProfile?.state,
+          userProfile?.city
+        );
+        
         return (
           <div className="space-y-6">
+            {/* Legal Resources by Jurisdiction */}
+            <LegalResourcesDisplay 
+              resources={legalResources}
+              userState={userProfile?.state}
+              userCity={userProfile?.city}
+            />
+
+            {/* Contact Legal Partners Form */}
             <div className="bg-white border rounded-xl p-4 lg:p-6" style={{ borderColor: '#E5E5E5' }}>
               <div className="w-full">
                 <div className="p-4 lg:p-6">
+                  <h2 className="text-xl font-bold mb-3 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    Contact Our Legal Partners
+                  </h2>
                   <div className="mb-4 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
                     <p className="mb-3 leading-relaxed text-sm">
-                      If you believe you have experienced employment discrimination or have questions about your rights under Fair Chance Hiring laws, you can contact a legal team for assistance. Your inquiry will be sent to the appropriate legal professionals in your jurisdiction.
+                      If you believe you have experienced employment discrimination or need personalized legal assistance, you can contact our partnered legal professionals. Your inquiry will be sent to appropriate legal experts in your jurisdiction.
                     </p>
                     <ul className="list-disc pl-5 text-xs mb-3 space-y-1" style={{ color: '#595959' }}>
-                      <li>Fair Chance Hiring laws protect individuals with criminal records from unfair discrimination in employment.</li>
-                      <li>You have the right to know if an employer has run a background check on you.</li>
-                      <li>Legal teams can help you understand your rights and options if you believe you have been treated unfairly.</li>
+                      <li>Free initial consultation available through our partners</li>
+                      <li>Confidential review of your situation</li>
+                      <li>Guidance on filing complaints with appropriate agencies</li>
+                      <li>Representation if your case moves forward</li>
                     </ul>
-                    
                   </div>
                   {legalSubmitted ? (
                     <div className="text-center py-8 px-4 rounded-lg" style={{ backgroundColor: '#f0f9ff', color: '#059669', fontFamily: 'Poppins, sans-serif' }}>
                       <div className="text-base font-medium mb-2">Thank you!</div>
-                      <div className="text-sm">Your request has been submitted. A legal professional will contact you soon.</div>
+                      <div className="text-sm">Your request has been submitted. A legal professional will contact you within 2-3 business days.</div>
                     </div>
                   ) : (
                     <form onSubmit={handleLegalSubmit} className="space-y-4">

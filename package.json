@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": "20.x"
+    "node": ">=20.x"
   },
   "scripts": {
     "dev": "next dev",
@@ -31,7 +31,7 @@
     "html2pdf.js": "^0.10.3",
     "lodash.debounce": "^4.0.8",
     "lucide-react": "^0.511.0",
-    "next": "14.1.0",
+    "next": "14.2.33",
     "pdf-parse": "^1.1.1",
     "postcss": "^8.4.33",
     "react": "^18.2.0",
@@ -45,13 +45,14 @@
     "zod": "^3.25.67"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
     "@types/lodash.debounce": "^4.0.9",
     "@types/node": "^20.11.5",
     "@types/pdf-parse": "^1.1.5",
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
     "eslint": "^8.56.0",
-    "eslint-config-next": "14.1.0",
+    "eslint-config-next": "14.2.33",
     "typescript": "^5.3.3"
   }
 }
