@@ -1588,7 +1588,7 @@ export const legalResourcesData: LegalResource[] = [
       {
         name: 'Rhode Island Commission for Human Rights',
         phone: '401-222-2661',
-        website: 'https://www.richr.ri.gov/',
+        website: 'http://www.richr.ri.gov/filecharge/index.php',
         filingInfo: 'File employment discrimination complaint within 1 year of violation. Commission investigates and enforces fair employment practices.'
       },
       {
