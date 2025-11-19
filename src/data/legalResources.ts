@@ -1641,7 +1641,7 @@ export const legalResourcesData: LegalResource[] = [
       },
       {
         title: 'File a Complaint with RI Commission for Human Rights',
-        url: 'https://www.richr.ri.gov/file-a-complaint',
+        url: 'http://www.richr.ri.gov/filecharge/iq.php',
         description: 'How to file employment discrimination complaint in Rhode Island'
       }
     ],
