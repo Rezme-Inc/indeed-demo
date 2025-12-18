@@ -39,20 +39,28 @@ export default function RezmeAdminLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Rezme Admin Login
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Manage the platform and oversee all users and HR admins
-          </p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-          <div className="rounded-md shadow-sm -space-y-px">
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="max-w-md w-full animate-fade-in">
+        {/* Glass Container */}
+        <div className="glass-strong rounded-3xl p-8 shadow-2xl backdrop-blur-2xl glow-border smooth-transition bg-white/60">
+          <div className="text-center mb-8">
+            <h2 className="text-4xl font-bold text-black mb-4 animate-slide-up">
+              Rezme Admin Login
+            </h2>
+            <p className="text-base text-gray-600 mb-8">
+              Manage the platform and oversee all users and HR admins
+            </p>
+          </div>
+          
+          <form className="space-y-6" onSubmit={handleLogin}>
+            {error && (
+              <div className="bg-red-50 rounded-2xl p-4 border border-red-200 animate-slide-up">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
             <div>
-              <label htmlFor="email-address" className="sr-only">
+              <label htmlFor="email-address" className="block text-sm font-medium text-gray-700 mb-2">
                 Email address
               </label>
               <input
@@ -61,14 +69,15 @@ export default function RezmeAdminLogin() {
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
+                className="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400 smooth-transition text-black placeholder-gray-400"
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
+            
             <div>
-              <label htmlFor="password" className="sr-only">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
               <input
@@ -77,32 +86,41 @@ export default function RezmeAdminLogin() {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
+                className="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400 smooth-transition text-black placeholder-gray-400"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-          </div>
 
-          {error && <div className="text-red-500 text-sm">{error}</div>}
-
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-            >
-              {loading ? "Logging in..." : "Login"}
-            </button>
+            <div className="pt-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-4 px-4 bg-black text-white font-semibold rounded-2xl hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-2xl smooth-transition"
+              >
+                {loading ? "Logging in..." : "Login"}
+              </button>
+            </div>
+          </form>
+          
+          <div className="text-center pt-6">
+            <p className="text-gray-600">
+              Don&apos;t have an account?{" "}
+              <Link
+                href="/auth/rezme-admin/signup"
+                className="text-black font-semibold hover:text-gray-700 smooth-transition underline decoration-gray-300 hover:decoration-gray-500"
+              >
+                Sign up
+              </Link>
+            </p>
           </div>
-        </form>
-        <div className="text-center">
-          <Link
-            href="/auth/rezme-admin/signup"
-            className="text-purple-600 hover:text-purple-500"
-          >
-            Don&apos;t have an account? Sign up
+        </div>
+
+        {/* Back to Home Link */}
+        <div className="text-center mt-6">
+          <Link href="/" className="text-gray-600 hover:text-black smooth-transition text-sm">
+            ← Back to Home
           </Link>
         </div>
       </div>

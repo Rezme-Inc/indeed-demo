@@ -67,76 +67,61 @@ export default function HrAdminSignup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: '#FFFFFF', fontFamily: 'Poppins, sans-serif' }}>
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-bold" style={{ fontFamily: 'Poppins, sans-serif', color: '#000000' }}>
-            Create HR Admin Account
-          </h2>
-          <p className="mt-2 text-center text-sm" style={{ fontFamily: 'Poppins, sans-serif', color: '#595959' }}>
-            Join Rezme as an HR Administrator
-          </p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSignup}>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="first-name" className="sr-only">
-                First Name
-              </label>
-              <input
-                id="first-name"
-                name="firstName"
-                type="text"
-                required
-                className="relative block w-full px-4 py-3 border border-gray-300 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:border-transparent sm:text-sm"
-                style={{
-                  fontFamily: 'Poppins, sans-serif',
-                  color: '#000000',
-                  backgroundColor: '#FFFFFF'
-                }}
-                placeholder="First Name"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#E54747';
-                  e.target.style.boxShadow = '0 0 0 2px rgba(229, 71, 71, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#D1D5DB';
-                  e.target.style.boxShadow = 'none';
-                }}
-              />
+    <div className="min-h-screen flex items-center justify-center py-12 px-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
+      <div className="max-w-md w-full animate-fade-in">
+        {/* Glass Container */}
+        <div className="glass-strong rounded-3xl p-8 shadow-2xl backdrop-blur-2xl glow-border smooth-transition bg-white/60">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-black mb-2 animate-slide-up">
+              Create HR Admin Account
+            </h2>
+            <p className="text-gray-600">
+              Join Rezme as an HR Administrator
+            </p>
+          </div>
+
+          <form className="space-y-4" onSubmit={handleSignup}>
+            {error && (
+              <div className="bg-red-50 rounded-2xl p-4 border border-red-200 animate-slide-up">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="first-name" className="block text-sm font-medium text-gray-700 mb-2">
+                  First Name
+                </label>
+                <input
+                  id="first-name"
+                  name="firstName"
+                  type="text"
+                  required
+                  className="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400 smooth-transition text-black placeholder-gray-400"
+                  placeholder="First name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="last-name" className="block text-sm font-medium text-gray-700 mb-2">
+                  Last Name
+                </label>
+                <input
+                  id="last-name"
+                  name="lastName"
+                  type="text"
+                  required
+                  className="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400 smooth-transition text-black placeholder-gray-400"
+                  placeholder="Last name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </div>
             </div>
+
             <div>
-              <label htmlFor="last-name" className="sr-only">
-                Last Name
-              </label>
-              <input
-                id="last-name"
-                name="lastName"
-                type="text"
-                required
-                className="relative block w-full px-4 py-3 border border-gray-300 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:border-transparent sm:text-sm"
-                style={{
-                  fontFamily: 'Poppins, sans-serif',
-                  color: '#000000',
-                  backgroundColor: '#FFFFFF'
-                }}
-                placeholder="Last Name"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#E54747';
-                  e.target.style.boxShadow = '0 0 0 2px rgba(229, 71, 71, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#D1D5DB';
-                  e.target.style.boxShadow = 'none';
-                }}
-              />
-            </div>
-            <div>
-              <label htmlFor="email-address" className="sr-only">
+              <label htmlFor="email-address" className="block text-sm font-medium text-gray-700 mb-2">
                 Email address
               </label>
               <input
@@ -145,27 +130,15 @@ export default function HrAdminSignup() {
                 type="email"
                 autoComplete="email"
                 required
-                className="relative block w-full px-4 py-3 border border-gray-300 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:border-transparent sm:text-sm"
-                style={{
-                  fontFamily: 'Poppins, sans-serif',
-                  color: '#000000',
-                  backgroundColor: '#FFFFFF'
-                }}
+                className="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400 smooth-transition text-black placeholder-gray-400"
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#E54747';
-                  e.target.style.boxShadow = '0 0 0 2px rgba(229, 71, 71, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#D1D5DB';
-                  e.target.style.boxShadow = 'none';
-                }}
               />
             </div>
+
             <div>
-              <label htmlFor="company" className="sr-only">
+              <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-2">
                 Company Name
               </label>
               <input
@@ -173,27 +146,15 @@ export default function HrAdminSignup() {
                 name="company"
                 type="text"
                 required
-                className="relative block w-full px-4 py-3 border border-gray-300 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:border-transparent sm:text-sm"
-                style={{
-                  fontFamily: 'Poppins, sans-serif',
-                  color: '#000000',
-                  backgroundColor: '#FFFFFF'
-                }}
-                placeholder="Company Name"
+                className="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400 smooth-transition text-black placeholder-gray-400"
+                placeholder="Company name"
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#E54747';
-                  e.target.style.boxShadow = '0 0 0 2px rgba(229, 71, 71, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#D1D5DB';
-                  e.target.style.boxShadow = 'none';
-                }}
               />
             </div>
+
             <div>
-              <label htmlFor="phone" className="sr-only">
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
                 Phone Number
               </label>
               <input
@@ -201,31 +162,18 @@ export default function HrAdminSignup() {
                 name="phone"
                 type="tel"
                 required
-                className="relative block w-full px-4 py-3 border border-gray-300 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:border-transparent sm:text-sm"
-                style={{
-                  fontFamily: 'Poppins, sans-serif',
-                  color: '#000000',
-                  backgroundColor: '#FFFFFF'
-                }}
-                placeholder="Work phone number or company phone number"
+                className="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400 smooth-transition text-black placeholder-gray-400"
+                placeholder="Work phone number"
                 value={phone}
                 onChange={(e) => {
-                  // Only allow numbers, spaces, hyphens, parentheses, and plus sign
                   const value = e.target.value.replace(/[^0-9\s\-\(\)\+]/g, '');
                   setPhone(value);
                 }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#E54747';
-                  e.target.style.boxShadow = '0 0 0 2px rgba(229, 71, 71, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#D1D5DB';
-                  e.target.style.boxShadow = 'none';
-                }}
               />
             </div>
+
             <div>
-              <label htmlFor="company-address" className="sr-only">
+              <label htmlFor="company-address" className="block text-sm font-medium text-gray-700 mb-2">
                 Company Address
               </label>
               <input
@@ -233,27 +181,15 @@ export default function HrAdminSignup() {
                 name="companyAddress"
                 type="text"
                 required
-                className="relative block w-full px-4 py-3 border border-gray-300 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:border-transparent sm:text-sm"
-                style={{
-                  fontFamily: 'Poppins, sans-serif',
-                  color: '#000000',
-                  backgroundColor: '#FFFFFF'
-                }}
+                className="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400 smooth-transition text-black placeholder-gray-400"
                 placeholder="Company address"
                 value={companyAddress}
                 onChange={(e) => setCompanyAddress(e.target.value)}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#E54747';
-                  e.target.style.boxShadow = '0 0 0 2px rgba(229, 71, 71, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#D1D5DB';
-                  e.target.style.boxShadow = 'none';
-                }}
               />
             </div>
+
             <div>
-              <label htmlFor="password" className="sr-only">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
               <input
@@ -262,64 +198,41 @@ export default function HrAdminSignup() {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="relative block w-full px-4 py-3 border border-gray-300 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:border-transparent sm:text-sm"
-                style={{
-                  fontFamily: 'Poppins, sans-serif',
-                  color: '#000000',
-                  backgroundColor: '#FFFFFF'
-                }}
+                className="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400 smooth-transition text-black placeholder-gray-400"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#E54747';
-                  e.target.style.boxShadow = '0 0 0 2px rgba(229, 71, 71, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#D1D5DB';
-                  e.target.style.boxShadow = 'none';
-                }}
               />
             </div>
-          </div>
 
-          {error && (
-            <div className="text-sm" style={{ fontFamily: 'Poppins, sans-serif', color: '#E54747' }}>
-              {error}
+            <div className="pt-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-4 px-4 bg-black text-white font-semibold rounded-2xl hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-2xl smooth-transition"
+              >
+                {loading ? "Creating account..." : "Sign up"}
+              </button>
             </div>
-          )}
+          </form>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
-              style={{
-                fontFamily: 'Poppins, sans-serif',
-                backgroundColor: '#E54747',
-                color: '#FFFFFF'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#D63636';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#E54747';
-              }}
-            >
-              {loading ? "Creating account..." : "Sign up"}
-            </button>
+          <div className="text-center pt-6">
+            <p className="text-gray-600">
+              Already have an account?{" "}
+              <Link
+                href="/auth/hr-admin/login"
+                className="text-black font-semibold hover:text-gray-700 smooth-transition underline decoration-gray-300 hover:decoration-gray-500"
+              >
+                Log in
+              </Link>
+            </p>
           </div>
-        </form>
-        <div className="text-center">
-          <Link
-            href="/auth/hr-admin/login"
-            className="text-sm font-medium transition-all duration-200 hover:underline"
-            style={{
-              fontFamily: 'Poppins, sans-serif',
-              color: '#E54747'
-            }}
-          >
-            Already have an account? Log in
+        </div>
+
+        {/* Back to Home Link */}
+        <div className="text-center mt-6">
+          <Link href="/" className="text-gray-600 hover:text-black smooth-transition text-sm">
+            ← Back to Home
           </Link>
         </div>
       </div>

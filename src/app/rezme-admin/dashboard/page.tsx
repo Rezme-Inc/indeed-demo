@@ -443,7 +443,7 @@ export default function RezmeAdminDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">

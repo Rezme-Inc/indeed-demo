@@ -307,7 +307,7 @@ This invitation code will allow you to connect with our HR team: ${
 
   return (
     <div
-      className="min-h-screen bg-white p-6 space-y-8"
+      className="min-h-screen p-6 space-y-8"
       style={{ fontFamily: "Poppins, sans-serif" }}
     >
       {error && (

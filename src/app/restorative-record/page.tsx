@@ -2309,7 +2309,7 @@ function RestorativeRecordBuilderForm() {
         return (
           <div className="space-y-6">
             {/* Quick Actions */}
-            <div className="bg-white border rounded-xl p-4 lg:p-6" style={{ borderColor: '#E5E5E5' }}>
+            <div className="glass-strong rounded-3xl p-4 lg:p-6 bg-white/60 shadow-lg">
               <h3 className="text-lg font-semibold text-black mb-4">Quick Actions</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {/* Continue Building */}
@@ -2324,8 +2324,7 @@ function RestorativeRecordBuilderForm() {
                       handleBuilderNavigation(currentCategory);
                     }
                   }}
-                  className="w-full p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg sm:col-span-2 md:col-span-1"
-                  style={{ borderColor: '#E5E5E5' }}
+                  className="w-full p-4 glass-hover rounded-2xl text-center smooth-transition border border-gray-200 hover:shadow-lg sm:col-span-2 md:col-span-1"
                 >
                   <span className="flex justify-center items-center mb-2">
                     <img src="/dashboard_icons/continue-building.svg" alt="Progress" className="w-10 h-10" />
@@ -2336,8 +2335,7 @@ function RestorativeRecordBuilderForm() {
                 <button
                   id="preview-record-btn"
                   onClick={handleViewProfile}
-                  className="w-full p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
-                  style={{ borderColor: '#E5E5E5' }}
+                  className="w-full p-4 glass-hover rounded-2xl text-center smooth-transition border border-gray-200 hover:shadow-lg"
                 >
                   <span className="flex justify-center items-center mb-2">
                     <img src="dashboard_icons/preview.svg" alt="Preview" className="w-10 h-10" />
@@ -2348,8 +2346,7 @@ function RestorativeRecordBuilderForm() {
                 <button
                   id="check-status-btn"
                   onClick={() => handleDashboardNavigation('status')}
-                  className="w-full p-4 border rounded-xl text-center transition-all duration-200 hover:shadow-lg"
-                  style={{ borderColor: '#E5E5E5' }}
+                  className="w-full p-4 glass-hover rounded-2xl text-center smooth-transition border border-gray-200 hover:shadow-lg"
                 >
                   <span className="flex justify-center items-center mb-2">
                     <img src="/dashboard_icons/check-status.svg" alt="Check Status" className="w-10 h-10" />
@@ -2358,7 +2355,7 @@ function RestorativeRecordBuilderForm() {
                 </button>
               </div>
             </div>
-            <div className="bg-white border rounded-xl p-4 lg:p-6" style={{ borderColor: '#E5E5E5' }}>
+            <div className="glass-strong rounded-3xl p-4 lg:p-6 bg-white/60 shadow-lg">
               <h2 className="text-xl lg:text-2xl font-semibold text-black mb-4">Your Restorative Record Progress</h2>
 
               {/* Progress Overview */}
@@ -2381,7 +2378,7 @@ function RestorativeRecordBuilderForm() {
               {/* Section Progress */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {categories.map((cat, idx) => (
-                  <div key={cat} className="border rounded-lg p-4" style={{ borderColor: '#E5E5E5' }}>
+                  <div key={cat} className="glass rounded-2xl p-4 border border-gray-200">
                     <div className="flex items-center justify-between">
                       <h3 className="font-medium text-black">
                         {cat.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
@@ -2392,7 +2389,7 @@ function RestorativeRecordBuilderForm() {
                         )}
                         <button
                           onClick={() => handleBuilderNavigation(idx)}
-                          className="text-sm px-3 py-1 rounded-lg transition-all duration-200 hover:opacity-90"
+                          className="text-sm px-3 py-1 rounded-lg smooth-transition hover:opacity-90"
                           style={{
                             color: '#E54747',
                             backgroundColor: '#FEF2F2',
@@ -2413,7 +2410,7 @@ function RestorativeRecordBuilderForm() {
       case 'status':
         return (
           <div className="space-y-6">
-            <div className="bg-white border rounded-xl p-4 lg:p-6" style={{ borderColor: '#E5E5E5' }}>
+            <div className="glass-strong rounded-3xl p-4 lg:p-6 bg-white/60 shadow-lg">
               <h2 className="text-xl lg:text-2xl font-semibold text-black mb-4">HR Admin Status Updates</h2>
 
               {/* Connected HR Admins */}
@@ -2422,7 +2419,7 @@ function RestorativeRecordBuilderForm() {
                 <div className="space-y-3">
                   {connectedHRAdmins.length > 0 ? (
                     connectedHRAdmins.map((admin) => (
-                      <div key={admin.id} className="border rounded-lg" style={{ borderColor: '#E5E5E5' }}>
+                      <div key={admin.id} className="glass rounded-2xl border border-gray-200">
                         {/* Always Visible Header */}
                         <div className="flex items-center justify-between gap-3 p-4">
                           <div className="flex items-center gap-3">
@@ -2855,7 +2852,7 @@ function RestorativeRecordBuilderForm() {
       case 'notifications':
         return (
           <div className="space-y-6">
-            <div className="bg-white border rounded-xl p-4 lg:p-6" style={{ borderColor: '#E5E5E5' }}>
+            <div className="glass-strong rounded-3xl p-4 lg:p-6 bg-white/60 shadow-lg">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                 <h2 className="text-xl lg:text-2xl font-semibold text-black">Notifications</h2>
                 <button
@@ -3164,7 +3161,7 @@ function RestorativeRecordBuilderForm() {
             />
 
             {/* Contact Legal Partners Form */}
-            <div className="bg-white border rounded-xl p-4 lg:p-6" style={{ borderColor: '#E5E5E5' }}>
+            <div className="glass-strong rounded-3xl p-4 lg:p-6 bg-white/60 shadow-lg">
               <div className="w-full">
                 <div className="p-4 lg:p-6">
                   <h2 className="text-xl font-bold mb-3 text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -3679,9 +3676,9 @@ function RestorativeRecordBuilderForm() {
   }, [tutorialStep, mobileMenuOpen]);
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+    <div className="min-h-screen" style={{ fontFamily: 'Poppins, sans-serif' }}>
       {/* Mobile Header */}
-      <div className="lg:hidden bg-white border-b p-4" style={{ borderColor: '#E5E5E5' }}>
+      <div className="lg:hidden glass border-b border-gray-200/50 p-4">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-lg font-semibold text-black">My Rézme Dashboard</h1>
@@ -3706,8 +3703,8 @@ function RestorativeRecordBuilderForm() {
       </div>
 
       <div className="flex">
-        {/* Sidebar Navigation */}
-        <nav className={`${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 right-0 z-40 w-80 bg-white border-l min-h-screen p-6 transition-transform duration-300 ease-in-out lg:transition-none overflow-y-auto`} style={{ borderColor: '#E5E5E5' }}>
+        {/* Sidebar Navigation with Glass Effect */}
+        <nav className={`${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 right-0 z-40 w-80 glass border-l border-gray-200/50 min-h-screen p-6 transition-transform duration-300 ease-in-out lg:transition-none overflow-y-auto`}>
           <div className={`flex flex-col ${mobileMenuOpen ? 'pb-16' : 'pb-0'}`}> {/* Add extra bottom padding only when mobile menu is open */}
             <div>
               {/* Dashboard Header */}
@@ -3726,13 +3723,10 @@ function RestorativeRecordBuilderForm() {
                     <li key={section.id}>
                       <button
                         id={section.id}
-                        className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center gap-3 ${currentView === 'dashboard' && activeDashboardSection === section.id
-                          ? "text-white font-medium"
-                          : "text-black hover:bg-gray-50"
+                        className={`w-full text-left px-4 py-3 rounded-2xl smooth-transition flex items-center gap-3 ${currentView === 'dashboard' && activeDashboardSection === section.id
+                          ? "text-white font-medium bg-black shadow-md"
+                          : "text-black glass-hover"
                           }`}
-                        style={{
-                          backgroundColor: currentView === 'dashboard' && activeDashboardSection === section.id ? '#E54747' : 'transparent'
-                        }}
                         onClick={() => {
                           handleDashboardNavigation(section.id);
                           setMobileMenuOpen(false);

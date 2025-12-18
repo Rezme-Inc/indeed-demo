@@ -71,138 +71,148 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center px-4">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-semibold text-black mb-2">
-            Create Your Account
-          </h1>
-          <p className="text-secondary">
-            Join us to build your restorative record
-          </p>
+    <div className="min-h-screen flex items-center justify-center px-4 py-12">
+      <div className="max-w-md w-full animate-fade-in">
+        {/* Glass Container */}
+        <div className="glass-strong rounded-3xl p-8 shadow-2xl backdrop-blur-2xl glow-border smooth-transition bg-white/60">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-black mb-2 animate-slide-up">
+              Create Your Account
+            </h1>
+            <p className="text-gray-600">
+              Join us to build your restorative record
+            </p>
+          </div>
+
+          <form onSubmit={handleSignup} className="space-y-6">
+            {error && (
+              <div className="bg-red-50 rounded-2xl p-4 border border-red-200 animate-slide-up">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="firstName"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  First Name
+                </label>
+                <input
+                  id="firstName"
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400 smooth-transition text-black placeholder-gray-400"
+                  placeholder="First name"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="lastName"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Last Name
+                </label>
+                <input
+                  id="lastName"
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400 smooth-transition text-black placeholder-gray-400"
+                  placeholder="Last name"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Email Address
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400 smooth-transition text-black placeholder-gray-400"
+                placeholder="you@example.com"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400 smooth-transition text-black placeholder-gray-400"
+                placeholder="••••••••"
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                Must be at least 6 characters
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Confirm Password
+              </label>
+              <input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400 smooth-transition text-black placeholder-gray-400"
+                placeholder="••••••••"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 px-4 bg-black text-white font-semibold rounded-2xl hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-2xl smooth-transition"
+            >
+              {loading ? "Creating account..." : "Create Account"}
+            </button>
+
+            <div className="text-center">
+              <p className="text-gray-600">
+                Already have an account?{" "}
+                <Link
+                  href="/auth/user/login"
+                  className="text-black font-semibold hover:text-gray-700 smooth-transition underline decoration-gray-300 hover:decoration-gray-500"
+                >
+                  Sign in
+                </Link>
+              </p>
+            </div>
+          </form>
         </div>
-
-        <form onSubmit={handleSignup} className="space-y-6">
-          {error && (
-            <div className="bg-red-50 border border-primary rounded-lg p-4">
-              <p className="text-sm text-primary">{error}</p>
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="firstName"
-                className="block text-sm font-medium text-black mb-2"
-              >
-                First Name
-              </label>
-              <input
-                id="firstName"
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                required
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                placeholder="First name"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="lastName"
-                className="block text-sm font-medium text-black mb-2"
-              >
-                Last Name
-              </label>
-              <input
-                id="lastName"
-                type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                required
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                placeholder="Last name"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-black mb-2"
-            >
-              Email Address
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              placeholder="you@example.com"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-black mb-2"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              placeholder="••••••••"
-            />
-            <p className="mt-1 text-sm text-secondary">
-              Must be at least 6 characters
-            </p>
-          </div>
-
-          <div>
-            <label
-              htmlFor="confirmPassword"
-              className="block text-sm font-medium text-black mb-2"
-            >
-              Confirm Password
-            </label>
-            <input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              placeholder="••••••••"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 px-4 bg-primary text-white font-medium rounded-lg hover:bg-red-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "Creating account..." : "Create Account"}
-          </button>
-
-          <div className="text-center">
-            <p className="text-secondary">
-              Already have an account?{" "}
-              <Link
-                href="/auth/user/login"
-                className="text-primary hover:text-red-600 font-medium transition-colors"
-              >
-                Sign in
-              </Link>
-            </p>
-          </div>
-        </form>
+        
+        {/* Back to Home Link */}
+        <div className="text-center mt-6">
+          <Link href="/" className="text-gray-600 hover:text-black smooth-transition text-sm">
+            ← Back to Home
+          </Link>
+        </div>
       </div>
     </div>
   );

@@ -60,28 +60,29 @@ export default function RezmeAdminSignup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8">
-        {/* Header Section */}
-        <div className="text-center">
-          <h1 className="text-3xl font-semibold text-black mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            Create Rezme Admin Account
-          </h1>
-          <p className="text-base text-gray-600" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            Join Rezme as a Platform Administrator
-          </p>
-        </div>
+    <div className="min-h-screen flex items-center justify-center px-4 py-12">
+      <div className="max-w-md w-full animate-fade-in">
+        {/* Glass Container */}
+        <div className="glass-strong rounded-3xl p-8 shadow-2xl backdrop-blur-2xl glow-border smooth-transition bg-white/60">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-black mb-2 animate-slide-up">
+              Create Rezme Admin Account
+            </h1>
+            <p className="text-gray-600">
+              Join Rezme as a Platform Administrator
+            </p>
+          </div>
 
-        {/* Form Section */}
-        <div className="bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
           <form className="space-y-6" onSubmit={handleSignup}>
-            <div className="space-y-4">
+            {error && (
+              <div className="bg-red-50 rounded-2xl p-4 border border-red-200 animate-slide-up">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label 
-                  htmlFor="first-name" 
-                  className="block text-sm font-medium text-black mb-2"
-                  style={{ fontFamily: 'Poppins, sans-serif' }}
-                >
+                <label htmlFor="first-name" className="block text-sm font-medium text-gray-700 mb-2">
                   First Name
                 </label>
                 <input
@@ -89,20 +90,14 @@ export default function RezmeAdminSignup() {
                   name="firstName"
                   type="text"
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors duration-200"
-                  style={{ fontFamily: 'Poppins, sans-serif' }}
-                  placeholder="First Name"
+                  className="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400 smooth-transition text-black placeholder-gray-400"
+                  placeholder="First name"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                 />
               </div>
-              
               <div>
-                <label 
-                  htmlFor="last-name" 
-                  className="block text-sm font-medium text-black mb-2"
-                  style={{ fontFamily: 'Poppins, sans-serif' }}
-                >
+                <label htmlFor="last-name" className="block text-sm font-medium text-gray-700 mb-2">
                   Last Name
                 </label>
                 <input
@@ -110,103 +105,75 @@ export default function RezmeAdminSignup() {
                   name="lastName"
                   type="text"
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors duration-200"
-                  style={{ fontFamily: 'Poppins, sans-serif' }}
-                  placeholder="Last Name"
+                  className="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400 smooth-transition text-black placeholder-gray-400"
+                  placeholder="Last name"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                 />
               </div>
-              
-              <div>
-                <label 
-                  htmlFor="email-address" 
-                  className="block text-sm font-medium text-black mb-2"
-                  style={{ fontFamily: 'Poppins, sans-serif' }}
-                >
-                  Email address
-                </label>
-                <input
-                  id="email-address"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors duration-200"
-                  style={{ fontFamily: 'Poppins, sans-serif' }}
-                  placeholder="Email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              
-              <div>
-                <label 
-                  htmlFor="password" 
-                  className="block text-sm font-medium text-black mb-2"
-                  style={{ fontFamily: 'Poppins, sans-serif' }}
-                >
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors duration-200"
-                  style={{ fontFamily: 'Poppins, sans-serif' }}
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
             </div>
-
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                <p className="text-sm text-red-700" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                  {error}
-                </p>
-              </div>
-            )}
+            
+            <div>
+              <label htmlFor="email-address" className="block text-sm font-medium text-gray-700 mb-2">
+                Email address
+              </label>
+              <input
+                id="email-address"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                className="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400 smooth-transition text-black placeholder-gray-400"
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                required
+                className="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400 smooth-transition text-black placeholder-gray-400"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-              style={{ 
-                fontFamily: 'Poppins, sans-serif',
-                backgroundColor: loading ? '#9CA3AF' : '#E54747',
-              }}
-              onMouseEnter={(e) => {
-                if (!loading) {
-                  e.currentTarget.style.backgroundColor = '#DC2626';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!loading) {
-                  e.currentTarget.style.backgroundColor = '#E54747';
-                }
-              }}
+              className="w-full py-4 px-4 bg-black text-white font-semibold rounded-2xl hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-2xl smooth-transition"
             >
               {loading ? "Creating account..." : "Sign up"}
             </button>
           </form>
+
+          <div className="text-center pt-6">
+            <p className="text-gray-600">
+              Already have an account?{" "}
+              <Link
+                href="/auth/rezme-admin/login"
+                className="text-black font-semibold hover:text-gray-700 smooth-transition underline decoration-gray-300 hover:decoration-gray-500"
+              >
+                Log in
+              </Link>
+            </p>
+          </div>
         </div>
 
-        {/* Footer Section */}
-        <div className="text-center">
-          <p className="text-sm text-gray-600" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            Already have an account?{" "}
-            <Link
-              href="/auth/rezme-admin/login"
-              className="text-red-600 hover:text-red-700 font-medium transition-colors duration-200"
-              style={{ fontFamily: 'Poppins, sans-serif' }}
-            >
-              Log in
-            </Link>
-          </p>
+        {/* Back to Home Link */}
+        <div className="text-center mt-6">
+          <Link href="/" className="text-gray-600 hover:text-black smooth-transition text-sm">
+            ← Back to Home
+          </Link>
         </div>
       </div>
     </div>
