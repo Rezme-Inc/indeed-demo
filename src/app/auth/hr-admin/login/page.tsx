@@ -39,21 +39,28 @@ export default function HrAdminLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white py-12 px-4 sm:px-6 lg:px-8" style={{fontFamily: 'Poppins, sans-serif'}}>
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <h2 className="text-4xl font-semibold text-black mb-4">
-            HR Admin Login
-          </h2>
-          <p className="text-base mb-8" style={{color: '#595959'}}>
-            Manage your organization&apos;s talent and view connected users
-          </p>
-        </div>
-        
-        <form className="space-y-6" onSubmit={handleLogin}>
-          <div className="space-y-4">
+    <div className="min-h-screen flex items-center justify-center px-4" style={{fontFamily: 'Poppins, sans-serif'}}>
+      <div className="max-w-md w-full animate-fade-in">
+        {/* Glass Container */}
+        <div className="glass-strong rounded-3xl p-8 shadow-2xl backdrop-blur-2xl glow-border smooth-transition bg-white/60">
+          <div className="text-center mb-8">
+            <h2 className="text-4xl font-bold text-black mb-4 animate-slide-up">
+              HR Admin Login
+            </h2>
+            <p className="text-base text-gray-600 mb-8">
+              Manage your organization&apos;s talent and view connected users
+            </p>
+          </div>
+          
+          <form className="space-y-6" onSubmit={handleLogin}>
+            {error && (
+              <div className="bg-red-50 rounded-2xl p-4 border border-red-200 animate-slide-up">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
             <div>
-              <label htmlFor="email-address" className="sr-only">
+              <label htmlFor="email-address" className="block text-sm font-medium text-gray-700 mb-2">
                 Email address
               </label>
               <input
@@ -62,28 +69,15 @@ export default function HrAdminLogin() {
                 type="email"
                 autoComplete="email"
                 required
-                className="w-full px-4 py-4 border text-base rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200"
-                style={{
-                  borderColor: '#E5E5E5',
-                  color: '#000000',
-                  backgroundColor: '#FFFFFF'
-                }}
+                className="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400 smooth-transition text-black placeholder-gray-400"
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#E54747';
-                  e.target.style.boxShadow = '0 0 0 2px rgba(229, 71, 71, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#E5E5E5';
-                  e.target.style.boxShadow = 'none';
-                }}
               />
             </div>
             
             <div>
-              <label htmlFor="password" className="sr-only">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
               <input
@@ -92,62 +86,41 @@ export default function HrAdminLogin() {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="w-full px-4 py-4 border text-base rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200"
-                style={{
-                  borderColor: '#E5E5E5',
-                  color: '#000000',
-                  backgroundColor: '#FFFFFF'
-                }}
+                className="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-400 smooth-transition text-black placeholder-gray-400"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#E54747';
-                  e.target.style.boxShadow = '0 0 0 2px rgba(229, 71, 71, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#E5E5E5';
-                  e.target.style.boxShadow = 'none';
-                }}
               />
             </div>
-          </div>
 
-          {error && (
-            <div 
-              className="text-sm p-3 rounded-lg"
-              style={{
-                color: '#E54747',
-                backgroundColor: '#FEF2F2',
-                border: '1px solid #FECACA'
-              }}
-            >
-              {error}
+            <div className="pt-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-4 px-4 bg-black text-white font-semibold rounded-2xl hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-2xl smooth-transition"
+              >
+                {loading ? "Logging in..." : "Login"}
+              </button>
             </div>
-          )}
-
-          <div className="pt-4">
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex justify-center py-4 px-6 border-2 text-base font-medium rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{
-                backgroundColor: loading ? '#d1d5db' : '#E54747',
-                borderColor: loading ? '#d1d5db' : '#E54747'
-              }}
-            >
-              {loading ? "Logging in..." : "Login"}
-            </button>
+          </form>
+          
+          <div className="text-center pt-6">
+            <p className="text-gray-600">
+              Don&apos;t have an account?{" "}
+              <Link
+                href="/auth/hr-admin/signup"
+                className="text-black font-semibold hover:text-gray-700 smooth-transition underline decoration-gray-300 hover:decoration-gray-500"
+              >
+                Sign up
+              </Link>
+            </p>
           </div>
-        </form>
-        
-        <div className="text-center pt-4">
-          <Link
-            href="/auth/hr-admin/signup"
-            className="text-base font-medium transition-all duration-200 hover:opacity-90"
-            style={{color: '#595959'}}
-          >
-            Don&apos;t have an account? Sign up
+        </div>
+
+        {/* Back to Home Link */}
+        <div className="text-center mt-6">
+          <Link href="/" className="text-gray-600 hover:text-black smooth-transition text-sm">
+            ← Back to Home
           </Link>
         </div>
       </div>

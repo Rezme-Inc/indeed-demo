@@ -344,16 +344,16 @@ export default function MyRestorativeRecordProfile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-secondary">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
-      {/* Full-width Header */}
-      <header className="sticky top-0 z-50 w-full bg-white shadow-sm border-b border-gray-200">
+    <div className="min-h-screen" style={{ fontFamily: 'Poppins, sans-serif' }}>
+      {/* Full-width Header with Glass Effect */}
+      <header className="sticky top-0 z-50 w-full glass shadow-sm border-b border-gray-200/50">
         <div className="w-full px-4 py-4 lg:px-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between w-full gap-2 lg:gap-0">
             {/* Flexbox row for logo, print, share, dashboard button */}
@@ -478,7 +478,7 @@ export default function MyRestorativeRecordProfile() {
         {/* Share Modal */}
         {showShareModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl w-full max-w-2xl mx-4 shadow-lg">
+            <div className="glass-strong bg-white/95 rounded-3xl w-full max-w-2xl mx-4 shadow-2xl backdrop-blur-2xl">
               <div className="p-8">
                 <div className="flex justify-between items-center mb-8">
                   <h2 className="text-2xl font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -713,7 +713,7 @@ export default function MyRestorativeRecordProfile() {
         {/* Legal Assistance Modal */}
         {showLegalModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl w-full max-w-3xl mx-4 shadow-lg max-h-[80vh] overflow-y-auto">
+            <div className="glass-strong bg-white/95 rounded-3xl w-full max-w-3xl mx-4 shadow-2xl backdrop-blur-2xl max-h-[80vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -915,7 +915,7 @@ export default function MyRestorativeRecordProfile() {
         )}
 
         {/* About / Introduction */}
-        <section className="mb-8 p-8 bg-white rounded-xl shadow-sm" style={{ border: '1px solid #f0f0f0' }}>
+        <section className="mb-8 p-8 glass-strong rounded-3xl shadow-lg bg-white/60">
           <div className="flex justify-between items-start mb-6">
             <h2 className="text-2xl font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>About</h2>
             <Link
@@ -1044,8 +1044,7 @@ export default function MyRestorativeRecordProfile() {
           {achievements.map((award: any, idx: number) => (
             <div
               key={idx}
-              className="p-6 mb-4 bg-white rounded-xl shadow-sm transition-all duration-200 hover:shadow-lg"
-              style={{ border: '1px solid #f0f0f0' }}
+              className="p-6 mb-4 glass-strong rounded-3xl shadow-lg smooth-transition hover:shadow-2xl bg-white/60"
             >
               <div className="font-semibold text-lg text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>{award.name}</div>
               <div className="text-sm mb-2" style={{ color: '#595959', fontFamily: 'Poppins, sans-serif' }}>
