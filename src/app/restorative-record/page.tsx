@@ -130,6 +130,41 @@ function RestorativeRecordBuilderForm() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [tooltipReady, setTooltipReady] = useState(false);
 
+  // Pre-screening assessment questionnaire state
+  const [showPreScreeningModal, setShowPreScreeningModal] = useState(false);
+  const [preScreeningStep, setPreScreeningStep] = useState(1);
+  const [preScreeningData, setPreScreeningData] = useState({
+    firstName: "",
+    lastName: "",
+    phoneNumber: "",
+    dateOfBirth: "",
+    address: "",
+    city: "",
+    state: "",
+    zipCode: "",
+  });
+
+  // WOTC Survey modal state
+  const [showWotcModal, setShowWotcModal] = useState(false);
+  const [wotcStep, setWotcStep] = useState(0); // 0 = instructions, 1+ = questions
+  const [wotcInfoExpanded, setWotcInfoExpanded] = useState<string | null>(null); // Track which info panel is expanded
+  const [wotcAnswers, setWotcAnswers] = useState({
+    conditionalCertificate: "",
+    receivedTANF: "",
+    receivedSNAP: "",
+    receivedSSI: "",
+    isVeteran: "",
+    veteranDisabled: "",
+    unemployed27Weeks: "",
+    receivedUnemployment: "",
+    felonyConviction: "",
+    vocationalRehab: "",
+    empowermentZone: "",
+  });
+  const [wotcSSN, setWotcSSN] = useState("");
+  const [wotcSignature, setWotcSignature] = useState("");
+  const [wotcEditingQuestion, setWotcEditingQuestion] = useState<number | null>(null);
+
   // Disable body scroll when mobile menu is open
   useEffect(() => {
     if (mobileMenuOpen) {
@@ -542,11 +577,11 @@ function RestorativeRecordBuilderForm() {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
       
-      // Fetch user profile to get location data
+      // Fetch user profile to get location and name data
       if (user) {
         const { data: profile } = await supabase
           .from('user_profiles')
-          .select('city, state')
+          .select('first_name, last_name, city, state, phone, address_line1, zip_code, birthday')
           .eq('id', user.id)
           .single();
         
@@ -2190,6 +2225,8 @@ function RestorativeRecordBuilderForm() {
   const dashboardSections = [
     { id: 'progress', label: 'Progress Tracking', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'progress' ? "/dashboard_icons/progress-white.svg" : "/dashboard_icons/progress.svg"} alt="Status Updates" className="w-5 h-5" /> },
     { id: 'status', label: 'Status Updates', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'status' ? "/dashboard_icons/status-updates-white.svg" : "/dashboard_icons/status-updates.svg"} alt="Status Updates" className="w-5 h-5" /> },
+    { id: 'incentives-hub', label: 'Incentives Hub', icon: <svg className="w-5 h-5" fill="none" stroke={currentView === 'dashboard' && activeDashboardSection === 'incentives-hub' ? "white" : "currentColor"} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
+    { id: 'pre-screening', label: 'Pre Screening Activities', icon: <svg className="w-5 h-5" fill="none" stroke={currentView === 'dashboard' && activeDashboardSection === 'pre-screening' ? "white" : "currentColor"} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg> },
     { id: 'notifications', label: 'Notifications', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'notifications' ? "/dashboard_icons/notifications-white.svg" : "/dashboard_icons/notifications.svg"} alt="Notifications" className="w-5 h-5" /> },
     { id: 'legal-resources', label: 'Legal Resources', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'legal-resources' ? "/dashboard_icons/legal-resources-white.svg" : "/dashboard_icons/legal-resources.svg"} alt="Legal Resources" className="w-5 h-5" />, alt: "Legal Resources" },
     { id: 'settings', label: 'Settings', icon: <img src={currentView === 'dashboard' && activeDashboardSection === 'settings' ? "/dashboard_icons/settings-white.svg" : "/dashboard_icons/settings.svg"} alt="Settings" className="w-5 h-5" />, alt: "Settings" }
@@ -3257,6 +3294,189 @@ function RestorativeRecordBuilderForm() {
           </div>
         )
 
+      case 'incentives-hub':
+        return (
+          <div className="space-y-8">
+            {/* Header with Icon */}
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-4">
+                <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h1 className="text-3xl font-bold text-black mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                Candidate Incentives Hub
+              </h1>
+              <p className="text-gray-600" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                Access tax benefits and opportunities to maximize your financial potential.
+              </p>
+            </div>
+
+            {/* Your Activities Section */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+              <h2 className="text-xl font-semibold text-black mb-6" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                Your Activities
+              </h2>
+
+              {/* WOTC Survey Card */}
+              <div className="bg-white rounded-xl border border-gray-200 p-5">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-black mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                      WOTC Survey
+                    </h3>
+                    <p className="text-sm text-gray-600" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                      WOTC Survey Completed - Employers will contact you directly if you qualify
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setWotcStep(0);
+                    setShowWotcModal(true);
+                  }}
+                  className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 bg-green-500 text-white font-medium rounded-xl hover:bg-green-600 transition-colors"
+                  style={{ fontFamily: 'Poppins, sans-serif' }}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Edit WOTC Survey
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+
+      case 'pre-screening':
+        return (
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="mb-2">
+              <p className="text-gray-600" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                Track your pre-employment screening progress and requirements
+              </p>
+            </div>
+
+            {/* Partner Companies Section */}
+            <div>
+              <h2 className="text-xl font-semibold text-black mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                Partner Companies
+              </h2>
+              <p className="text-gray-600 text-sm mb-6" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                Below are companies that we have partnerships with. If you want to be prescreened for these companies please click to start their assessment.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* JBM Packaging Card */}
+                <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          JBM Packaging
+                        </h3>
+                        <p className="text-sm text-gray-500">Manufacturing</p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                      New
+                    </span>
+                  </div>
+
+                  <p className="text-sm text-gray-600 mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    Complete JBM Packaging's pre-screening assessment to be considered for their open positions.
+                  </p>
+
+                  {/* Assessment Items */}
+                  <div className="space-y-2 mb-6">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <span className="text-sm text-green-600 font-medium">JBM Packaging Math Assessment</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                      <span className="text-sm text-yellow-600 font-medium">JBM Packaging Preemployment Screening Questionnaire</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <span className="text-sm text-green-600 font-medium">JBM Upload Resume</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <span className="text-sm text-green-600 font-medium">JBM Personality Test</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      // Pre-populate with existing data from user profile
+                      setPreScreeningData({
+                        firstName: userProfile?.first_name || "",
+                        lastName: userProfile?.last_name || "",
+                        phoneNumber: userProfile?.phone || "",
+                        dateOfBirth: userProfile?.birthday || "",
+                        address: userProfile?.address_line1 || "",
+                        city: userProfile?.city || "",
+                        state: userProfile?.state || "",
+                        zipCode: userProfile?.zip_code || "",
+                      });
+                      setPreScreeningStep(1);
+                      setShowPreScreeningModal(true);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors"
+                    style={{ fontFamily: 'Poppins, sans-serif' }}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    Start Assessment
+                  </button>
+                </div>
+
+                {/* More Partners Coming Soon Card */}
+                <div className="bg-gray-50 rounded-2xl border border-gray-200 border-dashed p-6">
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
+                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-400" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        More Partners
+                      </h3>
+                      <p className="text-sm text-gray-400">Coming Soon</p>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-gray-400 mb-6" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    Additional partner companies will be added here as they join the platform.
+                  </p>
+
+                  <button
+                    disabled
+                    className="w-full px-4 py-3 bg-gray-200 text-gray-400 font-medium rounded-xl cursor-not-allowed"
+                    style={{ fontFamily: 'Poppins, sans-serif' }}
+                  >
+                    Coming Soon
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+
       case 'settings':
         return (
           <UserDashboardContent />
@@ -3931,6 +4151,1473 @@ function RestorativeRecordBuilderForm() {
             >
               Continue Building Your Restorative Record
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Pre-Screening Assessment Questionnaire Modal */}
+      {showPreScreeningModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100 max-w-md w-full mx-4 animate-fade-in">
+            {/* Step 1: First Name (Confirm) */}
+            {preScreeningStep === 1 && (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-black mb-2">Confirm your first name</h2>
+                  <p className="text-gray-500 text-sm">Let's make sure we have your information correct.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">First Name</label>
+                  <input
+                    type="text"
+                    value={preScreeningData.firstName}
+                    onChange={(e) => setPreScreeningData(prev => ({ ...prev, firstName: e.target.value }))}
+                    placeholder="Enter your first name"
+                    className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent transition-all"
+                    autoFocus
+                  />
+                </div>
+                <button
+                  onClick={() => setPreScreeningStep(2)}
+                  disabled={!preScreeningData.firstName.trim()}
+                  className={`w-full py-4 px-4 font-semibold rounded-full transition-all duration-200 ${
+                    preScreeningData.firstName.trim()
+                      ? "bg-black text-white hover:bg-gray-800 shadow-lg"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  Continue
+                </button>
+                <button
+                  onClick={() => setShowPreScreeningModal(false)}
+                  className="w-full py-3 text-gray-500 hover:text-black transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+
+            {/* Step 2: Last Name */}
+            {preScreeningStep === 2 && (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-black mb-2">What's your last name?</h2>
+                  <p className="text-gray-500 text-sm">We need this for your assessment profile.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">Last Name</label>
+                  <input
+                    type="text"
+                    value={preScreeningData.lastName}
+                    onChange={(e) => setPreScreeningData(prev => ({ ...prev, lastName: e.target.value }))}
+                    placeholder="Enter your last name"
+                    className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent transition-all"
+                    autoFocus
+                  />
+                </div>
+                <button
+                  onClick={() => setPreScreeningStep(3)}
+                  disabled={!preScreeningData.lastName.trim()}
+                  className={`w-full py-4 px-4 font-semibold rounded-full transition-all duration-200 ${
+                    preScreeningData.lastName.trim()
+                      ? "bg-black text-white hover:bg-gray-800 shadow-lg"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  Continue
+                </button>
+                <button
+                  onClick={() => setPreScreeningStep(1)}
+                  className="w-full py-3 text-gray-500 hover:text-black transition-colors text-sm"
+                >
+                  ← Back
+                </button>
+              </div>
+            )}
+
+            {/* Step 3: Phone Number */}
+            {preScreeningStep === 3 && (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-black mb-2">What's your phone number?</h2>
+                  <p className="text-gray-500 text-sm">We may need to contact you about your assessment.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">Phone Number</label>
+                  <input
+                    type="tel"
+                    value={preScreeningData.phoneNumber}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, "");
+                      let formatted = value;
+                      if (value.length > 3 && value.length <= 6) {
+                        formatted = `(${value.slice(0, 3)}) ${value.slice(3)}`;
+                      } else if (value.length > 6) {
+                        formatted = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6, 10)}`;
+                      }
+                      setPreScreeningData(prev => ({ ...prev, phoneNumber: formatted }));
+                    }}
+                    placeholder="(555) 555-5555"
+                    className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent transition-all"
+                    autoFocus
+                    maxLength={14}
+                  />
+                </div>
+                <button
+                  onClick={() => setPreScreeningStep(4)}
+                  disabled={preScreeningData.phoneNumber.replace(/\D/g, "").length < 10}
+                  className={`w-full py-4 px-4 font-semibold rounded-full transition-all duration-200 ${
+                    preScreeningData.phoneNumber.replace(/\D/g, "").length >= 10
+                      ? "bg-black text-white hover:bg-gray-800 shadow-lg"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  Continue
+                </button>
+                <button
+                  onClick={() => setPreScreeningStep(2)}
+                  className="w-full py-3 text-gray-500 hover:text-black transition-colors text-sm"
+                >
+                  ← Back
+                </button>
+              </div>
+            )}
+
+            {/* Step 4: Date of Birth */}
+            {preScreeningStep === 4 && (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-black mb-2">What's your date of birth?</h2>
+                  <p className="text-gray-500 text-sm">This is required for the pre-screening process.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">Date of Birth</label>
+                  <input
+                    type="date"
+                    value={preScreeningData.dateOfBirth}
+                    onChange={(e) => setPreScreeningData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+                    className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent transition-all"
+                    autoFocus
+                  />
+                </div>
+                <button
+                  onClick={() => setPreScreeningStep(5)}
+                  disabled={!preScreeningData.dateOfBirth}
+                  className={`w-full py-4 px-4 font-semibold rounded-full transition-all duration-200 ${
+                    preScreeningData.dateOfBirth
+                      ? "bg-black text-white hover:bg-gray-800 shadow-lg"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  Continue
+                </button>
+                <button
+                  onClick={() => setPreScreeningStep(3)}
+                  className="w-full py-3 text-gray-500 hover:text-black transition-colors text-sm"
+                >
+                  ← Back
+                </button>
+              </div>
+            )}
+
+            {/* Step 5: Address */}
+            {preScreeningStep === 5 && (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-black mb-2">What's your street address?</h2>
+                  <p className="text-gray-500 text-sm">Enter your current street address.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">Street Address</label>
+                  <input
+                    type="text"
+                    value={preScreeningData.address}
+                    onChange={(e) => setPreScreeningData(prev => ({ ...prev, address: e.target.value }))}
+                    placeholder="123 Main Street"
+                    className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent transition-all"
+                    autoFocus
+                  />
+                </div>
+                <button
+                  onClick={() => setPreScreeningStep(6)}
+                  disabled={!preScreeningData.address.trim()}
+                  className={`w-full py-4 px-4 font-semibold rounded-full transition-all duration-200 ${
+                    preScreeningData.address.trim()
+                      ? "bg-black text-white hover:bg-gray-800 shadow-lg"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  Continue
+                </button>
+                <button
+                  onClick={() => setPreScreeningStep(4)}
+                  className="w-full py-3 text-gray-500 hover:text-black transition-colors text-sm"
+                >
+                  ← Back
+                </button>
+              </div>
+            )}
+
+            {/* Step 6: City (Confirm) */}
+            {preScreeningStep === 6 && (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-black mb-2">Confirm your city</h2>
+                  <p className="text-gray-500 text-sm">Make sure your city is correct.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">City</label>
+                  <input
+                    type="text"
+                    value={preScreeningData.city}
+                    onChange={(e) => setPreScreeningData(prev => ({ ...prev, city: e.target.value }))}
+                    placeholder="Enter your city"
+                    className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent transition-all"
+                    autoFocus
+                  />
+                </div>
+                <button
+                  onClick={() => setPreScreeningStep(7)}
+                  disabled={!preScreeningData.city.trim()}
+                  className={`w-full py-4 px-4 font-semibold rounded-full transition-all duration-200 ${
+                    preScreeningData.city.trim()
+                      ? "bg-black text-white hover:bg-gray-800 shadow-lg"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  Continue
+                </button>
+                <button
+                  onClick={() => setPreScreeningStep(5)}
+                  className="w-full py-3 text-gray-500 hover:text-black transition-colors text-sm"
+                >
+                  ← Back
+                </button>
+              </div>
+            )}
+
+            {/* Step 7: State */}
+            {preScreeningStep === 7 && (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-black mb-2">What state do you live in?</h2>
+                  <p className="text-gray-500 text-sm">Select your state of residence.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">State</label>
+                  <input
+                    type="text"
+                    value={preScreeningData.state}
+                    onChange={(e) => setPreScreeningData(prev => ({ ...prev, state: e.target.value }))}
+                    placeholder="e.g. California, TX, New York"
+                    className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent transition-all"
+                    autoFocus
+                  />
+                </div>
+                <button
+                  onClick={() => setPreScreeningStep(8)}
+                  disabled={!preScreeningData.state.trim()}
+                  className={`w-full py-4 px-4 font-semibold rounded-full transition-all duration-200 ${
+                    preScreeningData.state.trim()
+                      ? "bg-black text-white hover:bg-gray-800 shadow-lg"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  Continue
+                </button>
+                <button
+                  onClick={() => setPreScreeningStep(6)}
+                  className="w-full py-3 text-gray-500 hover:text-black transition-colors text-sm"
+                >
+                  ← Back
+                </button>
+              </div>
+            )}
+
+            {/* Step 8: Zip Code */}
+            {preScreeningStep === 8 && (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-black mb-2">What's your zip code?</h2>
+                  <p className="text-gray-500 text-sm">Almost done! Enter your zip code.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">Zip Code</label>
+                  <input
+                    type="text"
+                    value={preScreeningData.zipCode}
+                    onChange={(e) => setPreScreeningData(prev => ({ ...prev, zipCode: e.target.value.replace(/\D/g, "").slice(0, 5) }))}
+                    placeholder="12345"
+                    className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent transition-all"
+                    autoFocus
+                    maxLength={5}
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    // Save the data and proceed to assessment
+                    toast.success("Profile information saved! Starting assessment...");
+                    setShowPreScreeningModal(false);
+                    // Here you would save to database and redirect to actual assessment
+                  }}
+                  disabled={preScreeningData.zipCode.length < 5}
+                  className={`w-full py-4 px-4 font-semibold rounded-full transition-all duration-200 ${
+                    preScreeningData.zipCode.length >= 5
+                      ? "bg-blue-600 text-white hover:bg-blue-700 shadow-lg"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  Start Assessment
+                </button>
+                <button
+                  onClick={() => setPreScreeningStep(7)}
+                  className="w-full py-3 text-gray-500 hover:text-black transition-colors text-sm"
+                >
+                  ← Back
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* WOTC Survey Modal */}
+      {showWotcModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100 max-w-md w-full mx-4 animate-fade-in max-h-[90vh] overflow-y-auto">
+            {/* Step 0: Instructions */}
+            {wotcStep === 0 && (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
+                    <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-bold text-black mb-2">Candidate Instructions</h2>
+                </div>
+                
+                <div className="space-y-4 text-sm text-gray-600">
+                  <p>
+                    This survey asks a few questions about your background and work history. <strong className="text-black">It is critical that you answer them honestly.</strong>
+                  </p>
+                  <p>
+                    Your answers help your employer check whether they may qualify for hiring incentives and tax credits that support people getting back to work. These programs are set by the government.
+                  </p>
+                  
+                  <ul className="space-y-2 pl-4">
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-500 mt-0.5">✓</span>
+                      <span>There are no right or wrong answers</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-500 mt-0.5">✓</span>
+                      <span>Your answers will not affect whether you get the job</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-500 mt-0.5">✓</span>
+                      <span>Some questions may not apply to you</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-500 mt-0.5">✓</span>
+                      <span>If you are not sure about a question, it is okay to choose "Not sure"</span>
+                    </li>
+                  </ul>
+                  
+                  <p>
+                    You may see questions about past work, benefits, or programs you were part of. These questions are required to complete government forms after someone is hired.
+                  </p>
+                  <p className="font-medium text-black">
+                    This survey usually takes only a few minutes. Please answer as best you can.
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => setWotcStep(1)}
+                  className="w-full py-4 px-4 font-semibold rounded-full bg-black text-white hover:bg-gray-800 shadow-lg transition-all duration-200"
+                >
+                  Start Survey
+                </button>
+                <button
+                  onClick={() => setShowWotcModal(false)}
+                  className="w-full py-3 text-gray-500 hover:text-black transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+
+            {/* Step 1: Conditional Certificate */}
+            {wotcStep === 1 && (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-xl font-bold text-black mb-2">Conditional Certificate</h2>
+                  <p className="text-gray-500 text-sm">Question 1 of 11</p>
+                </div>
+                <p className="text-gray-700 text-center">
+                  Before you were offered this job, did a government agency or workforce program give you a written "conditional certification" saying an employer could receive a Work Opportunity Tax Credit for hiring you?
+                </p>
+                <div className="space-y-3">
+                  {["Yes", "No"].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        setWotcAnswers(prev => ({ ...prev, conditionalCertificate: option }));
+                        if (wotcEditingQuestion === 1) {
+                          setWotcEditingQuestion(null);
+                          setWotcStep(12);
+                        } else {
+                          setWotcStep(2);
+                        }
+                      }}
+                      className={`w-full py-4 px-4 font-medium rounded-2xl border-2 transition-all duration-200 ${
+                        wotcAnswers.conditionalCertificate === option
+                          ? "border-black bg-gray-100"
+                          : "border-gray-200 hover:border-gray-400"
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setWotcStep(0)}
+                  className="w-full py-3 text-gray-500 hover:text-black transition-colors text-sm"
+                >
+                  ← Back
+                </button>
+              </div>
+            )}
+
+            {/* Step 2: TANF */}
+            {wotcStep === 2 && (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-xl font-bold text-black mb-2">TANF Benefits</h2>
+                  <p className="text-gray-500 text-sm">Question 2 of 11</p>
+                </div>
+                <p className="text-gray-700 text-center">
+                  Have you received Temporary Assistance for Needy Families (TANF) in the past 18 months?
+                </p>
+                
+                {/* Expandable Info Section */}
+                <button
+                  type="button"
+                  onClick={() => setWotcInfoExpanded(wotcInfoExpanded === 'tanf' ? null : 'tanf')}
+                  className="w-full text-center text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center justify-center gap-1"
+                >
+                  <svg className={`w-4 h-4 transition-transform ${wotcInfoExpanded === 'tanf' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                  Not sure what this means?
+                </button>
+                {wotcInfoExpanded === 'tanf' && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-gray-700 space-y-3 animate-fade-in">
+                    <p className="font-medium text-blue-800">What is TANF?</p>
+                    <p>TANF (Temporary Assistance for Needy Families) is a government program that provides cash assistance to low-income families with children. It helps with basic needs like food, housing, and utilities.</p>
+                    <p className="font-medium text-blue-800 mt-3">Examples:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Monthly cash payments from your state welfare office</li>
+                      <li>CalWORKs (California), TAFDC (Massachusetts), or similar state programs</li>
+                      <li>Cash assistance specifically for families with children under 18</li>
+                    </ul>
+                    <p className="font-medium text-blue-800 mt-3">Documentation you would have:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Benefit approval letter from your state</li>
+                      <li>EBT card statements showing cash benefits</li>
+                      <li>Correspondence from your local Department of Social Services</li>
+                    </ul>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {["Yes", "No", "Not sure"].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        setWotcAnswers(prev => ({ ...prev, receivedTANF: option }));
+                        if (wotcEditingQuestion === 2) {
+                          setWotcEditingQuestion(null);
+                          setWotcStep(12);
+                        } else {
+                          setWotcStep(3);
+                        }
+                      }}
+                      className={`w-full py-4 px-4 font-medium rounded-2xl border-2 transition-all duration-200 ${
+                        wotcAnswers.receivedTANF === option
+                          ? "border-black bg-gray-100"
+                          : "border-gray-200 hover:border-gray-400"
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setWotcStep(1)}
+                  className="w-full py-3 text-gray-500 hover:text-black transition-colors text-sm"
+                >
+                  ← Back
+                </button>
+              </div>
+            )}
+
+            {/* Step 3: SNAP */}
+            {wotcStep === 3 && (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-xl font-bold text-black mb-2">SNAP Benefits</h2>
+                  <p className="text-gray-500 text-sm">Question 3 of 11</p>
+                </div>
+                <p className="text-gray-700 text-center">
+                  Have you received SNAP (food stamps) benefits in the past 6 months?
+                </p>
+                
+                {/* Expandable Info Section */}
+                <button
+                  type="button"
+                  onClick={() => setWotcInfoExpanded(wotcInfoExpanded === 'snap' ? null : 'snap')}
+                  className="w-full text-center text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center justify-center gap-1"
+                >
+                  <svg className={`w-4 h-4 transition-transform ${wotcInfoExpanded === 'snap' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                  Not sure what this means?
+                </button>
+                {wotcInfoExpanded === 'snap' && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-gray-700 space-y-3 animate-fade-in">
+                    <p className="font-medium text-blue-800">What is SNAP?</p>
+                    <p>SNAP (Supplemental Nutrition Assistance Program), formerly known as food stamps, helps low-income individuals and families buy groceries. Benefits are loaded onto an EBT (Electronic Benefits Transfer) card each month.</p>
+                    <p className="font-medium text-blue-800 mt-3">Examples:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Monthly food benefits on an EBT card</li>
+                      <li>CalFresh (California), SNAP benefits in other states</li>
+                      <li>Benefits used specifically at grocery stores for food purchases</li>
+                    </ul>
+                    <p className="font-medium text-blue-800 mt-3">Documentation you would have:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>EBT card with your name on it</li>
+                      <li>SNAP benefit approval letter</li>
+                      <li>Monthly benefit statements</li>
+                      <li>Correspondence from your local SNAP office</li>
+                    </ul>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {["Yes", "No", "Not sure"].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        setWotcAnswers(prev => ({ ...prev, receivedSNAP: option }));
+                        if (wotcEditingQuestion === 3) {
+                          setWotcEditingQuestion(null);
+                          setWotcStep(12);
+                        } else {
+                          setWotcStep(4);
+                        }
+                      }}
+                      className={`w-full py-4 px-4 font-medium rounded-2xl border-2 transition-all duration-200 ${
+                        wotcAnswers.receivedSNAP === option
+                          ? "border-black bg-gray-100"
+                          : "border-gray-200 hover:border-gray-400"
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setWotcStep(2)}
+                  className="w-full py-3 text-gray-500 hover:text-black transition-colors text-sm"
+                >
+                  ← Back
+                </button>
+              </div>
+            )}
+
+            {/* Step 4: SSI */}
+            {wotcStep === 4 && (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-xl font-bold text-black mb-2">SSI Benefits</h2>
+                  <p className="text-gray-500 text-sm">Question 4 of 11</p>
+                </div>
+                <p className="text-gray-700 text-center">
+                  Have you received Supplemental Security Income (SSI) in the past 60 days?
+                </p>
+                
+                {/* Expandable Info Section */}
+                <button
+                  type="button"
+                  onClick={() => setWotcInfoExpanded(wotcInfoExpanded === 'ssi' ? null : 'ssi')}
+                  className="w-full text-center text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center justify-center gap-1"
+                >
+                  <svg className={`w-4 h-4 transition-transform ${wotcInfoExpanded === 'ssi' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                  Not sure what this means?
+                </button>
+                {wotcInfoExpanded === 'ssi' && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-gray-700 space-y-3 animate-fade-in">
+                    <p className="font-medium text-blue-800">What is SSI?</p>
+                    <p>SSI (Supplemental Security Income) is a federal program that provides monthly cash payments to people who are aged, blind, or have a disability and have limited income and resources. It is different from Social Security Disability Insurance (SSDI).</p>
+                    <p className="font-medium text-blue-800 mt-3">Examples:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Monthly payments from Social Security Administration for disability</li>
+                      <li>Benefits for low-income seniors aged 65 or older</li>
+                      <li>Disability payments for those who haven&apos;t worked enough to qualify for SSDI</li>
+                    </ul>
+                    <p className="font-medium text-blue-800 mt-3">Documentation you would have:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>SSI award letter from Social Security Administration</li>
+                      <li>Monthly benefit statements from SSA</li>
+                      <li>Direct deposit records showing SSI payments</li>
+                      <li>SSA-1099 form showing SSI benefits received</li>
+                    </ul>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {["Yes", "No", "Not sure"].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        setWotcAnswers(prev => ({ ...prev, receivedSSI: option }));
+                        if (wotcEditingQuestion === 4) {
+                          setWotcEditingQuestion(null);
+                          setWotcStep(12);
+                        } else {
+                          setWotcStep(5);
+                        }
+                      }}
+                      className={`w-full py-4 px-4 font-medium rounded-2xl border-2 transition-all duration-200 ${
+                        wotcAnswers.receivedSSI === option
+                          ? "border-black bg-gray-100"
+                          : "border-gray-200 hover:border-gray-400"
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setWotcStep(3)}
+                  className="w-full py-3 text-gray-500 hover:text-black transition-colors text-sm"
+                >
+                  ← Back
+                </button>
+              </div>
+            )}
+
+            {/* Step 5: Veteran Status */}
+            {wotcStep === 5 && (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-xl font-bold text-black mb-2">Veteran Status</h2>
+                  <p className="text-gray-500 text-sm">Question 5 of 11</p>
+                </div>
+                <p className="text-gray-700 text-center">
+                  Are you a veteran of the U.S. Armed Forces?
+                </p>
+                <div className="space-y-3">
+                  {["Yes", "No"].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        setWotcAnswers(prev => ({ ...prev, isVeteran: option }));
+                        if (wotcEditingQuestion === 5) {
+                          setWotcEditingQuestion(null);
+                          setWotcStep(12);
+                        } else {
+                          setWotcStep(option === "Yes" ? 6 : 7);
+                        }
+                      }}
+                      className={`w-full py-4 px-4 font-medium rounded-2xl border-2 transition-all duration-200 ${
+                        wotcAnswers.isVeteran === option
+                          ? "border-black bg-gray-100"
+                          : "border-gray-200 hover:border-gray-400"
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setWotcStep(4)}
+                  className="w-full py-3 text-gray-500 hover:text-black transition-colors text-sm"
+                >
+                  ← Back
+                </button>
+              </div>
+            )}
+
+            {/* Step 6: Veteran Disability (only if veteran) */}
+            {wotcStep === 6 && (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-xl font-bold text-black mb-2">Service-Connected Disability</h2>
+                  <p className="text-gray-500 text-sm">Question 6 of 11</p>
+                </div>
+                <p className="text-gray-700 text-center">
+                  Do you have a service-connected disability?
+                </p>
+                
+                {/* Expandable Info Section */}
+                <button
+                  type="button"
+                  onClick={() => setWotcInfoExpanded(wotcInfoExpanded === 'veteranDisability' ? null : 'veteranDisability')}
+                  className="w-full text-center text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center justify-center gap-1"
+                >
+                  <svg className={`w-4 h-4 transition-transform ${wotcInfoExpanded === 'veteranDisability' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                  Not sure what this means?
+                </button>
+                {wotcInfoExpanded === 'veteranDisability' && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-gray-700 space-y-3 animate-fade-in">
+                    <p className="font-medium text-blue-800">What is a Service-Connected Disability?</p>
+                    <p>A service-connected disability is an injury, illness, or condition that was caused or made worse by your military service. The VA assigns a disability rating from 0% to 100% based on the severity.</p>
+                    <p className="font-medium text-blue-800 mt-3">Examples:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Hearing loss or tinnitus from military service</li>
+                      <li>PTSD or other mental health conditions related to service</li>
+                      <li>Physical injuries sustained during active duty</li>
+                      <li>Conditions caused by exposure to hazardous materials during service</li>
+                    </ul>
+                    <p className="font-medium text-blue-800 mt-3">Documentation you would have:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>VA disability rating letter</li>
+                      <li>VA Benefits Summary Letter (also called VA Award Letter)</li>
+                      <li>DD-214 showing disability discharge</li>
+                      <li>VA compensation and pension records</li>
+                    </ul>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {["Yes", "No", "Not sure"].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        setWotcAnswers(prev => ({ ...prev, veteranDisabled: option }));
+                        if (wotcEditingQuestion === 6) {
+                          setWotcEditingQuestion(null);
+                          setWotcStep(12);
+                        } else {
+                          setWotcStep(7);
+                        }
+                      }}
+                      className={`w-full py-4 px-4 font-medium rounded-2xl border-2 transition-all duration-200 ${
+                        wotcAnswers.veteranDisabled === option
+                          ? "border-black bg-gray-100"
+                          : "border-gray-200 hover:border-gray-400"
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setWotcStep(5)}
+                  className="w-full py-3 text-gray-500 hover:text-black transition-colors text-sm"
+                >
+                  ← Back
+                </button>
+              </div>
+            )}
+
+            {/* Step 7: Unemployment Duration */}
+            {wotcStep === 7 && (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-xl font-bold text-black mb-2">Unemployment Duration</h2>
+                  <p className="text-gray-500 text-sm">Question 7 of 11</p>
+                </div>
+                <p className="text-gray-700 text-center">
+                  Have you been unemployed for 27 weeks or more?
+                </p>
+                
+                {/* Expandable Info Section */}
+                <button
+                  type="button"
+                  onClick={() => setWotcInfoExpanded(wotcInfoExpanded === 'unemployment' ? null : 'unemployment')}
+                  className="w-full text-center text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center justify-center gap-1"
+                >
+                  <svg className={`w-4 h-4 transition-transform ${wotcInfoExpanded === 'unemployment' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                  Not sure what this means?
+                </button>
+                {wotcInfoExpanded === 'unemployment' && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-gray-700 space-y-3 animate-fade-in">
+                    <p className="font-medium text-blue-800">What counts as being unemployed for 27 weeks?</p>
+                    <p>This means you have been without a job and actively looking for work for at least 27 consecutive weeks (about 6 months). Part-time work or temporary jobs may reset this count.</p>
+                    <p className="font-medium text-blue-800 mt-3">Examples:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>You were laid off 7 months ago and have been job searching since</li>
+                      <li>You haven&apos;t had a regular job for over 6 months</li>
+                      <li>Your unemployment benefits have been running for 27+ weeks</li>
+                    </ul>
+                    <p className="font-medium text-blue-800 mt-3">Documentation you would have:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Unemployment benefit statements showing duration</li>
+                      <li>Last pay stub from your previous employer</li>
+                      <li>Termination letter with date</li>
+                      <li>Records from your state unemployment office</li>
+                    </ul>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {["Yes", "No", "Not sure"].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        setWotcAnswers(prev => ({ ...prev, unemployed27Weeks: option }));
+                        if (wotcEditingQuestion === 7) {
+                          setWotcEditingQuestion(null);
+                          setWotcStep(12);
+                        } else {
+                          setWotcStep(8);
+                        }
+                      }}
+                      className={`w-full py-4 px-4 font-medium rounded-2xl border-2 transition-all duration-200 ${
+                        wotcAnswers.unemployed27Weeks === option
+                          ? "border-black bg-gray-100"
+                          : "border-gray-200 hover:border-gray-400"
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setWotcStep(wotcAnswers.isVeteran === "Yes" ? 6 : 5)}
+                  className="w-full py-3 text-gray-500 hover:text-black transition-colors text-sm"
+                >
+                  ← Back
+                </button>
+              </div>
+            )}
+
+            {/* Step 8: Unemployment Compensation */}
+            {wotcStep === 8 && (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-xl font-bold text-black mb-2">Unemployment Benefits</h2>
+                  <p className="text-gray-500 text-sm">Question 8 of 11</p>
+                </div>
+                <p className="text-gray-700 text-center">
+                  Have you received unemployment compensation during your unemployment period?
+                </p>
+                
+                {/* Expandable Info Section */}
+                <button
+                  type="button"
+                  onClick={() => setWotcInfoExpanded(wotcInfoExpanded === 'unemploymentComp' ? null : 'unemploymentComp')}
+                  className="w-full text-center text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center justify-center gap-1"
+                >
+                  <svg className={`w-4 h-4 transition-transform ${wotcInfoExpanded === 'unemploymentComp' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                  Not sure what this means?
+                </button>
+                {wotcInfoExpanded === 'unemploymentComp' && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-gray-700 space-y-3 animate-fade-in">
+                    <p className="font-medium text-blue-800">What is Unemployment Compensation?</p>
+                    <p>Unemployment compensation (also called unemployment insurance or UI) is money paid by your state to workers who have lost their job through no fault of their own. You must apply for these benefits and meet eligibility requirements.</p>
+                    <p className="font-medium text-blue-800 mt-3">Examples:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Weekly or bi-weekly payments from your state unemployment office</li>
+                      <li>Direct deposits or debit card payments labeled as UI benefits</li>
+                      <li>Pandemic Unemployment Assistance (PUA) received during COVID-19</li>
+                    </ul>
+                    <p className="font-medium text-blue-800 mt-3">Documentation you would have:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Unemployment benefit award letter</li>
+                      <li>Weekly/bi-weekly payment statements</li>
+                      <li>1099-G tax form showing unemployment benefits received</li>
+                      <li>Bank statements showing UI deposits</li>
+                    </ul>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {["Yes", "No", "Not sure"].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        setWotcAnswers(prev => ({ ...prev, receivedUnemployment: option }));
+                        if (wotcEditingQuestion === 8) {
+                          setWotcEditingQuestion(null);
+                          setWotcStep(12);
+                        } else {
+                          setWotcStep(9);
+                        }
+                      }}
+                      className={`w-full py-4 px-4 font-medium rounded-2xl border-2 transition-all duration-200 ${
+                        wotcAnswers.receivedUnemployment === option
+                          ? "border-black bg-gray-100"
+                          : "border-gray-200 hover:border-gray-400"
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setWotcStep(7)}
+                  className="w-full py-3 text-gray-500 hover:text-black transition-colors text-sm"
+                >
+                  ← Back
+                </button>
+              </div>
+            )}
+
+            {/* Step 9: Felony Conviction */}
+            {wotcStep === 9 && (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-xl font-bold text-black mb-2">Criminal History</h2>
+                  <p className="text-gray-500 text-sm">Question 9 of 11</p>
+                </div>
+                <p className="text-gray-700 text-center">
+                  Have you been convicted of a felony and released from prison within the past year?
+                </p>
+                
+                {/* Expandable Info Section */}
+                <button
+                  type="button"
+                  onClick={() => setWotcInfoExpanded(wotcInfoExpanded === 'felony' ? null : 'felony')}
+                  className="w-full text-center text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center justify-center gap-1"
+                >
+                  <svg className={`w-4 h-4 transition-transform ${wotcInfoExpanded === 'felony' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                  Not sure what this means?
+                </button>
+                {wotcInfoExpanded === 'felony' && (
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-gray-700 space-y-3 animate-fade-in">
+                    <p className="font-medium text-green-800">Why we ask this question</p>
+                    <p><strong className="text-green-700">This is not a disqualifying question!</strong> In fact, employers receive significant tax credits for hiring individuals who have been recently released. Your answer helps connect you with employers who want to give you an opportunity.</p>
+                    <p className="font-medium text-green-800 mt-3">What this means:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>You were convicted of a felony (not a misdemeanor)</li>
+                      <li>You were released from prison within the last 12 months</li>
+                      <li>This includes release from a federal, state, or local prison</li>
+                    </ul>
+                    <p className="font-medium text-green-800 mt-3">How this helps you:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Employers can receive tax credits of up to $2,400 for hiring you</li>
+                      <li>Many employers actively seek candidates who qualify for these credits</li>
+                      <li>This program is designed to support your successful reentry into the workforce</li>
+                    </ul>
+                    <p className="font-medium text-green-800 mt-3">Documentation you may have:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Release papers or discharge documents</li>
+                      <li>Parole or probation paperwork</li>
+                      <li>Court records showing conviction and release dates</li>
+                    </ul>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {["Yes", "No", "Not sure"].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        setWotcAnswers(prev => ({ ...prev, felonyConviction: option }));
+                        if (wotcEditingQuestion === 9) {
+                          setWotcEditingQuestion(null);
+                          setWotcStep(12);
+                        } else {
+                          setWotcStep(10);
+                        }
+                      }}
+                      className={`w-full py-4 px-4 font-medium rounded-2xl border-2 transition-all duration-200 ${
+                        wotcAnswers.felonyConviction === option
+                          ? "border-black bg-gray-100"
+                          : "border-gray-200 hover:border-gray-400"
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setWotcStep(8)}
+                  className="w-full py-3 text-gray-500 hover:text-black transition-colors text-sm"
+                >
+                  ← Back
+                </button>
+              </div>
+            )}
+
+            {/* Step 10: Vocational Rehabilitation */}
+            {wotcStep === 10 && (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-xl font-bold text-black mb-2">Vocational Rehabilitation</h2>
+                  <p className="text-gray-500 text-sm">Question 10 of 11</p>
+                </div>
+                <p className="text-gray-700 text-center">
+                  Have you participated in a vocational rehabilitation program?
+                </p>
+                
+                {/* Expandable Info Section */}
+                <button
+                  type="button"
+                  onClick={() => setWotcInfoExpanded(wotcInfoExpanded === 'vocRehab' ? null : 'vocRehab')}
+                  className="w-full text-center text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center justify-center gap-1"
+                >
+                  <svg className={`w-4 h-4 transition-transform ${wotcInfoExpanded === 'vocRehab' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                  Not sure what this means?
+                </button>
+                {wotcInfoExpanded === 'vocRehab' && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-gray-700 space-y-3 animate-fade-in">
+                    <p className="font-medium text-blue-800">What is Vocational Rehabilitation?</p>
+                    <p>Vocational rehabilitation programs help people with disabilities prepare for, find, and keep jobs. These programs are run by state agencies and provide job training, counseling, and other services to help people return to work.</p>
+                    <p className="font-medium text-blue-800 mt-3">Examples:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>State Department of Rehabilitation services</li>
+                      <li>VA Vocational Rehabilitation and Employment (VR&E) program</li>
+                      <li>Ticket to Work program</li>
+                      <li>Job training programs for people with disabilities</li>
+                      <li>Employment services through a disability services agency</li>
+                    </ul>
+                    <p className="font-medium text-blue-800 mt-3">Documentation you would have:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Individualized Plan for Employment (IPE)</li>
+                      <li>Letters from your vocational rehabilitation counselor</li>
+                      <li>Program enrollment or completion certificates</li>
+                      <li>Records from your state&apos;s Department of Rehabilitation</li>
+                    </ul>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {["Yes", "No", "Not sure"].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        setWotcAnswers(prev => ({ ...prev, vocationalRehab: option }));
+                        if (wotcEditingQuestion === 10) {
+                          setWotcEditingQuestion(null);
+                          setWotcStep(12);
+                        } else {
+                          setWotcStep(11);
+                        }
+                      }}
+                      className={`w-full py-4 px-4 font-medium rounded-2xl border-2 transition-all duration-200 ${
+                        wotcAnswers.vocationalRehab === option
+                          ? "border-black bg-gray-100"
+                          : "border-gray-200 hover:border-gray-400"
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setWotcStep(9)}
+                  className="w-full py-3 text-gray-500 hover:text-black transition-colors text-sm"
+                >
+                  ← Back
+                </button>
+              </div>
+            )}
+
+            {/* Step 11: Empowerment Zone */}
+            {wotcStep === 11 && (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-xl font-bold text-black mb-2">Empowerment Zone</h2>
+                  <p className="text-gray-500 text-sm">Question 11 of 11</p>
+                </div>
+                <p className="text-gray-700 text-center">
+                  Do you live in an Empowerment Zone or Rural Renewal County?
+                </p>
+                
+                {/* Expandable Info Section */}
+                <button
+                  type="button"
+                  onClick={() => setWotcInfoExpanded(wotcInfoExpanded === 'empZone' ? null : 'empZone')}
+                  className="w-full text-center text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center justify-center gap-1"
+                >
+                  <svg className={`w-4 h-4 transition-transform ${wotcInfoExpanded === 'empZone' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                  Not sure what this means?
+                </button>
+                {wotcInfoExpanded === 'empZone' && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-gray-700 space-y-3 animate-fade-in">
+                    <p className="font-medium text-blue-800">What is an Empowerment Zone or Rural Renewal County?</p>
+                    <p>Empowerment Zones and Rural Renewal Counties are designated areas where the government provides special incentives to encourage business growth and hiring. These are typically economically disadvantaged urban or rural communities.</p>
+                    <p className="font-medium text-blue-800 mt-3">Examples of designated areas:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Urban Empowerment Zones in cities like Detroit, Cleveland, Baltimore, Chicago</li>
+                      <li>Rural Empowerment Zones in counties across Texas, Kentucky, Mississippi</li>
+                      <li>Enterprise Communities and Renewal Communities</li>
+                      <li>Historically underserved neighborhoods with high poverty rates</li>
+                    </ul>
+                    <p className="font-medium text-blue-800 mt-3">How to check if you qualify:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Your city or county government can confirm if your address is in a designated zone</li>
+                      <li>Check with your local economic development office</li>
+                      <li>Look up your address on HUD&apos;s Empowerment Zone website</li>
+                      <li>If you live in a low-income or economically distressed area, you may qualify</li>
+                    </ul>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {["Yes", "No", "Not sure"].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        setWotcAnswers(prev => ({ ...prev, empowermentZone: option }));
+                        if (wotcEditingQuestion === 11) {
+                          setWotcEditingQuestion(null);
+                        }
+                        setWotcStep(12);
+                      }}
+                      className={`w-full py-4 px-4 font-medium rounded-2xl border-2 transition-all duration-200 ${
+                        wotcAnswers.empowermentZone === option
+                          ? "border-black bg-gray-100"
+                          : "border-gray-200 hover:border-gray-400"
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setWotcStep(10)}
+                  className="w-full py-3 text-gray-500 hover:text-black transition-colors text-sm"
+                >
+                  ← Back
+                </button>
+              </div>
+            )}
+
+            {/* Step 12: Review Answers */}
+            {wotcStep === 12 && (
+              <div className="space-y-6">
+                <div className="text-center mb-4">
+                  <h2 className="text-xl font-bold text-black mb-2">Review Your Answers</h2>
+                  <p className="text-gray-500 text-sm">Please confirm your responses before submitting.</p>
+                </div>
+                
+                <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2">
+                  {/* Question 1: Conditional Certificate */}
+                  <div className="bg-gray-50 rounded-xl p-3 flex justify-between items-center">
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500">Q1: Conditional Certificate</p>
+                      <p className="text-sm font-medium text-black">{wotcAnswers.conditionalCertificate || "Not answered"}</p>
+                    </div>
+                    <button
+                      onClick={() => { setWotcEditingQuestion(1); setWotcStep(1); }}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium ml-2"
+                    >
+                      Edit
+                    </button>
+                  </div>
+
+                  {/* Question 2: TANF */}
+                  <div className="bg-gray-50 rounded-xl p-3 flex justify-between items-center">
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500">Q2: TANF Benefits</p>
+                      <p className="text-sm font-medium text-black">{wotcAnswers.receivedTANF || "Not answered"}</p>
+                    </div>
+                    <button
+                      onClick={() => { setWotcEditingQuestion(2); setWotcStep(2); }}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium ml-2"
+                    >
+                      Edit
+                    </button>
+                  </div>
+
+                  {/* Question 3: SNAP */}
+                  <div className="bg-gray-50 rounded-xl p-3 flex justify-between items-center">
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500">Q3: SNAP Benefits</p>
+                      <p className="text-sm font-medium text-black">{wotcAnswers.receivedSNAP || "Not answered"}</p>
+                    </div>
+                    <button
+                      onClick={() => { setWotcEditingQuestion(3); setWotcStep(3); }}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium ml-2"
+                    >
+                      Edit
+                    </button>
+                  </div>
+
+                  {/* Question 4: SSI */}
+                  <div className="bg-gray-50 rounded-xl p-3 flex justify-between items-center">
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500">Q4: SSI Benefits</p>
+                      <p className="text-sm font-medium text-black">{wotcAnswers.receivedSSI || "Not answered"}</p>
+                    </div>
+                    <button
+                      onClick={() => { setWotcEditingQuestion(4); setWotcStep(4); }}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium ml-2"
+                    >
+                      Edit
+                    </button>
+                  </div>
+
+                  {/* Question 5: Veteran Status */}
+                  <div className="bg-gray-50 rounded-xl p-3 flex justify-between items-center">
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500">Q5: Veteran Status</p>
+                      <p className="text-sm font-medium text-black">{wotcAnswers.isVeteran || "Not answered"}</p>
+                    </div>
+                    <button
+                      onClick={() => { setWotcEditingQuestion(5); setWotcStep(5); }}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium ml-2"
+                    >
+                      Edit
+                    </button>
+                  </div>
+
+                  {/* Question 6: Veteran Disability - only show if veteran */}
+                  {wotcAnswers.isVeteran === "Yes" && (
+                    <div className="bg-gray-50 rounded-xl p-3 flex justify-between items-center">
+                      <div className="flex-1">
+                        <p className="text-xs text-gray-500">Q6: Service-Connected Disability</p>
+                        <p className="text-sm font-medium text-black">{wotcAnswers.veteranDisabled || "Not answered"}</p>
+                      </div>
+                      <button
+                        onClick={() => { setWotcEditingQuestion(6); setWotcStep(6); }}
+                        className="text-blue-600 hover:text-blue-700 text-sm font-medium ml-2"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Question 7: Unemployment Duration */}
+                  <div className="bg-gray-50 rounded-xl p-3 flex justify-between items-center">
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500">Q7: Unemployment Duration</p>
+                      <p className="text-sm font-medium text-black">{wotcAnswers.unemployed27Weeks || "Not answered"}</p>
+                    </div>
+                    <button
+                      onClick={() => { setWotcEditingQuestion(7); setWotcStep(7); }}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium ml-2"
+                    >
+                      Edit
+                    </button>
+                  </div>
+
+                  {/* Question 8: Unemployment Benefits */}
+                  <div className="bg-gray-50 rounded-xl p-3 flex justify-between items-center">
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500">Q8: Unemployment Benefits</p>
+                      <p className="text-sm font-medium text-black">{wotcAnswers.receivedUnemployment || "Not answered"}</p>
+                    </div>
+                    <button
+                      onClick={() => { setWotcEditingQuestion(8); setWotcStep(8); }}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium ml-2"
+                    >
+                      Edit
+                    </button>
+                  </div>
+
+                  {/* Question 9: Criminal History */}
+                  <div className="bg-gray-50 rounded-xl p-3 flex justify-between items-center">
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500">Q9: Criminal History</p>
+                      <p className="text-sm font-medium text-black">{wotcAnswers.felonyConviction || "Not answered"}</p>
+                    </div>
+                    <button
+                      onClick={() => { setWotcEditingQuestion(9); setWotcStep(9); }}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium ml-2"
+                    >
+                      Edit
+                    </button>
+                  </div>
+
+                  {/* Question 10: Vocational Rehabilitation */}
+                  <div className="bg-gray-50 rounded-xl p-3 flex justify-between items-center">
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500">Q10: Vocational Rehabilitation</p>
+                      <p className="text-sm font-medium text-black">{wotcAnswers.vocationalRehab || "Not answered"}</p>
+                    </div>
+                    <button
+                      onClick={() => { setWotcEditingQuestion(10); setWotcStep(10); }}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium ml-2"
+                    >
+                      Edit
+                    </button>
+                  </div>
+
+                  {/* Question 11: Empowerment Zone */}
+                  <div className="bg-gray-50 rounded-xl p-3 flex justify-between items-center">
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500">Q11: Empowerment Zone</p>
+                      <p className="text-sm font-medium text-black">{wotcAnswers.empowermentZone || "Not answered"}</p>
+                    </div>
+                    <button
+                      onClick={() => { setWotcEditingQuestion(11); setWotcStep(11); }}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium ml-2"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setWotcStep(13)}
+                  className="w-full py-4 px-4 font-semibold rounded-full bg-black text-white hover:bg-gray-800 shadow-lg transition-all duration-200"
+                >
+                  Confirm & Continue
+                </button>
+                <button
+                  onClick={() => setWotcStep(11)}
+                  className="w-full py-3 text-gray-500 hover:text-black transition-colors text-sm"
+                >
+                  ← Back
+                </button>
+              </div>
+            )}
+
+            {/* Step 13: SSN and Signature */}
+            {wotcStep === 13 && (
+              <div className="space-y-6">
+                <div className="text-center mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-4">
+                    <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-xl font-bold text-black mb-2">Final Step</h2>
+                  <p className="text-gray-500 text-sm">To submit your WOTC forms to the Department of Labor, we need your SSN and signature.</p>
+                </div>
+                
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-gray-700">
+                  <p className="flex items-start gap-2">
+                    <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span>Your information is encrypted and securely transmitted. It will only be used to process your WOTC certification with the appropriate state agency.</span>
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-black mb-2">
+                      Social Security Number
+                    </label>
+                    <input
+                      type="text"
+                      value={wotcSSN}
+                      onChange={(e) => {
+                        // Format SSN as XXX-XX-XXXX
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 9);
+                        let formatted = value;
+                        if (value.length > 5) {
+                          formatted = `${value.slice(0, 3)}-${value.slice(3, 5)}-${value.slice(5)}`;
+                        } else if (value.length > 3) {
+                          formatted = `${value.slice(0, 3)}-${value.slice(3)}`;
+                        }
+                        setWotcSSN(formatted);
+                      }}
+                      placeholder="XXX-XX-XXXX"
+                      className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all text-center text-lg tracking-wider"
+                      maxLength={11}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-black mb-2">
+                      Electronic Signature
+                    </label>
+                    <p className="text-xs text-gray-500 mb-2">Type your full legal name as it appears on official documents.</p>
+                    <input
+                      type="text"
+                      value={wotcSignature}
+                      onChange={(e) => setWotcSignature(e.target.value)}
+                      placeholder="Your full legal name"
+                      className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all"
+                      style={{ fontFamily: 'cursive', fontStyle: 'italic' }}
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-xs text-gray-600">
+                  <p>By signing above, I certify under penalty of perjury that the information I have provided is true and correct to the best of my knowledge. I authorize the release of this information to the appropriate state workforce agency for WOTC certification purposes.</p>
+                </div>
+
+                <button
+                  onClick={() => setWotcStep(14)}
+                  disabled={wotcSSN.length !== 11 || wotcSignature.length < 2}
+                  className={`w-full py-4 px-4 font-semibold rounded-full transition-all duration-200 ${
+                    wotcSSN.length === 11 && wotcSignature.length >= 2
+                      ? "bg-green-500 text-white hover:bg-green-600 shadow-lg"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  Submit to Department of Labor
+                </button>
+                <button
+                  onClick={() => setWotcStep(12)}
+                  className="w-full py-3 text-gray-500 hover:text-black transition-colors text-sm"
+                >
+                  ← Back to Review
+                </button>
+              </div>
+            )}
+
+            {/* Step 14: Final Completion */}
+            {wotcStep === 14 && (
+              <div className="space-y-6">
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
+                    <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-bold text-black mb-2">Successfully Submitted!</h2>
+                  <p className="text-gray-500 text-sm">Your WOTC forms have been submitted to the Department of Labor.</p>
+                </div>
+                
+                <div className="bg-green-50 border border-green-200 rounded-2xl p-4 space-y-3">
+                  <p className="text-sm text-green-800 text-center font-medium">
+                    What happens next?
+                  </p>
+                  <ul className="text-sm text-green-700 space-y-2">
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-500">✓</span>
+                      <span>Your forms will be reviewed by your state&apos;s workforce agency</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-500">✓</span>
+                      <span>Employers will be notified if you qualify for tax credits</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-500">✓</span>
+                      <span>This can make you a more attractive candidate to employers</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <button
+                  onClick={() => {
+                    toast.success("WOTC Survey submitted successfully!");
+                    setShowWotcModal(false);
+                    setWotcStep(0);
+                    setWotcSSN("");
+                    setWotcSignature("");
+                  }}
+                  className="w-full py-4 px-4 font-semibold rounded-full bg-green-500 text-white hover:bg-green-600 shadow-lg transition-all duration-200"
+                >
+                  Done
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

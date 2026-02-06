@@ -86,7 +86,7 @@ export default function Home() {
                 Welcome to Rezme
               </h2>
               <p className="text-lg text-gray-600 mb-8">
-                Choose how you want to access the platform
+                Rezme connects you to legal advice, trusted people, and jobs.
               </p>
             </div>
             
@@ -96,7 +96,7 @@ export default function Home() {
                 href="/auth/user/signup"
                 className="group relative w-full flex justify-center py-4 px-6 text-base font-medium rounded-2xl text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 smooth-transition shadow-lg hover:shadow-2xl overflow-hidden"
               >
-                <span className="relative z-10 font-semibold">I am a User</span>
+                <span className="relative z-10 font-semibold">Start here →</span>
               </Link>
               
               {/* Login Button */}
@@ -104,7 +104,7 @@ export default function Home() {
                 href="/auth/user/login"
                 className="group relative w-full flex justify-center py-4 px-6 text-base font-medium rounded-2xl text-black glass-light hover:glass focus:outline-none focus:ring-2 focus:ring-gray-300 smooth-transition hover:shadow-lg border border-gray-200"
               >
-                <span className="relative z-10">Login as User</span>
+                <span className="relative z-10">Sign back in</span>
               </Link>
             </div>
           </div>
